@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="$(SolutionDir)\InstallLocation.targets" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -17,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Binaries\WPF\LabVIEWFutures\Debug\</OutputPath>
+    <OutputPath>$(InstallLocation)</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -33,28 +34,28 @@
   <ItemGroup>
     <Reference Include="NationalInstruments.Common, Version=15.1.40.49152, Culture=neutral, PublicKeyToken=dc6ad606294fc298, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Imports\Common\Desktop\NationalInstruments.Common.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.Common.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Compiler, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.Compiler.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Core">
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.Core.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.MocCommon">
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.MocCommon.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PanelCommon, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.PanelCommon.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.PanelCommon.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PlatformFramework">
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.PlatformFramework.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.VI, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Binaries\WPF\Assemblies\Debug\NationalInstruments.VI.dll</HintPath>
+      <HintPath>$(InstallLocation)\NationalInstruments.VI.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />

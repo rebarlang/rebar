@@ -1,2 +1,5 @@
-/bin
-/obj
+bin/
+obj/
+.vs/
+InstallLocation.targets
+RustyWires.csproj.user

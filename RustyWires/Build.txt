@@ -1,2 +1,3 @@
-Build against drop:
-\\labviewstore\tfs\Drops\R4-R-Cycle11[NI]\20180823.1
+Build against drop: \\labviewstore\TFS\Drops\R4-R-Cycle11[NI]\20180823.1\WindowsBuild\WPF\LabVIEWFutures
+
+To run with built RustyWires.dll, add disable_cache.txt to drop folder.
