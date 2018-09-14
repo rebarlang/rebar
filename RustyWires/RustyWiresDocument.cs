@@ -174,14 +174,6 @@ namespace RustyWires
                 }
             }
 
-            using (context.AddConfigurationPaneContent())
-            {
-                using (context.AddGroup(ConfigurationPaneCommands.BehaviorGroupCommand))
-                {
-                    context.Add(BorrowTunnelViewModelHelpers.StructureAddBorrowTunnelCommand.SetWeight(0.6));
-                    context.Add(BorrowTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
-                }
-            }
 #if FALSE
             if (!(ActiveEditControl is IconDocumentEditControl))
             {
