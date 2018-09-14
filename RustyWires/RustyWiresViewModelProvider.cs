@@ -1,4 +1,6 @@
-﻿using NationalInstruments.Shell;
+﻿using NationalInstruments.Design;
+using NationalInstruments.Shell;
+using NationalInstruments.SourceModel;
 using NationalInstruments.VI.Design;
 using NationalInstruments.VI.SourceModel;
 using RustyWires.Design;
@@ -11,6 +13,8 @@ namespace RustyWires
     {
         public RustyWiresViewModelProvider()
         {
+            AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
+
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
             AddSupportedModel<MutablePassthroughNode>(n => new BasicNodeViewModel(n, "Mutable Passthrough"));
