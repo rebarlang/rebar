@@ -22,6 +22,7 @@ namespace RustyWires.Compiler
 
         void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive node);
         void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive node);
+        void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node);
         void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node);
     }
 }

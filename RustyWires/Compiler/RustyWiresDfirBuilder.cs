@@ -398,6 +398,14 @@ namespace RustyWires.Compiler
             _map.AddMapping(node.Terminals.ElementAt(4), pureBinaryPrimitiveDfir.Terminals.ElementAt(4));
         }
 
+        public void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node)
+        {
+            var mutatingUnaryPrimitiveDfir = new MutatingUnaryPrimitive(_currentDiagram);
+            _map.AddMapping(node, mutatingUnaryPrimitiveDfir);
+            _map.AddMapping(node.Terminals.ElementAt(0), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(0));
+            _map.AddMapping(node.Terminals.ElementAt(1), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(1));
+        }
+
         public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node)
         {
             var mutatingBinaryPrimitiveDfir = new MutatingBinaryPrimitive(_currentDiagram);

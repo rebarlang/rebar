@@ -26,11 +26,11 @@ namespace RustyWires
             AddSupportedModel<SourceModel.Multiply>(n => new BasicNodeViewModel(n, "Multiply"));
             AddSupportedModel<SourceModel.Divide>(n => new BasicNodeViewModel(n, "Divide"));
             AddSupportedModel<SourceModel.Increment>(n => new BasicNodeViewModel(n, "Increment"));
-            // AddSupportedModel<SourceModel.Divide>(n => new BasicNodeViewModel(n, "Divide"));
             AddSupportedModel<AccumulateAdd>(n => new BasicNodeViewModel(n, "Accumulate Add"));
             AddSupportedModel<AccumulateSubtract>(n => new BasicNodeViewModel(n, "Accumulate Subtract"));
             AddSupportedModel<AccumulateMultiply>(n => new BasicNodeViewModel(n, "Accumulate Multiply"));
             AddSupportedModel<AccumulateDivide>(n => new BasicNodeViewModel(n, "Accumulate Divide"));
+            AddSupportedModel<AccumulateIncrement>(n => new BasicNodeViewModel(n, "Accumulate Increment"));
 
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));
             AddSupportedModel<UnborrowTunnel>(t => new UnborrowTunnelViewModel(t));

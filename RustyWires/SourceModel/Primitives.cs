@@ -115,6 +115,37 @@ namespace RustyWires.SourceModel
             }
         }
     }
+    
+    public abstract class MutatingUnaryPrimitive : RustyWiresSimpleNode
+    {
+        protected MutatingUnaryPrimitive()
+        {
+            NIType intMutableReferenceType = PFTypes.Int32.CreateMutableReference();
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, intMutableReferenceType, "x in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, intMutableReferenceType, "x out"));
+        }
+
+        protected override void SetIconViewGeometry()
+        {
+            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
+            var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
+            terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
+            terminals[1].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);
+        }
+
+        public override void AcceptVisitor(IElementVisitor visitor)
+        {
+            var rustyWiresVisitor = visitor as IRustyWiresFunctionVisitor;
+            if (rustyWiresVisitor != null)
+            {
+                rustyWiresVisitor.VisitMutatingUnaryPrimitive(this);
+            }
+            else
+            {
+                base.AcceptVisitor(visitor);
+            }
+        }
+    }
 
     public class Add : PureBinaryPrimitive
     {
@@ -246,6 +277,21 @@ namespace RustyWires.SourceModel
             var accumulateDivide = new AccumulateDivide();
             accumulateDivide.Init(elementCreateInfo);
             return accumulateDivide;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
+
+    public class AccumulateIncrement : MutatingUnaryPrimitive
+    {
+        private const string ElementName = "AccumulateIncrement";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static AccumulateIncrement CreateAccumulateIncrement(IElementCreateInfo elementCreateInfo)
+        {
+            var accumulateIncrement = new AccumulateIncrement();
+            accumulateIncrement.Init(elementCreateInfo);
+            return accumulateIncrement;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);

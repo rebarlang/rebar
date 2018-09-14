@@ -92,6 +92,7 @@
     <Compile Include="Compiler\LockTunnel.cs" />
     <Compile Include="Compiler\MutablePassthroughNode.cs" />
     <Compile Include="Compiler\MutatingBinaryPrimitive.cs" />
+    <Compile Include="Compiler\MutatingUnaryPrimitive.cs" />
     <Compile Include="Compiler\PropagateTypePermissivenessTransform.cs" />
     <Compile Include="Compiler\PureBinaryPrimitive.cs" />
     <Compile Include="Compiler\PureUnaryPrimitive.cs" />
