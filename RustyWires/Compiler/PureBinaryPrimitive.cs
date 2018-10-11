@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
@@ -29,6 +31,16 @@ namespace RustyWires.Compiler
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {
             return new PureBinaryPrimitive(newParentNode, this, copyInfo);
+        }
+
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        {
+            get
+            {
+                yield return new PassthroughTerminalPair(Terminals[0], Terminals[2]);
+                yield return new PassthroughTerminalPair(Terminals[1], Terminals[3]);
+            }
         }
 
         public Task DoTypePropagationAsync(

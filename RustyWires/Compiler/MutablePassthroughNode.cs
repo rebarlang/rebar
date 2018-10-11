@@ -8,7 +8,7 @@ using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler
 {
-    internal class MutablePassthroughNode : RustyWiresDfirNode, IPassthroughTerminalsNode, ITypePropagationImplementation
+    internal class MutablePassthroughNode : RustyWiresDfirNode, ITypePropagationImplementation
     {
         private readonly Terminal _inputTerminal, _outputTerminal;
 
@@ -24,7 +24,8 @@ namespace RustyWires.Compiler
         {
         }
 
-        public IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
         {
             get
             {

@@ -5,6 +5,8 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 
 namespace RustyWires.Compiler
 {
@@ -25,6 +27,15 @@ namespace RustyWires.Compiler
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {
             return new MutatingUnaryPrimitive(newParentNode, this, copyInfo);
+        }
+
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        {
+            get
+            {
+                yield return new PassthroughTerminalPair(Terminals[0], Terminals[1]);
+            }
         }
 
         public Task DoTypePropagationAsync(

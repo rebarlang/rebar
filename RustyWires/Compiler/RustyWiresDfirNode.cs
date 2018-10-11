@@ -10,7 +10,7 @@ using NationalInstruments.Dfir.Plugin;
 
 namespace RustyWires.Compiler
 {
-    internal abstract class RustyWiresDfirNode : Node, IDecomposeImplementation
+    internal abstract class RustyWiresDfirNode : Node, IPassthroughTerminalsNode, IDecomposeImplementation
     {
         protected RustyWiresDfirNode(
             Node parentNode,
@@ -48,6 +48,9 @@ namespace RustyWires.Compiler
         }
 
         public bool SynchronizeAtNodeBoundaries => false;
+
+        /// <inheritdoc />
+        public abstract IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs { get; }
     }
 
     internal static class RustyWiresLifetimes

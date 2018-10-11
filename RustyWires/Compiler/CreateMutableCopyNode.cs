@@ -31,7 +31,8 @@ namespace RustyWires.Compiler
             return new CreateMutableCopyNode(newParentNode, this, copyInfo);
         }
 
-        public IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
         {
             get
             {

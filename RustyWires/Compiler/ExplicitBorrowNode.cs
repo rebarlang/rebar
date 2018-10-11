@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
@@ -49,6 +50,9 @@ namespace RustyWires.Compiler
         {
             return new ExplicitBorrowNode(newParentNode, this, copyInfo);
         }
+
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
 
         public Task DoTypePropagationAsync(
             Node node,

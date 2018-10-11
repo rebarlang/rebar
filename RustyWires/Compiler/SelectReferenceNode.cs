@@ -9,7 +9,7 @@ using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler
 {
-    internal class SelectReferenceNode : RustyWiresDfirNode, IPassthroughTerminalsNode, ITypePropagationImplementation
+    internal class SelectReferenceNode : RustyWiresDfirNode, ITypePropagationImplementation
     {
         public SelectReferenceNode(Node parentNode) : base(parentNode)
         {
@@ -29,10 +29,8 @@ namespace RustyWires.Compiler
             return new SelectReferenceNode(newParentNode, this, copyInfo);
         }
 
-        public IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
-        {
-            get { yield break; }
-        }
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
 
         public Task DoTypePropagationAsync(
             Node node,

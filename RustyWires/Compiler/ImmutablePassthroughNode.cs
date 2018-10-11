@@ -12,7 +12,7 @@ using RustyWires.Common;
 
 namespace RustyWires.Compiler
 {
-    internal class ImmutablePassthroughNode : RustyWiresDfirNode, IPassthroughTerminalsNode, ITypePropagationImplementation
+    internal class ImmutablePassthroughNode : RustyWiresDfirNode, ITypePropagationImplementation
     {
         private readonly Terminal _inputTerminal, _outputTerminal;
 
@@ -33,7 +33,8 @@ namespace RustyWires.Compiler
             return new ImmutablePassthroughNode(newParentNode, this, copyInfo);
         }
 
-        public IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
         {
             get
             {

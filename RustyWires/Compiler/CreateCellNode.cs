@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
@@ -13,8 +15,8 @@ namespace RustyWires.Compiler
         public CreateCellNode(Node parentNode) : base(parentNode)
         {
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
-            CreateTerminal(Direction.Input, immutableReferenceType, "ref in");
-            CreateTerminal(Direction.Output, immutableReferenceType, "ref out");
+            CreateTerminal(Direction.Input, immutableReferenceType, "value in");
+            CreateTerminal(Direction.Output, immutableReferenceType, "cell out");
         }
 
         private CreateCellNode(Node parentNode, CreateCellNode nodeToCopy, NodeCopyInfo nodeCopyInfo)
@@ -26,6 +28,9 @@ namespace RustyWires.Compiler
         {
             return new CreateCellNode(newParentNode, this, copyInfo);
         }
+
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
 
         public Task DoTypePropagationAsync(
             Node node,

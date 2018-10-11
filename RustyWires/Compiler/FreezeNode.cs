@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Core;
@@ -25,6 +26,9 @@ namespace RustyWires.Compiler
         {
             return new FreezeNode(newParentNode, this, copyInfo);
         }
+
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
 
         public Task DoTypePropagationAsync(
             Node node,

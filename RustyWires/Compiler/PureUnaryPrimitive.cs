@@ -32,6 +32,15 @@ namespace RustyWires.Compiler
             return new PureUnaryPrimitive(newParentNode, this, copyInfo);
         }
 
+        /// <inheritdoc />
+        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        {
+            get
+            {
+                yield return new PassthroughTerminalPair(Terminals[0], Terminals[1]);
+            }
+        }
+
         public Task DoTypePropagationAsync(
             Node node,
             ITypePropagationAccessor typePropagationAccessor,
