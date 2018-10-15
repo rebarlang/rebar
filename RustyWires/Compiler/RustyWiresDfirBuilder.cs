@@ -5,7 +5,10 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
+using NationalInstruments.Compiler;
+using NationalInstruments.VI.DfirBuilder;
 using RustyWires.SourceModel;
+using RustyWires.Compiler.Nodes;
 using BorderNode = NationalInstruments.SourceModel.BorderNode;
 using DataAccessor = NationalInstruments.MocCommon.SourceModel.DataAccessor;
 using DataItem = NationalInstruments.MocCommon.SourceModel.DataItem;
@@ -16,8 +19,6 @@ using Structure = NationalInstruments.SourceModel.Structure;
 using Terminal = NationalInstruments.SourceModel.Terminal;
 using Tunnel = NationalInstruments.SourceModel.Tunnel;
 using Wire = NationalInstruments.SourceModel.Wire;
-using NationalInstruments.Compiler;
-using NationalInstruments.VI.DfirBuilder;
 
 namespace RustyWires.Compiler
 {
@@ -91,8 +92,8 @@ namespace RustyWires.Compiler
                     var unlockTunnel = tunnel as SourceModel.UnlockTunnel;
                     if (borrowTunnel != null)
                     {
-                        var borrowDfir = new BorrowTunnel(flatSequenceFrame, borrowTunnel.BorrowMode);
-                        var unborrowDfir = new UnborrowTunnel(flatSequenceFrame);
+                        var borrowDfir = new Nodes.BorrowTunnel(flatSequenceFrame, borrowTunnel.BorrowMode);
+                        var unborrowDfir = new Nodes.UnborrowTunnel(flatSequenceFrame);
                         borrowDfir.AssociatedUnborrowTunnel = unborrowDfir;
                         unborrowDfir.AssociatedBorrowTunnel = borrowDfir;
                         dfirBorderNode = borrowDfir;
@@ -100,14 +101,14 @@ namespace RustyWires.Compiler
                     }
                     else if (unborrowTunnel != null)
                     {
-                        var borrowDfir = (BorrowTunnel)_map.GetDfirForModel(unborrowTunnel.BorrowTunnel);
+                        var borrowDfir = (Nodes.BorrowTunnel)_map.GetDfirForModel(unborrowTunnel.BorrowTunnel);
                         dfirBorderNode = borrowDfir.AssociatedUnborrowTunnel;
                         _map.AddMapping(tunnel, dfirBorderNode);
                     }
                     else if (lockTunnel != null)
                     {
-                        var lockDfir = new LockTunnel(flatSequenceFrame);
-                        var unlockDfir = new UnlockTunnel(flatSequenceFrame);
+                        var lockDfir = new Nodes.LockTunnel(flatSequenceFrame);
+                        var unlockDfir = new Nodes.UnlockTunnel(flatSequenceFrame);
                         lockDfir.AssociatedUnlockTunnel = unlockDfir;
                         unlockDfir.AssociatedLockTunnel = lockDfir;
                         dfirBorderNode = lockDfir;
@@ -115,7 +116,7 @@ namespace RustyWires.Compiler
                     }
                     else if (unlockTunnel != null)
                     {
-                        var lockDfir = (LockTunnel)_map.GetDfirForModel(unlockTunnel.LockTunnel);
+                        var lockDfir = (Nodes.LockTunnel)_map.GetDfirForModel(unlockTunnel.LockTunnel);
                         dfirBorderNode = lockDfir.AssociatedUnlockTunnel;
                         _map.AddMapping(tunnel, dfirBorderNode);
                     }
@@ -320,23 +321,22 @@ namespace RustyWires.Compiler
 
         public void VisitDropNode(SourceModel.DropNode node)
         {
-            var dropDfir = new DropNode(_currentDiagram);
+            var dropDfir = new Nodes.DropNode(_currentDiagram);
             _map.AddMapping(node, dropDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), dropDfir.Terminals.ElementAt(0));
         }
 
         public void VisitImmutablePassthroughNode(SourceModel.ImmutablePassthroughNode node)
         {
-            var immutablePassthroughDfir = new ImmutablePassthroughNode(_currentDiagram);
+            var immutablePassthroughDfir = new Nodes.ImmutablePassthroughNode(_currentDiagram);
             _map.AddMapping(node, immutablePassthroughDfir);
-            immutablePassthroughDfir.Terminals.ElementAt(0).SetSourceModelId(node.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(0), immutablePassthroughDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), immutablePassthroughDfir.Terminals.ElementAt(1));
         }
 
         public void VisitMutablePassthroughNode(SourceModel.MutablePassthroughNode node)
         {
-            var mutablePassthroughDfir = new MutablePassthroughNode(_currentDiagram);
+            var mutablePassthroughDfir = new Nodes.MutablePassthroughNode(_currentDiagram);
             _map.AddMapping(node, mutablePassthroughDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), mutablePassthroughDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), mutablePassthroughDfir.Terminals.ElementAt(1));
@@ -344,7 +344,7 @@ namespace RustyWires.Compiler
 
         public void VisitSelectReferenceNode(SourceModel.SelectReferenceNode node)
         {
-            var selectReferenceDfir = new SelectReferenceNode(_currentDiagram);
+            var selectReferenceDfir = new Nodes.SelectReferenceNode(_currentDiagram);
             _map.AddMapping(node, selectReferenceDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), selectReferenceDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), selectReferenceDfir.Terminals.ElementAt(1));
@@ -353,7 +353,7 @@ namespace RustyWires.Compiler
 
         public void VisitCreateMutableCopyNode(SourceModel.CreateMutableCopyNode node)
         {
-            var createMutableCopyDfir = new CreateMutableCopyNode(_currentDiagram);
+            var createMutableCopyDfir = new Nodes.CreateMutableCopyNode(_currentDiagram);
             _map.AddMapping(node, createMutableCopyDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), createMutableCopyDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), createMutableCopyDfir.Terminals.ElementAt(1));
@@ -380,7 +380,7 @@ namespace RustyWires.Compiler
 
         public void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive node)
         {
-            var pureUnaryPrimitiveDfir = new PureUnaryPrimitive(_currentDiagram);
+            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram);
             _map.AddMapping(node, pureUnaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), pureUnaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), pureUnaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -389,7 +389,7 @@ namespace RustyWires.Compiler
 
         public void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive node)
         {
-            var pureBinaryPrimitiveDfir = new PureBinaryPrimitive(_currentDiagram);
+            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram);
             _map.AddMapping(node, pureBinaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), pureBinaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), pureBinaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -400,7 +400,7 @@ namespace RustyWires.Compiler
 
         public void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node)
         {
-            var mutatingUnaryPrimitiveDfir = new MutatingUnaryPrimitive(_currentDiagram);
+            var mutatingUnaryPrimitiveDfir = new Nodes.MutatingUnaryPrimitive(_currentDiagram);
             _map.AddMapping(node, mutatingUnaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -408,7 +408,7 @@ namespace RustyWires.Compiler
 
         public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node)
         {
-            var mutatingBinaryPrimitiveDfir = new MutatingBinaryPrimitive(_currentDiagram);
+            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram);
             _map.AddMapping(node, mutatingBinaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(1));

@@ -188,24 +188,24 @@ namespace RustyWires
             }
         }
 
-        internal static BorrowMode GetBorrowMode(TypePermissiveness borrowFrom, TypePermissiveness borrowTo)
+        internal static Compiler.Nodes.BorrowMode GetBorrowMode(TypePermissiveness borrowFrom, TypePermissiveness borrowTo)
         {
             if (borrowFrom == TypePermissiveness.Owner)
             {
                 if (borrowTo == TypePermissiveness.MutableReference)
                 {
-                    return BorrowMode.OwnerToMutable;
+                    return Compiler.Nodes.BorrowMode.OwnerToMutable;
                 }
 
                 if (borrowTo == TypePermissiveness.ImmutableReference)
                 {
-                    return BorrowMode.OwnerToImmutable;
+                    return Compiler.Nodes.BorrowMode.OwnerToImmutable;
                 }
             }
             else if (borrowFrom == TypePermissiveness.MutableReference &&
                      borrowTo == TypePermissiveness.ImmutableReference)
             {
-                return BorrowMode.MutableToImmutable;
+                return Compiler.Nodes.BorrowMode.MutableToImmutable;
             }
             throw new InvalidOperationException($"Borrowing {borrowTo} from {borrowFrom} is not necessary.");
         }

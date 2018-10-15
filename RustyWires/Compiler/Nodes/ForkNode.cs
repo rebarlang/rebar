@@ -1,7 +1,7 @@
 ﻿using NationalInstruments.Dfir;
 using System.Collections.Generic;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Compiler.Nodes
 {
     internal class ForkNode : RustyWiresDfirNode
     {

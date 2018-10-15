@@ -1,17 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using NationalInstruments.Compiler;
-using NationalInstruments.Compiler.SemanticAnalysis;
-using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Direction = NationalInstruments.Dfir.Direction;
 using Node = NationalInstruments.Dfir.Node;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Compiler.Nodes
 {
-    internal class DropNode : RustyWiresDfirNode, ITypePropagationImplementation
+    internal class DropNode : RustyWiresDfirNode
     {
         public DropNode(Node parentNode) : base(parentNode)
         {
@@ -31,19 +27,11 @@ namespace RustyWires.Compiler
         /// <inheritdoc />
         public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
 
-        public Task DoTypePropagationAsync(
-            Node node,
-            ITypePropagationAccessor typePropagationAccessor,
-            CompileCancellationToken cancellationToken)
+        /// <inheritdoc />
+        public override void CheckVariableUsages()
         {
-            var dropNode = (DropNode)node;
-            NationalInstruments.Dfir.Terminal valueInTerminal = dropNode.Terminals.ElementAt(0);
-            if (valueInTerminal.TestRequiredTerminalConnected())
-            {
-                dropNode.PullInputTypes();
-                valueInTerminal.TestTerminalHasOwnedValueConnected();
-            }
-            return AsyncHelpers.CompletedTask;
+            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            validator.TestVariableIsOwnedType();
         }
     }
 }

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NationalInstruments;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using RustyWires.Compiler;
-using NationalInstruments;
+using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Common
 {

@@ -83,10 +83,12 @@ namespace RustyWires.Compiler
         {
             List<IDfirTransformBase> semanticAnalysisTransforms = new List<IDfirTransformBase>()
             {
-                // new AssociateValuesAndReferencesTransform(),
+                new DetermineVariablesTransform(),
+                new SetVariableTypesAndLifetimesTransform(),
+                new ValidateVariableUsagesTransform(),
+                new ReflectVariablesToTerminalsTransform(),
                 // new ExplicitBorrowTransform(),
                 // new PropagateTypePermissivenessTransform(),
-                new SemanticAnalysisTransform(specAndQName.BuildSpec.TargetCompiler, null, null),
                 new WireForkValidationTransform(),
                 new StandardTypeReflectionTransform(),
             };

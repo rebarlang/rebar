@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
+using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
 {

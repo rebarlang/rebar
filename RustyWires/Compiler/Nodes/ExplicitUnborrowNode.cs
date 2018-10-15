@@ -3,7 +3,7 @@ using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Compiler.Nodes
 {
     internal class ExplicitUnborrowNode : RustyWiresDfirNode
     {

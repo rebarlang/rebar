@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NationalInstruments.Compiler;
-using NationalInstruments.Compiler.SemanticAnalysis;
-using NationalInstruments.Core;
+﻿using System.Collections.Generic;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using RustyWires.Common;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Compiler.Nodes
 {
-    internal class ImmutablePassthroughNode : RustyWiresDfirNode, ITypePropagationImplementation
+    internal class ImmutablePassthroughNode : RustyWiresDfirNode
     {
         private readonly Terminal _inputTerminal, _outputTerminal;
 
@@ -42,14 +34,10 @@ namespace RustyWires.Compiler
             }
         }
 
-        public Task DoTypePropagationAsync(
-            Node node,
-            ITypePropagationAccessor typePropagationAccessor,
-            CompileCancellationToken cancellationToken)
+        /// <inheritdoc />
+        public override void CheckVariableUsages()
         {
-            var immutablePassthroughNode = (ImmutablePassthroughNode)node;
-            CommonNodes.ImmutablePassthrough.PropagateTypes(immutablePassthroughNode);
-            return AsyncHelpers.CompletedTask;
+            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(_inputTerminal);
         }
     }
 }

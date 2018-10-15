@@ -2,6 +2,7 @@
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
+using RustyWires.Compiler.Nodes;
 using Terminal = NationalInstruments.Dfir.Terminal;
 
 namespace RustyWires.Compiler
