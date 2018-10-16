@@ -111,7 +111,6 @@
     <Compile Include="Compiler\RustyWiresMocPlugin.cs" />
     <Compile Include="Compiler\SetVariableTypesTransform.cs" />
     <Compile Include="Compiler\ValidateVariableUsagesTransform.cs" />
-    <Compile Include="Compiler\WireForkValidationTransform.cs" />
     <Compile Include="Compiler\Variable.cs" />
     <Compile Include="Compiler\VariableSet.cs" />
     <Compile Include="Compiler\VariableUsageValidator.cs" />
