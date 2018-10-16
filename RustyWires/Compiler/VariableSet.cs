@@ -5,13 +5,14 @@ namespace RustyWires.Compiler
 {
     internal sealed class VariableSet
     {
-        private readonly Dictionary<Wire, Variable> _wireVariables = new Dictionary<Wire, Variable>();
+        private readonly List<Variable> _variables = new List<Variable>();
         private readonly Dictionary<Terminal, Variable> _terminalVariables = new Dictionary<Terminal, Variable>();
-        private int _setCount = 0;
 
         private Variable CreateNewVariable(Terminal originatingTerminal)
         {
-            return new Variable(_setCount++, originatingTerminal);
+            var variable = new Variable(_variables.Count, originatingTerminal);
+            _variables.Add(variable);
+            return variable;
         }
 
         public Variable AddTerminalToNewVariable(Terminal terminal)
@@ -31,19 +32,6 @@ namespace RustyWires.Compiler
         public void AddTerminalToVariable(Variable variable, Terminal terminal)
         {
             _terminalVariables[terminal] = variable;
-        }
-
-        public Variable GetVariableForWire(Wire wire)
-        {
-            Variable variable;
-            _wireVariables.TryGetValue(wire, out variable);
-            return variable;
-        }
-
-        public void AddWireToVariable(Variable variable, Wire wire)
-        {
-            _wireVariables[wire] = variable;
-            variable.Wires.Add(wire);
         }
 
         public VariableUsageValidator GetValidatorForTerminal(Terminal terminal)

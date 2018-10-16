@@ -1,4 +1,6 @@
-﻿using NationalInstruments.Dfir;
+﻿using NationalInstruments;
+using NationalInstruments.DataTypes;
+using NationalInstruments.Dfir;
 using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
@@ -13,6 +15,38 @@ namespace RustyWires.Compiler
 
         protected override void VisitWire(Wire wire)
         {
+            VariableSet variableSet = wire.DfirRoot.GetVariableSet();
+            Variable sourceVariable = variableSet.GetVariableForTerminal(wire.SourceTerminal);
+
+            if (wire.SinkTerminals.HasMoreThan(1) && sourceVariable != null && !WireTypeMayFork(sourceVariable.Type))
+            {
+                wire.SetDfirMessage(RustyWiresMessages.WireCannotFork);
+            }
+        }
+
+        private bool WireTypeMayFork(NIType wireType)
+        {
+            if (wireType.IsMutableValueType() || wireType.IsImmutableValueType())
+            {
+                return CanShallowCopyDataType(wireType.GetUnderlyingTypeFromRustyWiresType());
+            }
+
+            if (wireType.IsMutableReferenceType())
+            {
+                return false;
+            }
+
+            if (wireType.IsImmutableReferenceType())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool CanShallowCopyDataType(NIType dataType)
+        {
+            return dataType.IsNumeric();
         }
 
         protected override void VisitBorderNode(BorderNode borderNode)

@@ -89,7 +89,6 @@ namespace RustyWires.Compiler
                 new ReflectVariablesToTerminalsTransform(),
                 // new ExplicitBorrowTransform(),
                 // new PropagateTypePermissivenessTransform(),
-                new WireForkValidationTransform(),
                 new StandardTypeReflectionTransform(),
             };
             ReflectErrorsTransform.AddErrorReflection(semanticAnalysisTransforms, CompilePhase.SemanticAnalysis);

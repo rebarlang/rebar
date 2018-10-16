@@ -14,16 +14,27 @@ namespace RustyWires.Compiler
             diagram.DfirRoot.SetVariableSet(_variableSet);
         }
 
-        // Assumes that all wires have exactly one source and one sink.
-
         protected override void VisitWire(Wire wire)
         {
             Terminal sourceTerminal = wire.SourceTerminal;
             Terminal connectedTerminal = sourceTerminal.ConnectedTerminal;
             if (connectedTerminal != null)
             {
-                Variable variable = _variableSet.GetVariableForTerminal(connectedTerminal);
-                _variableSet.AddWireToVariable(variable, wire);
+                Variable sourceVariable = _variableSet.GetVariableForTerminal(connectedTerminal);
+                _variableSet.AddTerminalToVariable(sourceVariable, wire.SourceTerminal);
+                bool reuseSource = true;
+                foreach (Terminal sinkTerminal in wire.SinkTerminals)
+                {
+                    if (reuseSource)
+                    {
+                        _variableSet.AddTerminalToVariable(sourceVariable, sinkTerminal);
+                        reuseSource = false;
+                    }
+                    else
+                    {
+                        _variableSet.AddTerminalToNewVariable(sinkTerminal);
+                    }
+                }
             }
             else
             {
@@ -64,10 +75,10 @@ namespace RustyWires.Compiler
 
         private Variable PullInputTerminalVariable(Terminal inputTerminal)
         {
-            var inputWire = inputTerminal.GetWireIfConnected();
-            if (inputWire != null)
+            var connectedTerminal = inputTerminal.ConnectedTerminal;
+            if (connectedTerminal != null)
             {
-                Variable variable = _variableSet.GetVariableForWire(inputWire);
+                Variable variable = _variableSet.GetVariableForTerminal(connectedTerminal);
                 _variableSet.AddTerminalToVariable(variable, inputTerminal);
                 return variable;
             }
