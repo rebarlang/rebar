@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using NationalInstruments.Compiler.SemanticAnalysis;
+﻿using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -10,12 +9,15 @@ namespace RustyWires.Compiler
         private readonly Variable _variable;
         private readonly Terminal _terminal;
 
-        public VariableUsageValidator(Variable variable, Terminal terminal)
+        public VariableUsageValidator(Variable variable, Terminal terminal, bool validateUsageWithinLifetime = true)
         {
             _variable = variable;
             _terminal = terminal;
             _terminal.TestRequiredTerminalConnected();
-            TestUsageWithinLifetime();
+            if (validateUsageWithinLifetime)
+            {
+                TestUsageWithinLifetime();
+            }
         }
 
         private void TestUsageWithinLifetime()

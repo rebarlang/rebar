@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler
@@ -7,6 +9,7 @@ namespace RustyWires.Compiler
     {
         private readonly List<Variable> _variables = new List<Variable>();
         private readonly Dictionary<Terminal, Variable> _terminalVariables = new Dictionary<Terminal, Variable>();
+        private readonly Dictionary<Lifetime, List<Variable>> _variablesInterruptedByLifetimes = new Dictionary<Lifetime, List<Variable>>();
         private readonly BoundedLifetimeGraph _boundedLifetimeGraph = new BoundedLifetimeGraph();
 
         private Variable CreateNewVariable(Terminal originatingTerminal)
@@ -16,26 +19,49 @@ namespace RustyWires.Compiler
             return variable;
         }
 
-        internal Variable AddTerminalToNewVariable(Terminal terminal)
+        public IEnumerable<Variable> Variables => _variables;
+
+        public Variable AddTerminalToNewVariable(Terminal terminal)
         {
             Variable set = CreateNewVariable(terminal);
             _terminalVariables[terminal] = set;
             return set;
         }
 
-        internal Variable GetVariableForTerminal(Terminal terminal)
+        public Variable GetVariableForTerminal(Terminal terminal)
         {
             Variable variable;
             _terminalVariables.TryGetValue(terminal, out variable);
             return variable;
         }
 
-        internal void AddTerminalToVariable(Variable variable, Terminal terminal)
+        public void AddTerminalToVariable(Variable variable, Terminal terminal)
         {
             _terminalVariables[terminal] = variable;
         }
 
-        internal VariableUsageValidator GetValidatorForTerminal(Terminal terminal)
+        public void MergeVariables(Variable toMerge, Variable mergeWith)
+        {
+            if (!_variables.Contains(mergeWith))
+            {
+                throw new ArgumentException(nameof(mergeWith));
+            }
+            List<Terminal> terminalsToMerge = _terminalVariables.Where(pair => pair.Value == toMerge).Select(pair => pair.Key).ToList();
+            terminalsToMerge.ForEach(terminal => _terminalVariables[terminal] = mergeWith);
+            _variables.Remove(toMerge);
+        }
+
+        public IEnumerable<Variable> GetVariablesInterruptedByLifetime(Lifetime lifetime)
+        {
+            List<Variable> variables;
+            if (_variablesInterruptedByLifetimes.TryGetValue(lifetime, out variables))
+            {
+                return variables;
+            }
+            return Enumerable.Empty<Variable>();
+        }
+
+        public VariableUsageValidator GetValidatorForTerminal(Terminal terminal)
         {
             return new VariableUsageValidator(GetVariableForTerminal(terminal), terminal);
         }
@@ -45,9 +71,11 @@ namespace RustyWires.Compiler
             return _boundedLifetimeGraph.CreateLifetimeThatOutlastsDiagram();
         }
 
-        public Lifetime DefineLifetimeThatIsBoundedByDiagram()
+        public Lifetime DefineLifetimeThatIsBoundedByDiagram(IEnumerable<Variable> decomposedVariables)
         {
-            return _boundedLifetimeGraph.CreateLifetimeThatIsBoundedByDiagram();
+            Lifetime lifetime = _boundedLifetimeGraph.CreateLifetimeThatIsBoundedByDiagram();
+            _variablesInterruptedByLifetimes.Add(lifetime, decomposedVariables.ToList());
+            return lifetime;
         }
 
         public Lifetime ComputeCommonLifetime(Lifetime left, Lifetime right)

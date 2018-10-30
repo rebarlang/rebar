@@ -10,6 +10,8 @@ namespace RustyWires.Compiler
         void VisitImmutablePassthroughNode(SourceModel.ImmutablePassthroughNode node);
         void VisitMutablePassthroughNode(SourceModel.MutablePassthroughNode node);
 
+        void VisitTerminateLifetimeNode(SourceModel.TerminateLifetime node);
+
         void VisitSelectReferenceNode(SourceModel.SelectReferenceNode node);
         void VisitCreateMutableCopyNode(SourceModel.CreateMutableCopyNode node);
         void VisitExchangeValuesNode(SourceModel.ExchangeValues node);

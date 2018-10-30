@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -62,7 +63,7 @@ namespace RustyWires.Compiler.Nodes
                 : outputUnderlyingType.CreateMutableReference();
 
             Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
-            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatIsBoundedByDiagram();
+            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatIsBoundedByDiagram(inputVariable.ToEnumerable());
             outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
         }
 

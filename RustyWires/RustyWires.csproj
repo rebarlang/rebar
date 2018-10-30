@@ -95,6 +95,7 @@
     <Compile Include="Compiler\Nodes\RustyWiresBorderNode.cs" />
     <Compile Include="Compiler\Nodes\RustyWiresDfirNode.cs" />
     <Compile Include="Compiler\Nodes\SelectReferenceNode.cs" />
+    <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
     <Compile Include="Compiler\Nodes\UnborrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\UnlockTunnel.cs" />
     <Compile Include="Compiler\DetermineVariablesTransform.cs" />
@@ -154,6 +155,7 @@
     <Compile Include="SourceModel\RustyWiresFlatSequence.cs" />
     <Compile Include="SourceModel\RustyWiresSimpleNode.cs" />
     <Compile Include="SourceModel\SelectReferenceNode.cs" />
+    <Compile Include="SourceModel\TerminateLifetime.cs" />
     <Compile Include="SourceModel\UnborrowTunnel.cs" />
     <Compile Include="SourceModel\UnlockTunnel.cs" />
   </ItemGroup>

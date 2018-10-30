@@ -3,13 +3,13 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using Foundation;
 using NationalInstruments.Compiler;
-using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
+using RustyWires.Compiler.Nodes;
 using RustyWires.SourceModel;
 using Diagram = NationalInstruments.SourceModel.Diagram;
 using Structure = NationalInstruments.SourceModel.Structure;
@@ -181,6 +181,21 @@ namespace RustyWires.Compiler
                 {
                     nodeTerminal.DataType = typeToReflect;
                 }
+            }
+
+            var terminateLifetime = connectable as TerminateLifetime;
+            if (terminateLifetime != null)
+            {
+                VisitTerminateLifetime(terminateLifetime);
+            }
+        }
+
+        private void VisitTerminateLifetime(TerminateLifetime terminateLifetime)
+        {
+            TerminateLifetimeNode terminateLifetimeDfir = (TerminateLifetimeNode)_map.GetDfirForModel(terminateLifetime);
+            if (terminateLifetimeDfir.RequiredInputCount != null && terminateLifetimeDfir.RequiredOutputCount != null)
+            {
+                terminateLifetime.UpdateTerminals(terminateLifetimeDfir.RequiredInputCount.Value, terminateLifetimeDfir.RequiredOutputCount.Value);
             }
         }
     }

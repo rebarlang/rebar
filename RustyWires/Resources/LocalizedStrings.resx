@@ -129,6 +129,15 @@
   <data name="TerminalDoesNotAcceptReference" xml:space="preserve">
     <value>This terminal cannot accept a wired reference type.</value>
   </data>
+  <data name="TerminateLifetimeInputLifetimeCannotBeTerminated" xml:space="preserve">
+    <value>The lifetime of values wired to this node cannot be terminated with this node.</value>
+  </data>
+  <data name="TerminateLifetimeInputLifetimesNotUnique" xml:space="preserve">
+    <value>The values wired to this node do not all share the same lifetime.</value>
+  </data>
+  <data name="TerminateLifetimeNotAllVariablesInLifetimeConnected" xml:space="preserve">
+    <value>The scope that this node terminates contains at least one variable that is not wired.</value>
+  </data>
   <data name="WireCannotFork" xml:space="preserve">
     <value>The data type of this wire does not allow it to branch.</value>
   </data>

@@ -97,6 +97,33 @@ namespace RustyWires.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The lifetime of values wired to this node cannot be terminated with this node..
+        /// </summary>
+        internal static string TerminateLifetimeInputLifetimeCannotBeTerminated {
+            get {
+                return ResourceManager.GetString("TerminateLifetimeInputLifetimeCannotBeTerminated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The values wired to this node do not all share the same lifetime..
+        /// </summary>
+        internal static string TerminateLifetimeInputLifetimesNotUnique {
+            get {
+                return ResourceManager.GetString("TerminateLifetimeInputLifetimesNotUnique", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The scope that this node terminates contains at least one variable that is not wired..
+        /// </summary>
+        internal static string TerminateLifetimeNotAllVariablesInLifetimeConnected {
+            get {
+                return ResourceManager.GetString("TerminateLifetimeNotAllVariablesInLifetimeConnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The data type of this wire does not allow it to branch..
         /// </summary>
         internal static string WireCannotFork {
