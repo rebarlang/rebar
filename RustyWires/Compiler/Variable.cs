@@ -1,6 +1,6 @@
-﻿using NationalInstruments.DataTypes;
+﻿using System.Collections.Generic;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using System.Collections.Generic;
 
 namespace RustyWires.Compiler
 {
@@ -12,9 +12,9 @@ namespace RustyWires.Compiler
 
         public List<Wire> Wires { get; }
 
-        public NIType Type { get; set; }
+        public NIType Type { get; private set; }
 
-        public Lifetime Lifetime { get; set; }
+        public Lifetime Lifetime { get; private set; }
 
         public Variable(int id, Terminal originatingTerminal)
         {
@@ -24,20 +24,13 @@ namespace RustyWires.Compiler
         }
 
         /// <summary>
-        /// Convenience method for setting the <see cref="Type"/> property that allows using the ?. operator.
+        /// Convenience method for setting the <see cref="Type"/> and <see cref="Lifetime"/> properties that allows using the ?. operator.
         /// </summary>
         /// <param name="type">The <see cref="NIType"/> to set on this <see cref="Variable"/>.</param>
-        public void SetType(NIType type)
+        /// <param name="lifetime">The <see cref="Lifetime"/> to set on this <see cref="Variable"/>.</param>
+        public void SetTypeAndLifetime(NIType type, Lifetime lifetime)
         {
             Type = type;
-        }
-
-        /// <summary>
-        /// Convenience method for setting the <see cref="Lifetime"/> property that allows using the ?. operator.
-        /// </summary>
-        /// <param name="lifetime">The <see cref="Lifetime"/> to set on this <see cref="Variable"/>.</param>
-        public void SetLifetime(Lifetime lifetime)
-        {
             Lifetime = lifetime;
         }
 

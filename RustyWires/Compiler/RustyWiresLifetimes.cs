@@ -4,21 +4,6 @@ namespace RustyWires.Compiler
 {
     internal static class RustyWiresLifetimes
     {
-        private static readonly AttributeDescriptor _lifetimeTokenName = new AttributeDescriptor("RustyWires.Compiler.Lifetime", false);
-        private static readonly AttributeDescriptor _lifetimeSetTokenName = new AttributeDescriptor("RustyWires.Compiler.LifetimeSet", false);
-
-        public static void SetLifetime(this Terminal terminal, Lifetime lifetime)
-        {
-            var token = terminal.DfirRoot.GetOrCreateNamedSparseAttributeToken<Lifetime>(_lifetimeTokenName);
-            token.SetAttribute(terminal, lifetime);
-        }
-
-        public static Lifetime GetLifetime(this Terminal terminal)
-        {
-            var token = terminal.DfirRoot.GetOrCreateNamedSparseAttributeToken<Lifetime>(_lifetimeTokenName);
-            return token.GetAttribute(terminal);
-        }
-
         public static Lifetime GetSourceLifetime(this Terminal terminal)
         {
             if (!terminal.IsConnected)
@@ -26,39 +11,36 @@ namespace RustyWires.Compiler
                 return null;
             }
 
-            var token = terminal.DfirRoot.GetOrCreateNamedSparseAttributeToken<Lifetime>(_lifetimeTokenName);
             var connectedTerminal = terminal.ConnectedTerminal;
-            if (!token.HasAttributeStorage(connectedTerminal) && connectedTerminal.ParentNode is Wire)
+            var connectedTerminalVariable = connectedTerminal.GetVariable();
+            if (connectedTerminalVariable.Lifetime == null && connectedTerminal.ParentNode is Wire)
             {
                 Wire wire = (Wire)connectedTerminal.ParentNode;
                 Lifetime sourceLifetime = wire.SourceTerminal.GetSourceLifetime();
-                wire.SourceTerminal.SetLifetime(sourceLifetime);
+                Variable sourceVariable = wire.SourceTerminal.GetVariable();
+                sourceVariable.SetTypeAndLifetime(sourceVariable.Type, sourceLifetime);
                 foreach (var sinkTerminal in wire.SinkTerminals)
                 {
-                    sinkTerminal.SetLifetime(sourceLifetime);
+                    Variable sinkVariable = sinkTerminal.GetVariable();
+                    sinkVariable.SetTypeAndLifetime(sinkVariable.Type, sourceLifetime);
                 }
             }
-            return connectedTerminal.GetLifetime();
+            return connectedTerminalVariable.Lifetime;
         }
 
         public static Lifetime ComputeInputTerminalEffectiveLifetime(this Terminal inputTerminal)
         {
+            Variable inputVariable = inputTerminal.GetVariable();
             // TODO: this should take a parameter for the type permission level above which to consider the input to be re-borrowed;
             // for now, assume that this level is ImmutableReference.
-            if (inputTerminal.DataType.IsImmutableReferenceType())
+            if (inputVariable.Type.IsImmutableReferenceType())
             {
-                return inputTerminal.GetSourceLifetime();
+                return inputVariable.Lifetime;
             }
             else
             {
-                return inputTerminal.DfirRoot.GetLifetimeSet().EmptyLifetime;
+                return Lifetime.Empty;
             }
-        }
-
-        public static LifetimeSet GetLifetimeSet(this DfirRoot dfirRoot)
-        {
-            var token = dfirRoot.GetOrCreateNamedSparseAttributeToken<LifetimeSet>(_lifetimeSetTokenName);
-            return token.GetAttribute(dfirRoot);
         }
     }
 }

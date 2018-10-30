@@ -38,10 +38,9 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
-            VariableUsageValidator validator1 = variableSet.GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator1 = Terminals[0].GetValidator();
             validator1.TestVariableIsMutableType();
-            VariableUsageValidator validator2 = variableSet.GetValidatorForTerminal(Terminals[1]);
+            VariableUsageValidator validator2 = Terminals[1].GetValidator();
             validator2.TestVariableIsMutableType();
             // TODO: ensure that lifetimes of exchanged values and references are compatible
         }

@@ -24,7 +24,7 @@ namespace RustyWires.Compiler
                 var structure = node as Structure;
                 if (structure != null)
                 {
-                    VisitStructure(structure);
+                    TraverseStructure(structure);
                 }
                 else if (wire != null)
                 {
@@ -37,14 +37,17 @@ namespace RustyWires.Compiler
             }
         }
 
-        private void VisitStructure(Structure structure)
+        private void TraverseStructure(Structure structure)
         {
+            Diagram diagram = structure.Diagrams.First();
+            VisitDiagram(diagram);
+
             foreach (BorderNode inputBorderNode in structure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
             {
                 VisitBorderNode(inputBorderNode);
             }
 
-            TraverseDiagram(structure.Diagrams.First());
+            TraverseDiagram(diagram);
 
             foreach (BorderNode outputBorderNode in structure.BorderNodes.Where(bn => bn.Direction == Direction.Output))
             {

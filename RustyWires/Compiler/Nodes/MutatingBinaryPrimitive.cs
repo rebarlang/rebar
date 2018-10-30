@@ -39,9 +39,9 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator1 = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator1 = Terminals[0].GetValidator();
             validator1.TestExpectedUnderlyingType(PFTypes.Int32);
-            VariableUsageValidator validator2 = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[1]);
+            VariableUsageValidator validator2 = Terminals[1].GetValidator();
             validator2.TestExpectedUnderlyingType(PFTypes.Int32);
         }
     }

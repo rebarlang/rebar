@@ -296,7 +296,6 @@ namespace RustyWires.Compiler
             Constant constant = Constant.Create(_currentDiagram, literal.Data, dataType.CreateImmutableReference());
             _map.AddMapping((Content)literal, constant);
             _map.AddMapping(literal.OutputTerminal, constant.Terminals.ElementAt(0));
-            constant.Terminals.ElementAt(0).SetLifetime(constant.DfirRoot.GetLifetimeSet().StaticLifetime);
         }
 
         public void VisitMethodCall(MocCommonMethodCall callStatic)

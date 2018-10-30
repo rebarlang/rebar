@@ -32,30 +32,23 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
             Terminal inputTerminal = Terminals.ElementAt(0),
                 outputTerminal = Terminals.ElementAt(1);
-            Variable inputVariable = variableSet.GetVariableForTerminal(inputTerminal);
+            Variable inputVariable = inputTerminal.GetVariable();
             NIType inputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
             NIType outputUnderlyingType = inputUnderlyingType.IsLockingCellType()
                 ? inputUnderlyingType.GetUnderlyingTypeFromLockingCellType()
                 : PFTypes.Void;
-            Variable outputVariable = variableSet.GetVariableForTerminal(outputTerminal);
-            outputVariable?.SetType(outputUnderlyingType.CreateMutableReference());
 
-            LifetimeSet lifetimeSet = DfirRoot.GetLifetimeSet();
-            Lifetime sourceLifetime = inputVariable?.Lifetime ?? lifetimeSet.EmptyLifetime;
-            Lifetime outputLifetime = lifetimeSet.DefineLifetime(
-                LifetimeCategory.Structure,
-                ParentNode,
-                sourceLifetime.IsEmpty ? null : sourceLifetime);
-            outputVariable?.SetLifetime(outputLifetime);
+            Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
+            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableReference(), outputLifetime);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator = Terminals[0].GetValidator();
             // TODO: report error if variable type !.IsLockingCellType()
         }
     }

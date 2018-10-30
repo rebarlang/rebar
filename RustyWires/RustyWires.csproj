@@ -74,9 +74,8 @@
   <ItemGroup>
     <Compile Include="Common\CommonNodes.cs" />
     <Compile Include="Common\NodeSignature.cs" />
+    <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
     <Compile Include="Compiler\Lifetime.cs" />
-    <Compile Include="Compiler\LifetimeCategory.cs" />
-    <Compile Include="Compiler\LifetimeSet.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
     <Compile Include="Compiler\Nodes\CreateMutableCopyNode.cs" />

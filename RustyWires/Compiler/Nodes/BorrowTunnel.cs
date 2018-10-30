@@ -36,31 +36,27 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
             Terminal inputTerminal = Terminals.ElementAt(0),
                 outputTerminal = Terminals.ElementAt(1);
-            Variable inputVariable = variableSet.GetVariableForTerminal(inputTerminal);
+            Variable inputVariable = inputTerminal.GetVariable();
             NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
             NIType outputType = BorrowMode == Common.BorrowMode.Mutable
                 ? outputUnderlyingType.CreateMutableReference()
                 : outputUnderlyingType.CreateImmutableReference();
-            Variable outputVariable = variableSet.GetVariableForTerminal(outputTerminal);
-            outputVariable?.SetType(outputType);
 
-            LifetimeSet lifetimeSet = DfirRoot.GetLifetimeSet();
-            Lifetime sourceLifetime = inputVariable?.Lifetime ?? lifetimeSet.EmptyLifetime;
-            Lifetime outputLifetime = lifetimeSet.DefineLifetime(
-                LifetimeCategory.Structure,
-                ParentNode,
-                sourceLifetime.IsEmpty ? null : sourceLifetime);
-            outputVariable?.SetLifetime(outputLifetime);
+            Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
+            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            var validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
-            validator.TestVariableIsMutableType();
+            var validator = Terminals[0].GetValidator();
+            if (BorrowMode == Common.BorrowMode.Mutable)
+            {
+                validator.TestVariableIsMutableType();
+            }
         }
     }
 }

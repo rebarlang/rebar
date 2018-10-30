@@ -38,15 +38,14 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
-            NIType outputType = variableSet.GetVariableForTerminal(_refInTerminal).GetUnderlyingTypeOrVoid().CreateMutableValue();
-            variableSet.GetVariableForTerminal(_valueOutTerminal)?.SetType(outputType);
+            NIType outputType = _refInTerminal.GetVariable().GetUnderlyingTypeOrVoid().CreateMutableValue();
+            _valueOutTerminal.GetVariable()?.SetTypeAndLifetime(outputType, Lifetime.Unbounded);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(_refInTerminal);
+            VariableUsageValidator validator = _refInTerminal.GetValidator();
             // TODO: check that the underlying type can be copied
         }
     }

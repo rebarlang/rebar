@@ -30,11 +30,10 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
             Terminal valueInTerminal = Terminals.ElementAt(0);
             Terminal cellOutTerminal = Terminals.ElementAt(1);
             NIType cellType;
-            Variable inputVariable = variableSet.GetVariableForTerminal(valueInTerminal);
+            Variable inputVariable = valueInTerminal.GetVariable();
             if (inputVariable != null)
             {
                 NIType underlyingType = inputVariable.Type.GetUnderlyingTypeFromRustyWiresType();
@@ -46,13 +45,13 @@ namespace RustyWires.Compiler.Nodes
             {
                 cellType = PFTypes.Void.CreateNonLockingCell();
             }
-            variableSet.GetVariableForTerminal(cellOutTerminal)?.SetType(cellType.CreateMutableValue());
+            cellOutTerminal.GetVariable()?.SetTypeAndLifetime(cellType.CreateMutableValue(), Lifetime.Unbounded);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator = Terminals[0].GetValidator();
             validator.TestVariableIsOwnedType();
         }
     }

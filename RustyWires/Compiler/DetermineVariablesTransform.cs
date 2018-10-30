@@ -7,32 +7,31 @@ namespace RustyWires.Compiler
 {
     internal class DetermineVariablesTransform : VisitorTransformBase
     {
-        private readonly VariableSet _variableSet = new VariableSet();
+        private VariableSet CurrentDiagramVariableSet { get; set; }
 
         protected override void VisitDiagram(Diagram diagram)
         {
-            diagram.DfirRoot.SetVariableSet(_variableSet);
+            diagram.SetVariableSet(new VariableSet());
         }
 
         protected override void VisitWire(Wire wire)
         {
-            Terminal sourceTerminal = wire.SourceTerminal;
-            Terminal connectedTerminal = sourceTerminal.ConnectedTerminal;
+            Terminal connectedTerminal = wire.SourceTerminal.ConnectedTerminal;
             if (connectedTerminal != null)
             {
-                Variable sourceVariable = _variableSet.GetVariableForTerminal(connectedTerminal);
-                _variableSet.AddTerminalToVariable(sourceVariable, wire.SourceTerminal);
+                Variable sourceVariable = connectedTerminal.GetVariable();
+                wire.SourceTerminal.AddTerminalToVariable(sourceVariable);
                 bool reuseSource = true;
                 foreach (Terminal sinkTerminal in wire.SinkTerminals)
                 {
                     if (reuseSource)
                     {
-                        _variableSet.AddTerminalToVariable(sourceVariable, sinkTerminal);
+                        sinkTerminal.AddTerminalToVariable(sourceVariable);
                         reuseSource = false;
                     }
                     else
                     {
-                        _variableSet.AddTerminalToNewVariable(sinkTerminal);
+                        sinkTerminal.AddTerminalToNewVariable();
                     }
                 }
             }
@@ -69,7 +68,7 @@ namespace RustyWires.Compiler
 
             foreach (var nonPassthroughOutput in nonPassthroughOutputs)
             {
-                _variableSet.AddTerminalToNewVariable(nonPassthroughOutput);
+                nonPassthroughOutput.AddTerminalToNewVariable();
             }
         }
 
@@ -78,8 +77,8 @@ namespace RustyWires.Compiler
             var connectedTerminal = inputTerminal.ConnectedTerminal;
             if (connectedTerminal != null)
             {
-                Variable variable = _variableSet.GetVariableForTerminal(connectedTerminal);
-                _variableSet.AddTerminalToVariable(variable, inputTerminal);
+                Variable variable = connectedTerminal.GetVariable();
+                inputTerminal.AddTerminalToVariable(variable);
                 return variable;
             }
             return null;
@@ -87,42 +86,39 @@ namespace RustyWires.Compiler
 
         private void LinkPassthroughTerminalPair(Terminal inputTerminal, Terminal outputTerminal)
         {
-            var inputVariable = PullInputTerminalVariable(inputTerminal);
+            Variable inputVariable = PullInputTerminalVariable(inputTerminal);
             if (inputVariable != null)
             {
-                _variableSet.AddTerminalToVariable(inputVariable, outputTerminal);
+                outputTerminal.AddTerminalToVariable(inputVariable);
             }
             else
             {
                 // the input on a passthrough is not wired, but the output is
                 // for now, create a new variable for the output
-                _variableSet.AddTerminalToNewVariable(outputTerminal);
+                outputTerminal.AddTerminalToNewVariable();
             }
         }
 
         protected override void VisitBorderNode(BorderNode borderNode)
         {
             var simpleTunnel = borderNode as Tunnel;
+
             var borrowTunnel = borderNode as BorrowTunnel;
             var lockTunnel = borderNode as LockTunnel;
             var unborrowTunnel = borderNode as UnborrowTunnel;
             var unlockTunnel = borderNode as UnlockTunnel;
+
             if (simpleTunnel != null)
             {
-                // for now, treat the wires inside and outside the structure as the same variable, since the tunnel is a move
-                if (simpleTunnel.Direction == Direction.Input)
-                {
-                    LinkPassthroughTerminalPair(simpleTunnel.GetOuterTerminal(), simpleTunnel.GetInnerTerminal());
-                }
-                else
-                {
-                    LinkPassthroughTerminalPair(simpleTunnel.GetInnerTerminal(), simpleTunnel.GetOuterTerminal());
-                }
+                Terminal inputTerminal = simpleTunnel.Direction == Direction.Input ? simpleTunnel.GetOuterTerminal() : simpleTunnel.GetInnerTerminal();
+                Terminal outputTerminal = simpleTunnel.Direction == Direction.Input ? simpleTunnel.GetInnerTerminal() : simpleTunnel.GetOuterTerminal();
+                PullInputTerminalVariable(inputTerminal);
+                outputTerminal.AddTerminalToNewVariable();
             }
             else if (borrowTunnel != null || lockTunnel != null)
             {
-                Terminal innerTerminal = borderNode.GetInnerTerminal(0, 0);
-                _variableSet.AddTerminalToNewVariable(innerTerminal);
+                PullInputTerminalVariable(borderNode.GetOuterTerminal(0));
+                borderNode.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
             }
             else if (unborrowTunnel != null)
             {

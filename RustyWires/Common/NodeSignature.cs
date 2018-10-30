@@ -6,7 +6,6 @@ using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using RustyWires.Compiler;
-using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Common
 {
@@ -23,7 +22,6 @@ namespace RustyWires.Common
 
         public void PropagateTypes(Node dfirNode)
         {
-            LifetimeSet lifetimeSet = dfirNode.DfirRoot.GetLifetimeSet();
             // check that required terminals are wired
             dfirNode.PullInputTypes();
             List<Tuple<Terminal, NIType, Lifetime>> inputParameterInfo = new List<Tuple<Terminal, NIType, Lifetime>>();
@@ -35,7 +33,7 @@ namespace RustyWires.Common
                 }
                 else
                 {
-                    inputParameterInfo.Add(new Tuple<Terminal, NIType, Lifetime>(inputTerminal, PFTypes.Void.CreateImmutableReference(), lifetimeSet.EmptyLifetime));
+                    inputParameterInfo.Add(new Tuple<Terminal, NIType, Lifetime>(inputTerminal, PFTypes.Void.CreateImmutableReference(), Lifetime.Empty));
                 }
             }
 
@@ -120,7 +118,7 @@ namespace RustyWires.Common
                     outputPermission = inputParameterInfo[index].Item2.GetTypePermissiveness();
                 }
 
-                Lifetime outputLifetime = lifetimeSet.EmptyLifetime;
+                Lifetime outputLifetime = Lifetime.Empty;
                 if (formalParameter.Direction == Direction.Bidirectional)
                 {
                     outputLifetime = inputParameterInfo[index].Item3;
@@ -129,26 +127,24 @@ namespace RustyWires.Common
                 {
                     if (!lifetimeArguments.TryGetValue(formalParameter.Type.LifetimeParameter, out outputLifetime))
                     {
-                        outputLifetime = lifetimeSet.EmptyLifetime;
+                        outputLifetime = Lifetime.Empty;
                     }
                 }
 
+                Variable terminalVariable = terminal.GetVariable();
                 switch (outputPermission)
                 {
                     case TypePermissiveness.ImmutableReference:
-                        terminal.DataType = dataType.CreateImmutableReference();
-                        terminal.SetLifetime(outputLifetime);
+                        terminalVariable.SetTypeAndLifetime(dataType.CreateImmutableReference(), outputLifetime);
                         break;
                     case TypePermissiveness.MutableReference:
-                        terminal.DataType = dataType.CreateMutableReference();
-                        terminal.SetLifetime(outputLifetime);
+                        terminalVariable.SetTypeAndLifetime(dataType.CreateMutableReference(), outputLifetime);
                         break;
                     case TypePermissiveness.Owner:
-                        // TODO: terminal.DataType = dataType.CreateImmutableValue();
-                        terminal.DataType = dataType.CreateMutableValue();
+                        terminalVariable.SetTypeAndLifetime(dataType.CreateImmutableValue(), Lifetime.Unbounded);
                         break;
                     case TypePermissiveness.MutableOwner:
-                        terminal.DataType = dataType.CreateMutableValue();
+                        terminalVariable.SetTypeAndLifetime(dataType.CreateMutableValue(), Lifetime.Unbounded);
                         break;
                 }
                 ++index;

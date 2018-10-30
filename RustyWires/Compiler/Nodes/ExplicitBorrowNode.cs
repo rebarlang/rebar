@@ -53,30 +53,23 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
             Terminal inputTerminal = Terminals.ElementAt(0);
             Terminal outputTerminal = Terminals.ElementAt(1);
-            Variable inputVariable = variableSet.GetVariableForTerminal(inputTerminal);
+            Variable inputVariable = inputTerminal.GetVariable();
             NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
             NIType outputType = BorrowMode == BorrowMode.OwnerToImmutable
                 ? outputUnderlyingType.CreateImmutableReference()
                 : outputUnderlyingType.CreateMutableReference();
-            Variable outputVariable = variableSet.GetVariableForTerminal(outputTerminal);
-            outputVariable?.SetType(outputType);
 
-            LifetimeSet lifetimeSet = DfirRoot.GetLifetimeSet();
-            Lifetime sourceLifetime = inputVariable?.Lifetime ?? lifetimeSet.EmptyLifetime;
-            Lifetime outputLifetime = lifetimeSet.DefineLifetime(
-                LifetimeCategory.Node,
-                this,
-                sourceLifetime.IsEmpty ? null : sourceLifetime);
-            outputVariable?.SetLifetime(outputLifetime);
+            Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
+            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatIsBoundedByDiagram();
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator = Terminals[0].GetValidator();
         }
     }
 

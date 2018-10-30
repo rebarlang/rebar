@@ -31,7 +31,7 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            // Do nothing; the output terminal's variable is the same as the associated BorrowTunnel's input variable
+            // Do nothing; the output terminal's variable is the same as the associated LockTunnel's input variable
         }
     }
 }

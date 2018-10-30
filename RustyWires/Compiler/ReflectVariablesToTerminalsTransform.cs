@@ -7,19 +7,10 @@ namespace RustyWires.Compiler
     {
         protected override void VisitNode(Node node)
         {
-            VariableSet variableSet = node.DfirRoot.GetVariableSet();
             foreach (Terminal terminal in node.Terminals)
             {
-                Variable variable = variableSet.GetVariableForTerminal(terminal);
-                if (variable != null)
-                {
-                    terminal.DataType = !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
-                    terminal.SetLifetime(variable.Lifetime);
-                }
-                else
-                {
-                    terminal.DataType = PFTypes.Void;
-                }
+                Variable variable = terminal.GetVariable();
+                terminal.DataType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
             }
         }
 
@@ -29,19 +20,10 @@ namespace RustyWires.Compiler
 
         protected override void VisitBorderNode(BorderNode borderNode)
         {
-            VariableSet variableSet = borderNode.DfirRoot.GetVariableSet();
             foreach (Terminal terminal in borderNode.Terminals)
             {
-                Variable variable = variableSet.GetVariableForTerminal(terminal);
-                if (variable != null)
-                {
-                    terminal.DataType = !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
-                    terminal.SetLifetime(variable.Lifetime);
-                }
-                else
-                {
-                    terminal.DataType = PFTypes.Void;
-                }
+                Variable variable = terminal.GetVariable();
+                terminal.DataType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
             }
         }
     }

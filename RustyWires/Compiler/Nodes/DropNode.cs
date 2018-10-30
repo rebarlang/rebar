@@ -30,7 +30,7 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
+            VariableUsageValidator validator = Terminals[0].GetValidator();
             validator.TestVariableIsOwnedType();
         }
     }

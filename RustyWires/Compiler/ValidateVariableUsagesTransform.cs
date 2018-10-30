@@ -15,9 +15,7 @@ namespace RustyWires.Compiler
 
         protected override void VisitWire(Wire wire)
         {
-            VariableSet variableSet = wire.DfirRoot.GetVariableSet();
-            Variable sourceVariable = variableSet.GetVariableForTerminal(wire.SourceTerminal);
-
+            Variable sourceVariable = wire.SourceTerminal.GetVariable();
             if (wire.SinkTerminals.HasMoreThan(1) && sourceVariable != null && !WireTypeMayFork(sourceVariable.Type))
             {
                 wire.SetDfirMessage(RustyWiresMessages.WireCannotFork);

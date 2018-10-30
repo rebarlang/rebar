@@ -31,30 +31,26 @@ namespace RustyWires.Compiler.Nodes
         /// <inheritdoc />
         public override void SetOutputVariableTypesAndLifetimes()
         {
-            VariableSet variableSet = DfirRoot.GetVariableSet();
             Terminal refInTerminal1 = Terminals.ElementAt(0),
                 refInTerminal2 = Terminals.ElementAt(1),
                 refOutTerminal = Terminals.ElementAt(2);
-            Variable input1Variable = variableSet.GetVariableForTerminal(refInTerminal1);
-            Variable input2Variable = variableSet.GetVariableForTerminal(refInTerminal2);
+            Variable input1Variable = refInTerminal1.GetVariable();
+            Variable input2Variable = refInTerminal2.GetVariable();
             NIType input1UnderlyingType = input1Variable.GetUnderlyingTypeOrVoid();
             NIType input2UnderlyingType = input2Variable.GetUnderlyingTypeOrVoid();
             NIType outputUnderlyingType = input1UnderlyingType == input2UnderlyingType ? input1UnderlyingType : PFTypes.Void;
-            Variable outputVariable = variableSet.GetVariableForTerminal(refOutTerminal);
-            outputVariable?.SetType(outputUnderlyingType.CreateImmutableReference());
 
-            LifetimeSet lifetimeSet = DfirRoot.GetLifetimeSet();
-            Lifetime inputLifetime1 = input1Variable?.Lifetime ?? lifetimeSet.EmptyLifetime;
-            Lifetime inputLifetime2 = input2Variable?.Lifetime ?? lifetimeSet.EmptyLifetime;
-            Lifetime commonLifetime = lifetimeSet.ComputeCommonLifetime(inputLifetime1, inputLifetime2);
-            outputVariable?.SetLifetime(commonLifetime);
+            Lifetime inputLifetime1 = input1Variable?.Lifetime ?? Lifetime.Empty;
+            Lifetime inputLifetime2 = input2Variable?.Lifetime ?? Lifetime.Empty;
+            Lifetime commonLifetime = refInTerminal1.GetVariableSet().ComputeCommonLifetime(inputLifetime1, inputLifetime2);
+            refOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateImmutableReference(), commonLifetime);
         }
 
         /// <inheritdoc />
         public override void CheckVariableUsages()
         {
-            VariableUsageValidator validator1 = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[0]);
-            VariableUsageValidator validator2 = DfirRoot.GetVariableSet().GetValidatorForTerminal(Terminals[1]);
+            VariableUsageValidator validator1 = Terminals[0].GetValidator();
+            VariableUsageValidator validator2 = Terminals[1].GetValidator();
         }
     }
 }

@@ -66,18 +66,5 @@ namespace RustyWires.Compiler
             }
             return true;
         }
-
-        public static bool PropagateLifetimeAndTestNonEmpty(this Terminal inputTerminal, Terminal outputTerminal)
-        {
-            bool checkPassed = true;
-            if (inputTerminal.DataType.IsRWReferenceType() && inputTerminal.GetSourceLifetime().IsEmpty)
-            {
-                inputTerminal.SetDfirMessage(RustyWiresMessages.WiredReferenceDoesNotLiveLongEnough);
-                checkPassed = false;
-            }
-            Lifetime inputLifetime = inputTerminal.ComputeInputTerminalEffectiveLifetime();
-            outputTerminal.SetLifetime(inputLifetime);
-            return checkPassed;
-        }
     }
 }
