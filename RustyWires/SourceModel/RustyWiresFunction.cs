@@ -72,6 +72,7 @@ namespace RustyWires.SourceModel
             rules.Add(new WiringBatchRule());
             rules.Add(new WireCommentBatchRule());
             rules.Add(new SequenceStructureBatchRule());
+            rules.Add(new PairedTunnelBatchRule());
         }
 
         /// <inheritdoc />

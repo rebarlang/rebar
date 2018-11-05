@@ -147,6 +147,7 @@
     <Compile Include="SourceModel\ImmutablePassthroughNode.cs" />
     <Compile Include="SourceModel\LockTunnel.cs" />
     <Compile Include="SourceModel\MutablePassthroughNode.cs" />
+    <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Primitives.cs" />
     <Compile Include="SourceModel\RustyWiresFunction.cs" />
     <Compile Include="SourceModel\RustyWiresNamespaceSchema.cs" />

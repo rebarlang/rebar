@@ -30,6 +30,7 @@ namespace RustyWires.SourceModel
         private void EnsureViewWork(EnsureViewHints hints, RectDifference oldBoundsMinusNewbounds)
         {
             Docking = BorderNodeDocking.Right;
+            LockTunnel.Top = Top;
             base.EnsureViewDirectional(hints, oldBoundsMinusNewbounds);
         }
     }
