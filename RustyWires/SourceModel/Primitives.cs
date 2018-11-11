@@ -5,6 +5,7 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using RustyWires.Compiler;
+using RustyWires.Common;
 
 namespace RustyWires.SourceModel
 {
@@ -44,6 +45,8 @@ namespace RustyWires.SourceModel
                 base.AcceptVisitor(visitor);
             }
         }
+
+        public abstract BinaryPrimitiveOps Operation { get; }
     }
 
     public abstract class PureUnaryPrimitive : RustyWiresSimpleNode
@@ -78,6 +81,8 @@ namespace RustyWires.SourceModel
                 base.AcceptVisitor(visitor);
             }
         }
+
+        public abstract UnaryPrimitiveOps Operation { get; }
     }
 
     public abstract class MutatingBinaryPrimitive : RustyWiresSimpleNode
@@ -114,8 +119,10 @@ namespace RustyWires.SourceModel
                 base.AcceptVisitor(visitor);
             }
         }
+
+        public abstract BinaryPrimitiveOps Operation { get; }
     }
-    
+
     public abstract class MutatingUnaryPrimitive : RustyWiresSimpleNode
     {
         protected MutatingUnaryPrimitive()
@@ -145,6 +152,8 @@ namespace RustyWires.SourceModel
                 base.AcceptVisitor(visitor);
             }
         }
+
+        public abstract UnaryPrimitiveOps Operation { get; }
     }
 
     public class Add : PureBinaryPrimitive
@@ -160,6 +169,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Add;
     }
 
     public class Subtract : PureBinaryPrimitive
@@ -175,6 +186,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Subtract;
     }
 
     public class Multiply : PureBinaryPrimitive
@@ -190,6 +203,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Multiply;
     }
 
     public class Divide : PureBinaryPrimitive
@@ -205,6 +220,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Divide;
     }
 
     public class Increment : PureUnaryPrimitive
@@ -220,6 +237,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override UnaryPrimitiveOps Operation => UnaryPrimitiveOps.Increment;
     }
 
     public class AccumulateAdd : MutatingBinaryPrimitive
@@ -235,6 +254,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Add;
     }
 
     public class AccumulateSubtract : MutatingBinaryPrimitive
@@ -250,6 +271,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Subtract;
     }
 
     public class AccumulateMultiply : MutatingBinaryPrimitive
@@ -265,6 +288,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Multiply;
     }
 
     public class AccumulateDivide : MutatingBinaryPrimitive
@@ -280,6 +305,8 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Divide;
     }
 
     public class AccumulateIncrement : MutatingUnaryPrimitive
@@ -295,5 +322,7 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public override UnaryPrimitiveOps Operation => UnaryPrimitiveOps.Increment;
     }
 }

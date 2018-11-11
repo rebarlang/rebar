@@ -390,7 +390,7 @@ namespace RustyWires.Compiler
 
         public void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive node)
         {
-            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram);
+            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram, node.Operation);
             _map.AddMapping(node, pureUnaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), pureUnaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), pureUnaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -399,7 +399,7 @@ namespace RustyWires.Compiler
 
         public void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive node)
         {
-            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram);
+            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram, node.Operation);
             _map.AddMapping(node, pureBinaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), pureBinaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), pureBinaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -410,7 +410,7 @@ namespace RustyWires.Compiler
 
         public void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node)
         {
-            var mutatingUnaryPrimitiveDfir = new Nodes.MutatingUnaryPrimitive(_currentDiagram);
+            var mutatingUnaryPrimitiveDfir = new Nodes.MutatingUnaryPrimitive(_currentDiagram, node.Operation);
             _map.AddMapping(node, mutatingUnaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(1));
@@ -418,7 +418,7 @@ namespace RustyWires.Compiler
 
         public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node)
         {
-            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram);
+            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram, node.Operation);
             _map.AddMapping(node, mutatingBinaryPrimitiveDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(1));

@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler.Nodes
 {
     internal class MutatingUnaryPrimitive : RustyWiresDfirNode
     {
-        public MutatingUnaryPrimitive(Node parentNode) : base(parentNode)
+        public MutatingUnaryPrimitive(Node parentNode, UnaryPrimitiveOps operation) : base(parentNode)
         {
             NIType intMutableReferenceType = PFTypes.Int32.CreateMutableReference();
             CreateTerminal(Direction.Input, intMutableReferenceType, "x in");
@@ -22,6 +23,8 @@ namespace RustyWires.Compiler.Nodes
         {
             return new MutatingUnaryPrimitive(newParentNode, this, copyInfo);
         }
+
+        public UnaryPrimitiveOps Operation { get; }
 
         /// <inheritdoc />
         public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)

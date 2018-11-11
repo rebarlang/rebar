@@ -2,13 +2,15 @@
 using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler.Nodes
 {
     internal class PureBinaryPrimitive : RustyWiresDfirNode
     {
-        public PureBinaryPrimitive(Node parentNode) : base(parentNode)
+        public PureBinaryPrimitive(Node parentNode, BinaryPrimitiveOps operation) : base(parentNode)
         {
+            Operation = operation;
             NIType intReferenceType = PFTypes.Int32.CreateImmutableReference();
             NIType intOwnedType = PFTypes.Int32.CreateMutableValue();
             CreateTerminal(Direction.Input, intReferenceType, "x in");
@@ -27,6 +29,8 @@ namespace RustyWires.Compiler.Nodes
         {
             return new PureBinaryPrimitive(newParentNode, this, copyInfo);
         }
+
+        public BinaryPrimitiveOps Operation { get; }
 
         /// <inheritdoc />
         public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)

@@ -74,6 +74,7 @@
   <ItemGroup>
     <Compile Include="Common\CommonNodes.cs" />
     <Compile Include="Common\NodeSignature.cs" />
+    <Compile Include="Common\PrimitiveOps.cs" />
     <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
     <Compile Include="Compiler\Lifetime.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
