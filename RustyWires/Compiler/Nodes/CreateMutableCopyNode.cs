@@ -27,26 +27,9 @@ namespace RustyWires.Compiler.Nodes
         }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            get
-            {
-                yield return new PassthroughTerminalPair(_refInTerminal, _refOutTerminal);
-            }
-        }
-
-        /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
-        {
-            NIType outputType = _refInTerminal.GetVariable().GetUnderlyingTypeOrVoid().CreateMutableValue();
-            _valueOutTerminal.GetVariable()?.SetTypeAndLifetime(outputType, Lifetime.Unbounded);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator = _refInTerminal.GetValidator();
-            // TODO: check that the underlying type can be copied
+            return visitor.VisitCreateMutableCopyNode(this);
         }
     }
 }

@@ -24,23 +24,9 @@ namespace RustyWires.Compiler.Nodes
         }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
-
-        /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            Terminal valueInTerminal = Terminals.ElementAt(0);
-            Terminal valueOutTerminal = Terminals.ElementAt(1);
-            NIType underlyingType = valueInTerminal.GetVariable().GetUnderlyingTypeOrVoid();
-            valueOutTerminal.GetVariable()?.SetTypeAndLifetime(underlyingType.CreateImmutableValue(), Lifetime.Unbounded);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator = Terminals[0].GetValidator();
-            validator.TestVariableIsOwnedType();
-            validator.TestVariableIsMutableType();
+            return visitor.VisitFreezeNode(this);
         }
     }
 }

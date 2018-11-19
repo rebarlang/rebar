@@ -29,9 +29,9 @@ namespace RustyWires.Compiler.Nodes
         public LockTunnel AssociatedLockTunnel { get; internal set; }
 
         /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            // Do nothing; the output terminal's variable is the same as the associated LockTunnel's input variable
+            return visitor.VisitUnlockTunnel(this);
         }
     }
 }

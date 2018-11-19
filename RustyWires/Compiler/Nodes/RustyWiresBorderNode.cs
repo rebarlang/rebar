@@ -39,21 +39,6 @@ namespace RustyWires.Compiler.Nodes
 
         public bool SynchronizeAtNodeBoundaries => false;
 
-        /// <summary>
-        /// Sets the initial <see cref="NIType"/> and <see cref="Lifetime"/> of any <see cref="Variable"/>s associated
-        /// with non-passthrough output terminals on this border node. Can assume that all <see cref="Variable"/>s associated 
-        /// with input terminals (passthrough and non-passthrough) have initial types and lifetimes set.
-        /// </summary>
-        public virtual void SetOutputVariableTypesAndLifetimes()
-        {
-        }
-
-        /// <summary>
-        /// Checks that all <see cref="Variable"/> usages associated with input terminals on this border node are correct.
-        /// Can assume that all <see cref="Variable"/>s associated with input terminals have initial types and lifetimes set.
-        /// </summary>
-        public virtual void CheckVariableUsages()
-        {
-        }
+        public abstract T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -34,29 +35,9 @@ namespace RustyWires.Compiler.Nodes
         public UnborrowTunnel AssociatedUnborrowTunnel { get; internal set; }
 
         /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            Terminal inputTerminal = Terminals.ElementAt(0),
-                outputTerminal = Terminals.ElementAt(1);
-            Variable inputVariable = inputTerminal.GetVariable();
-            NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
-            NIType outputType = BorrowMode == Common.BorrowMode.Mutable
-                ? outputUnderlyingType.CreateMutableReference()
-                : outputUnderlyingType.CreateImmutableReference();
-
-            Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
-            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
-            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            var validator = Terminals[0].GetValidator();
-            if (BorrowMode == Common.BorrowMode.Mutable)
-            {
-                validator.TestVariableIsMutableType();
-            }
+            return visitor.VisitBorrowTunnel(this);
         }
     }
 }

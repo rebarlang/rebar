@@ -29,34 +29,9 @@ namespace RustyWires.Compiler.Nodes
         }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            get
-            {
-                yield return new PassthroughTerminalPair(Terminals[0], Terminals[2]);
-                yield return new PassthroughTerminalPair(Terminals[1], Terminals[3]);
-            }
-        }
-
-        /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
-        {
-            Terminal refInTerminal1 = Terminals.ElementAt(0),
-                refInTerminal2 = Terminals.ElementAt(1),
-                resultOutTerminal = Terminals.ElementAt(4);
-            NIType input1UnderlyingType = refInTerminal1.GetVariable().GetUnderlyingTypeOrVoid();
-            NIType input2UnderlyingType = refInTerminal2.GetVariable().GetUnderlyingTypeOrVoid();
-            NIType outputUnderlyingType = input1UnderlyingType.IsInt32() && input2UnderlyingType.IsInt32() ? PFTypes.Int32 : PFTypes.Void;
-            resultOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableValue(), Lifetime.Unbounded);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator1 = Terminals[0].GetValidator();
-            validator1.TestExpectedUnderlyingType(PFTypes.Int32);
-            VariableUsageValidator validator2 = Terminals[1].GetValidator();
-            validator2.TestExpectedUnderlyingType(PFTypes.Int32);
+            return visitor.VisitPureBinaryPrimitive(this);
         }
     }
 }

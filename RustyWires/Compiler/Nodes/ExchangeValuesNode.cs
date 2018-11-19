@@ -26,23 +26,9 @@ namespace RustyWires.Compiler.Nodes
         }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            get
-            {
-                yield return new PassthroughTerminalPair(Terminals[0], Terminals[2]);
-                yield return new PassthroughTerminalPair(Terminals[1], Terminals[3]);
-            }
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator1 = Terminals[0].GetValidator();
-            validator1.TestVariableIsMutableType();
-            VariableUsageValidator validator2 = Terminals[1].GetValidator();
-            validator2.TestVariableIsMutableType();
-            // TODO: ensure that lifetimes of exchanged values and references are compatible
+            return visitor.VisitExchangeValuesNode(this);
         }
     }
 }

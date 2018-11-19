@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -37,7 +38,10 @@ namespace RustyWires.Compiler.Nodes
         public Terminal OutputTerminal { get; }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
+        {
+            throw new NotImplementedException();
+        }
 
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {

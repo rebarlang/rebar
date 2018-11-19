@@ -26,31 +26,9 @@ namespace RustyWires.Compiler.Nodes
         }
 
         /// <inheritdoc />
-        public override IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs => Enumerable.Empty<PassthroughTerminalPair>();
-
-        /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            Terminal refInTerminal1 = Terminals.ElementAt(0),
-                refInTerminal2 = Terminals.ElementAt(1),
-                refOutTerminal = Terminals.ElementAt(2);
-            Variable input1Variable = refInTerminal1.GetVariable();
-            Variable input2Variable = refInTerminal2.GetVariable();
-            NIType input1UnderlyingType = input1Variable.GetUnderlyingTypeOrVoid();
-            NIType input2UnderlyingType = input2Variable.GetUnderlyingTypeOrVoid();
-            NIType outputUnderlyingType = input1UnderlyingType == input2UnderlyingType ? input1UnderlyingType : PFTypes.Void;
-
-            Lifetime inputLifetime1 = input1Variable?.Lifetime ?? Lifetime.Empty;
-            Lifetime inputLifetime2 = input2Variable?.Lifetime ?? Lifetime.Empty;
-            Lifetime commonLifetime = refInTerminal1.GetVariableSet().ComputeCommonLifetime(inputLifetime1, inputLifetime2);
-            refOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateImmutableReference(), commonLifetime);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator1 = Terminals[0].GetValidator();
-            VariableUsageValidator validator2 = Terminals[1].GetValidator();
+            return visitor.VisitSelectReferenceNode(this);
         }
     }
 }

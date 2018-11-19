@@ -8,7 +8,7 @@ using NationalInstruments.Dfir.Plugin;
 
 namespace RustyWires.Compiler.Nodes
 {
-    internal abstract class RustyWiresDfirNode : Node, IPassthroughTerminalsNode, IDecomposeImplementation
+    internal abstract class RustyWiresDfirNode : Node, IDecomposeImplementation
     {
         protected RustyWiresDfirNode(
             Node parentNode,
@@ -47,24 +47,6 @@ namespace RustyWires.Compiler.Nodes
 
         public bool SynchronizeAtNodeBoundaries => false;
 
-        /// <inheritdoc />
-        public abstract IEnumerable<PassthroughTerminalPair> PassthroughTerminalPairs { get; }
-
-        /// <summary>
-        /// Sets the initial <see cref="NIType"/> and <see cref="Lifetime"/> of any <see cref="Variable"/>s associated
-        /// with non-passthrough output terminals on this node. Can assume that all <see cref="Variable"/>s associated 
-        /// with input terminals (passthrough and non-passthrough) have initial types and lifetimes set.
-        /// </summary>
-        public virtual void SetOutputVariableTypesAndLifetimes()
-        {
-        }
-
-        /// <summary>
-        /// Checks that all <see cref="Variable"/> usages associated with input terminals on this node are correct.
-        /// Can assume that all <see cref="Variable"/>s associated with input terminals have initial types and lifetimes set.
-        /// </summary>
-        public virtual void CheckVariableUsages()
-        {
-        }
+        public abstract T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor);
     }
 }

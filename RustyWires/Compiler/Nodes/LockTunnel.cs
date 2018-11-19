@@ -30,26 +30,9 @@ namespace RustyWires.Compiler.Nodes
         public UnlockTunnel AssociatedUnlockTunnel { get; internal set; }
 
         /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            Terminal inputTerminal = Terminals.ElementAt(0),
-                outputTerminal = Terminals.ElementAt(1);
-            Variable inputVariable = inputTerminal.GetVariable();
-            NIType inputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
-            NIType outputUnderlyingType = inputUnderlyingType.IsLockingCellType()
-                ? inputUnderlyingType.GetUnderlyingTypeFromLockingCellType()
-                : PFTypes.Void;
-
-            Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
-            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
-            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableReference(), outputLifetime);
-        }
-
-        /// <inheritdoc />
-        public override void CheckVariableUsages()
-        {
-            VariableUsageValidator validator = Terminals[0].GetValidator();
-            // TODO: report error if variable type !.IsLockingCellType()
+            return visitor.VisitLockTunnel(this);
         }
     }
 }

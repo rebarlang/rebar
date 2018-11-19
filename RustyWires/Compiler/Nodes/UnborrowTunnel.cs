@@ -26,12 +26,12 @@ namespace RustyWires.Compiler.Nodes
             return new UnborrowTunnel((Structure)newParentNode, this, copyInfo);
         }
 
-        public BorrowTunnel AssociatedBorrowTunnel { get; internal set; }
-
         /// <inheritdoc />
-        public override void SetOutputVariableTypesAndLifetimes()
+        public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)
         {
-            // Do nothing; the output terminal's variable is the same as the associated BorrowTunnel's input variable
+            return visitor.VisitUnborrowTunnel(this);
         }
+
+        public BorrowTunnel AssociatedBorrowTunnel { get; internal set; }
     }
 }

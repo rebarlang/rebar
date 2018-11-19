@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.Dfir;
 using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
 {
-    internal class DetermineVariablesTransform : VisitorTransformBase
+    internal class DetermineVariablesTransform : VisitorTransformBase, IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>
     {
         private VariableSet CurrentDiagramVariableSet { get; set; }
 
@@ -44,10 +45,8 @@ namespace RustyWires.Compiler
         protected override void VisitNode(Node node)
         {
             List<Terminal> nonPassthroughInputs = new List<Terminal>(node.InputTerminals), nonPassthroughOutputs = new List<Terminal>(node.OutputTerminals);
-            var passthroughTerminalsNode = node as IPassthroughTerminalsNode;
-            var passthroughTerminalPairs = passthroughTerminalsNode != null
-                ? passthroughTerminalsNode.PassthroughTerminalPairs
-                : Enumerable.Empty<PassthroughTerminalPair>();
+            var rustyWiresDfirNode = node as RustyWiresDfirNode;
+            var passthroughTerminalPairs = this.VisitRustyWiresNode(node);
             foreach (var pair in passthroughTerminalPairs)
             {
                 nonPassthroughInputs.Remove(pair.InputTerminal);
@@ -101,33 +100,120 @@ namespace RustyWires.Compiler
 
         protected override void VisitBorderNode(BorderNode borderNode)
         {
-            var simpleTunnel = borderNode as Tunnel;
+            this.VisitRustyWiresNode(borderNode);
+        }
 
-            var borrowTunnel = borderNode as BorrowTunnel;
-            var lockTunnel = borderNode as LockTunnel;
-            var unborrowTunnel = borderNode as UnborrowTunnel;
-            var unlockTunnel = borderNode as UnlockTunnel;
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitConstant(Constant constant)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
 
-            if (simpleTunnel != null)
-            {
-                Terminal inputTerminal = simpleTunnel.Direction == Direction.Input ? simpleTunnel.GetOuterTerminal() : simpleTunnel.GetInnerTerminal();
-                Terminal outputTerminal = simpleTunnel.Direction == Direction.Input ? simpleTunnel.GetInnerTerminal() : simpleTunnel.GetOuterTerminal();
-                PullInputTerminalVariable(inputTerminal);
-                outputTerminal.AddTerminalToNewVariable();
-            }
-            else if (borrowTunnel != null || lockTunnel != null)
-            {
-                PullInputTerminalVariable(borderNode.GetOuterTerminal(0));
-                borderNode.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
-            }
-            else if (unborrowTunnel != null)
-            {
-                LinkPassthroughTerminalPair(unborrowTunnel.AssociatedBorrowTunnel.GetOuterTerminal(0), unborrowTunnel.GetOuterTerminal(0));
-            }
-            else if (unlockTunnel != null)
-            {
-                LinkPassthroughTerminalPair(unlockTunnel.AssociatedLockTunnel.GetOuterTerminal(0), unlockTunnel.GetOuterTerminal(0));
-            }
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitCreateCellNode(CreateCellNode createCellNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode)
+        {
+            yield return new PassthroughTerminalPair(createMutableCopyNode.InputTerminals.ElementAt(0), createMutableCopyNode.OutputTerminals.ElementAt(0));
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitDropNode(DropNode dropNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode)
+        {
+            yield return new PassthroughTerminalPair(exchangeValuesNode.Terminals[0], exchangeValuesNode.Terminals[2]);
+            yield return new PassthroughTerminalPair(exchangeValuesNode.Terminals[1], exchangeValuesNode.Terminals[3]);
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitFreezeNode(FreezeNode freezeNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        {
+            yield return new PassthroughTerminalPair(immutablePassthroughNode.InputTerminals.ElementAt(0), immutablePassthroughNode.OutputTerminals.ElementAt(0));
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
+        {
+            yield return new PassthroughTerminalPair(mutablePassthroughNode.InputTerminals.ElementAt(0), mutablePassthroughNode.OutputTerminals.ElementAt(0));
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
+        {
+            yield return new PassthroughTerminalPair(mutatingBinaryPrimitive.Terminals[0], mutatingBinaryPrimitive.Terminals[2]);
+            yield return new PassthroughTerminalPair(mutatingBinaryPrimitive.Terminals[1], mutatingBinaryPrimitive.Terminals[3]);
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
+        {
+            yield return new PassthroughTerminalPair(mutatingUnaryPrimitive.Terminals[0], mutatingUnaryPrimitive.Terminals[1]);
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
+        {
+            yield return new PassthroughTerminalPair(pureBinaryPrimitive.Terminals[0], pureBinaryPrimitive.Terminals[2]);
+            yield return new PassthroughTerminalPair(pureBinaryPrimitive.Terminals[1], pureBinaryPrimitive.Terminals[3]);
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
+        {
+            yield return new PassthroughTerminalPair(pureUnaryPrimitive.Terminals[0], pureUnaryPrimitive.Terminals[1]);
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitBorrowTunnel(BorrowTunnel borrowTunnel)
+        {
+            PullInputTerminalVariable(borrowTunnel.GetOuterTerminal(0));
+            borrowTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitLockTunnel(LockTunnel lockTunnel)
+        {
+            PullInputTerminalVariable(lockTunnel.GetOuterTerminal(0));
+            lockTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitTunnel(Tunnel tunnel)
+        {
+            Terminal inputTerminal = tunnel.Direction == Direction.Input ? tunnel.GetOuterTerminal() : tunnel.GetInnerTerminal();
+            Terminal outputTerminal = tunnel.Direction == Direction.Input ? tunnel.GetInnerTerminal() : tunnel.GetOuterTerminal();
+            PullInputTerminalVariable(inputTerminal);
+            outputTerminal.AddTerminalToNewVariable();
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel)
+        {
+            LinkPassthroughTerminalPair(unborrowTunnel.AssociatedBorrowTunnel.GetOuterTerminal(0), unborrowTunnel.GetOuterTerminal(0));
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnlockTunnel(UnlockTunnel unlockTunnel)
+        {
+            LinkPassthroughTerminalPair(unlockTunnel.AssociatedLockTunnel.GetOuterTerminal(0), unlockTunnel.GetOuterTerminal(0));
+            return Enumerable.Empty<PassthroughTerminalPair>();
         }
     }
 }

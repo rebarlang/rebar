@@ -83,9 +83,9 @@
     <Compile Include="Compiler\Nodes\ExchangeValuesNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitUnborrowNode.cs" />
-    <Compile Include="Compiler\Nodes\ForkNode.cs" />
     <Compile Include="Compiler\Nodes\FreezeNode.cs" />
     <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
+    <Compile Include="Compiler\Nodes\IRustyWiresDfirNodeVisitor.cs" />
     <Compile Include="Compiler\Nodes\LockTunnel.cs" />
     <Compile Include="Compiler\Nodes\MutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\MutatingBinaryPrimitive.cs" />
