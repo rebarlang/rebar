@@ -7,8 +7,16 @@ namespace RustyWires.Compiler
 {
     internal sealed class VariableSet
     {
+        /// <summary>
+        /// Token that stores a unique identifier per <see cref="Terminal"/>. This is used instead of <see cref="Terminal.UniqueId"/> because it
+        /// is stable across DfirRoot copies, which allows re-using <see cref="VariableSet"/>s across DfirRoot copies.
+        /// </summary>
+        private static readonly AttributeDescriptor _variableTerminalIdTokenName = new AttributeDescriptor("RustyWires.Compiler.VariableTerminalId", true);
+
+        private int _currentVariableId = 1;
+
         private readonly List<Variable> _variables = new List<Variable>();
-        private readonly Dictionary<Terminal, Variable> _terminalVariables = new Dictionary<Terminal, Variable>();
+        private readonly Dictionary<int, Variable> _terminalVariables = new Dictionary<int, Variable>();
         private readonly Dictionary<Lifetime, List<Variable>> _variablesInterruptedByLifetimes = new Dictionary<Lifetime, List<Variable>>();
         private readonly BoundedLifetimeGraph _boundedLifetimeGraph = new BoundedLifetimeGraph();
 
@@ -23,21 +31,21 @@ namespace RustyWires.Compiler
 
         public Variable AddTerminalToNewVariable(Terminal terminal)
         {
-            Variable set = CreateNewVariable(terminal);
-            _terminalVariables[terminal] = set;
-            return set;
+            Variable variable = CreateNewVariable(terminal);
+            _terminalVariables[GetVariableTerminalId(terminal)] = variable;
+            return variable;
         }
 
         public Variable GetVariableForTerminal(Terminal terminal)
         {
             Variable variable;
-            _terminalVariables.TryGetValue(terminal, out variable);
+            _terminalVariables.TryGetValue(GetVariableTerminalId(terminal), out variable);
             return variable;
         }
 
         public void AddTerminalToVariable(Variable variable, Terminal terminal)
         {
-            _terminalVariables[terminal] = variable;
+            _terminalVariables[GetVariableTerminalId(terminal)] = variable;
         }
 
         public void MergeVariables(Variable toMerge, Variable mergeWith)
@@ -46,8 +54,8 @@ namespace RustyWires.Compiler
             {
                 throw new ArgumentException(nameof(mergeWith));
             }
-            List<Terminal> terminalsToMerge = _terminalVariables.Where(pair => pair.Value == toMerge).Select(pair => pair.Key).ToList();
-            terminalsToMerge.ForEach(terminal => _terminalVariables[terminal] = mergeWith);
+            List<int> terminalIdsToMerge = _terminalVariables.Where(pair => pair.Value == toMerge).Select(pair => pair.Key).ToList();
+            terminalIdsToMerge.ForEach(terminal => _terminalVariables[terminal] = mergeWith);
             _variables.Remove(toMerge);
         }
 
@@ -90,11 +98,23 @@ namespace RustyWires.Compiler
             }
             return Lifetime.Empty;
         }
+
+        private int GetVariableTerminalId(Terminal terminal)
+        {
+            var token = terminal.DfirRoot.GetOrCreateNamedSparseAttributeToken<int>(_variableTerminalIdTokenName);
+            int id = terminal.GetAttribute(token);
+            if (id == 0)
+            {
+                id = _currentVariableId++;
+                terminal.SetAttribute(token, id);
+            }
+            return id;
+        }
     }
 
     internal static class VariableSetExtensions
     {
-        private static readonly AttributeDescriptor _variableSetTokenName = new AttributeDescriptor("RustyWires.Compiler.VariableSet", false);
+        private static readonly AttributeDescriptor _variableSetTokenName = new AttributeDescriptor("RustyWires.Compiler.VariableSet", true);
 
         public static void SetVariableSet(this Diagram diagram, VariableSet variableSet)
         {
