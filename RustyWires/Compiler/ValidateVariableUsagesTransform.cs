@@ -142,6 +142,7 @@ namespace RustyWires.Compiler
         {
             VariableUsageValidator validator1 = mutatingBinaryPrimitive.Terminals[0].GetValidator();
             validator1.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator1.TestVariableIsMutableType();
             VariableUsageValidator validator2 = mutatingBinaryPrimitive.Terminals[1].GetValidator();
             validator2.TestExpectedUnderlyingType(PFTypes.Int32);
             return true;
@@ -151,6 +152,7 @@ namespace RustyWires.Compiler
         {
             VariableUsageValidator validator = mutatingUnaryPrimitive.Terminals[0].GetValidator();
             validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator.TestVariableIsMutableType();
             return true;
         }
 
