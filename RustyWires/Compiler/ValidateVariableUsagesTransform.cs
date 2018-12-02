@@ -3,6 +3,7 @@ using System.Linq;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
@@ -140,35 +141,39 @@ namespace RustyWires.Compiler
 
         public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
         {
+            NIType expectedInputUnderlyingType = mutatingBinaryPrimitive.Operation.GetExpectedInputType();
             VariableUsageValidator validator1 = mutatingBinaryPrimitive.Terminals[0].GetValidator();
-            validator1.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator1.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             validator1.TestVariableIsMutableType();
             VariableUsageValidator validator2 = mutatingBinaryPrimitive.Terminals[1].GetValidator();
-            validator2.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator2.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             return true;
         }
 
         public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
         {
+            NIType expectedInputUnderlyingType = mutatingUnaryPrimitive.Operation.GetExpectedInputType();
             VariableUsageValidator validator = mutatingUnaryPrimitive.Terminals[0].GetValidator();
-            validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             validator.TestVariableIsMutableType();
             return true;
         }
 
         public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
         {
+            NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();
             VariableUsageValidator validator1 = pureBinaryPrimitive.Terminals[0].GetValidator();
-            validator1.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator1.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             VariableUsageValidator validator2 = pureBinaryPrimitive.Terminals[1].GetValidator();
-            validator2.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator2.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             return true;
         }
 
         public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
         {
+            NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
             VariableUsageValidator validator = pureUnaryPrimitive.Terminals[0].GetValidator();
-            validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator.TestExpectedUnderlyingType(expectedInputUnderlyingType);
             return true;
         }
 
@@ -176,6 +181,9 @@ namespace RustyWires.Compiler
         {
             VariableUsageValidator validator1 = selectReferenceNode.Terminals[0].GetValidator();
             VariableUsageValidator validator2 = selectReferenceNode.Terminals[1].GetValidator();
+            validator2.TestSameUnderlyingTypeAs(validator1);
+            VariableUsageValidator selectorValidator = selectReferenceNode.Terminals[2].GetValidator();
+            selectorValidator.TestExpectedUnderlyingType(PFTypes.Boolean);
             return true;
         }
 

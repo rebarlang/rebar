@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
@@ -106,7 +106,7 @@ namespace RustyWires.Compiler
             Terminal outputTerminal = explicitBorrowNode.Terminals.ElementAt(1);
             Variable inputVariable = inputTerminal.GetVariable();
             NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
-            NIType outputType = explicitBorrowNode.BorrowMode == BorrowMode.OwnerToImmutable
+            NIType outputType = explicitBorrowNode.BorrowMode == Nodes.BorrowMode.OwnerToImmutable
                 ? outputUnderlyingType.CreateImmutableReference()
                 : outputUnderlyingType.CreateMutableReference();
 
@@ -166,9 +166,13 @@ namespace RustyWires.Compiler
             Terminal refInTerminal1 = pureBinaryPrimitive.Terminals.ElementAt(0),
                 refInTerminal2 = pureBinaryPrimitive.Terminals.ElementAt(1),
                 resultOutTerminal = pureBinaryPrimitive.Terminals.ElementAt(4);
+            NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();
             NIType input1UnderlyingType = refInTerminal1.GetVariable().GetUnderlyingTypeOrVoid();
             NIType input2UnderlyingType = refInTerminal2.GetVariable().GetUnderlyingTypeOrVoid();
-            NIType outputUnderlyingType = input1UnderlyingType.IsInt32() && input2UnderlyingType.IsInt32() ? PFTypes.Int32 : PFTypes.Void;
+            NIType outputUnderlyingType = input1UnderlyingType == expectedInputUnderlyingType 
+                && input2UnderlyingType == expectedInputUnderlyingType 
+                ? expectedInputUnderlyingType
+                : PFTypes.Void;
             resultOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableValue(), Lifetime.Unbounded);
             return true;
         }
@@ -177,8 +181,9 @@ namespace RustyWires.Compiler
         {
             Terminal refInTerminal = pureUnaryPrimitive.Terminals.ElementAt(0),
                 resultOutTerminal = pureUnaryPrimitive.Terminals.ElementAt(2);
+            NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
             NIType inputUnderlyingType = refInTerminal.GetVariable().GetUnderlyingTypeOrVoid();
-            NIType outputUnderlyingType = inputUnderlyingType.IsInt32() ? PFTypes.Int32 : PFTypes.Void;
+            NIType outputUnderlyingType = inputUnderlyingType == expectedInputUnderlyingType ? expectedInputUnderlyingType : PFTypes.Void;
             resultOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableValue(), Lifetime.Unbounded);
             return true;
         }
@@ -187,7 +192,7 @@ namespace RustyWires.Compiler
         {
             Terminal refInTerminal1 = selectReferenceNode.Terminals.ElementAt(0),
                 refInTerminal2 = selectReferenceNode.Terminals.ElementAt(1),
-                refOutTerminal = selectReferenceNode.Terminals.ElementAt(2);
+                refOutTerminal = selectReferenceNode.Terminals.ElementAt(6);
             Variable input1Variable = refInTerminal1.GetVariable();
             Variable input2Variable = refInTerminal2.GetVariable();
             NIType input1UnderlyingType = input1Variable.GetUnderlyingTypeOrVoid();

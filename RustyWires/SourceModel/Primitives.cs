@@ -11,15 +11,17 @@ namespace RustyWires.SourceModel
 {
     public abstract class PureBinaryPrimitive : RustyWiresSimpleNode
     {
-        protected PureBinaryPrimitive()
+        protected PureBinaryPrimitive(BinaryPrimitiveOps binaryOp)
         {
-            NIType intReferenceType = PFTypes.Int32.CreateImmutableReference();
-            NIType intOwnedType = PFTypes.Int32.CreateMutableValue();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intReferenceType, "y in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intReferenceType, "y out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intOwnedType, "result"));
+            Operation = binaryOp;
+            NIType inputType = binaryOp.GetExpectedInputType();
+            NIType inputReferenceType = inputType.CreateImmutableReference();
+            NIType inputOwnedType = inputType.CreateMutableValue();
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "y in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "y out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputOwnedType, "result"));
         }
 
         protected override void SetIconViewGeometry()
@@ -46,18 +48,20 @@ namespace RustyWires.SourceModel
             }
         }
 
-        public abstract BinaryPrimitiveOps Operation { get; }
+        public BinaryPrimitiveOps Operation { get; }
     }
 
     public abstract class PureUnaryPrimitive : RustyWiresSimpleNode
     {
-        protected PureUnaryPrimitive()
+        protected PureUnaryPrimitive(UnaryPrimitiveOps unaryOp)
         {
-            NIType intReferenceType = PFTypes.Int32.CreateImmutableReference();
-            NIType intOwnedType = PFTypes.Int32.CreateMutableValue();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intOwnedType, "result"));
+            Operation = unaryOp;
+            NIType inputType = unaryOp.GetExpectedInputType();
+            NIType inputReferenceType = inputType.CreateImmutableReference();
+            NIType inputOwnedType = inputType.CreateMutableValue();
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputOwnedType, "result"));
         }
 
         protected override void SetIconViewGeometry()
@@ -82,19 +86,21 @@ namespace RustyWires.SourceModel
             }
         }
 
-        public abstract UnaryPrimitiveOps Operation { get; }
+        public UnaryPrimitiveOps Operation { get; }
     }
 
     public abstract class MutatingBinaryPrimitive : RustyWiresSimpleNode
     {
-        protected MutatingBinaryPrimitive()
+        protected MutatingBinaryPrimitive(BinaryPrimitiveOps binaryOp)
         {
-            NIType intMutableReferenceType = PFTypes.Int32.CreateMutableReference();
-            NIType intImmutableReferenceType = PFTypes.Int32.CreateImmutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intMutableReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intImmutableReferenceType, "y in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intMutableReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intImmutableReferenceType, "y out"));
+            Operation = binaryOp;
+            NIType inputType = binaryOp.GetExpectedInputType();
+            NIType inputMutableReferenceType = inputType.CreateMutableReference();
+            NIType inputImmutableReferenceType = inputType.CreateImmutableReference();
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputMutableReferenceType, "x in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputImmutableReferenceType, "y in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputMutableReferenceType, "x out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputImmutableReferenceType, "y out"));
         }
 
         protected override void SetIconViewGeometry()
@@ -120,14 +126,16 @@ namespace RustyWires.SourceModel
             }
         }
 
-        public abstract BinaryPrimitiveOps Operation { get; }
+        public BinaryPrimitiveOps Operation { get; }
     }
 
     public abstract class MutatingUnaryPrimitive : RustyWiresSimpleNode
     {
-        protected MutatingUnaryPrimitive()
+        protected MutatingUnaryPrimitive(UnaryPrimitiveOps unaryOp)
         {
-            NIType intMutableReferenceType = PFTypes.Int32.CreateMutableReference();
+            Operation = unaryOp;
+            NIType inputType = unaryOp.GetExpectedInputType();
+            NIType intMutableReferenceType = inputType.CreateMutableReference();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, intMutableReferenceType, "x in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, intMutableReferenceType, "x out"));
         }
@@ -153,11 +161,13 @@ namespace RustyWires.SourceModel
             }
         }
 
-        public abstract UnaryPrimitiveOps Operation { get; }
+        public UnaryPrimitiveOps Operation { get; }
     }
 
     public class Add : PureBinaryPrimitive
     {
+        public Add() : base(BinaryPrimitiveOps.Add) { }
+
         private const string ElementName = "Add";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -169,12 +179,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Add;
     }
 
     public class Subtract : PureBinaryPrimitive
     {
+        public Subtract() : base(BinaryPrimitiveOps.Subtract) { }
+
         private const string ElementName = "Subtract";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -186,12 +196,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Subtract;
     }
 
     public class Multiply : PureBinaryPrimitive
     {
+        public Multiply() : base(BinaryPrimitiveOps.Multiply) { }
+
         private const string ElementName = "Multiply";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -203,12 +213,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Multiply;
     }
 
     public class Divide : PureBinaryPrimitive
     {
+        public Divide() : base(BinaryPrimitiveOps.Divide) { }
+
         private const string ElementName = "Divide";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -220,12 +230,63 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
 
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Divide;
+    public class And : PureBinaryPrimitive
+    {
+        public And() : base(BinaryPrimitiveOps.And) { }
+
+        private const string ElementName = "And";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static And CreateAdd(IElementCreateInfo elementCreateInfo)
+        {
+            var and = new And();
+            and.Init(elementCreateInfo);
+            return and;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
+
+    public class Or : PureBinaryPrimitive
+    {
+        public Or() : base(BinaryPrimitiveOps.Or) { }
+
+        private const string ElementName = "Or";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static Or CreateOr(IElementCreateInfo elementCreateInfo)
+        {
+            var or = new Or();
+            or.Init(elementCreateInfo);
+            return or;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
+
+    public class Xor : PureBinaryPrimitive
+    {
+        public Xor() : base(BinaryPrimitiveOps.Xor) { }
+
+        private const string ElementName = "Xor";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static Xor CreateXor(IElementCreateInfo elementCreateInfo)
+        {
+            var xor = new Xor();
+            xor.Init(elementCreateInfo);
+            return xor;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
     }
 
     public class Increment : PureUnaryPrimitive
     {
+        public Increment() : base(UnaryPrimitiveOps.Increment) { }
+
         private const string ElementName = "Increment";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -237,12 +298,29 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
 
-        public override UnaryPrimitiveOps Operation => UnaryPrimitiveOps.Increment;
+    public class Not : PureUnaryPrimitive
+    {
+        public Not() : base(UnaryPrimitiveOps.Not) { }
+
+        private const string ElementName = "Not";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static Not CreateIncrement(IElementCreateInfo elementCreateInfo)
+        {
+            var not = new Not();
+            not.Init(elementCreateInfo);
+            return not;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
     }
 
     public class AccumulateAdd : MutatingBinaryPrimitive
     {
+        public AccumulateAdd() : base(BinaryPrimitiveOps.Add) { }
+
         private const string ElementName = "AccumulateAdd";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -254,12 +332,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Add;
     }
 
     public class AccumulateSubtract : MutatingBinaryPrimitive
     {
+        public AccumulateSubtract() : base(BinaryPrimitiveOps.Subtract) { }
+
         private const string ElementName = "AccumulateSubtract";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -271,12 +349,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Subtract;
     }
 
     public class AccumulateMultiply : MutatingBinaryPrimitive
     {
+        public AccumulateMultiply() : base(BinaryPrimitiveOps.Multiply) { }
+
         private const string ElementName = "AccumulateMultiply";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -288,12 +366,12 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
-
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Multiply;
     }
 
     public class AccumulateDivide : MutatingBinaryPrimitive
     {
+        public AccumulateDivide() : base(BinaryPrimitiveOps.Divide) { }
+
         private const string ElementName = "AccumulateDivide";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -305,12 +383,63 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
 
-        public override BinaryPrimitiveOps Operation => BinaryPrimitiveOps.Divide;
+    public class AccumulateAnd : MutatingBinaryPrimitive
+    {
+        public AccumulateAnd() : base(BinaryPrimitiveOps.And) { }
+
+        private const string ElementName = "AccumulateAnd";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static AccumulateAnd CreateAccumulateAnd(IElementCreateInfo elementCreateInfo)
+        {
+            var accumulateAnd = new AccumulateAnd();
+            accumulateAnd.Init(elementCreateInfo);
+            return accumulateAnd;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
+
+    public class AccumulateOr : MutatingBinaryPrimitive
+    {
+        public AccumulateOr() : base(BinaryPrimitiveOps.Or) { }
+
+        private const string ElementName = "AccumulateOr";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static AccumulateOr CreateAccumulateOr(IElementCreateInfo elementCreateInfo)
+        {
+            var accumulateOr = new AccumulateOr();
+            accumulateOr.Init(elementCreateInfo);
+            return accumulateOr;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
+
+    public class AccumulateXor : MutatingBinaryPrimitive
+    {
+        public AccumulateXor() : base(BinaryPrimitiveOps.Xor) { }
+
+        private const string ElementName = "AccumulateXor";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static AccumulateXor CreateAccumulateXor(IElementCreateInfo elementCreateInfo)
+        {
+            var accumulateXor = new AccumulateXor();
+            accumulateXor.Init(elementCreateInfo);
+            return accumulateXor;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
     }
 
     public class AccumulateIncrement : MutatingUnaryPrimitive
     {
+        public AccumulateIncrement() : base(UnaryPrimitiveOps.Increment) { }
+
         private const string ElementName = "AccumulateIncrement";
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
@@ -322,7 +451,22 @@ namespace RustyWires.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+    }
 
-        public override UnaryPrimitiveOps Operation => UnaryPrimitiveOps.Increment;
+    public class AccumulateNot : MutatingUnaryPrimitive
+    {
+        public AccumulateNot() : base(UnaryPrimitiveOps.Not) { }
+
+        private const string ElementName = "AccumulateNot";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static AccumulateNot CreateIncrement(IElementCreateInfo elementCreateInfo)
+        {
+            var accumulateNot = new AccumulateNot();
+            accumulateNot.Init(elementCreateInfo);
+            return accumulateNot;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
     }
 }

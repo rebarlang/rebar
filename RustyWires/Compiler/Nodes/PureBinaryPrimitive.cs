@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using RustyWires.Common;
 
@@ -11,13 +9,14 @@ namespace RustyWires.Compiler.Nodes
         public PureBinaryPrimitive(Node parentNode, BinaryPrimitiveOps operation) : base(parentNode)
         {
             Operation = operation;
-            NIType intReferenceType = PFTypes.Int32.CreateImmutableReference();
-            NIType intOwnedType = PFTypes.Int32.CreateMutableValue();
-            CreateTerminal(Direction.Input, intReferenceType, "x in");
-            CreateTerminal(Direction.Input, intReferenceType, "y in");
-            CreateTerminal(Direction.Output, intReferenceType, "x out");
-            CreateTerminal(Direction.Output, intReferenceType, "y out");
-            CreateTerminal(Direction.Output, intOwnedType, "result");
+            NIType inputType = operation.GetExpectedInputType();
+            NIType inputReferenceType = inputType.CreateImmutableReference();
+            NIType inputOwnedType = inputType.CreateMutableValue();
+            CreateTerminal(Direction.Input, inputReferenceType, "x in");
+            CreateTerminal(Direction.Input, inputReferenceType, "y in");
+            CreateTerminal(Direction.Output, inputReferenceType, "x out");
+            CreateTerminal(Direction.Output, inputReferenceType, "y out");
+            CreateTerminal(Direction.Output, inputOwnedType, "result");
         }
 
         private PureBinaryPrimitive(Node parentNode, PureBinaryPrimitive nodeToCopy, NodeCopyInfo nodeCopyInfo)

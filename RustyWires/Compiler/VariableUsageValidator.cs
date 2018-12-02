@@ -77,5 +77,15 @@ namespace RustyWires.Compiler
             }
             return true;
         }
+
+        public bool TestSameUnderlyingTypeAs(VariableUsageValidator other)
+        {
+            if (other._variable == null)
+            {
+                return false;
+            }
+            NIType otherUnderlyingType = other._variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            return TestExpectedUnderlyingType(otherUnderlyingType);
+        }
     }
 }

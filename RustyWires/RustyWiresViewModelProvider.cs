@@ -30,12 +30,20 @@ namespace RustyWires
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract"));
             AddSupportedModel<SourceModel.Multiply>(n => new BasicNodeViewModel(n, "Multiply"));
             AddSupportedModel<SourceModel.Divide>(n => new BasicNodeViewModel(n, "Divide"));
+            AddSupportedModel<And>(n => new BasicNodeViewModel(n, "And"));
+            AddSupportedModel<Or>(n => new BasicNodeViewModel(n, "Or"));
+            AddSupportedModel<Xor>(n => new BasicNodeViewModel(n, "Xor"));
             AddSupportedModel<SourceModel.Increment>(n => new BasicNodeViewModel(n, "Increment"));
+            AddSupportedModel<SourceModel.Not>(n => new BasicNodeViewModel(n, "Not"));
             AddSupportedModel<AccumulateAdd>(n => new BasicNodeViewModel(n, "Accumulate Add"));
             AddSupportedModel<AccumulateSubtract>(n => new BasicNodeViewModel(n, "Accumulate Subtract"));
             AddSupportedModel<AccumulateMultiply>(n => new BasicNodeViewModel(n, "Accumulate Multiply"));
             AddSupportedModel<AccumulateDivide>(n => new BasicNodeViewModel(n, "Accumulate Divide"));
+            AddSupportedModel<AccumulateAnd>(n => new BasicNodeViewModel(n, "Accumulate And"));
+            AddSupportedModel<AccumulateOr>(n => new BasicNodeViewModel(n, "Accumulate Or"));
+            AddSupportedModel<AccumulateXor>(n => new BasicNodeViewModel(n, "Accumulate Xor"));
             AddSupportedModel<AccumulateIncrement>(n => new BasicNodeViewModel(n, "Accumulate Increment"));
+            AddSupportedModel<AccumulateNot>(n => new BasicNodeViewModel(n, "Accumulate Not"));
 
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));
             AddSupportedModel<UnborrowTunnel>(t => new UnborrowTunnelViewModel(t));

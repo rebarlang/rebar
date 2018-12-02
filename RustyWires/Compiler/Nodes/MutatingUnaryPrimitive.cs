@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using RustyWires.Common;
 
@@ -9,9 +8,11 @@ namespace RustyWires.Compiler.Nodes
     {
         public MutatingUnaryPrimitive(Node parentNode, UnaryPrimitiveOps operation) : base(parentNode)
         {
-            NIType intMutableReferenceType = PFTypes.Int32.CreateMutableReference();
-            CreateTerminal(Direction.Input, intMutableReferenceType, "x in");
-            CreateTerminal(Direction.Output, intMutableReferenceType, "x out");
+            Operation = operation;
+            NIType inputType = operation.GetExpectedInputType();
+            NIType inputMutableReferenceType = inputType.CreateMutableReference();
+            CreateTerminal(Direction.Input, inputMutableReferenceType, "x in");
+            CreateTerminal(Direction.Output, inputMutableReferenceType, "x out");
         }
 
         private MutatingUnaryPrimitive(Node parentNode, MutatingUnaryPrimitive nodeToCopy, NodeCopyInfo nodeCopyInfo)
