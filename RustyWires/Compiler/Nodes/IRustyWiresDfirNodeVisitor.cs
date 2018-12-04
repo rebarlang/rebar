@@ -20,11 +20,13 @@ namespace RustyWires.Compiler.Nodes
         T VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive);
         T VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive);
         T VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive);
+        T VisitSomeConstructorNode(SomeConstructorNode someConstructorNode);
         T VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
         T VisitTunnel(Tunnel tunnel);
         T VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel);
         T VisitUnlockTunnel(UnlockTunnel unlockTunnel);
+        T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
     }
 
     internal static class RustyWiresDfirNodeVisitorExtensions

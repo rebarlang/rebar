@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Compiler.SemanticAnalysis;
+﻿using System;
+using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -40,7 +41,7 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            if (_variable.Type.IsImmutableReferenceType() || _variable.Type.IsImmutableValueType())
+            if (!_variable.Type.IsMutableType())
             {
                 _terminal.ParentNode.SetDfirMessage(RustyWiresMessages.TerminalDoesNotAcceptImmutableType);
                 return false;
@@ -73,6 +74,21 @@ namespace RustyWires.Compiler
             if (underlyingType != expectedType)
             {
                 _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedType));
+                return false;
+            }
+            return true;
+        }
+
+        public bool TestUnderlyingType(Func<NIType, bool> underlyingTypePredicate, NIType expectedTypeExample)
+        {
+            if (_variable == null)
+            {
+                return false;
+            }
+            NIType underlyingType = _variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            if (!underlyingTypePredicate(underlyingType))
+            {
+                _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedTypeExample));
                 return false;
             }
             return true;

@@ -25,6 +25,7 @@ namespace RustyWires
             AddSupportedModel<CreateCell>(n => new BasicNodeViewModel(n, "Create Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow"));
             AddSupportedModel<Freeze>(n => new BasicNodeViewModel(n, "Freeze"));
+            AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some"));
 
             AddSupportedModel<SourceModel.Add>(n => new BasicNodeViewModel(n, "Add"));
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract"));
@@ -50,6 +51,7 @@ namespace RustyWires
             AddSupportedModel<RustyWiresFlatSequence>(s => new RustyWiresFlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<RustyWiresFlatSequenceSimpleTunnel>(t => new FlatSequenceTunnelViewModel(t));
+            AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceTunnelViewModel(t));
         }
     }
 }

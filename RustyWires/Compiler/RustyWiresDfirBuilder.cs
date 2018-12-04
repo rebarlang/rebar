@@ -78,60 +78,68 @@ namespace RustyWires.Compiler
             var flatSequence = structure as RustyWiresFlatSequence;
             if (flatSequence != null)
             {
-                var firstDiagram = structure.NestedDiagrams.First();
-                var flatSequenceFrame = Frame.Create(_currentDiagram);
-                _map.AddMapping(firstDiagram, flatSequenceFrame.Diagram);
-                flatSequenceFrame.Diagram.SetSourceModelId(firstDiagram);
+                VisitRustyWiresFlatSequence(flatSequence);
+            }
+        }
 
-                foreach (BorderNode tunnel in flatSequence.BorderNodes)
+        private void VisitRustyWiresFlatSequence(RustyWiresFlatSequence rustyWiresFlatSequence)
+        {
+            var firstDiagram = rustyWiresFlatSequence.NestedDiagrams.First();
+            var flatSequenceFrame = Frame.Create(_currentDiagram);
+            _map.AddMapping(firstDiagram, flatSequenceFrame.Diagram);
+            flatSequenceFrame.Diagram.SetSourceModelId(firstDiagram);
+
+            foreach (BorderNode tunnel in rustyWiresFlatSequence.BorderNodes)
+            {
+                NationalInstruments.Dfir.BorderNode dfirBorderNode = null;
+                var rustyWiresFlatSequenceSimpleTunnel = tunnel as RustyWiresFlatSequenceSimpleTunnel;
+                var borrowTunnel = tunnel as SourceModel.BorrowTunnel;
+                var unborrowTunnel = tunnel as SourceModel.UnborrowTunnel;
+                var lockTunnel = tunnel as SourceModel.LockTunnel;
+                var unlockTunnel = tunnel as SourceModel.UnlockTunnel;
+                var unwrapOptionTunnel = tunnel as SourceModel.UnwrapOptionTunnel;
+                if (borrowTunnel != null)
                 {
-                    NationalInstruments.Dfir.BorderNode dfirBorderNode = null;
-                    var rustyWiresFlatSequenceSimpleTunnel = tunnel as RustyWiresFlatSequenceSimpleTunnel;
-                    var borrowTunnel = tunnel as SourceModel.BorrowTunnel;
-                    var unborrowTunnel = tunnel as SourceModel.UnborrowTunnel;
-                    var lockTunnel = tunnel as SourceModel.LockTunnel;
-                    var unlockTunnel = tunnel as SourceModel.UnlockTunnel;
-                    if (borrowTunnel != null)
-                    {
-                        var borrowDfir = new Nodes.BorrowTunnel(flatSequenceFrame, borrowTunnel.BorrowMode);
-                        var unborrowDfir = new Nodes.UnborrowTunnel(flatSequenceFrame);
-                        borrowDfir.AssociatedUnborrowTunnel = unborrowDfir;
-                        unborrowDfir.AssociatedBorrowTunnel = borrowDfir;
-                        dfirBorderNode = borrowDfir;
-                        _map.AddMapping(tunnel, dfirBorderNode);
-                    }
-                    else if (unborrowTunnel != null)
-                    {
-                        var borrowDfir = (Nodes.BorrowTunnel)_map.GetDfirForModel(unborrowTunnel.BorrowTunnel);
-                        dfirBorderNode = borrowDfir.AssociatedUnborrowTunnel;
-                        _map.AddMapping(tunnel, dfirBorderNode);
-                    }
-                    else if (lockTunnel != null)
-                    {
-                        var lockDfir = new Nodes.LockTunnel(flatSequenceFrame);
-                        var unlockDfir = new Nodes.UnlockTunnel(flatSequenceFrame);
-                        lockDfir.AssociatedUnlockTunnel = unlockDfir;
-                        unlockDfir.AssociatedLockTunnel = lockDfir;
-                        dfirBorderNode = lockDfir;
-                        _map.AddMapping(tunnel, dfirBorderNode);
-                    }
-                    else if (unlockTunnel != null)
-                    {
-                        var lockDfir = (Nodes.LockTunnel)_map.GetDfirForModel(unlockTunnel.LockTunnel);
-                        dfirBorderNode = lockDfir.AssociatedUnlockTunnel;
-                        _map.AddMapping(tunnel, dfirBorderNode);
-                    }
-                    else if (rustyWiresFlatSequenceSimpleTunnel != null)
-                    {
-                        var tunnelDfir = flatSequenceFrame.CreateTunnel(
-                            VIDfirBuilder.TranslateDirection(rustyWiresFlatSequenceSimpleTunnel.PrimaryOuterTerminal.Direction),
-                            TunnelMode.LastValue,
-                            rustyWiresFlatSequenceSimpleTunnel.PrimaryOuterTerminal.DataType,
-                            rustyWiresFlatSequenceSimpleTunnel.PrimaryInnerTerminals.First().DataType);
-                        dfirBorderNode = tunnelDfir;
-                        _map.AddMapping(rustyWiresFlatSequenceSimpleTunnel, dfirBorderNode);
-                    }
+                    var borrowDfir = new Nodes.BorrowTunnel(flatSequenceFrame, borrowTunnel.BorrowMode);
+                    var unborrowDfir = new Nodes.UnborrowTunnel(flatSequenceFrame);
+                    borrowDfir.AssociatedUnborrowTunnel = unborrowDfir;
+                    unborrowDfir.AssociatedBorrowTunnel = borrowDfir;
+                    dfirBorderNode = borrowDfir;
+                }
+                else if (unborrowTunnel != null)
+                {
+                    var borrowDfir = (Nodes.BorrowTunnel)_map.GetDfirForModel(unborrowTunnel.BorrowTunnel);
+                    dfirBorderNode = borrowDfir.AssociatedUnborrowTunnel;
+                }
+                else if (lockTunnel != null)
+                {
+                    var lockDfir = new Nodes.LockTunnel(flatSequenceFrame);
+                    var unlockDfir = new Nodes.UnlockTunnel(flatSequenceFrame);
+                    lockDfir.AssociatedUnlockTunnel = unlockDfir;
+                    unlockDfir.AssociatedLockTunnel = lockDfir;
+                    dfirBorderNode = lockDfir;
+                }
+                else if (unlockTunnel != null)
+                {
+                    var lockDfir = (Nodes.LockTunnel)_map.GetDfirForModel(unlockTunnel.LockTunnel);
+                    dfirBorderNode = lockDfir.AssociatedUnlockTunnel;
+                }
+                else if (rustyWiresFlatSequenceSimpleTunnel != null)
+                {
+                    dfirBorderNode = flatSequenceFrame.CreateTunnel(
+                        VIDfirBuilder.TranslateDirection(rustyWiresFlatSequenceSimpleTunnel.PrimaryOuterTerminal.Direction),
+                        TunnelMode.LastValue,
+                        rustyWiresFlatSequenceSimpleTunnel.PrimaryOuterTerminal.DataType,
+                        rustyWiresFlatSequenceSimpleTunnel.PrimaryInnerTerminals.First().DataType);
+                }
+                else if (unwrapOptionTunnel != null)
+                {
+                    dfirBorderNode = new Nodes.UnwrapOptionTunnel(flatSequenceFrame);
+                }
 
+                if (dfirBorderNode != null)
+                {
+                    _map.AddMapping(tunnel, dfirBorderNode);
                     int i = 0;
                     foreach (var terminal in tunnel.OuterTerminals)
                     {
@@ -145,9 +153,9 @@ namespace RustyWires.Compiler
                         ++i;
                     }
                 }
-
-                firstDiagram.AcceptVisitor(this);
             }
+
+            firstDiagram.AcceptVisitor(this);
         }
 
         public void VisitDiagram(Diagram diagram)
@@ -444,6 +452,14 @@ namespace RustyWires.Compiler
             _map.AddMapping(node, createCellDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), createCellDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), createCellDfir.Terminals.ElementAt(1));
+        }
+
+        public void VisitSomeConstructorNode(SourceModel.SomeConstructorNode someConstructorNode)
+        {
+            var someConstructorNodeDfir = new Nodes.SomeConstructorNode(_currentDiagram);
+            _map.AddMapping(someConstructorNode, someConstructorNodeDfir);
+            _map.AddMapping(someConstructorNode.Terminals.ElementAt(0), someConstructorNodeDfir.Terminals.ElementAt(0));
+            _map.AddMapping(someConstructorNode.Terminals.ElementAt(1), someConstructorNodeDfir.Terminals.ElementAt(1));
         }
 
         public void VisitRustyWiresFunction(RustyWiresFunction function)

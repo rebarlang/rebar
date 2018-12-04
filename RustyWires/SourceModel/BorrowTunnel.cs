@@ -9,7 +9,7 @@ namespace RustyWires.SourceModel
 {
     public class BorrowTunnel : FlatSequenceTunnel
     {
-        public static readonly PropertySymbol NodeTerminalsPropertySymbol =
+        public static readonly PropertySymbol BorrowModePropertySymbol =
             ExposeStaticProperty<BorrowTunnel>(
                 "BorrowMode",
                 borrowTunnel => borrowTunnel.BorrowMode,

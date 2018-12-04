@@ -22,6 +22,8 @@ namespace RustyWires.Compiler
 
         void VisitCreateCellNode(SourceModel.CreateCell node);
 
+        void VisitSomeConstructorNode(SourceModel.SomeConstructorNode node);
+
         void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive node);
         void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive node);
         void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node);

@@ -68,6 +68,13 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Leaf Display="Some" UniqueId="RustyWires:Some" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rw:SomeConstructor />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
     <Leaf Display="Sequence Structure" UniqueId="RustyWires:FlatSequence" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
       <Synonyms>frame</Synonyms>
       <pf:MergeScript>

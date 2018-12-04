@@ -141,34 +141,9 @@ namespace RustyWires.Design
                 {
                     foreach (var structureViewModel in structureViewModels)
                     {
-                        var view = structureViewModel.View;
-                        var contextMenuInfo = parameter.QueryService<ContextMenuInfo>().FirstOrDefault();
-                        double top = 0;
-                        if (contextMenuInfo != null && !view.IsEmpty)
-                        {
-                            top = contextMenuInfo.ClickPosition.GetPosition(view).Y;
-                        }
-
+                        SMRect leftRect, rightRect;
+                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
-                        top -= (top - model.OuterBorderThickness.Top) % StockDiagramGeometries.GridSize;
-                        top = Math.Max(top, model.OuterBorderThickness.Top);
-                        top = Math.Min(top, model.Height - model.OuterBorderThickness.Bottom - StockDiagramGeometries.StandardTunnelHeight);
-                        SMRect leftRect = new SMRect(-StockDiagramGeometries.StandardTunnelOffsetForStructures, top, StockDiagramGeometries.StandardTunnelWidth,
-                            StockDiagramGeometries.StandardTunnelHeight);
-                        SMRect rightRect = new SMRect(model.Width - StockDiagramGeometries.StandardTunnelWidth + StockDiagramGeometries.StandardTunnelOffsetForStructures, top,
-                            StockDiagramGeometries.StandardTerminalWidth, StockDiagramGeometries.StandardTunnelHeight);
-                        while (
-                            model.BorderNodes.Any(
-                                node => node.Bounds.Overlaps(leftRect) || node.Bounds.Overlaps(rightRect)))
-                        {
-                            leftRect.Y += StockDiagramGeometries.GridSize;
-                            rightRect.Y += StockDiagramGeometries.GridSize;
-                        }
-                        // If we ran out of room looking for a place to put Shift Register, we need to grow our Loop
-                        if (leftRect.Bottom > model.Height - model.OuterBorderThickness.Bottom)
-                        {
-                            model.Height = leftRect.Bottom + StockDiagramGeometries.StandardTunnelHeight;
-                        }
 
                         BorrowTunnel borrowTunnel = model.MakeTunnel<BorrowTunnel>(model.Diagram, model.NestedDiagrams.First());
                         UnborrowTunnel unborrowTunnel = model.MakeTunnel<UnborrowTunnel>(model.Diagram, model.NestedDiagrams.First());
@@ -188,7 +163,7 @@ namespace RustyWires.Design
         /// <summary>
         /// Add Lock Tunnel to a Frame command
         /// </summary>
-        public static readonly ICommandEx StructureAddLockTunnelCommand = new ShellSelectionRelayCommand(HandleAddLockTunnel, HandleCanAddLockunnel)
+        public static readonly ICommandEx StructureAddLockTunnelCommand = new ShellSelectionRelayCommand(HandleAddLockTunnel, HandleCanAddLockTunnel)
         {
             UniqueId = "NI.RWDiagramNodeCommands:AddLockTunnelCommand",
             LabelTitle = "Add Lock Tunnel",
@@ -197,7 +172,7 @@ namespace RustyWires.Design
             Weight = 0.1
         };
 
-        private static bool HandleCanAddLockunnel(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
+        private static bool HandleCanAddLockTunnel(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
             return selection.OfType<StructureViewModel>().Any();
         }
@@ -211,34 +186,9 @@ namespace RustyWires.Design
                 {
                     foreach (var structureViewModel in structureViewModels)
                     {
-                        var view = structureViewModel.View;
-                        var contextMenuInfo = parameter.QueryService<ContextMenuInfo>().FirstOrDefault();
-                        double top = 0;
-                        if (contextMenuInfo != null && !view.IsEmpty)
-                        {
-                            top = contextMenuInfo.ClickPosition.GetPosition(view).Y;
-                        }
-
+                        SMRect leftRect, rightRect;
+                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
-                        top -= (top - model.OuterBorderThickness.Top) % StockDiagramGeometries.GridSize;
-                        top = Math.Max(top, model.OuterBorderThickness.Top);
-                        top = Math.Min(top, model.Height - model.OuterBorderThickness.Bottom - StockDiagramGeometries.StandardTunnelHeight);
-                        SMRect leftRect = new SMRect(-StockDiagramGeometries.StandardTunnelOffsetForStructures, top, StockDiagramGeometries.StandardTunnelWidth,
-                            StockDiagramGeometries.StandardTunnelHeight);
-                        SMRect rightRect = new SMRect(model.Width - StockDiagramGeometries.StandardTunnelWidth + StockDiagramGeometries.StandardTunnelOffsetForStructures, top,
-                            StockDiagramGeometries.StandardTerminalWidth, StockDiagramGeometries.StandardTunnelHeight);
-                        while (
-                            model.BorderNodes.Any(
-                                node => node.Bounds.Overlaps(leftRect) || node.Bounds.Overlaps(rightRect)))
-                        {
-                            leftRect.Y += StockDiagramGeometries.GridSize;
-                            rightRect.Y += StockDiagramGeometries.GridSize;
-                        }
-                        // If we ran out of room looking for a place to put Shift Register, we need to grow our Loop
-                        if (leftRect.Bottom > model.Height - model.OuterBorderThickness.Bottom)
-                        {
-                            model.Height = leftRect.Bottom + StockDiagramGeometries.StandardTunnelHeight;
-                        }
 
                         LockTunnel lockTunnel = model.MakeTunnel<LockTunnel>(model.Diagram, model.NestedDiagrams.First());
                         UnlockTunnel unlockTunnel = model.MakeTunnel<UnlockTunnel>(model.Diagram, model.NestedDiagrams.First());
@@ -253,6 +203,80 @@ namespace RustyWires.Design
                     transaction.Commit();
                 }
             }
+        }
+
+        /// <summary>
+        /// Add Unwrap Option Tunnel to a FlatSequenceStructure command
+        /// </summary>
+        public static readonly ICommandEx StructureAddUnwrapOptionTunnelCommand = new ShellSelectionRelayCommand(HandleAddUnwrapOptionTunnel, HandleCanAddUnwrapOptionTunnel)
+        {
+            UniqueId = "NI.RWDiagramNodeCommands:AddUnwrapOptionTunnelCommand",
+            LabelTitle = "Add Unwrap Option Tunnel",
+            UIType = UITypeForCommand.Button,
+            PopupMenuParent = MenuPathCommands.RootMenu,
+            Weight = 0.1
+        };
+
+        private static bool HandleCanAddUnwrapOptionTunnel(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
+        {
+            return selection.OfType<RustyWiresFlatSequenceEditor>().Any();
+        }
+
+        private static void HandleAddUnwrapOptionTunnel(object parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
+        {
+            var flatSequenceStructureViewModels = selection.OfType<StructureViewModel>().WhereNotNull();
+            if (flatSequenceStructureViewModels.Any())
+            {
+                using (var transaction = flatSequenceStructureViewModels.First().TransactionManager.BeginTransaction("Add Unwrap Option Tunnels", TransactionPurpose.User))
+                {
+                    foreach (var structureViewModel in flatSequenceStructureViewModels)
+                    {
+                        Structure model = (Structure)structureViewModel.Model;
+                        SMRect leftRect, rightRect;
+                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
+                        UnwrapOptionTunnel unwrapOptionTunnel = model.MakeTunnel<UnwrapOptionTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        unwrapOptionTunnel.Top = leftRect.Y;
+                        unwrapOptionTunnel.Left = leftRect.X;
+                    }
+                    transaction.Commit();
+                }
+            }
+        }
+
+        private static void FindBorderNodePositions(StructureViewModel structureViewModel, out SMRect leftRect, out SMRect rightRect)
+        {
+            var view = structureViewModel.View;
+            double top = 0;
+#if FALSE
+            var contextMenuInfo = parameter.QueryService<ContextMenuInfo>().FirstOrDefault();
+            if (contextMenuInfo != null && !view.IsEmpty)
+            {
+                top = contextMenuInfo.ClickPosition.GetPosition(view).Y;
+            }
+#endif
+
+            Structure model = (Structure)structureViewModel.Model;
+            top -= (top - model.OuterBorderThickness.Top) % StockDiagramGeometries.GridSize;
+            top = Math.Max(top, model.OuterBorderThickness.Top);
+            top = Math.Min(top, model.Height - model.OuterBorderThickness.Bottom - StockDiagramGeometries.StandardTunnelHeight);
+            SMRect l = new SMRect(-StockDiagramGeometries.StandardTunnelOffsetForStructures, top, StockDiagramGeometries.StandardTunnelWidth,
+                StockDiagramGeometries.StandardTunnelHeight);
+            SMRect r = new SMRect(model.Width - StockDiagramGeometries.StandardTunnelWidth + StockDiagramGeometries.StandardTunnelOffsetForStructures, top,
+                StockDiagramGeometries.StandardTerminalWidth, StockDiagramGeometries.StandardTunnelHeight);
+            while (
+                model.BorderNodes.Any(
+                    node => node.Bounds.Overlaps(l) || node.Bounds.Overlaps(r)))
+            {
+                l.Y += StockDiagramGeometries.GridSize;
+                r.Y += StockDiagramGeometries.GridSize;
+            }
+            // If we ran out of room looking for a place to put Shift Register, we need to grow our Loop
+            if (l.Bottom > model.Height - model.OuterBorderThickness.Bottom)
+            {
+                model.Height = l.Bottom + StockDiagramGeometries.StandardTunnelHeight;
+            }
+            leftRect = l;
+            rightRect = r;
         }
     }
 }

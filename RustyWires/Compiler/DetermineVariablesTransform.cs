@@ -178,6 +178,11 @@ namespace RustyWires.Compiler
             yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[2], selectReferenceNode.Terminals[5]);
         }
 
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             return Enumerable.Empty<PassthroughTerminalPair>();
@@ -215,6 +220,15 @@ namespace RustyWires.Compiler
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnlockTunnel(UnlockTunnel unlockTunnel)
         {
             LinkPassthroughTerminalPair(unlockTunnel.AssociatedLockTunnel.GetOuterTerminal(0), unlockTunnel.GetOuterTerminal(0));
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
+        {
+            Terminal inputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetOuterTerminal(0) : unwrapOptionTunnel.GetInnerTerminal(0, 0);
+            Terminal outputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetInnerTerminal(0, 0) : unwrapOptionTunnel.GetOuterTerminal(0);
+            PullInputTerminalVariable(inputTerminal);
+            outputTerminal.AddTerminalToNewVariable();
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
     }

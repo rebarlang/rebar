@@ -96,6 +96,7 @@
     <Compile Include="Compiler\Nodes\RustyWiresBorderNode.cs" />
     <Compile Include="Compiler\Nodes\RustyWiresDfirNode.cs" />
     <Compile Include="Compiler\Nodes\SelectReferenceNode.cs" />
+    <Compile Include="Compiler\Nodes\SomeConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
     <Compile Include="Compiler\Nodes\UnborrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\UnlockTunnel.cs" />
@@ -104,6 +105,7 @@
     <Compile Include="Compiler\ExplicitBorrowTransform.cs" />
     <Compile Include="Compiler\IPassthroughTerminalsNode.cs" />
     <Compile Include="Compiler\IRustyWiresFunctionVisitor.cs" />
+    <Compile Include="Compiler\Nodes\UnwrapOptionTunnel.cs" />
     <Compile Include="Compiler\PropagateTypePermissivenessTransform.cs" />
     <Compile Include="Compiler\ReflectVariablesToTerminalsTransform.cs" />
     <Compile Include="Compiler\RustyWiresLifetimes.cs" />
@@ -157,9 +159,11 @@
     <Compile Include="SourceModel\RustyWiresFlatSequence.cs" />
     <Compile Include="SourceModel\RustyWiresSimpleNode.cs" />
     <Compile Include="SourceModel\SelectReferenceNode.cs" />
+    <Compile Include="SourceModel\SomeConstructorNode.cs" />
     <Compile Include="SourceModel\TerminateLifetime.cs" />
     <Compile Include="SourceModel\UnborrowTunnel.cs" />
     <Compile Include="SourceModel\UnlockTunnel.cs" />
+    <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="RustyWiresDiagramEditor.xaml">

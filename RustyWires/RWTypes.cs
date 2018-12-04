@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using NationalInstruments.DataTypes;
-using RustyWires.Compiler;
 
 namespace RustyWires
 {
@@ -14,6 +13,8 @@ namespace RustyWires
         private static NIType MutableValueGenericType { get; }
 
         private static NIType ImmutableValueGenericType { get; }
+
+        private static NIType OptionGenericType { get; }
 
         private static NIType LockingCellGenericType { get; }
 
@@ -40,6 +41,11 @@ namespace RustyWires
             immutableValueGenericTypeBuilder.MakeGenericParameters("T");
             immutableValueGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
             ImmutableValueGenericType = immutableValueGenericTypeBuilder.CreateType();
+
+            var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
+            optionGenericTypeBuilder.MakeGenericParameters("T");
+            optionGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
+            OptionGenericType = optionGenericTypeBuilder.CreateType();
 
             var lockingCellGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("LockingCell");
             lockingCellGenericTypeBuilder.MakeGenericParameters("T");
@@ -103,6 +109,40 @@ namespace RustyWires
         public static bool IsImmutableValueType(this NIType type)
         {
             return type.IsGenericType() && type.GetGenericTypeDefinition() == ImmutableValueGenericType;
+        }
+
+        public static bool IsMutableType(this NIType type)
+        {
+            return type.IsMutableReferenceType() || type.IsMutableValueType();
+        }
+
+        public static NIType CreateOption(this NIType valueType)
+        {
+            var optionTypeBuilder = OptionGenericType.DefineClassFromExisting();
+            optionTypeBuilder.ReplaceGenericParameters(valueType);
+            return optionTypeBuilder.CreateType();
+        }
+
+        public static bool IsOptionType(this NIType type)
+        {
+            return type.IsGenericType() && type.GetGenericTypeDefinition() == OptionGenericType;
+        }
+
+        /// <summary>
+        /// If the given <see cref="type"/> is an Option type, outputs the inner value type and returns true; otherwise, returns false.
+        /// </summary>
+        /// <param name="type">The <see cref="NIType"/> to try to destructure as an Option type.</param>
+        /// <param name="valueType">The inner value type of the given type if it is an Option.</param>
+        /// <returns>True if the given type was an Option type; false otherwise.</returns>
+        public static bool TryDestructureOptionType(this NIType type, out NIType valueType)
+        {
+            if (!IsOptionType(type))
+            {
+                valueType = NIType.Unset;
+                return false;
+            }
+            valueType = type.GetGenericParameters().ElementAt(0);
+            return true;
         }
 
         public static NIType CreateLockingCell(this NIType dereferenceType)

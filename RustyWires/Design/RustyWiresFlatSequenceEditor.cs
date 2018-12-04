@@ -21,6 +21,7 @@ namespace RustyWires.Design
                 {
                     context.Add(BorrowTunnelViewModelHelpers.StructureAddBorrowTunnelCommand.SetWeight(0.6));
                     context.Add(BorrowTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
+                    context.Add(BorrowTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
                 }
             }
         }

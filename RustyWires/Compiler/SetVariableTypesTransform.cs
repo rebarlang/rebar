@@ -206,6 +206,28 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
+        {
+            Variable valueInVariable = someConstructorNode.Terminals.ElementAt(0).GetVariable(),
+                optionOutVariable = someConstructorNode.Terminals.ElementAt(1).GetVariable();
+            NIType optionUnderlyingType;
+            Lifetime optionLifetime;
+            if (valueInVariable != null)
+            {
+                optionUnderlyingType = valueInVariable.Type.IsRWReferenceType()
+                    ? valueInVariable.Type
+                    : valueInVariable.Type.GetUnderlyingTypeFromRustyWiresType();
+                optionLifetime = valueInVariable.Lifetime;
+            }
+            else
+            {
+                optionUnderlyingType = PFTypes.Void;
+                optionLifetime = Lifetime.Unbounded;
+            }
+            optionOutVariable?.SetTypeAndLifetime(optionUnderlyingType.CreateOption().CreateMutableValue(), optionLifetime);
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             VariableSet variableSet = terminateLifetimeNode.ParentDiagram.GetVariableSet();
@@ -267,8 +289,16 @@ namespace RustyWires.Compiler
             Terminal outputTerminal = tunnel.Direction == Direction.Input ? tunnel.GetInnerTerminal() : tunnel.GetOuterTerminal();
             Variable inputVariable = inputTerminal.GetVariable(),
                 outputVariable = outputTerminal.GetVariable();
+            var parentFrame = tunnel.ParentStructure as Frame;
+            bool executesConditionally = parentFrame != null && DoesFrameExecuteConditionally(parentFrame);
+            bool wrapOutputInOption = tunnel.Direction == Direction.Output && executesConditionally;
+
+            Lifetime outputLifetime;
+            NIType outputType;
             if (outputVariable != null)
             {
+                outputType = PFTypes.Void.CreateImmutableValue();
+                outputLifetime = Lifetime.Unbounded;
                 if (inputVariable != null)
                 {
                     // if input is unbounded/static, then output is unbounded/static
@@ -276,7 +306,7 @@ namespace RustyWires.Compiler
                     // if input is from inner diagram and outlasts the inner diagram, we should be able to determine 
                     //    which outer diagram lifetime it came from
                     // otherwise, output is empty/error
-                    Lifetime inputLifetime = inputVariable.Lifetime, outputLifetime;
+                    Lifetime inputLifetime = inputVariable.Lifetime;
                     if (!inputLifetime.IsBounded)
                     {
                         outputLifetime = inputLifetime;
@@ -290,14 +320,34 @@ namespace RustyWires.Compiler
                     {
                         outputLifetime = Lifetime.Empty;
                     }
-                    outputVariable.SetTypeAndLifetime(inputVariable.Type, outputLifetime);
+                    outputType = inputVariable.Type;
                 }
-                else
+
+                if (wrapOutputInOption)
                 {
-                    outputVariable.SetTypeAndLifetime(PFTypes.Void.CreateImmutableValue(), Lifetime.Unbounded);
+                    // If outputType is already an Option value type, then don't re-wrap it.
+                    if (outputType.IsRWReferenceType()
+                        || !outputType.GetUnderlyingTypeFromRustyWiresType().IsOptionType())
+                    {
+                        bool mutable = outputType.IsMutableType();
+                        NIType optionType = (outputType.IsRWReferenceType()
+                            ? outputType
+                            : outputType.GetUnderlyingTypeFromRustyWiresType())
+                            .CreateOption();
+                        outputType = mutable
+                            ? optionType.CreateMutableValue()
+                            : optionType.CreateImmutableValue();
+                    }
                 }
+                outputVariable.SetTypeAndLifetime(outputType, outputLifetime);
             }
             return true;
+        }
+
+        private bool DoesFrameExecuteConditionally(Frame frame)
+        {
+            // TODO: handle multi-frame flat sequence structures
+            return frame.BorderNodes.OfType<UnwrapOptionTunnel>().Any();
         }
 
         public bool VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel)
@@ -309,6 +359,34 @@ namespace RustyWires.Compiler
         public bool VisitUnlockTunnel(UnlockTunnel unlockTunnel)
         {
             // Do nothing; the output terminal's variable is the same as the associated LockTunnel's input variable
+            return true;
+        }
+
+        public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
+        {
+            Terminal inputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetOuterTerminal(0) : unwrapOptionTunnel.GetInnerTerminal(0, 0);
+            Terminal outputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetInnerTerminal(0, 0) : unwrapOptionTunnel.GetOuterTerminal(0);
+            Variable inputVariable = inputTerminal.GetVariable(),
+                outputVariable = outputTerminal.GetVariable();
+            if (outputVariable != null)
+            {
+                if (inputVariable != null)
+                {
+                    NIType optionType = inputVariable.Type.GetUnderlyingTypeFromRustyWiresType();
+                    NIType optionValueType;
+                    if (optionType.TryDestructureOptionType(out optionValueType))
+                    {
+                        NIType outputType = optionValueType.IsRWReferenceType() ? optionValueType : optionValueType.CreateMutableValue();
+                        Lifetime outputLifetime = inputVariable.Lifetime.IsBounded
+                            ? outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram()
+                            : inputVariable.Lifetime;
+                        outputVariable.SetTypeAndLifetime(outputType, outputLifetime);
+                        return true;
+                    }
+                }
+
+                outputVariable.SetTypeAndLifetime(PFTypes.Void.CreateMutableValue(), Lifetime.Unbounded);
+            }
             return true;
         }
     }

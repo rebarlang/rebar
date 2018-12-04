@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -50,7 +49,20 @@ namespace RustyWires.Compiler
 
         private bool CanShallowCopyDataType(NIType dataType)
         {
-            return dataType.IsNumeric();
+            if (dataType.IsNumeric())
+            {
+                return true;
+            }
+            if (dataType.IsImmutableReferenceType())
+            {
+                return true;
+            }
+            NIType optionValueType;
+            if (dataType.TryDestructureOptionType(out optionValueType))
+            {
+                return CanShallowCopyDataType(optionValueType);
+            }
+            return false;
         }
 
         protected override void VisitBorderNode(BorderNode borderNode)
@@ -187,6 +199,12 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
+        {
+            VariableUsageValidator validator = someConstructorNode.Terminals[0].GetValidator();
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             foreach (var inputTerminal in terminateLifetimeNode.InputTerminals)
@@ -223,6 +241,19 @@ namespace RustyWires.Compiler
         public bool VisitUnlockTunnel(UnlockTunnel unlockTunnel)
         {
             // This node has no inputs.
+            return true;
+        }
+
+        public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
+        {
+            if (unwrapOptionTunnel.Direction != Direction.Input)
+            {
+                // TODO: report an error; this tunnel can only be an input
+                return true;
+            }
+            VariableUsageValidator validator = unwrapOptionTunnel.GetOuterTerminal(0).GetValidator();
+            validator.TestVariableIsOwnedType();
+            validator.TestUnderlyingType(t => t.IsOptionType(), PFTypes.Void.CreateOption());
             return true;
         }
     }
