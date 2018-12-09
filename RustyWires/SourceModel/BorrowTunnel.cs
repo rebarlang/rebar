@@ -31,7 +31,7 @@ namespace RustyWires.SourceModel
         // TODO: this will not be the case for BorrowTunnels on case structures
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
-        public UnborrowTunnel UnborrowTunnel { get; set; }
+        public FlatSequenceTerminateLifetimeTunnel TerminateScopeTunnel { get; set; }
 
         public BorrowMode BorrowMode
         {

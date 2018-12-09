@@ -47,7 +47,7 @@ namespace RustyWires
             AddSupportedModel<AccumulateNot>(n => new BasicNodeViewModel(n, "Accumulate Not"));
 
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));
-            AddSupportedModel<UnborrowTunnel>(t => new UnborrowTunnelViewModel(t));
+            AddSupportedModel<FlatSequenceTerminateLifetimeTunnel>(t => new TerminateScopeTunnelViewModel(t));
             AddSupportedModel<RustyWiresFlatSequence>(s => new RustyWiresFlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<RustyWiresFlatSequenceSimpleTunnel>(t => new FlatSequenceTunnelViewModel(t));

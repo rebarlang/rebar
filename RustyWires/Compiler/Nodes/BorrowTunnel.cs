@@ -1,11 +1,9 @@
-﻿using System;
-using System.Linq;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler.Nodes
 {
-    internal class BorrowTunnel : RustyWiresBorderNode
+    internal class BorrowTunnel : RustyWiresBorderNode, IBeginLifetimeTunnel
     {
         public BorrowTunnel(Structure parentStructure, Common.BorrowMode borrowMode) : base(parentStructure)
         {
@@ -18,10 +16,10 @@ namespace RustyWires.Compiler.Nodes
         {
             BorrowMode = toCopy.BorrowMode;
             Node mappedTunnel;
-            if (copyInfo.TryGetMappingFor(toCopy.AssociatedUnborrowTunnel, out mappedTunnel))
+            if (copyInfo.TryGetMappingFor(toCopy.TerminateLifetimeTunnel, out mappedTunnel))
             {
-                AssociatedUnborrowTunnel = (UnborrowTunnel)mappedTunnel;
-                AssociatedUnborrowTunnel.AssociatedBorrowTunnel = this;
+                TerminateLifetimeTunnel = (TerminateLifetimeTunnel)mappedTunnel;
+                TerminateLifetimeTunnel.BeginLifetimeTunnel = this;
             }
         }
 
@@ -32,7 +30,7 @@ namespace RustyWires.Compiler.Nodes
 
         public Common.BorrowMode BorrowMode { get; }
 
-        public UnborrowTunnel AssociatedUnborrowTunnel { get; internal set; }
+        public TerminateLifetimeTunnel TerminateLifetimeTunnel { get; set; }
 
         /// <inheritdoc />
         public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)

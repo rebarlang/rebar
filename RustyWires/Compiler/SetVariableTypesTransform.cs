@@ -350,15 +350,9 @@ namespace RustyWires.Compiler
             return frame.BorderNodes.OfType<UnwrapOptionTunnel>().Any();
         }
 
-        public bool VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel)
+        public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel unborrowTunnel)
         {
             // Do nothing; the output terminal's variable is the same as the associated BorrowTunnel's input variable
-            return true;
-        }
-
-        public bool VisitUnlockTunnel(UnlockTunnel unlockTunnel)
-        {
-            // Do nothing; the output terminal's variable is the same as the associated LockTunnel's input variable
             return true;
         }
 

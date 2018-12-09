@@ -4,7 +4,7 @@ using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler.Nodes
 {
-    internal class LockTunnel : RustyWiresBorderNode
+    internal class LockTunnel : RustyWiresBorderNode, IBeginLifetimeTunnel
     {
         public LockTunnel(Structure parentStructure) : base(parentStructure)
         {
@@ -15,10 +15,10 @@ namespace RustyWires.Compiler.Nodes
             : base(parentStructure, toCopy, copyInfo)
         {
             Node mappedTunnel;
-            if (copyInfo.TryGetMappingFor(toCopy.AssociatedUnlockTunnel, out mappedTunnel))
+            if (copyInfo.TryGetMappingFor(toCopy.TerminateLifetimeTunnel, out mappedTunnel))
             {
-                AssociatedUnlockTunnel = (UnlockTunnel)mappedTunnel;
-                AssociatedUnlockTunnel.AssociatedLockTunnel = this;
+                TerminateLifetimeTunnel = (TerminateLifetimeTunnel)mappedTunnel;
+                TerminateLifetimeTunnel.BeginLifetimeTunnel = this;
             }
         }
 
@@ -27,7 +27,7 @@ namespace RustyWires.Compiler.Nodes
             return new LockTunnel((Structure)newParentNode, this, copyInfo);
         }
 
-        public UnlockTunnel AssociatedUnlockTunnel { get; internal set; }
+        public TerminateLifetimeTunnel TerminateLifetimeTunnel { get; set; }
 
         /// <inheritdoc />
         public override T AcceptVisitor<T>(IRustyWiresDfirNodeVisitor<T> visitor)

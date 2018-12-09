@@ -4,15 +4,15 @@ using NationalInstruments.VI.SourceModel;
 
 namespace RustyWires.SourceModel
 {
-    public class UnborrowTunnel : FlatSequenceTunnel
+    public class FlatSequenceTerminateLifetimeTunnel : FlatSequenceTunnel
     {
         public override BorderNodeRelationship Relationship => BorderNodeRelationship.AncestorToDescendant;
 
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
-        public BorrowTunnel BorrowTunnel { get; set; }
+        public FlatSequenceTunnel BeginLifetimeTunnel { get; set; }
 
-        public UnborrowTunnel()
+        public FlatSequenceTerminateLifetimeTunnel()
         {
             Docking = BorderNodeDocking.Right;
         }
@@ -30,7 +30,7 @@ namespace RustyWires.SourceModel
         private void EnsureViewWork(EnsureViewHints hints, RectDifference oldBoundsMinusNewbounds)
         {
             Docking = BorderNodeDocking.Right;
-            BorrowTunnel.Top = Top;
+            BeginLifetimeTunnel.Top = Top;
             base.EnsureViewDirectional(hints, oldBoundsMinusNewbounds);
         }
     }

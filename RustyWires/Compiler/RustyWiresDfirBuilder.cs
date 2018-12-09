@@ -94,35 +94,29 @@ namespace RustyWires.Compiler
                 NationalInstruments.Dfir.BorderNode dfirBorderNode = null;
                 var rustyWiresFlatSequenceSimpleTunnel = tunnel as RustyWiresFlatSequenceSimpleTunnel;
                 var borrowTunnel = tunnel as SourceModel.BorrowTunnel;
-                var unborrowTunnel = tunnel as SourceModel.UnborrowTunnel;
+                var flatSequenceTerminateLifetimeTunnel = tunnel as SourceModel.FlatSequenceTerminateLifetimeTunnel;
                 var lockTunnel = tunnel as SourceModel.LockTunnel;
-                var unlockTunnel = tunnel as SourceModel.UnlockTunnel;
                 var unwrapOptionTunnel = tunnel as SourceModel.UnwrapOptionTunnel;
                 if (borrowTunnel != null)
                 {
                     var borrowDfir = new Nodes.BorrowTunnel(flatSequenceFrame, borrowTunnel.BorrowMode);
-                    var unborrowDfir = new Nodes.UnborrowTunnel(flatSequenceFrame);
-                    borrowDfir.AssociatedUnborrowTunnel = unborrowDfir;
-                    unborrowDfir.AssociatedBorrowTunnel = borrowDfir;
+                    var terminateLifetimeDfir = new Nodes.TerminateLifetimeTunnel(flatSequenceFrame);
+                    borrowDfir.TerminateLifetimeTunnel = terminateLifetimeDfir;
+                    terminateLifetimeDfir.BeginLifetimeTunnel = borrowDfir;
                     dfirBorderNode = borrowDfir;
-                }
-                else if (unborrowTunnel != null)
-                {
-                    var borrowDfir = (Nodes.BorrowTunnel)_map.GetDfirForModel(unborrowTunnel.BorrowTunnel);
-                    dfirBorderNode = borrowDfir.AssociatedUnborrowTunnel;
                 }
                 else if (lockTunnel != null)
                 {
                     var lockDfir = new Nodes.LockTunnel(flatSequenceFrame);
-                    var unlockDfir = new Nodes.UnlockTunnel(flatSequenceFrame);
-                    lockDfir.AssociatedUnlockTunnel = unlockDfir;
-                    unlockDfir.AssociatedLockTunnel = lockDfir;
+                    var terminateLifetimeDfir = new Nodes.TerminateLifetimeTunnel(flatSequenceFrame);
+                    lockDfir.TerminateLifetimeTunnel = terminateLifetimeDfir;
+                    terminateLifetimeDfir.BeginLifetimeTunnel = lockDfir;
                     dfirBorderNode = lockDfir;
                 }
-                else if (unlockTunnel != null)
+                else if (flatSequenceTerminateLifetimeTunnel != null)
                 {
-                    var lockDfir = (Nodes.LockTunnel)_map.GetDfirForModel(unlockTunnel.LockTunnel);
-                    dfirBorderNode = lockDfir.AssociatedUnlockTunnel;
+                    var beginLifetimeDfir = (IBeginLifetimeTunnel)_map.GetDfirForModel(flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel);
+                    dfirBorderNode = beginLifetimeDfir.TerminateLifetimeTunnel;
                 }
                 else if (rustyWiresFlatSequenceSimpleTunnel != null)
                 {

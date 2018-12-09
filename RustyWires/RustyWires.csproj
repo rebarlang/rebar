@@ -85,6 +85,7 @@
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitUnborrowNode.cs" />
     <Compile Include="Compiler\Nodes\FreezeNode.cs" />
+    <Compile Include="Compiler\Nodes\IBeginLifetimeTunnel.cs" />
     <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\IRustyWiresDfirNodeVisitor.cs" />
     <Compile Include="Compiler\Nodes\LockTunnel.cs" />
@@ -98,8 +99,7 @@
     <Compile Include="Compiler\Nodes\SelectReferenceNode.cs" />
     <Compile Include="Compiler\Nodes\SomeConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
-    <Compile Include="Compiler\Nodes\UnborrowTunnel.cs" />
-    <Compile Include="Compiler\Nodes\UnlockTunnel.cs" />
+    <Compile Include="Compiler\Nodes\TerminateLifetimeTunnel.cs" />
     <Compile Include="Compiler\DetermineVariablesTransform.cs" />
     <Compile Include="Compiler\DfirModelMap.cs" />
     <Compile Include="Compiler\ExplicitBorrowTransform.cs" />
@@ -124,7 +124,7 @@
     <Compile Include="Design\RustyWiresFunctionSignatureCacheService.cs" />
     <Compile Include="Design\RustyWiresProjectItemInfoService.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
-    <Compile Include="Design\UnborrowTunnelViewModel.cs" />
+    <Compile Include="Design\TerminateScopeTunnelViewModel.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -161,8 +161,7 @@
     <Compile Include="SourceModel\SelectReferenceNode.cs" />
     <Compile Include="SourceModel\SomeConstructorNode.cs" />
     <Compile Include="SourceModel\TerminateLifetime.cs" />
-    <Compile Include="SourceModel\UnborrowTunnel.cs" />
-    <Compile Include="SourceModel\UnlockTunnel.cs" />
+    <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
   </ItemGroup>
   <ItemGroup>

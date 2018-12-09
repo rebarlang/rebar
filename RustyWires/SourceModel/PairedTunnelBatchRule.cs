@@ -23,14 +23,14 @@ namespace RustyWires.SourceModel
             if (borrowTunnelBoundsChange.IsValid)
             {
                 BorrowTunnel borrowTunnel = borrowTunnelBoundsChange.TargetElement;
-                borrowTunnel.UnborrowTunnel.Top = borrowTunnel.Top;
+                borrowTunnel.TerminateScopeTunnel.Top = borrowTunnel.Top;
             }
 
             var lockTunnelBoundsChange = item.AsBoundsChange<LockTunnel>();
             if (lockTunnelBoundsChange.IsValid)
             {
                 LockTunnel lockTunnel = lockTunnelBoundsChange.TargetElement;
-                lockTunnel.UnlockTunnel.Top = lockTunnel.Top;
+                lockTunnel.TerminateScopeTunnel.Top = lockTunnel.Top;
             }
         }
     }

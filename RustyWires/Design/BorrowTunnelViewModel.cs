@@ -146,14 +146,14 @@ namespace RustyWires.Design
                         Structure model = (Structure)structureViewModel.Model;
 
                         BorrowTunnel borrowTunnel = model.MakeTunnel<BorrowTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        UnborrowTunnel unborrowTunnel = model.MakeTunnel<UnborrowTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        borrowTunnel.UnborrowTunnel = unborrowTunnel;
-                        unborrowTunnel.BorrowTunnel = borrowTunnel;
+                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        borrowTunnel.TerminateScopeTunnel = flatSequenceTerminateLifetimeTunnel;
+                        flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = borrowTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
                         borrowTunnel.Top = leftRect.Y;
                         borrowTunnel.Left = leftRect.X;
-                        unborrowTunnel.Top = borrowTunnel.Top;
-                        unborrowTunnel.Left = rightRect.X;
+                        flatSequenceTerminateLifetimeTunnel.Top = borrowTunnel.Top;
+                        flatSequenceTerminateLifetimeTunnel.Left = rightRect.X;
                     }
                     transaction.Commit();
                 }
@@ -191,14 +191,14 @@ namespace RustyWires.Design
                         Structure model = (Structure)structureViewModel.Model;
 
                         LockTunnel lockTunnel = model.MakeTunnel<LockTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        UnlockTunnel unlockTunnel = model.MakeTunnel<UnlockTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        lockTunnel.UnlockTunnel = unlockTunnel;
-                        unlockTunnel.LockTunnel = lockTunnel;
+                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateScopeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        lockTunnel.TerminateScopeTunnel = flatSequenceTerminateScopeTunnel;
+                        flatSequenceTerminateScopeTunnel.BeginLifetimeTunnel = lockTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
                         lockTunnel.Top = leftRect.Y;
                         lockTunnel.Left = leftRect.X;
-                        unlockTunnel.Top = lockTunnel.Top;
-                        unlockTunnel.Left = rightRect.X;
+                        flatSequenceTerminateScopeTunnel.Top = lockTunnel.Top;
+                        flatSequenceTerminateScopeTunnel.Left = rightRect.X;
                     }
                     transaction.Commit();
                 }

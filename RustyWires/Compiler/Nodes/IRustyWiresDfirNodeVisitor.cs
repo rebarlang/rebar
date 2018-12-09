@@ -23,9 +23,8 @@ namespace RustyWires.Compiler.Nodes
         T VisitSomeConstructorNode(SomeConstructorNode someConstructorNode);
         T VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
+        T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);
-        T VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel);
-        T VisitUnlockTunnel(UnlockTunnel unlockTunnel);
         T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
     }
 

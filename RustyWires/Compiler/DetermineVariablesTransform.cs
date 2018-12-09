@@ -211,15 +211,9 @@ namespace RustyWires.Compiler
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
-        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel)
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel unborrowTunnel)
         {
-            LinkPassthroughTerminalPair(unborrowTunnel.AssociatedBorrowTunnel.GetOuterTerminal(0), unborrowTunnel.GetOuterTerminal(0));
-            return Enumerable.Empty<PassthroughTerminalPair>();
-        }
-
-        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitUnlockTunnel(UnlockTunnel unlockTunnel)
-        {
-            LinkPassthroughTerminalPair(unlockTunnel.AssociatedLockTunnel.GetOuterTerminal(0), unlockTunnel.GetOuterTerminal(0));
+            LinkPassthroughTerminalPair(((RustyWiresBorderNode)unborrowTunnel.BeginLifetimeTunnel).GetOuterTerminal(0), unborrowTunnel.GetOuterTerminal(0));
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 

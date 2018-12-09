@@ -232,13 +232,7 @@ namespace RustyWires.Compiler
             return true;
         }
 
-        public bool VisitUnborrowTunnel(UnborrowTunnel unborrowTunnel)
-        {
-            // This node has no inputs.
-            return true;
-        }
-
-        public bool VisitUnlockTunnel(UnlockTunnel unlockTunnel)
+        public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel unborrowTunnel)
         {
             // This node has no inputs.
             return true;

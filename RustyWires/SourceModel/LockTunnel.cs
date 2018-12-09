@@ -15,7 +15,7 @@ namespace RustyWires.SourceModel
 
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
-        public UnlockTunnel UnlockTunnel { get; set; }
+        public FlatSequenceTerminateLifetimeTunnel TerminateScopeTunnel { get; set; }
 
         public override void EnsureView(EnsureViewHints hints)
         {
