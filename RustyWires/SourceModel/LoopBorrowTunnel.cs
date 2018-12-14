@@ -2,15 +2,23 @@
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
-using NationalInstruments.VI.SourceModel;
 using RustyWires.Common;
 
 namespace RustyWires.SourceModel
 {
-    public class BorrowTunnel : FlatSequenceTunnel, IBeginLifetimeTunnel, IBorrowTunnel
+    /// <summary>
+    /// <see cref="SimpleTunnel"/> for borrowing references on entering a <see cref="Loop"/>.
+    /// </summary>
+    public class LoopBorrowTunnel : SimpleTunnel, IBeginLifetimeTunnel, IBorrowTunnel
     {
+        public static readonly PropertySymbol TerminateLifetimeTunnelPropertySymbol =
+            ExposeIdReferenceProperty<LoopBorrowTunnel>(
+                "TerminateLifetimeTunnel",
+                loopBorrowTunnel => loopBorrowTunnel.TerminateLifetimeTunnel,
+                (loopBorrowTunnel, terminateLifetimeTunnel) => loopBorrowTunnel.TerminateLifetimeTunnel = (LoopTerminateLifetimeTunnel)terminateLifetimeTunnel);
+
         public static readonly PropertySymbol BorrowModePropertySymbol =
-            ExposeStaticProperty<BorrowTunnel>(
+            ExposeStaticProperty<LoopBorrowTunnel>(
                 "BorrowMode",
                 borrowTunnel => borrowTunnel.BorrowMode,
                 (borrowTunnel, value) => borrowTunnel.BorrowMode = (BorrowMode)value,
@@ -20,7 +28,7 @@ namespace RustyWires.SourceModel
 
         private BorrowMode _borrowMode;
 
-        public BorrowTunnel()
+        public LoopBorrowTunnel()
         {
             Docking = BorderNodeDocking.Left;
             _borrowMode = BorrowMode.Immutable;
@@ -28,24 +36,23 @@ namespace RustyWires.SourceModel
 
         public override BorderNodeRelationship Relationship => BorderNodeRelationship.AncestorToDescendant;
 
-        // TODO: this will not be the case for BorrowTunnels on case structures
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
         public ITerminateLifetimeTunnel TerminateLifetimeTunnel { get; set; }
 
         public BorrowMode BorrowMode
         {
-            get { return _borrowMode;}
+            get { return _borrowMode; }
             set
             {
                 if (_borrowMode != value)
                 {
                     TransactionRecruiter.EnlistPropertyItem(
-                        this, 
-                        "BorrowMode", 
-                        _borrowMode, 
-                        value, 
-                        (mode, reason) => _borrowMode = mode, 
+                        this,
+                        "BorrowMode",
+                        _borrowMode,
+                        value,
+                        (mode, reason) => _borrowMode = mode,
                         TransactionHints.Semantic);
                     _borrowMode = value;
                 }

@@ -144,6 +144,15 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
+        {
+            Terminal inputTerminal = loopConditionTunnel.InputTerminals.ElementAt(0);
+            var validator = new VariableUsageValidator(inputTerminal.GetVariable(), inputTerminal, true, false);
+            validator.TestVariableIsOwnedType();
+            validator.TestExpectedUnderlyingType(PFTypes.Boolean);
+            return true;
+        }
+
         public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
         {
             VariableUsageValidator validator = mutablePassthroughNode.Terminals[0].GetValidator();

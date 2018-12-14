@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.Composition;
 using NationalInstruments.Controls.Shell;
@@ -51,6 +50,7 @@ namespace RustyWires.Design
         {
         }
 
+        /// <inheritdoc />
         public override void CreateCommandContent(ICommandPresentationContext context)
         {
             base.CreateCommandContent(context);
@@ -66,59 +66,33 @@ namespace RustyWires.Design
 
         private static bool HandleCanExecuteBorrowImmutableCommand(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            IEnumerable<BorrowTunnel> borrowTunnels = GetBorrowTunnels(selection);
-            BorrowMode firstMode = borrowTunnels.First().BorrowMode;
-            bool multipleModes = borrowTunnels.Any(bt => bt.BorrowMode != firstMode);
-            ((ICheckableCommandParameter)parameter).IsChecked = firstMode == BorrowMode.Immutable && !multipleModes;
+            selection.CheckAllBorrowModesMatch<BorrowTunnel>(parameter, BorrowMode.Immutable);
             return true;
         }
 
         private static void HandleExecuteBorrowImmutableCommand(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            SetBorrowTunnelsMode(GetBorrowTunnels(selection), BorrowMode.Immutable);
+            selection.GetBorrowTunnels<BorrowTunnel>().SetBorrowTunnelsMode(BorrowMode.Immutable);
         }
 
         private static bool HandleCanExecuteBorrowMutableCommand(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            IEnumerable<BorrowTunnel> borrowTunnels = GetBorrowTunnels(selection);
-            BorrowMode firstMode = borrowTunnels.First().BorrowMode;
-            bool multipleModes = borrowTunnels.Any(bt => bt.BorrowMode != firstMode);
-            ((ICheckableCommandParameter)parameter).IsChecked = firstMode == BorrowMode.Mutable && !multipleModes;
+            selection.CheckAllBorrowModesMatch<BorrowTunnel>(parameter, BorrowMode.Mutable);
             return true;
         }
 
         private static void HandleExecuteBorrowMutableCommand(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            SetBorrowTunnelsMode(GetBorrowTunnels(selection), BorrowMode.Mutable);
-        }
-
-        private static IEnumerable<BorrowTunnel> GetBorrowTunnels(IEnumerable<IViewModel> selection)
-        {
-            return selection.Select(viewModel => viewModel.Model).OfType<BorrowTunnel>();
-        }
-
-        private static void SetBorrowTunnelsMode(IEnumerable<BorrowTunnel> borrowTunnels, BorrowMode borrowMode)
-        {
-            if (borrowTunnels.Any())
-            {
-                using (IActiveTransaction transaction = borrowTunnels.First().TransactionManager.BeginTransaction("Set BorrowTunnel BorrowMode", TransactionPurpose.User))
-                {
-                    foreach (BorrowTunnel borrowTunnel in borrowTunnels)
-                    {
-                        borrowTunnel.BorrowMode = borrowMode;
-                    }
-                    transaction.Commit();
-                }
-            }
+            selection.GetBorrowTunnels<BorrowTunnel>().SetBorrowTunnelsMode(BorrowMode.Mutable);
         }
     }
 
-    public static class BorrowTunnelViewModelHelpers
+    public static class FlatSequenceTunnelViewModelHelpers
     {
         /// <summary>
         /// Add Shift Register to a loop command
         /// </summary>
-        public static readonly ICommandEx StructureAddBorrowTunnelCommand = new ShellSelectionRelayCommand(HandleAddBorrowTunnel, HandleCanAddBorrowTunnel)
+        public static readonly ICommandEx StructureAddBorrowTunnelCommand = new ShellSelectionRelayCommand(HandleAddFlatSequenceBorrowTunnel, HandleCanAddFlatSequenceBorrowTunnel)
         {
             UniqueId = "NI.RWDiagramNodeCommands:AddBorrowTunnelCommand",
             LabelTitle = "Add Borrow Tunnel",
@@ -127,14 +101,14 @@ namespace RustyWires.Design
             Weight = 0.1
         };
 
-        private static bool HandleCanAddBorrowTunnel(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
+        private static bool HandleCanAddFlatSequenceBorrowTunnel(ICommandParameter parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            return selection.OfType<StructureViewModel>().Any();
+            return selection.OfType<RustyWiresFlatSequenceEditor>().Any();
         }
 
-        private static void HandleAddBorrowTunnel(object parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
+        private static void HandleAddFlatSequenceBorrowTunnel(object parameter, IEnumerable<IViewModel> selection, ICompositionHost host, DocumentEditSite site)
         {
-            var structureViewModels = selection.OfType<StructureViewModel>().WhereNotNull();
+            var structureViewModels = selection.OfType<RustyWiresFlatSequenceEditor>().WhereNotNull();
             if (structureViewModels.Any())
             {
                 using (var transaction = structureViewModels.First().TransactionManager.BeginTransaction("Add Borrow Tunnels", TransactionPurpose.User))
@@ -142,12 +116,12 @@ namespace RustyWires.Design
                     foreach (var structureViewModel in structureViewModels)
                     {
                         SMRect leftRect, rightRect;
-                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
+                        BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
 
                         BorrowTunnel borrowTunnel = model.MakeTunnel<BorrowTunnel>(model.Diagram, model.NestedDiagrams.First());
                         FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        borrowTunnel.TerminateScopeTunnel = flatSequenceTerminateLifetimeTunnel;
+                        borrowTunnel.TerminateLifetimeTunnel = flatSequenceTerminateLifetimeTunnel;
                         flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = borrowTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
                         borrowTunnel.Top = leftRect.Y;
@@ -187,18 +161,18 @@ namespace RustyWires.Design
                     foreach (var structureViewModel in structureViewModels)
                     {
                         SMRect leftRect, rightRect;
-                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
+                        BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
 
                         LockTunnel lockTunnel = model.MakeTunnel<LockTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateScopeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        lockTunnel.TerminateScopeTunnel = flatSequenceTerminateScopeTunnel;
-                        flatSequenceTerminateScopeTunnel.BeginLifetimeTunnel = lockTunnel;
+                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        lockTunnel.TerminateLifetimeTunnel = flatSequenceTerminateLifetimeTunnel;
+                        flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = lockTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
                         lockTunnel.Top = leftRect.Y;
                         lockTunnel.Left = leftRect.X;
-                        flatSequenceTerminateScopeTunnel.Top = lockTunnel.Top;
-                        flatSequenceTerminateScopeTunnel.Left = rightRect.X;
+                        flatSequenceTerminateLifetimeTunnel.Top = lockTunnel.Top;
+                        flatSequenceTerminateLifetimeTunnel.Left = rightRect.X;
                     }
                     transaction.Commit();
                 }
@@ -233,7 +207,7 @@ namespace RustyWires.Design
                     {
                         Structure model = (Structure)structureViewModel.Model;
                         SMRect leftRect, rightRect;
-                        FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
+                        BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         UnwrapOptionTunnel unwrapOptionTunnel = model.MakeTunnel<UnwrapOptionTunnel>(model.Diagram, model.NestedDiagrams.First());
                         unwrapOptionTunnel.Top = leftRect.Y;
                         unwrapOptionTunnel.Left = leftRect.X;
@@ -241,42 +215,6 @@ namespace RustyWires.Design
                     transaction.Commit();
                 }
             }
-        }
-
-        private static void FindBorderNodePositions(StructureViewModel structureViewModel, out SMRect leftRect, out SMRect rightRect)
-        {
-            var view = structureViewModel.View;
-            double top = 0;
-#if FALSE
-            var contextMenuInfo = parameter.QueryService<ContextMenuInfo>().FirstOrDefault();
-            if (contextMenuInfo != null && !view.IsEmpty)
-            {
-                top = contextMenuInfo.ClickPosition.GetPosition(view).Y;
-            }
-#endif
-
-            Structure model = (Structure)structureViewModel.Model;
-            top -= (top - model.OuterBorderThickness.Top) % StockDiagramGeometries.GridSize;
-            top = Math.Max(top, model.OuterBorderThickness.Top);
-            top = Math.Min(top, model.Height - model.OuterBorderThickness.Bottom - StockDiagramGeometries.StandardTunnelHeight);
-            SMRect l = new SMRect(-StockDiagramGeometries.StandardTunnelOffsetForStructures, top, StockDiagramGeometries.StandardTunnelWidth,
-                StockDiagramGeometries.StandardTunnelHeight);
-            SMRect r = new SMRect(model.Width - StockDiagramGeometries.StandardTunnelWidth + StockDiagramGeometries.StandardTunnelOffsetForStructures, top,
-                StockDiagramGeometries.StandardTerminalWidth, StockDiagramGeometries.StandardTunnelHeight);
-            while (
-                model.BorderNodes.Any(
-                    node => node.Bounds.Overlaps(l) || node.Bounds.Overlaps(r)))
-            {
-                l.Y += StockDiagramGeometries.GridSize;
-                r.Y += StockDiagramGeometries.GridSize;
-            }
-            // If we ran out of room looking for a place to put Shift Register, we need to grow our Loop
-            if (l.Bottom > model.Height - model.OuterBorderThickness.Bottom)
-            {
-                model.Height = l.Bottom + StockDiagramGeometries.StandardTunnelHeight;
-            }
-            leftRect = l;
-            rightRect = r;
         }
     }
 }

@@ -4,7 +4,7 @@ using NationalInstruments.VI.SourceModel;
 
 namespace RustyWires.SourceModel
 {
-    public class LockTunnel : FlatSequenceTunnel
+    public class LockTunnel : FlatSequenceTunnel, IBeginLifetimeTunnel
     {
         public LockTunnel()
         {
@@ -15,7 +15,7 @@ namespace RustyWires.SourceModel
 
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
-        public FlatSequenceTerminateLifetimeTunnel TerminateScopeTunnel { get; set; }
+        public ITerminateLifetimeTunnel TerminateLifetimeTunnel { get; set; }
 
         public override void EnsureView(EnsureViewHints hints)
         {

@@ -89,6 +89,8 @@
     <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\IRustyWiresDfirNodeVisitor.cs" />
     <Compile Include="Compiler\Nodes\LockTunnel.cs" />
+    <Compile Include="Compiler\Nodes\Loop.cs" />
+    <Compile Include="Compiler\Nodes\LoopConditionTunnel.cs" />
     <Compile Include="Compiler\Nodes\MutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\MutatingBinaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\MutatingUnaryPrimitive.cs" />
@@ -118,8 +120,14 @@
     <Compile Include="Compiler\VariableSet.cs" />
     <Compile Include="Compiler\VariableUsageValidator.cs" />
     <Compile Include="Compiler\VisitorTransformBase.cs" />
+    <Compile Include="Design\BorderNodeViewModelHelpers.cs" />
     <Compile Include="Design\BorrowTunnelViewModel.cs" />
     <Compile Include="Design\BasicNodeViewModel.cs" />
+    <Compile Include="Design\BorrowTunnelViewModelHelpers.cs" />
+    <Compile Include="Design\LoopBorrowTunnelViewModel.cs" />
+    <Compile Include="Design\LoopTunnelViewModel.cs" />
+    <Compile Include="Design\LoopTunnelViewModelHelpers.cs" />
+    <Compile Include="Design\LoopViewModel.cs" />
     <Compile Include="Design\RustyWiresFlatSequenceEditor.cs" />
     <Compile Include="Design\RustyWiresFunctionSignatureCacheService.cs" />
     <Compile Include="Design\RustyWiresProjectItemInfoService.cs" />
@@ -146,9 +154,18 @@
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\ExchangeValues.cs" />
     <Compile Include="SourceModel\Freeze.cs" />
+    <Compile Include="SourceModel\IBeginLifetimeTunnel.cs" />
+    <Compile Include="SourceModel\IBorrowTunnel.cs" />
     <Compile Include="SourceModel\ImmutableBorrowNode.cs" />
     <Compile Include="SourceModel\ImmutablePassthroughNode.cs" />
+    <Compile Include="SourceModel\ITerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LockTunnel.cs" />
+    <Compile Include="SourceModel\Loop.cs" />
+    <Compile Include="SourceModel\LoopBatchRule.cs" />
+    <Compile Include="SourceModel\LoopBorrowTunnel.cs" />
+    <Compile Include="SourceModel\LoopConditionTunnel.cs" />
+    <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
+    <Compile Include="SourceModel\LoopTunnel.cs" />
     <Compile Include="SourceModel\MutablePassthroughNode.cs" />
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Primitives.cs" />
@@ -162,6 +179,7 @@
     <Compile Include="SourceModel\SomeConstructorNode.cs" />
     <Compile Include="SourceModel\TerminateLifetime.cs" />
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
+    <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -193,6 +211,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Design\Resources\ImmutableValuePattern.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Loop_96.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

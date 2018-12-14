@@ -65,6 +65,7 @@ namespace RustyWires.SourceModel
         protected override void CreateBatchRules(ICollection<ModelBatchRule> rules)
         {
             rules.Add(new CoreBatchRule());
+            rules.Add(new ContentBatchRule());
             // rules.Add(new UIModelContextBatchRule());
             rules.Add(new VerticalGrowNodeBoundsRule());
             // rules.Add(new GroupRule());
@@ -72,6 +73,7 @@ namespace RustyWires.SourceModel
             rules.Add(new WiringBatchRule());
             rules.Add(new WireCommentBatchRule());
             rules.Add(new SequenceStructureBatchRule());
+            rules.Add(new LoopBatchRule());
             rules.Add(new PairedTunnelBatchRule());
         }
 

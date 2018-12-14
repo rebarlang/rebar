@@ -12,6 +12,7 @@ namespace RustyWires.Design
         {
         }
 
+        /// <inheritdoc />
         public override void CreateCommandContent(ICommandPresentationContext context)
         {
             base.CreateCommandContent(context);
@@ -19,9 +20,9 @@ namespace RustyWires.Design
             {
                 using (context.AddGroup(ConfigurationPaneCommands.BehaviorGroupCommand))
                 {
-                    context.Add(BorrowTunnelViewModelHelpers.StructureAddBorrowTunnelCommand.SetWeight(0.6));
-                    context.Add(BorrowTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
-                    context.Add(BorrowTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
+                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddBorrowTunnelCommand.SetWeight(0.6));
+                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
+                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
                 }
             }
         }

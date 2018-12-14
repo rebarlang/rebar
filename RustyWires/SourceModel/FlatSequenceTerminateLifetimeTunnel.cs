@@ -4,13 +4,13 @@ using NationalInstruments.VI.SourceModel;
 
 namespace RustyWires.SourceModel
 {
-    public class FlatSequenceTerminateLifetimeTunnel : FlatSequenceTunnel
+    public class FlatSequenceTerminateLifetimeTunnel : FlatSequenceTunnel, ITerminateLifetimeTunnel
     {
         public override BorderNodeRelationship Relationship => BorderNodeRelationship.AncestorToDescendant;
 
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
 
-        public FlatSequenceTunnel BeginLifetimeTunnel { get; set; }
+        public IBeginLifetimeTunnel BeginLifetimeTunnel { get; set; }
 
         public FlatSequenceTerminateLifetimeTunnel()
         {

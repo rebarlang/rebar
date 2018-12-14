@@ -85,6 +85,16 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Leaf Display="Loop" UniqueId="RustyWires:Loop" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rw:Loop Id="1" DiagramId="2" Bounds="203 133 156 96">
+            <rw:LoopConditionTunnel Bounds="-5 17 13 10" Docking="Left" Id="3" TerminateLifetimeTunnel="4" Terminals="1, 2" />
+            <rw:LoopTerminateLifetimeTunnel Bounds="146 17 13 10" Docking="Right" Id="4" BeginLifetimeTunnel="3" Terminals="1" />
+          </rw:Loop>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
     <Leaf Display="Case Structure" UniqueId="RustyWires:CaseStructure" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
       <Synonyms>frame</Synonyms>
       <pf:MergeScript>

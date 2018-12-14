@@ -15,6 +15,7 @@ namespace RustyWires.Compiler.Nodes
         T VisitFreezeNode(FreezeNode freezeNode);
         T VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode);
         T VisitLockTunnel(LockTunnel lockTunnel);
+        T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
         T VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode);
         T VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive);
         T VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive);

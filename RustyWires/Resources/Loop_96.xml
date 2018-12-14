@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<NineGridDictionary>
+  <ColorTable />
+  <Items>
+    <NineGridPathList>
+      <Paths>
+        <NineGridPath Width="69" Height="53" Color="#FF727272" Data="F1 M51,45.5L36,38l3.304,5H10c-2.761,0-5-2.239-5-5V15c0-2.761,2.239-5,5-5h7V5h-7C4.477,5,0,9.477,0,15v23c0,5.523,4.477,10,10,10h29.363L36,53L51,45.5z" />
+        <NineGridPath Width="69" Height="53" Color="#FF727272" Data="F1 M59,5H29.696L33,0L18,7.5L33,15l-3.363-5H59c2.761,0,5,2.239,5,5v23c0,2.761-2.239,5-5,5h-7v5h7c5.523,0,10-4.477,10-10V15C69,9.477,64.523,5,59,5z" />
+      </Paths>
+    </NineGridPathList>
+  </Items>
+</NineGridDictionary>
+<!-- Copied from WhileLoop_96.xml in VI -->

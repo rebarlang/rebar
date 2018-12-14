@@ -19,18 +19,11 @@ namespace RustyWires.SourceModel
         /// <inheritdoc />
         protected override void Execute(TransactionItem item, IRuleExecuteContext context)
         {
-            var borrowTunnelBoundsChange = item.AsBoundsChange<BorrowTunnel>();
-            if (borrowTunnelBoundsChange.IsValid)
+            var beginLifetimeTunnelBoundsChange = item.AsBoundsChange<IBeginLifetimeTunnel>();
+            if (beginLifetimeTunnelBoundsChange.IsValid)
             {
-                BorrowTunnel borrowTunnel = borrowTunnelBoundsChange.TargetElement;
-                borrowTunnel.TerminateScopeTunnel.Top = borrowTunnel.Top;
-            }
-
-            var lockTunnelBoundsChange = item.AsBoundsChange<LockTunnel>();
-            if (lockTunnelBoundsChange.IsValid)
-            {
-                LockTunnel lockTunnel = lockTunnelBoundsChange.TargetElement;
-                lockTunnel.TerminateScopeTunnel.Top = lockTunnel.Top;
+                IBeginLifetimeTunnel beginLifetimeTunnel = beginLifetimeTunnelBoundsChange.TargetElement;
+                beginLifetimeTunnel.TerminateLifetimeTunnel.Top = beginLifetimeTunnel.Top;
             }
         }
     }

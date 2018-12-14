@@ -85,7 +85,9 @@ namespace RustyWires.Compiler
 
         private void LinkPassthroughTerminalPair(Terminal inputTerminal, Terminal outputTerminal)
         {
-            Variable inputVariable = PullInputTerminalVariable(inputTerminal);
+            PullInputTerminalVariable(inputTerminal);
+            // The input terminal may have a variable whether or not it is connected.
+            Variable inputVariable = inputTerminal.GetVariable();
             if (inputVariable != null)
             {
                 outputTerminal.AddTerminalToVariable(inputVariable);
@@ -199,6 +201,17 @@ namespace RustyWires.Compiler
         {
             PullInputTerminalVariable(lockTunnel.GetOuterTerminal(0));
             lockTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
+        {
+            Terminal outerTerminal = loopConditionTunnel.GetOuterTerminal(0);
+            if (PullInputTerminalVariable(outerTerminal) == null)
+            {
+                outerTerminal.AddTerminalToNewVariable();
+            }
+            loopConditionTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 

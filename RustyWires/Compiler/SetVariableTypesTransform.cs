@@ -146,6 +146,22 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
+        {
+            Terminal inputTerminal = loopConditionTunnel.Terminals.ElementAt(0),
+                outputTerminal = loopConditionTunnel.Terminals.ElementAt(1);
+            Variable inputVariable = inputTerminal.GetVariable();
+            if (!inputTerminal.IsConnected)
+            {
+                inputVariable.SetTypeAndLifetime(PFTypes.Boolean.CreateImmutableValue(), Lifetime.Unbounded);
+            }
+            NIType outputType = PFTypes.Boolean.CreateMutableReference();
+
+            Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
+            return true;
+        }
+
         public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
         {
             return true;
@@ -297,7 +313,7 @@ namespace RustyWires.Compiler
             NIType outputType;
             if (outputVariable != null)
             {
-                outputType = PFTypes.Void.CreateImmutableValue();
+                outputType = PFTypes.Void.CreateMutableValue();
                 outputLifetime = Lifetime.Unbounded;
                 if (inputVariable != null)
                 {

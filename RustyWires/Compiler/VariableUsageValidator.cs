@@ -10,11 +10,14 @@ namespace RustyWires.Compiler
         private readonly Variable _variable;
         private readonly Terminal _terminal;
 
-        public VariableUsageValidator(Variable variable, Terminal terminal, bool validateUsageWithinLifetime = true)
+        public VariableUsageValidator(Variable variable, Terminal terminal, bool validateUsageWithinLifetime = true, bool validateTerminalConnected = true)
         {
             _variable = variable;
             _terminal = terminal;
-            _terminal.TestRequiredTerminalConnected();
+            if (validateTerminalConnected)
+            {
+                _terminal.TestRequiredTerminalConnected();
+            }
             if (validateUsageWithinLifetime)
             {
                 TestUsageWithinLifetime();

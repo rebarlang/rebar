@@ -52,6 +52,11 @@ namespace RustyWires
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<RustyWiresFlatSequenceSimpleTunnel>(t => new FlatSequenceTunnelViewModel(t));
             AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceTunnelViewModel(t));
+            AddSupportedModel<SourceModel.Loop>(l => new LoopViewModel(l));
+            AddSupportedModel<SourceModel.LoopTunnel>(t => new Design.LoopTunnelViewModel(t));
+            AddSupportedModel<LoopBorrowTunnel>(t => new Design.LoopBorrowTunnelViewModel(t));
+            AddSupportedModel<LoopConditionTunnel>(t => new Design.LoopTunnelViewModel(t));
+            AddSupportedModel<LoopTerminateLifetimeTunnel>(t => new Design.LoopTunnelViewModel(t));
         }
     }
 }
