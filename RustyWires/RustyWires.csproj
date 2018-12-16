@@ -77,6 +77,7 @@
     <Compile Include="Common\PrimitiveOps.cs" />
     <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
     <Compile Include="Compiler\Lifetime.cs" />
+    <Compile Include="Compiler\Nodes\AssignNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
     <Compile Include="Compiler\Nodes\CreateMutableCopyNode.cs" />
@@ -148,6 +149,7 @@
     <Compile Include="RustyWiresViewModelProvider.cs" />
     <Compile Include="RWTypes.cs" />
     <Compile Include="Common\BorrowMode.cs" />
+    <Compile Include="SourceModel\AssignNode.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\CreateCell.cs" />
     <Compile Include="SourceModel\CreateMutableCopyNode.cs" />

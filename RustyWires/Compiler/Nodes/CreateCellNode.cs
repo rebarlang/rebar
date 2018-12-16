@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace RustyWires.Compiler.Nodes

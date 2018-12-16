@@ -105,6 +105,11 @@ namespace RustyWires.Compiler
             this.VisitRustyWiresNode(borderNode);
         }
 
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitAssignNode(AssignNode assignNode)
+        {
+            yield return new PassthroughTerminalPair(assignNode.InputTerminals.ElementAt(0), assignNode.OutputTerminals.ElementAt(0));
+        }
+
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitConstant(Constant constant)
         {
             return Enumerable.Empty<PassthroughTerminalPair>();

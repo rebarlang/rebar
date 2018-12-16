@@ -14,6 +14,7 @@ namespace RustyWires.Compiler
 
         void VisitSelectReferenceNode(SourceModel.SelectReferenceNode node);
         void VisitCreateMutableCopyNode(SourceModel.CreateMutableCopyNode node);
+        void VisitAssignNode(SourceModel.AssignNode node);
         void VisitExchangeValuesNode(SourceModel.ExchangeValues node);
 
         void VisitImmutableBorrowNode(SourceModel.ImmutableBorrowNode node);

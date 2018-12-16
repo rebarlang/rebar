@@ -5,6 +5,7 @@ namespace RustyWires.Compiler.Nodes
 {
     internal interface IRustyWiresDfirNodeVisitor<T>
     {
+        T VisitAssignNode(AssignNode assignNode);
         T VisitBorrowTunnel(BorrowTunnel borrowTunnel);
         T VisitConstant(Constant constant);
         T VisitCreateCellNode(CreateCellNode createCellNode);

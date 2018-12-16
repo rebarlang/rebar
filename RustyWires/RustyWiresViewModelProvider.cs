@@ -21,6 +21,7 @@ namespace RustyWires
             AddSupportedModel<TerminateLifetime>(n => new BasicNodeViewModel(n, "Terminate Lifetime"));
             AddSupportedModel<SelectReferenceNode>(n => new BasicNodeViewModel(n, "Select Reference"));
             AddSupportedModel<CreateMutableCopyNode>(n => new BasicNodeViewModel(n, "Create Mutable Copy"));
+            AddSupportedModel<AssignNode>(n => new BasicNodeViewModel(n, "Assign"));
             AddSupportedModel<ExchangeValues>(n => new BasicNodeViewModel(n, "Exchange Values"));
             AddSupportedModel<CreateCell>(n => new BasicNodeViewModel(n, "Create Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow"));

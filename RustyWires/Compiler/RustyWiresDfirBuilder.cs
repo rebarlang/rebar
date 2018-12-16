@@ -430,6 +430,15 @@ namespace RustyWires.Compiler
             _map.AddMapping(node.Terminals.ElementAt(2), createMutableCopyDfir.Terminals.ElementAt(2));
         }
 
+        public void VisitAssignNode(SourceModel.AssignNode node)
+        {
+            var assignDfir = new Nodes.AssignNode(_currentDiagram);
+            _map.AddMapping(node, assignDfir);
+            _map.AddMapping(node.Terminals.ElementAt(0), assignDfir.Terminals.ElementAt(0));
+            _map.AddMapping(node.Terminals.ElementAt(1), assignDfir.Terminals.ElementAt(1));
+            _map.AddMapping(node.Terminals.ElementAt(2), assignDfir.Terminals.ElementAt(2));
+        }
+
         public void VisitExchangeValuesNode(ExchangeValues node)
         {
             var exchangeValuesDfir = new ExchangeValuesNode(_currentDiagram);

@@ -70,6 +70,16 @@ namespace RustyWires.Compiler
             this.VisitRustyWiresNode(borderNode);
         }
 
+        public bool VisitAssignNode(AssignNode assignNode)
+        {
+            VariableUsageValidator assigneeValidator = assignNode.InputTerminals[0].GetValidator();
+            assigneeValidator.TestVariableIsMutableType();
+            VariableUsageValidator valueValidator = assignNode.InputTerminals[1].GetValidator();
+            valueValidator.TestVariableIsOwnedType();
+            assigneeValidator.TestSameUnderlyingTypeAs(valueValidator);
+            return true;
+        }
+
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             var validator = borrowTunnel.Terminals[0].GetValidator();
