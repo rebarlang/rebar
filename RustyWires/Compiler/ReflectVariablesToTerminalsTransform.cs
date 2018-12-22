@@ -9,8 +9,7 @@ namespace RustyWires.Compiler
         {
             foreach (Terminal terminal in node.Terminals)
             {
-                Variable variable = terminal.GetVariable();
-                terminal.DataType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+                terminal.DataType = GetTerminalTypeFromVariable(terminal.GetVariable());
             }
         }
 
@@ -22,9 +21,17 @@ namespace RustyWires.Compiler
         {
             foreach (Terminal terminal in borderNode.Terminals)
             {
-                Variable variable = terminal.GetVariable();
-                terminal.DataType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+                terminal.DataType = GetTerminalTypeFromVariable(terminal.GetVariable());
             }
+        }
+
+        private NIType GetTerminalTypeFromVariable(Variable variable)
+        {
+            NIType variableType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+            bool mutableVariable = variable?.Mutable ?? false;
+            return variableType.IsRWReferenceType()
+                ? variableType
+                : variableType.CreateValue(mutableVariable);
         }
     }
 }

@@ -12,6 +12,21 @@ namespace RustyWires.Compiler
 
         public List<Wire> Wires { get; }
 
+        /// <summary>
+        /// True if the <see cref="Variable"/> represents a mutable binding.
+        /// </summary>
+        /// <remarks>This property is independent of whether the <see cref="Variable"/>'s type
+        /// is a mutable reference; it is possible to have a mutable ImmutableReference <see cref="Variable"/>
+        /// (which can be rebound to a different ImmutableReference) and an immutable MutableReference
+        /// <see cref="Variable"/> (where the referred-to storage can be modified, but the <see cref="Variable"/>
+        /// cannot be rebound).</remarks>
+        public bool Mutable { get; } = true;
+
+        /// <summary>
+        /// The data <see cref="NIType"/> stored by the <see cref="Variable"/>.
+        /// </summary>
+        /// <remarks>This property should not store ImmutableValue or MutableValue types.
+        /// ImmutableReference and MutableReference types are allowed.</remarks>
         public NIType Type { get; private set; }
 
         public Lifetime Lifetime { get; private set; }
@@ -36,19 +51,16 @@ namespace RustyWires.Compiler
 
         public override string ToString()
         {
-            return $"v_{Id} : {Type}";
+            string mut = Mutable ? "mut" : string.Empty;
+            return $"v_{Id} : {mut} {Type}";
         }
     }
 
     internal static class VariableExtensions
     {
-        public static NIType GetUnderlyingTypeOrVoid(this Variable variable)
+        public static NIType GetTypeOrVoid(this Variable variable)
         {
-            if (variable == null)
-            {
-                return PFTypes.Void;
-            }
-            return variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            return variable?.Type ?? PFTypes.Void;
         }
     }
 }

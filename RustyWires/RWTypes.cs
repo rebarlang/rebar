@@ -87,6 +87,13 @@ namespace RustyWires
             return type.IsImmutableReferenceType() || type.IsMutableReferenceType();
         }
 
+        public static NIType GetTypeOrReferentType(this NIType type)
+        {
+            return type.IsRWReferenceType()
+                ? type.GetGenericParameters().ElementAt(0)
+                : type;
+        }
+
         public static NIType CreateMutableValue(this NIType valueType)
         {
             var mutableValueTypeBuilder = MutableValueGenericType.DefineClassFromExisting();
@@ -114,6 +121,11 @@ namespace RustyWires
         public static bool IsMutableType(this NIType type)
         {
             return type.IsMutableReferenceType() || type.IsMutableValueType();
+        }
+
+        public static NIType CreateValue(this NIType type, bool mutable)
+        {
+            return mutable ? type.CreateMutableValue() : type.CreateImmutableValue();
         }
 
         public static NIType CreateOption(this NIType valueType)

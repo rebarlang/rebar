@@ -51,20 +51,24 @@ namespace RustyWires.Compiler
             Terminal inputTerminal = borrowTunnel.Terminals.ElementAt(0),
                 outputTerminal = borrowTunnel.Terminals.ElementAt(1);
             Variable inputVariable = inputTerminal.GetVariable();
-            NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
+            NIType outputUnderlyingType = inputVariable.GetTypeOrVoid();
             NIType outputType = borrowTunnel.BorrowMode == Common.BorrowMode.Mutable
                 ? outputUnderlyingType.CreateMutableReference()
                 : outputUnderlyingType.CreateImmutableReference();
 
             Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
             Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
-            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputType,
+                outputLifetime);
             return true;
         }
 
         public bool VisitConstant(Constant constant)
         {
-            constant.OutputTerminal.GetVariable()?.SetTypeAndLifetime(constant.DataType, Lifetime.Static);
+            constant.OutputTerminal.GetVariable()?.SetTypeAndLifetime(
+                constant.DataType,
+                Lifetime.Static);
             return true;
         }
 
@@ -76,8 +80,9 @@ namespace RustyWires.Compiler
             Variable inputVariable = valueInTerminal.GetVariable();
             if (inputVariable != null)
             {
-                NIType underlyingType = inputVariable.Type.GetUnderlyingTypeFromRustyWiresType();
-                cellType = inputVariable.Type.IsMutableValueType()
+                NIType underlyingType = inputVariable.Type;
+                cellType = inputVariable.Mutable    // TODO: Locking and non-Locking cells should be created
+                    // by different nodes
                     ? underlyingType.CreateLockingCell()
                     : underlyingType.CreateNonLockingCell();
             }
@@ -85,14 +90,20 @@ namespace RustyWires.Compiler
             {
                 cellType = PFTypes.Void.CreateNonLockingCell();
             }
-            cellOutTerminal.GetVariable()?.SetTypeAndLifetime(cellType.CreateMutableValue(), Lifetime.Unbounded);
+            cellOutTerminal.GetVariable()?.SetTypeAndLifetime(
+                cellType,
+                Lifetime.Unbounded);
             return true;
         }
 
         public bool VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode)
         {
-            NIType outputType = createMutableCopyNode.InputTerminals.ElementAt(0).GetVariable().GetUnderlyingTypeOrVoid().CreateMutableValue();
-            createMutableCopyNode.OutputTerminals.ElementAt(1).GetVariable()?.SetTypeAndLifetime(outputType, Lifetime.Unbounded);
+            Variable inputVariable = createMutableCopyNode.InputTerminals.ElementAt(0).GetVariable();
+            NIType outputType = inputVariable.GetTypeOrVoid().GetTypeOrReferentType();
+            Variable outputVariable = createMutableCopyNode.OutputTerminals.ElementAt(1).GetVariable();
+            outputVariable?.SetTypeAndLifetime(
+                outputType,
+                Lifetime.Unbounded);
             return true;
         }
 
@@ -111,14 +122,16 @@ namespace RustyWires.Compiler
             Terminal inputTerminal = explicitBorrowNode.Terminals.ElementAt(0);
             Terminal outputTerminal = explicitBorrowNode.Terminals.ElementAt(1);
             Variable inputVariable = inputTerminal.GetVariable();
-            NIType outputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
+            NIType outputUnderlyingType = inputVariable.GetTypeOrVoid();
             NIType outputType = explicitBorrowNode.BorrowMode == Nodes.BorrowMode.OwnerToImmutable
                 ? outputUnderlyingType.CreateImmutableReference()
                 : outputUnderlyingType.CreateMutableReference();
 
             Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
             Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatIsBoundedByDiagram(inputVariable.ToEnumerable());
-            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputType, outputLifetime);
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputType,
+                outputLifetime);
             return true;
         }
 
@@ -126,8 +139,10 @@ namespace RustyWires.Compiler
         {
             Terminal valueInTerminal = freezeNode.Terminals.ElementAt(0);
             Terminal valueOutTerminal = freezeNode.Terminals.ElementAt(1);
-            NIType underlyingType = valueInTerminal.GetVariable().GetUnderlyingTypeOrVoid();
-            valueOutTerminal.GetVariable()?.SetTypeAndLifetime(underlyingType.CreateImmutableValue(), Lifetime.Unbounded);
+            NIType underlyingType = valueInTerminal.GetVariable().GetTypeOrVoid();
+            valueOutTerminal.GetVariable()?.SetTypeAndLifetime(
+                underlyingType,
+                Lifetime.Unbounded);
             return true;
         }
 
@@ -141,14 +156,16 @@ namespace RustyWires.Compiler
             Terminal inputTerminal = lockTunnel.Terminals.ElementAt(0),
                 outputTerminal = lockTunnel.Terminals.ElementAt(1);
             Variable inputVariable = inputTerminal.GetVariable();
-            NIType inputUnderlyingType = inputVariable.GetUnderlyingTypeOrVoid();
+            NIType inputUnderlyingType = inputVariable.GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = inputUnderlyingType.IsLockingCellType()
                 ? inputUnderlyingType.GetUnderlyingTypeFromLockingCellType()
                 : PFTypes.Void;
 
             Lifetime sourceLifetime = inputVariable?.Lifetime ?? Lifetime.Empty;
             Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
-            outputTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableReference(), outputLifetime);
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputUnderlyingType.CreateMutableReference(),
+                outputLifetime);
             return true;
         }
 
@@ -159,7 +176,7 @@ namespace RustyWires.Compiler
             Variable inputVariable = inputTerminal.GetVariable();
             if (!inputTerminal.IsConnected)
             {
-                inputVariable.SetTypeAndLifetime(PFTypes.Boolean.CreateImmutableValue(), Lifetime.Unbounded);
+                inputVariable.SetTypeAndLifetime(PFTypes.Boolean, Lifetime.Unbounded);
             }
             NIType outputType = PFTypes.Boolean.CreateMutableReference();
 
@@ -189,13 +206,15 @@ namespace RustyWires.Compiler
                 refInTerminal2 = pureBinaryPrimitive.Terminals.ElementAt(1),
                 resultOutTerminal = pureBinaryPrimitive.Terminals.ElementAt(4);
             NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();
-            NIType input1UnderlyingType = refInTerminal1.GetVariable().GetUnderlyingTypeOrVoid();
-            NIType input2UnderlyingType = refInTerminal2.GetVariable().GetUnderlyingTypeOrVoid();
+            NIType input1UnderlyingType = refInTerminal1.GetVariable().GetTypeOrVoid().GetTypeOrReferentType();
+            NIType input2UnderlyingType = refInTerminal2.GetVariable().GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = input1UnderlyingType == expectedInputUnderlyingType 
-                && input2UnderlyingType == expectedInputUnderlyingType 
+                && input2UnderlyingType == expectedInputUnderlyingType
                 ? expectedInputUnderlyingType
                 : PFTypes.Void;
-            resultOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableValue(), Lifetime.Unbounded);
+            resultOutTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputUnderlyingType,
+                Lifetime.Unbounded);
             return true;
         }
 
@@ -204,9 +223,11 @@ namespace RustyWires.Compiler
             Terminal refInTerminal = pureUnaryPrimitive.Terminals.ElementAt(0),
                 resultOutTerminal = pureUnaryPrimitive.Terminals.ElementAt(2);
             NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
-            NIType inputUnderlyingType = refInTerminal.GetVariable().GetUnderlyingTypeOrVoid();
+            NIType inputUnderlyingType = refInTerminal.GetVariable().GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = inputUnderlyingType == expectedInputUnderlyingType ? expectedInputUnderlyingType : PFTypes.Void;
-            resultOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateMutableValue(), Lifetime.Unbounded);
+            resultOutTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputUnderlyingType,
+                Lifetime.Unbounded);
             return true;
         }
 
@@ -217,8 +238,8 @@ namespace RustyWires.Compiler
                 refOutTerminal = selectReferenceNode.Terminals.ElementAt(6);
             Variable input1Variable = refInTerminal1.GetVariable();
             Variable input2Variable = refInTerminal2.GetVariable();
-            NIType input1UnderlyingType = input1Variable.GetUnderlyingTypeOrVoid();
-            NIType input2UnderlyingType = input2Variable.GetUnderlyingTypeOrVoid();
+            NIType input1UnderlyingType = input1Variable.GetTypeOrVoid().GetTypeOrReferentType();
+            NIType input2UnderlyingType = input2Variable.GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = input1UnderlyingType == input2UnderlyingType ? input1UnderlyingType : PFTypes.Void;
 
             Lifetime inputLifetime1 = input1Variable?.Lifetime ?? Lifetime.Empty;
@@ -232,21 +253,17 @@ namespace RustyWires.Compiler
         {
             Variable valueInVariable = someConstructorNode.Terminals.ElementAt(0).GetVariable(),
                 optionOutVariable = someConstructorNode.Terminals.ElementAt(1).GetVariable();
-            NIType optionUnderlyingType;
-            Lifetime optionLifetime;
+            NIType optionUnderlyingType = PFTypes.Void;
+            Lifetime optionLifetime = Lifetime.Unbounded;
             if (valueInVariable != null)
             {
-                optionUnderlyingType = valueInVariable.Type.IsRWReferenceType()
-                    ? valueInVariable.Type
-                    : valueInVariable.Type.GetUnderlyingTypeFromRustyWiresType();
+                optionUnderlyingType = valueInVariable.Type;
                 optionLifetime = valueInVariable.Lifetime;
             }
-            else
-            {
-                optionUnderlyingType = PFTypes.Void;
-                optionLifetime = Lifetime.Unbounded;
-            }
-            optionOutVariable?.SetTypeAndLifetime(optionUnderlyingType.CreateOption().CreateMutableValue(), optionLifetime);
+
+            optionOutVariable?.SetTypeAndLifetime(
+                optionUnderlyingType.CreateOption(),
+                optionLifetime);
             return true;
         }
 
@@ -319,7 +336,7 @@ namespace RustyWires.Compiler
             NIType outputType;
             if (outputVariable != null)
             {
-                outputType = PFTypes.Void.CreateMutableValue();
+                outputType = PFTypes.Void;
                 outputLifetime = Lifetime.Unbounded;
                 if (inputVariable != null)
                 {
@@ -345,23 +362,14 @@ namespace RustyWires.Compiler
                     outputType = inputVariable.Type;
                 }
 
-                if (wrapOutputInOption)
+                // If outputType is already an Option value type, then don't re-wrap it.
+                if (wrapOutputInOption && !outputType.IsOptionType())
                 {
-                    // If outputType is already an Option value type, then don't re-wrap it.
-                    if (outputType.IsRWReferenceType()
-                        || !outputType.GetUnderlyingTypeFromRustyWiresType().IsOptionType())
-                    {
-                        bool mutable = outputType.IsMutableType();
-                        NIType optionType = (outputType.IsRWReferenceType()
-                            ? outputType
-                            : outputType.GetUnderlyingTypeFromRustyWiresType())
-                            .CreateOption();
-                        outputType = mutable
-                            ? optionType.CreateMutableValue()
-                            : optionType.CreateImmutableValue();
-                    }
+                    outputType = outputType.CreateOption();
                 }
-                outputVariable.SetTypeAndLifetime(outputType, outputLifetime);
+                outputVariable.SetTypeAndLifetime(
+                    outputType,
+                    outputLifetime);
             }
             return true;
         }
@@ -388,20 +396,23 @@ namespace RustyWires.Compiler
             {
                 if (inputVariable != null)
                 {
-                    NIType optionType = inputVariable.Type.GetUnderlyingTypeFromRustyWiresType();
+                    NIType optionType = inputVariable.Type;
                     NIType optionValueType;
                     if (optionType.TryDestructureOptionType(out optionValueType))
                     {
-                        NIType outputType = optionValueType.IsRWReferenceType() ? optionValueType : optionValueType.CreateMutableValue();
                         Lifetime outputLifetime = inputVariable.Lifetime.IsBounded
                             ? outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram()
-                            : inputVariable.Lifetime;
-                        outputVariable.SetTypeAndLifetime(outputType, outputLifetime);
+                            : inputVariable.Lifetime; // TODO: this can't be right if it's supposed to be in the  inner variable set
+                        outputVariable.SetTypeAndLifetime(
+                            optionValueType,
+                            outputLifetime);
                         return true;
                     }
                 }
 
-                outputVariable.SetTypeAndLifetime(PFTypes.Void.CreateMutableValue(), Lifetime.Unbounded);
+                outputVariable.SetTypeAndLifetime(
+                    PFTypes.Void,
+                    Lifetime.Unbounded);
             }
             return true;
         }

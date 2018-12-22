@@ -44,7 +44,11 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            if (!_variable.Type.IsMutableType())
+            bool isMutable =  _variable.Type.IsRWReferenceType()
+                ? _variable.Type.IsMutableReferenceType()
+                : _variable.Mutable;
+            // TODO: change to using _variable.Mutable || _variable.Type.IsMutableReference
+            if (!isMutable)
             {
                 _terminal.ParentNode.SetDfirMessage(RustyWiresMessages.TerminalDoesNotAcceptImmutableType);
                 return false;
@@ -58,8 +62,7 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            if (_variable.Type.IsImmutableReferenceType() ||
-                _variable.Type.IsMutableReferenceType())
+            if (_variable.Type.IsRWReferenceType())
             {
                 _terminal.ParentNode.SetDfirMessage(RustyWiresMessages.TerminalDoesNotAcceptReference);
                 return false;
@@ -73,7 +76,7 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            NIType underlyingType = _variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            NIType underlyingType = _variable.Type.GetTypeOrReferentType();
             if (underlyingType != expectedType)
             {
                 _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedType));
@@ -88,7 +91,7 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            NIType underlyingType = _variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            NIType underlyingType = _variable.Type.GetTypeOrReferentType();
             if (!underlyingTypePredicate(underlyingType))
             {
                 _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedTypeExample));
@@ -103,7 +106,7 @@ namespace RustyWires.Compiler
             {
                 return false;
             }
-            NIType otherUnderlyingType = other._variable.Type.GetUnderlyingTypeFromRustyWiresType();
+            NIType otherUnderlyingType = other._variable.Type.GetTypeOrReferentType();
             return TestExpectedUnderlyingType(otherUnderlyingType);
         }
     }

@@ -141,10 +141,8 @@ namespace RustyWires.Common
                         terminalVariable.SetTypeAndLifetime(dataType.CreateMutableReference(), outputLifetime);
                         break;
                     case TypePermissiveness.Owner:
-                        terminalVariable.SetTypeAndLifetime(dataType.CreateImmutableValue(), Lifetime.Unbounded);
-                        break;
                     case TypePermissiveness.MutableOwner:
-                        terminalVariable.SetTypeAndLifetime(dataType.CreateMutableValue(), Lifetime.Unbounded);
+                        terminalVariable.SetTypeAndLifetime(dataType, Lifetime.Unbounded);
                         break;
                 }
                 ++index;
