@@ -29,39 +29,22 @@ namespace RustyWires.Compiler
 
         private bool WireTypeMayFork(NIType wireType)
         {
-            if (wireType.IsMutableValueType() || wireType.IsImmutableValueType())
-            {
-                return CanShallowCopyDataType(wireType.GetUnderlyingTypeFromRustyWiresType());
-            }
-
-            if (wireType.IsMutableReferenceType())
-            {
-                return false;
-            }
-
             if (wireType.IsImmutableReferenceType())
             {
                 return true;
             }
 
-            return false;
-        }
+            if (wireType.IsNumeric() || wireType.IsBoolean())
+            {
+                return true;
+            }
 
-        private bool CanShallowCopyDataType(NIType dataType)
-        {
-            if (dataType.IsNumeric())
-            {
-                return true;
-            }
-            if (dataType.IsImmutableReferenceType())
-            {
-                return true;
-            }
             NIType optionValueType;
-            if (dataType.TryDestructureOptionType(out optionValueType))
+            if (wireType.TryDestructureOptionType(out optionValueType))
             {
-                return CanShallowCopyDataType(optionValueType);
+                return WireTypeMayFork(optionValueType);
             }
+
             return false;
         }
 
