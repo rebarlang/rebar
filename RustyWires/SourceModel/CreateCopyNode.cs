@@ -8,24 +8,24 @@ using RustyWires.Compiler;
 
 namespace RustyWires.SourceModel
 {
-    public class CreateMutableCopyNode : RustyWiresSimpleNode
+    public class CreateCopyNode : RustyWiresSimpleNode
     {
-        private const string ElementName = "CreateMutableCopyNode";
+        private const string ElementName = "CreateCopyNode";
 
-        protected CreateMutableCopyNode()
+        protected CreateCopyNode()
         {
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, immutableReferenceType, "reference in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, immutableReferenceType, "reference out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateMutableValue(), "mutable copy"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateMutableValue(), "copy"));
         }
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
-        public static CreateMutableCopyNode CreateCreateMutableCopyNode(IElementCreateInfo elementCreateInfo)
+        public static CreateCopyNode CreateCreateCopyNode(IElementCreateInfo elementCreateInfo)
         {
-            var createMutableCopyNode = new CreateMutableCopyNode();
-            createMutableCopyNode.Init(elementCreateInfo);
-            return createMutableCopyNode;
+            var createCopyNode = new CreateCopyNode();
+            createCopyNode.Init(elementCreateInfo);
+            return createCopyNode;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
@@ -45,7 +45,7 @@ namespace RustyWires.SourceModel
             var rustyWiresVisitor = visitor as IRustyWiresFunctionVisitor;
             if (rustyWiresVisitor != null)
             {
-                rustyWiresVisitor.VisitCreateMutableCopyNode(this);
+                rustyWiresVisitor.VisitCreateCopyNode(this);
             }
             else
             {

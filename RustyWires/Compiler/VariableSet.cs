@@ -20,18 +20,18 @@ namespace RustyWires.Compiler
         private readonly Dictionary<Lifetime, List<Variable>> _variablesInterruptedByLifetimes = new Dictionary<Lifetime, List<Variable>>();
         private readonly BoundedLifetimeGraph _boundedLifetimeGraph = new BoundedLifetimeGraph();
 
-        private Variable CreateNewVariable(Terminal originatingTerminal)
+        private Variable CreateNewVariable(Terminal originatingTerminal, bool mutableVariable)
         {
-            var variable = new Variable(_variables.Count, originatingTerminal);
+            var variable = new Variable(_variables.Count, mutableVariable, originatingTerminal);
             _variables.Add(variable);
             return variable;
         }
 
         public IEnumerable<Variable> Variables => _variables;
 
-        public Variable AddTerminalToNewVariable(Terminal terminal)
+        public Variable AddTerminalToNewVariable(Terminal terminal, bool mutableVariable)
         {
-            Variable variable = CreateNewVariable(terminal);
+            Variable variable = CreateNewVariable(terminal, mutableVariable);
             _terminalVariables[GetVariableTerminalId(terminal)] = variable;
             return variable;
         }
@@ -144,9 +144,9 @@ namespace RustyWires.Compiler
             terminal.GetVariableSet().AddTerminalToVariable(variable, terminal);
         }
 
-        public static Variable AddTerminalToNewVariable(this Terminal terminal)
+        public static Variable AddTerminalToNewVariable(this Terminal terminal, bool mutableVariable)
         {
-            return terminal.GetVariableSet().AddTerminalToNewVariable(terminal);
+            return terminal.GetVariableSet().AddTerminalToNewVariable(terminal, mutableVariable);
         }
 
         public static VariableUsageValidator GetValidator(this Terminal terminal)

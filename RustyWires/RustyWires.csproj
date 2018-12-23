@@ -80,12 +80,11 @@
     <Compile Include="Compiler\Nodes\AssignNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
-    <Compile Include="Compiler\Nodes\CreateMutableCopyNode.cs" />
+    <Compile Include="Compiler\Nodes\CreateCopyNode.cs" />
     <Compile Include="Compiler\Nodes\DropNode.cs" />
     <Compile Include="Compiler\Nodes\ExchangeValuesNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitUnborrowNode.cs" />
-    <Compile Include="Compiler\Nodes\FreezeNode.cs" />
     <Compile Include="Compiler\Nodes\IBeginLifetimeTunnel.cs" />
     <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\IRustyWiresDfirNodeVisitor.cs" />
@@ -121,6 +120,7 @@
     <Compile Include="Compiler\VariableSet.cs" />
     <Compile Include="Compiler\VariableUsageValidator.cs" />
     <Compile Include="Compiler\VisitorTransformBase.cs" />
+    <Compile Include="Compiler\WireProperties.cs" />
     <Compile Include="Design\BorderNodeViewModelHelpers.cs" />
     <Compile Include="Design\BorrowTunnelViewModel.cs" />
     <Compile Include="Design\BasicNodeViewModel.cs" />
@@ -134,6 +134,7 @@
     <Compile Include="Design\RustyWiresProjectItemInfoService.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
     <Compile Include="Design\TerminateScopeTunnelViewModel.cs" />
+    <Compile Include="Design\WireMutabilityViewModelService.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -152,10 +153,9 @@
     <Compile Include="SourceModel\AssignNode.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\CreateCell.cs" />
-    <Compile Include="SourceModel\CreateMutableCopyNode.cs" />
+    <Compile Include="SourceModel\CreateCopyNode.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\ExchangeValues.cs" />
-    <Compile Include="SourceModel\Freeze.cs" />
     <Compile Include="SourceModel\IBeginLifetimeTunnel.cs" />
     <Compile Include="SourceModel\IBorrowTunnel.cs" />
     <Compile Include="SourceModel\ImmutableBorrowNode.cs" />
@@ -183,6 +183,7 @@
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
+    <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="RustyWiresDiagramEditor.xaml">

@@ -20,7 +20,7 @@ namespace RustyWires.Compiler
         /// (which can be rebound to a different ImmutableReference) and an immutable MutableReference
         /// <see cref="Variable"/> (where the referred-to storage can be modified, but the <see cref="Variable"/>
         /// cannot be rebound).</remarks>
-        public bool Mutable { get; } = true;
+        public bool Mutable { get; }
 
         /// <summary>
         /// The data <see cref="NIType"/> stored by the <see cref="Variable"/>.
@@ -31,9 +31,10 @@ namespace RustyWires.Compiler
 
         public Lifetime Lifetime { get; private set; }
 
-        public Variable(int id, Terminal originatingTerminal)
+        public Variable(int id, bool mutable, Terminal originatingTerminal)
         {
             Id = id;
+            Mutable = mutable;
             OriginatingTerminal = originatingTerminal;
             Wires = new List<Wire>();
         }

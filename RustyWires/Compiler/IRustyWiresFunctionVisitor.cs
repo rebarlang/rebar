@@ -13,13 +13,11 @@ namespace RustyWires.Compiler
         void VisitTerminateLifetimeNode(SourceModel.TerminateLifetime node);
 
         void VisitSelectReferenceNode(SourceModel.SelectReferenceNode node);
-        void VisitCreateMutableCopyNode(SourceModel.CreateMutableCopyNode node);
+        void VisitCreateCopyNode(SourceModel.CreateCopyNode node);
         void VisitAssignNode(SourceModel.AssignNode node);
         void VisitExchangeValuesNode(SourceModel.ExchangeValues node);
 
         void VisitImmutableBorrowNode(SourceModel.ImmutableBorrowNode node);
-
-        void VisitFreezeNode(SourceModel.Freeze node);
 
         void VisitCreateCellNode(SourceModel.CreateCell node);
 

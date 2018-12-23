@@ -169,6 +169,10 @@ namespace RustyWires.Compiler
                     }
                 }
             }
+            foreach (var wire in diagram.Wires)
+            {
+                VisitWire(wire);
+            }
         }
 
         private void VisitConnectable(Connectable connectable)
@@ -187,6 +191,17 @@ namespace RustyWires.Compiler
             if (terminateLifetime != null)
             {
                 VisitTerminateLifetime(terminateLifetime);
+            }
+        }
+
+        private void VisitWire(NationalInstruments.SourceModel.Wire wire)
+        {
+            var dfirWire = (NationalInstruments.Dfir.Wire)_map.GetDfirForModel(wire);
+            bool isFirstVariableWire = dfirWire.GetIsFirstVariableWire();
+            wire.SetIsFirstVariableWire(isFirstVariableWire);
+            if (!isFirstVariableWire)
+            {
+                wire.SetWireBeginsMutableVariable(false);
             }
         }
 

@@ -86,9 +86,9 @@ namespace RustyWires.Compiler
             return true;
         }
 
-        public bool VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode)
+        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
         {
-            VariableUsageValidator validator = createMutableCopyNode.InputTerminals.ElementAt(0).GetValidator();
+            VariableUsageValidator validator = createCopyNode.InputTerminals.ElementAt(0).GetValidator();
             // TODO: check that the underlying type can be copied
             return true;
         }
@@ -113,14 +113,6 @@ namespace RustyWires.Compiler
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
         {
             VariableUsageValidator validator = explicitBorrowNode.Terminals[0].GetValidator();
-            return true;
-        }
-
-        public bool VisitFreezeNode(FreezeNode freezeNode)
-        {
-            VariableUsageValidator validator = freezeNode.Terminals[0].GetValidator();
-            validator.TestVariableIsOwnedType();
-            validator.TestVariableIsMutableType();
             return true;
         }
 

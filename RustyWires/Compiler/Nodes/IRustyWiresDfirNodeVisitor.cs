@@ -9,11 +9,10 @@ namespace RustyWires.Compiler.Nodes
         T VisitBorrowTunnel(BorrowTunnel borrowTunnel);
         T VisitConstant(Constant constant);
         T VisitCreateCellNode(CreateCellNode createCellNode);
-        T VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode);
+        T VisitCreateCopyNode(CreateCopyNode createCopyNode);
         T VisitDropNode(DropNode dropNode);
         T VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode);
         T VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode);
-        T VisitFreezeNode(FreezeNode freezeNode);
         T VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode);
         T VisitLockTunnel(LockTunnel lockTunnel);
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);

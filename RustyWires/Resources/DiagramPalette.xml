@@ -17,11 +17,11 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
-    <Leaf Display="Create Mutable Copy" UniqueId="RustyWires:CreateMutableCopy" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+    <Leaf Display="Create Copy" UniqueId="RustyWires:CreateCopy" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <Synonyms>Copy</Synonyms>
       <pf:MergeScript>
         <pf:MergeItem>
-          <rw:CreateMutableCopyNode />
+          <rw:CreateCopyNode />
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
@@ -51,13 +51,6 @@
       <pf:MergeScript>
         <pf:MergeItem>
           <rw:ImmutableBorrowNode />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Freeze" UniqueId="RustyWires:Freeze" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rw:Freeze />
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>

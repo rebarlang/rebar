@@ -96,11 +96,11 @@ namespace RustyWires.Compiler
             return true;
         }
 
-        public bool VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode)
+        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
         {
-            Variable inputVariable = createMutableCopyNode.InputTerminals.ElementAt(0).GetVariable();
+            Variable inputVariable = createCopyNode.InputTerminals.ElementAt(0).GetVariable();
             NIType outputType = inputVariable.GetTypeOrVoid().GetTypeOrReferentType();
-            Variable outputVariable = createMutableCopyNode.OutputTerminals.ElementAt(1).GetVariable();
+            Variable outputVariable = createCopyNode.OutputTerminals.ElementAt(1).GetVariable();
             outputVariable?.SetTypeAndLifetime(
                 outputType,
                 Lifetime.Unbounded);
@@ -132,17 +132,6 @@ namespace RustyWires.Compiler
             outputTerminal.GetVariable()?.SetTypeAndLifetime(
                 outputType,
                 outputLifetime);
-            return true;
-        }
-
-        public bool VisitFreezeNode(FreezeNode freezeNode)
-        {
-            Terminal valueInTerminal = freezeNode.Terminals.ElementAt(0);
-            Terminal valueOutTerminal = freezeNode.Terminals.ElementAt(1);
-            NIType underlyingType = valueInTerminal.GetVariable().GetTypeOrVoid();
-            valueOutTerminal.GetVariable()?.SetTypeAndLifetime(
-                underlyingType,
-                Lifetime.Unbounded);
             return true;
         }
 
@@ -316,7 +305,7 @@ namespace RustyWires.Compiler
                 }
                 else
                 {
-                    variableSet.AddTerminalToNewVariable(outputTerminal);
+                    variableSet.AddTerminalToNewVariable(outputTerminal, false);
                 }
             }
             return true;

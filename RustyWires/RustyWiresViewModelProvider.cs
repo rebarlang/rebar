@@ -20,12 +20,11 @@ namespace RustyWires
             AddSupportedModel<MutablePassthroughNode>(n => new BasicNodeViewModel(n, "Mutable Passthrough"));
             AddSupportedModel<TerminateLifetime>(n => new BasicNodeViewModel(n, "Terminate Lifetime"));
             AddSupportedModel<SelectReferenceNode>(n => new BasicNodeViewModel(n, "Select Reference"));
-            AddSupportedModel<CreateMutableCopyNode>(n => new BasicNodeViewModel(n, "Create Mutable Copy"));
+            AddSupportedModel<CreateCopyNode>(n => new BasicNodeViewModel(n, "Create Copy"));
             AddSupportedModel<AssignNode>(n => new BasicNodeViewModel(n, "Assign"));
             AddSupportedModel<ExchangeValues>(n => new BasicNodeViewModel(n, "Exchange Values"));
             AddSupportedModel<CreateCell>(n => new BasicNodeViewModel(n, "Create Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow"));
-            AddSupportedModel<Freeze>(n => new BasicNodeViewModel(n, "Freeze"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some"));
 
             AddSupportedModel<SourceModel.Add>(n => new BasicNodeViewModel(n, "Add"));
@@ -58,6 +57,16 @@ namespace RustyWires
             AddSupportedModel<LoopBorrowTunnel>(t => new Design.LoopBorrowTunnelViewModel(t));
             AddSupportedModel<LoopConditionTunnel>(t => new Design.LoopTunnelViewModel(t));
             AddSupportedModel<LoopTerminateLifetimeTunnel>(t => new Design.LoopTunnelViewModel(t));
+        }
+
+        /// <inheritdoc />
+        public override void OnAnyViewModelCreated(Element model, IElementViewModel viewModel)
+        {
+            base.OnAnyViewModelCreated(model, viewModel);
+            if (model is Wire)
+            {
+                viewModel.AttachService(new WireMutabilityViewModelService());
+            }
         }
     }
 }

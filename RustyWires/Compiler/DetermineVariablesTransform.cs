@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.Dfir;
 using RustyWires.Compiler.Nodes;
@@ -32,7 +31,7 @@ namespace RustyWires.Compiler
                     }
                     else
                     {
-                        sinkTerminal.AddTerminalToNewVariable();
+                        sinkTerminal.AddTerminalToNewVariable(sourceVariable.Mutable);
                     }
                 }
             }
@@ -67,8 +66,20 @@ namespace RustyWires.Compiler
 
             foreach (var nonPassthroughOutput in nonPassthroughOutputs)
             {
-                nonPassthroughOutput.AddTerminalToNewVariable();
+                AddTerminalToNewVariable(nonPassthroughOutput, !(node is TerminateLifetimeNode));
             }
+        }
+
+        private void AddTerminalToNewVariable(Terminal outputTerminal, bool markWireAsVariableFirst = true)
+        {
+            bool mutableVariable = false;
+            if (outputTerminal.IsConnected && markWireAsVariableFirst)
+            {
+                Wire connectedWire = (Wire)outputTerminal.ConnectedTerminal.ParentNode;
+                connectedWire.SetIsFirstVariableWire(true);
+                mutableVariable = connectedWire.GetWireBeginsMutableVariable();
+            }
+            outputTerminal.AddTerminalToNewVariable(mutableVariable);
         }
 
         private Variable PullInputTerminalVariable(Terminal inputTerminal)
@@ -96,7 +107,8 @@ namespace RustyWires.Compiler
             {
                 // the input on a passthrough is not wired, but the output is
                 // for now, create a new variable for the output
-                outputTerminal.AddTerminalToNewVariable();
+                // Since the wire will be broken, do not allow it to be set as mutable
+                AddTerminalToNewVariable(outputTerminal, false);
             }
         }
 
@@ -120,9 +132,9 @@ namespace RustyWires.Compiler
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
-        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitCreateMutableCopyNode(CreateMutableCopyNode createMutableCopyNode)
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitCreateCopyNode(CreateCopyNode createCopyNode)
         {
-            yield return new PassthroughTerminalPair(createMutableCopyNode.InputTerminals.ElementAt(0), createMutableCopyNode.OutputTerminals.ElementAt(0));
+            yield return new PassthroughTerminalPair(createCopyNode.InputTerminals.ElementAt(0), createCopyNode.OutputTerminals.ElementAt(0));
         }
 
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitDropNode(DropNode dropNode)
@@ -137,11 +149,6 @@ namespace RustyWires.Compiler
         }
 
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
-        {
-            return Enumerable.Empty<PassthroughTerminalPair>();
-        }
-
-        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitFreezeNode(FreezeNode freezeNode)
         {
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
@@ -198,14 +205,14 @@ namespace RustyWires.Compiler
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             PullInputTerminalVariable(borrowTunnel.GetOuterTerminal(0));
-            borrowTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            AddTerminalToNewVariable(borrowTunnel.GetInnerTerminal(0, 0));
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitLockTunnel(LockTunnel lockTunnel)
         {
             PullInputTerminalVariable(lockTunnel.GetOuterTerminal(0));
-            lockTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            AddTerminalToNewVariable(lockTunnel.GetInnerTerminal(0, 0));
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
@@ -214,9 +221,11 @@ namespace RustyWires.Compiler
             Terminal outerTerminal = loopConditionTunnel.GetOuterTerminal(0);
             if (PullInputTerminalVariable(outerTerminal) == null)
             {
-                outerTerminal.AddTerminalToNewVariable();
+                // TODO: how to determine the mutability of the outer loop condition variable?
+                AddTerminalToNewVariable(outerTerminal, false);
             }
-            loopConditionTunnel.GetInnerTerminal(0, 0).AddTerminalToNewVariable();
+            // Disallow marking the loop condition reference variable as mutable.
+            AddTerminalToNewVariable(loopConditionTunnel.GetInnerTerminal(0, 0), false);
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
@@ -225,7 +234,7 @@ namespace RustyWires.Compiler
             Terminal inputTerminal = tunnel.Direction == Direction.Input ? tunnel.GetOuterTerminal() : tunnel.GetInnerTerminal();
             Terminal outputTerminal = tunnel.Direction == Direction.Input ? tunnel.GetInnerTerminal() : tunnel.GetOuterTerminal();
             PullInputTerminalVariable(inputTerminal);
-            outputTerminal.AddTerminalToNewVariable();
+            AddTerminalToNewVariable(outputTerminal);
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
@@ -240,7 +249,7 @@ namespace RustyWires.Compiler
             Terminal inputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetOuterTerminal(0) : unwrapOptionTunnel.GetInnerTerminal(0, 0);
             Terminal outputTerminal = unwrapOptionTunnel.Direction == Direction.Input ? unwrapOptionTunnel.GetInnerTerminal(0, 0) : unwrapOptionTunnel.GetOuterTerminal(0);
             PullInputTerminalVariable(inputTerminal);
-            outputTerminal.AddTerminalToNewVariable();
+            AddTerminalToNewVariable(outputTerminal);
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
     }

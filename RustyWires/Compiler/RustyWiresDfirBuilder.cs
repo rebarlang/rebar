@@ -421,13 +421,13 @@ namespace RustyWires.Compiler
             _map.AddMapping(node.Terminals.ElementAt(6), selectReferenceDfir.Terminals.ElementAt(6));
         }
 
-        public void VisitCreateMutableCopyNode(SourceModel.CreateMutableCopyNode node)
+        public void VisitCreateCopyNode(SourceModel.CreateCopyNode node)
         {
-            var createMutableCopyDfir = new Nodes.CreateMutableCopyNode(_currentDiagram);
-            _map.AddMapping(node, createMutableCopyDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), createMutableCopyDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), createMutableCopyDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), createMutableCopyDfir.Terminals.ElementAt(2));
+            var createCopyDfir = new Nodes.CreateCopyNode(_currentDiagram);
+            _map.AddMapping(node, createCopyDfir);
+            _map.AddMapping(node.Terminals.ElementAt(0), createCopyDfir.Terminals.ElementAt(0));
+            _map.AddMapping(node.Terminals.ElementAt(1), createCopyDfir.Terminals.ElementAt(1));
+            _map.AddMapping(node.Terminals.ElementAt(2), createCopyDfir.Terminals.ElementAt(2));
         }
 
         public void VisitAssignNode(SourceModel.AssignNode node)
@@ -495,14 +495,6 @@ namespace RustyWires.Compiler
             _map.AddMapping(node.Terminals.ElementAt(3), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(3));
         }
 
-        public void VisitFreezeNode(Freeze node)
-        {
-            var freezeDfir = new FreezeNode(_currentDiagram);
-            _map.AddMapping(node, freezeDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), freezeDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), freezeDfir.Terminals.ElementAt(1));
-        }
-
         public void VisitCreateCellNode(CreateCell node)
         {
             var createCellDfir = new CreateCellNode(_currentDiagram);
@@ -545,11 +537,11 @@ namespace RustyWires.Compiler
         /// </summary>
         private void ConnectWires()
         {
-            foreach (NationalInstruments.SourceModel.Wire wire in _modelWires)
+            foreach (Wire wire in _modelWires)
             {
                 var connectedDfirTerminals = new List<NationalInstruments.Dfir.Terminal>();
-                var looseEnds = new List<NationalInstruments.SourceModel.Terminal>();
-                foreach (NationalInstruments.SourceModel.Terminal terminal in wire.Terminals)
+                var looseEnds = new List<Terminal>();
+                foreach (Terminal terminal in wire.Terminals)
                 {
                     if (terminal.ConnectedTerminal != null)
                     {
@@ -564,15 +556,16 @@ namespace RustyWires.Compiler
                 var parentDiagram = (NationalInstruments.Dfir.Diagram)_map.GetDfirForModel(wire.Owner);
                 NationalInstruments.Dfir.Wire dfirWire = NationalInstruments.Dfir.Wire.Create(parentDiagram, connectedDfirTerminals);
                 _map.AddMapping(wire, dfirWire);
+                dfirWire.SetWireBeginsMutableVariable(wire.GetWireBeginsMutableVariable());
                 int i = 0;
                 // Map connected model wire terminals
-                foreach (NationalInstruments.SourceModel.Terminal terminal in wire.Terminals.Where(t => t.ConnectedTerminal != null))
+                foreach (Terminal terminal in wire.Terminals.Where(t => t.ConnectedTerminal != null))
                 {
                     MapTerminalAndType(terminal, dfirWire.Terminals[i]);
                     i++;
                 }
                 // Map unconnected model wire terminals
-                foreach (NationalInstruments.SourceModel.Terminal terminal in looseEnds)
+                foreach (Terminal terminal in looseEnds)
                 {
                     NationalInstruments.Dfir.Terminal dfirTerminal = dfirWire.CreateBranch();
                     MapTerminalAndType(terminal, dfirTerminal);
