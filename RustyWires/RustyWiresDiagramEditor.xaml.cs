@@ -32,7 +32,7 @@ namespace RustyWires
             DesignerSurfaceProperties.SetCanShowGridlines(_diagram, true);
             DesignerSurfaceProperties.SetCanSnapToGrid(_diagram, true);
             DesignerSurfaceProperties.SetSnapToGrid(_diagram, true);
-            DesignerSurfaceProperties.SetShowGridlines(_diagram, true);
+            DesignerSurfaceProperties.SetShowGridlines(_diagram, false);
             DesignerSurfaceProperties.SetCanSnapToObjects(_diagram, true);
             DesignerSurfaceProperties.SetSnapToGridSize(this, new SMSize(StockDiagramGeometries.GridSize * 2, StockDiagramGeometries.GridSize * 2));
             DesignerSurfaceProperties.SetGridlineSpacing(this, new SMSize(2 * StockDiagramGeometries.GridSize, 2 * StockDiagramGeometries.GridSize));
