@@ -1,39 +1,38 @@
-﻿using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Media;
-using NationalInstruments.Core;
-using NationalInstruments.Design;
+﻿using NationalInstruments.Design;
 using NationalInstruments.SourceModel;
-using RustyWires.SourceModel;
 
 namespace RustyWires.Design
 {
     public class BasicNodeViewModel : NodeViewModel
     {
-        private readonly string _name;
+        private readonly string _foregroundExplicitUri;
 
         public BasicNodeViewModel(Node node, string name)
-            : base(node)
+            : this(node, name, null)
         {
-            _name = name;
         }
 
-#if FALSE
-        public override IEnumerable<RenderData> RenderData
+        public BasicNodeViewModel(Node node, string name, string foregroundExplicitUri)
+            : base(node)
+        {
+            Name = name;
+            _foregroundExplicitUri = foregroundExplicitUri;
+        }
+
+        /// <inheritoc />
+        public override string Name { get; }
+
+        /// <inheritoc />
+        protected override ResourceUri ForegroundUri
         {
             get
             {
-                var background = StockAssets.GetPrimitiveRectangle(this);
-                background.Stretch = Stretch.Fill;
-                background.HorizontalAlignment = HorizontalAlignment.Stretch;
-                background.VerticalAlignment = VerticalAlignment.Stretch;
-                yield return background;
-                // yield return new ViewModelImageData(this) { ImageUri = ForegroundUri };
+                if (_foregroundExplicitUri != null)
+                {
+                    return new ResourceUri(this, _foregroundExplicitUri);
+                }
+                return base.ForegroundUri;
             }
         }
-#endif
-
-        public override string Name => _name;
-        // protected override ResourceUri ForegroundUri => new ResourceUri(this, "Resources/Diagram/Nodes/DropNode");
     }
 }

@@ -31,7 +31,7 @@ namespace RustyWires.SourceModel
 
         protected override void SetIconViewGeometry()
         {
-            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 2);
+            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
             var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
             terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
             terminals[1].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);

@@ -129,11 +129,12 @@
     <Compile Include="Design\LoopTunnelViewModel.cs" />
     <Compile Include="Design\LoopTunnelViewModelHelpers.cs" />
     <Compile Include="Design\LoopViewModel.cs" />
+    <Compile Include="Design\RustyWiresFlatSequenceBorderNodeViewModel.cs" />
     <Compile Include="Design\RustyWiresFlatSequenceEditor.cs" />
+    <Compile Include="Design\RustyWiresFlatSequenceSimpleBorderNodeViewModel.cs" />
     <Compile Include="Design\RustyWiresFunctionSignatureCacheService.cs" />
     <Compile Include="Design\RustyWiresProjectItemInfoService.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
-    <Compile Include="Design\TerminateScopeTunnelViewModel.cs" />
     <Compile Include="Design\WireMutabilityViewModelService.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -197,26 +198,41 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>LocalizedStrings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Diagram\Nodes\DropNode_40x40.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Design\Resources\MutableReferencePattern.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Design\Resources\ImmutableReferencePattern.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Design\Resources\MutableValuePattern.xml">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Design\Resources\ImmutableValuePattern.xml" />
+    <EmbeddedResource Include="Design\Resources\MutableReferencePattern.xml" />
+    <EmbeddedResource Include="Design\Resources\MutableValuePattern.xml" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Loop_96.xml" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateAdd.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateAnd.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateDivide.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateMultiply.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateNot.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateOr.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateSubtract.png" />
+    <Resource Include="Resources\Diagram\Nodes\AccumulateXor.png" />
+    <Resource Include="Resources\Diagram\Nodes\Add.png" />
+    <Resource Include="Resources\Diagram\Nodes\And.png" />
+    <Resource Include="Resources\Diagram\Nodes\Assign.png" />
+    <Resource Include="Resources\Diagram\Nodes\CreateCopy.png" />
+    <Resource Include="Resources\Diagram\Nodes\Divide.png" />
+    <Resource Include="Resources\Diagram\Nodes\Drop.png" />
+    <Resource Include="Resources\Diagram\Nodes\ExchangeValues.png" />
+    <Resource Include="Resources\Diagram\Nodes\ImmutableBorrowNode.png" />
+    <Resource Include="Resources\Diagram\Nodes\Increment.png" />
+    <Resource Include="Resources\Diagram\Nodes\Lock.png" />
+    <Resource Include="Resources\Diagram\Nodes\LoopCondition.png" />
+    <Resource Include="Resources\Diagram\Nodes\Multiply.png" />
+    <Resource Include="Resources\Diagram\Nodes\Not.png" />
+    <Resource Include="Resources\Diagram\Nodes\Or.png" />
+    <Resource Include="Resources\Diagram\Nodes\SelectReference.png" />
+    <Resource Include="Resources\Diagram\Nodes\Some.png" />
+    <Resource Include="Resources\Diagram\Nodes\Subtract.png" />
+    <Resource Include="Resources\Diagram\Nodes\TerminateLifetime.png" />
+    <Resource Include="Resources\Diagram\Nodes\UnwrapOption.png" />
+    <Resource Include="Resources\Diagram\Nodes\Xor.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -13,7 +13,7 @@ using RustyWires.SourceModel;
 
 namespace RustyWires.Design
 {
-    public class BorrowTunnelViewModel : BorderNodeViewModel
+    public class BorrowTunnelViewModel : RustyWiresFlatSequenceBorderNodeViewModel
     {
         public static readonly ICommandEx BorrowModeGroupCommand = new ShellRelayCommand()
         {
@@ -49,6 +49,9 @@ namespace RustyWires.Design
         public BorrowTunnelViewModel(BorrowTunnel element) : base(element)
         {
         }
+
+        /// <inheritoc />
+        protected override ResourceUri ForegroundUri => new ResourceUri(this, @"Resources\Diagram\Nodes\ImmutableBorrowNode.png");
 
         /// <inheritdoc />
         public override void CreateCommandContent(ICommandPresentationContext context)

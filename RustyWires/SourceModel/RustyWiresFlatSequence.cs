@@ -1,4 +1,5 @@
 ﻿using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using NationalInstruments.VI.SourceModel;
@@ -26,6 +27,19 @@ namespace RustyWires.SourceModel
             StructureIntersection intersection)
         {
             return MakeTunnel<RustyWiresFlatSequenceSimpleTunnel>(startDiagram, endDiagram);
+        }
+
+        /// <inheritdoc />
+        public override SMSize GetDesiredBorderNodeSize(BorderNode borderNode)
+        {
+            if (borderNode is BorrowTunnel 
+                || borderNode is FlatSequenceTerminateLifetimeTunnel
+                || borderNode is LockTunnel
+                || borderNode is UnwrapOptionTunnel)
+            {
+                return new SMSize(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
+            }
+            return base.GetDesiredBorderNodeSize(borderNode);
         }
     }
 

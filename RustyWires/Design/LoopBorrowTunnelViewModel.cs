@@ -10,7 +10,7 @@ using RustyWires.SourceModel;
 
 namespace RustyWires.Design
 {
-    public class LoopBorrowTunnelViewModel : LoopTunnelViewModel
+    public class LoopBorrowTunnelViewModel : LoopBorderNodeViewModel
     {
         public static readonly ICommandEx BorrowModeGroupCommand = new ShellRelayCommand()
         {
@@ -43,7 +43,8 @@ namespace RustyWires.Design
             LargeImageSource = VIDiagramNodeCommands.LoadVIResource("Designer/Resources/BlockDiagram/placeholder_32x32.PNG"),
         };
 
-        public LoopBorrowTunnelViewModel(LoopBorrowTunnel loopBorrowTunnel) : base(loopBorrowTunnel)
+        public LoopBorrowTunnelViewModel(LoopBorrowTunnel loopBorrowTunnel)
+            : base(loopBorrowTunnel, @"Resources\Diagram\Nodes\ImmutableBorrowNode.png")
         {
         }
 

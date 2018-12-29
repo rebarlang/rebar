@@ -1,15 +1,23 @@
-﻿using NationalInstruments.Design;
+﻿using NationalInstruments.Core;
+using NationalInstruments.Design;
 using NationalInstruments.SourceModel;
 
 namespace RustyWires.Design
 {
     /// <summary>
-    /// View model for <see cref="LoopTunnel"/>.
+    /// View model for <see cref="Loop"/> border nodes.
     /// </summary>
-    public class LoopTunnelViewModel : BorderNodeViewModel
+    public class LoopBorderNodeViewModel : BorderNodeViewModel
     {
-        public LoopTunnelViewModel(Tunnel loopTunnel) : base(loopTunnel)
+        public LoopBorderNodeViewModel(Tunnel loopTunnel, string foregroundUri) : base(loopTunnel)
         {
+            ForegroundUri = new ResourceUri(this, foregroundUri);
         }
+
+        /// <inheritoc />
+        protected override ResourceUri ForegroundUri { get; }
+
+        /// <inheritoc />
+        public override NineGridData ForegroundImageData => new ViewModelImageData(this) { ImageUri = ForegroundUri };
     }
 }

@@ -103,5 +103,17 @@ namespace RustyWires.SourceModel
             }
             return base.GetGuide(borderNode);
         }
+
+        /// <inheritdoc />
+        public override SMSize GetDesiredBorderNodeSize(BorderNode borderNode)
+        {
+            if (borderNode is LoopBorrowTunnel
+                || borderNode is LoopTerminateLifetimeTunnel
+                || borderNode is LoopConditionTunnel)
+            {
+                return new SMSize(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
+            }
+            return base.GetDesiredBorderNodeSize(borderNode);
+        }
     }
 }
