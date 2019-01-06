@@ -58,28 +58,36 @@ namespace RustyWires
             NonLockingCellGenericType = nonLockingCellGenericTypeBuilder.CreateType();
         }
 
+        private static NIType SpecializeGenericType(NIType genericTypeDefinition, NIType typeParameter)
+        {
+            var specializationTypeBuilder = genericTypeDefinition.DefineClassFromExisting();
+            specializationTypeBuilder.ReplaceGenericParameters(typeParameter);
+            return specializationTypeBuilder.CreateType();
+        }
+
+        private static bool IsGenericTypeSpecialization(this NIType type, NIType genericTypeDefinition)
+        {
+            return type.IsGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
+        }
+
         public static NIType CreateMutableReference(this NIType dereferenceType)
         {
-            var mutableReferenceTypeBuilder = MutableReferenceGenericType.DefineClassFromExisting();
-            mutableReferenceTypeBuilder.ReplaceGenericParameters(dereferenceType);
-            return mutableReferenceTypeBuilder.CreateType();
+            return SpecializeGenericType(MutableReferenceGenericType, dereferenceType);
         }
 
         public static bool IsMutableReferenceType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == MutableReferenceGenericType;
+            return type.IsGenericTypeSpecialization(MutableReferenceGenericType);
         }
 
         public static NIType CreateImmutableReference(this NIType dereferenceType)
         {
-            var immutableReferenceTypeBuilder = ImmutableReferenceGenericType.DefineClassFromExisting();
-            immutableReferenceTypeBuilder.ReplaceGenericParameters(dereferenceType);
-            return immutableReferenceTypeBuilder.CreateType();
+            return SpecializeGenericType(ImmutableReferenceGenericType, dereferenceType);
         }
 
         public static bool IsImmutableReferenceType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == ImmutableReferenceGenericType;
+            return type.IsGenericTypeSpecialization(ImmutableReferenceGenericType);
         }
 
         public static bool IsRWReferenceType(this NIType type)
@@ -96,26 +104,22 @@ namespace RustyWires
 
         public static NIType CreateMutableValue(this NIType valueType)
         {
-            var mutableValueTypeBuilder = MutableValueGenericType.DefineClassFromExisting();
-            mutableValueTypeBuilder.ReplaceGenericParameters(valueType);
-            return mutableValueTypeBuilder.CreateType();
+            return SpecializeGenericType(MutableValueGenericType, valueType);
         }
 
         public static bool IsMutableValueType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == MutableValueGenericType;
+            return type.IsGenericTypeSpecialization(MutableValueGenericType);
         }
 
         public static NIType CreateImmutableValue(this NIType valueType)
         {
-            var immutableValueTypeBuilder = ImmutableValueGenericType.DefineClassFromExisting();
-            immutableValueTypeBuilder.ReplaceGenericParameters(valueType);
-            return immutableValueTypeBuilder.CreateType();
+            return SpecializeGenericType(ImmutableValueGenericType, valueType);
         }
 
         public static bool IsImmutableValueType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == ImmutableValueGenericType;
+            return type.IsGenericTypeSpecialization(ImmutableValueGenericType);
         }
 
         public static bool IsMutableType(this NIType type)
@@ -130,14 +134,12 @@ namespace RustyWires
 
         public static NIType CreateOption(this NIType valueType)
         {
-            var optionTypeBuilder = OptionGenericType.DefineClassFromExisting();
-            optionTypeBuilder.ReplaceGenericParameters(valueType);
-            return optionTypeBuilder.CreateType();
+            return SpecializeGenericType(OptionGenericType, valueType);
         }
 
         public static bool IsOptionType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == OptionGenericType;
+            return type.IsGenericTypeSpecialization(OptionGenericType);
         }
 
         /// <summary>
@@ -159,26 +161,22 @@ namespace RustyWires
 
         public static NIType CreateLockingCell(this NIType dereferenceType)
         {
-            var lockingCellTypeBuilder = LockingCellGenericType.DefineClassFromExisting();
-            lockingCellTypeBuilder.ReplaceGenericParameters(dereferenceType);
-            return lockingCellTypeBuilder.CreateType();
+            return SpecializeGenericType(LockingCellGenericType, dereferenceType);
         }
 
         public static bool IsLockingCellType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == LockingCellGenericType;
+            return type.IsGenericTypeSpecialization(LockingCellGenericType);
         }
 
         public static NIType CreateNonLockingCell(this NIType dereferenceType)
         {
-            var nonLockingCellTypeBuilder = NonLockingCellGenericType.DefineClassFromExisting();
-            nonLockingCellTypeBuilder.ReplaceGenericParameters(dereferenceType);
-            return nonLockingCellTypeBuilder.CreateType();
+            return SpecializeGenericType(NonLockingCellGenericType, dereferenceType);
         }
 
         public static bool IsNonLockingCellType(this NIType type)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == NonLockingCellGenericType;
+            return type.IsGenericTypeSpecialization(NonLockingCellGenericType);
         }
 
         public static NIType GetUnderlyingTypeFromRustyWiresType(this NIType rustyWiresType)
