@@ -70,20 +70,24 @@ namespace RustyWires.Design
                 }
                 if (type.IsLockingCellType())
                 {
-                    return new QueryResult<T>(new CellTypeAssetProvider("Locking Cell") as T);
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Locking Cell") as T);
                 }
                 if (type.IsNonLockingCellType())
                 {
-                    return new QueryResult<T>(new CellTypeAssetProvider("Nonlocking Cell") as T);
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Nonlocking Cell") as T);
+                }
+                if (type.IsIteratorType())
+                {
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Iterator") as T);
                 }
             }
             return new QueryResult<T>();
         }
     }
 
-    internal class CellTypeAssetProvider : TypeAssetProvider
+    internal class GenericReferenceTypeAssetProvider : TypeAssetProvider
     {
-        public CellTypeAssetProvider(string name)
+        public GenericReferenceTypeAssetProvider(string name)
             : base(
                 typeof(PlatformFrameworkResourceKey),
                 "Resources/Reference",

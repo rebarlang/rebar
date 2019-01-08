@@ -140,6 +140,23 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
+        {
+            Variable inputVariable = iterateTunnel.Terminals.ElementAt(0).GetVariable();
+            NIType outputType;
+            if (!inputVariable.GetTypeOrVoid().TryDestructureIteratorType(out outputType))
+            {
+                outputType = PFTypes.Void;
+            }
+            Terminal outputTerminal = iterateTunnel.Terminals.ElementAt(1);
+            outputTerminal.GetVariable()?.SetTypeAndLifetime(
+                outputType,
+                outputType.IsRWReferenceType()
+                    ? outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram()
+                    : Lifetime.Unbounded);
+            return true;
+        }
+
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             Terminal inputTerminal = lockTunnel.Terminals.ElementAt(0),
@@ -217,6 +234,13 @@ namespace RustyWires.Compiler
             resultOutTerminal.GetVariable()?.SetTypeAndLifetime(
                 outputUnderlyingType,
                 Lifetime.Unbounded);
+            return true;
+        }
+
+        public bool VisitRangeNode(RangeNode rangeNode)
+        {
+            Variable outputVariable = rangeNode.Terminals.ElementAt(2).GetVariable();
+            outputVariable?.SetTypeAndLifetime(PFTypes.Int32.CreateIterator(), Lifetime.Unbounded);
             return true;
         }
 

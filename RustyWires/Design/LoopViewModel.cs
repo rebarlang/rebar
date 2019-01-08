@@ -39,6 +39,7 @@ namespace RustyWires.Design
                 using (context.AddGroup(ConfigurationPaneCommands.BehaviorGroupCommand))
                 {
                     context.Add(LoopTunnelViewModelHelpers.LoopAddBorrowTunnelCommand.SetWeight(0.6));
+                    context.Add(LoopTunnelViewModelHelpers.LoopAddIterateTunnelCommand.SetWeight(0.6));
                 }
             }
         }

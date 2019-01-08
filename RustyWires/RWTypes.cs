@@ -20,6 +20,8 @@ namespace RustyWires
 
         private static NIType NonLockingCellGenericType { get; }
 
+        private static NIType IteratorGenericType { get; }
+
         static RWTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -56,6 +58,11 @@ namespace RustyWires
             nonLockingCellGenericTypeBuilder.MakeGenericParameters("T");
             nonLockingCellGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
             NonLockingCellGenericType = nonLockingCellGenericTypeBuilder.CreateType();
+
+            var iteratorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Iterator");
+            iteratorGenericTypeBuilder.MakeGenericParameters("T");
+            iteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
+            IteratorGenericType = iteratorGenericTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, NIType typeParameter)
@@ -198,6 +205,33 @@ namespace RustyWires
                 return rustyWiresType.GetGenericParameters().ElementAt(0);
             }
             throw new ArgumentException("Expected a LockingCell type.");
+        }
+
+        public static NIType CreateIterator(this NIType itemType)
+        {
+            return SpecializeGenericType(IteratorGenericType, itemType);
+        }
+
+        public static bool IsIteratorType(this NIType type)
+        {
+            return type.IsGenericTypeSpecialization(IteratorGenericType);
+        }
+
+        /// <summary>
+        /// If the given <see cref="type"/> is an Iterator type, outputs the inner value type and returns true; otherwise, returns false.
+        /// </summary>
+        /// <param name="type">The <see cref="NIType"/> to try to destructure as an Iterator type.</param>
+        /// <param name="valueType">The inner value type of the given type if it is an Iterator.</param>
+        /// <returns>True if the given type was an Iterator type; false otherwise.</returns>
+        public static bool TryDestructureIteratorType(this NIType type, out NIType valueType)
+        {
+            if (!IsIteratorType(type))
+            {
+                valueType = NIType.Unset;
+                return false;
+            }
+            valueType = type.GetGenericParameters().ElementAt(0);
+            return true;
         }
 
         internal static TypePermissiveness GetTypePermissiveness(this NIType type)

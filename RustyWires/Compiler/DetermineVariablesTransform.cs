@@ -185,6 +185,11 @@ namespace RustyWires.Compiler
             yield return new PassthroughTerminalPair(pureUnaryPrimitive.Terminals[0], pureUnaryPrimitive.Terminals[1]);
         }
 
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitRangeNode(RangeNode rangeNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
         {
             yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[0], selectReferenceNode.Terminals[3]);
@@ -206,6 +211,13 @@ namespace RustyWires.Compiler
         {
             PullInputTerminalVariable(borrowTunnel.GetOuterTerminal(0));
             AddTerminalToNewVariable(borrowTunnel.GetInnerTerminal(0, 0));
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
+        IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitIterateTunnel(IterateTunnel iterateTunnel)
+        {
+            PullInputTerminalVariable(iterateTunnel.GetOuterTerminal(0));
+            AddTerminalToNewVariable(iterateTunnel.GetInnerTerminal(0, 0));
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 

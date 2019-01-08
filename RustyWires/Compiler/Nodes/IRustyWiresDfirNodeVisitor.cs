@@ -14,6 +14,7 @@ namespace RustyWires.Compiler.Nodes
         T VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode);
         T VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode);
         T VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode);
+        T VisitIterateTunnel(IterateTunnel iterateTunnel);
         T VisitLockTunnel(LockTunnel lockTunnel);
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
         T VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode);
@@ -21,6 +22,7 @@ namespace RustyWires.Compiler.Nodes
         T VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive);
         T VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive);
         T VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive);
+        T VisitRangeNode(RangeNode rangeNode);
         T VisitSomeConstructorNode(SomeConstructorNode someConstructorNode);
         T VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);

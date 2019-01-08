@@ -26,6 +26,7 @@ namespace RustyWires
             AddSupportedModel<CreateCell>(n => new BasicNodeViewModel(n, "Create Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow", @"Resources\Diagram\Nodes\ImmutableBorrowNode.png"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some", @"Resources\Diagram\Nodes\Some.png"));
+            AddSupportedModel<Range>(n => new BasicNodeViewModel(n, "Range", @"Resources\Diagram\Nodes\Range.png"));
 
             AddSupportedModel<SourceModel.Add>(n => new BasicNodeViewModel(n, "Add", @"Resources\Diagram\Nodes\Add.png"));
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract", @"Resources\Diagram\Nodes\Subtract.png"));
@@ -57,6 +58,7 @@ namespace RustyWires
             AddSupportedModel<SourceModel.LoopTunnel>(t => new BorderNodeViewModel(t));
             AddSupportedModel<LoopBorrowTunnel>(t => new LoopBorrowTunnelViewModel(t));
             AddSupportedModel<LoopConditionTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\LoopCondition.png"));
+            AddSupportedModel<LoopIterateTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\Iterate.png"));
             AddSupportedModel<LoopTerminateLifetimeTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\TerminateLifetime.png"));
         }
 

@@ -127,6 +127,7 @@ namespace RustyWires.Compiler
             var loopBorrowTunnel = sourceModelBorderNode as LoopBorrowTunnel;
             var lockTunnel = sourceModelBorderNode as SourceModel.LockTunnel;
             var loopConditionTunnel = sourceModelBorderNode as SourceModel.LoopConditionTunnel;
+            var loopIterateTunnel = sourceModelBorderNode as SourceModel.LoopIterateTunnel;
             var flatSequenceTerminateLifetimeTunnel = sourceModelBorderNode as FlatSequenceTerminateLifetimeTunnel;
             var loopTerminateLifetimeTunnel = sourceModelBorderNode as LoopTerminateLifetimeTunnel;
             var unwrapOptionTunnel = sourceModelBorderNode as SourceModel.UnwrapOptionTunnel;
@@ -153,6 +154,12 @@ namespace RustyWires.Compiler
                 var loopConditionDfir = new Nodes.LoopConditionTunnel((Nodes.Loop)dfirParentStructure);
                 CreateTerminateLifetimeTunnel(loopConditionDfir, dfirParentStructure);
                 return loopConditionDfir;
+            }
+            else if (loopIterateTunnel != null)
+            {
+                var loopIterateDfir = new IterateTunnel(dfirParentStructure);
+                CreateTerminateLifetimeTunnel(loopIterateDfir, dfirParentStructure);
+                return loopIterateDfir;
             }
             else if (flatSequenceTerminateLifetimeTunnel != null)
             {
@@ -509,6 +516,15 @@ namespace RustyWires.Compiler
             _map.AddMapping(someConstructorNode, someConstructorNodeDfir);
             _map.AddMapping(someConstructorNode.Terminals.ElementAt(0), someConstructorNodeDfir.Terminals.ElementAt(0));
             _map.AddMapping(someConstructorNode.Terminals.ElementAt(1), someConstructorNodeDfir.Terminals.ElementAt(1));
+        }
+
+        public void VisitRange(Range range)
+        {
+            var rangeDfir = new Nodes.RangeNode(_currentDiagram);
+            _map.AddMapping(range, rangeDfir);
+            _map.AddMapping(range.Terminals.ElementAt(0), rangeDfir.Terminals.ElementAt(0));
+            _map.AddMapping(range.Terminals.ElementAt(1), rangeDfir.Terminals.ElementAt(1));
+            _map.AddMapping(range.Terminals.ElementAt(2), rangeDfir.Terminals.ElementAt(2));
         }
 
         public void VisitRustyWiresFunction(RustyWiresFunction function)

@@ -88,7 +88,7 @@ namespace RustyWires.SourceModel
                     EdgeOverflow = StockDiagramGeometries.StandardTunnelOffsetForStructures
                 };
             }
-            else if (borderNode is LoopBorrowTunnel || borderNode is LoopConditionTunnel)
+            else if (borderNode is LoopBorrowTunnel || borderNode is LoopConditionTunnel || borderNode is LoopIterateTunnel)
             {
                 var height = GetMaxXYForBorderNode(this, borderNode).Y + borderNode.Height + OuterBorderThickness.Bottom;
                 // TerminateLifetimeTunnels do all the moving, but this guide ensures the left node is not out of place or on the wrong docking side.
@@ -109,7 +109,8 @@ namespace RustyWires.SourceModel
         {
             if (borderNode is LoopBorrowTunnel
                 || borderNode is LoopTerminateLifetimeTunnel
-                || borderNode is LoopConditionTunnel)
+                || borderNode is LoopConditionTunnel
+                || borderNode is LoopIterateTunnel)
             {
                 return new SMSize(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
             }

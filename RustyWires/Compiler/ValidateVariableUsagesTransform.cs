@@ -122,10 +122,18 @@ namespace RustyWires.Compiler
             return true;
         }
 
+        public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
+        {
+            VariableUsageValidator validator = iterateTunnel.Terminals[0].GetValidator();
+            validator.TestUnderlyingType(RWTypes.IsIteratorType, PFTypes.Void.CreateIterator());
+            validator.TestVariableIsMutableType();
+            return true;
+        }
+
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             VariableUsageValidator validator = lockTunnel.Terminals[0].GetValidator();
-            // TODO: report error if variable type !.IsLockingCellType()
+            validator.TestUnderlyingType(RWTypes.IsLockingCellType, PFTypes.Void.CreateLockingCell());
             return true;
         }
 
@@ -180,6 +188,17 @@ namespace RustyWires.Compiler
             NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
             VariableUsageValidator validator = pureUnaryPrimitive.Terminals[0].GetValidator();
             validator.TestExpectedUnderlyingType(expectedInputUnderlyingType);
+            return true;
+        }
+
+        public bool VisitRangeNode(RangeNode rangeNode)
+        {
+            VariableUsageValidator validator = rangeNode.Terminals[0].GetValidator();
+            validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator.TestVariableIsOwnedType();
+            validator = rangeNode.Terminals[1].GetValidator();
+            validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            validator.TestVariableIsOwnedType();
             return true;
         }
 

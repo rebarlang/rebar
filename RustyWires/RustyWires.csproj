@@ -88,6 +88,7 @@
     <Compile Include="Compiler\Nodes\IBeginLifetimeTunnel.cs" />
     <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\IRustyWiresDfirNodeVisitor.cs" />
+    <Compile Include="Compiler\Nodes\IterateTunnel.cs" />
     <Compile Include="Compiler\Nodes\LockTunnel.cs" />
     <Compile Include="Compiler\Nodes\Loop.cs" />
     <Compile Include="Compiler\Nodes\LoopConditionTunnel.cs" />
@@ -96,6 +97,7 @@
     <Compile Include="Compiler\Nodes\MutatingUnaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\PureBinaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\PureUnaryPrimitive.cs" />
+    <Compile Include="Compiler\Nodes\RangeNode.cs" />
     <Compile Include="Compiler\Nodes\RustyWiresBorderNode.cs" />
     <Compile Include="Compiler\Nodes\RustyWiresDfirNode.cs" />
     <Compile Include="Compiler\Nodes\SelectReferenceNode.cs" />
@@ -167,11 +169,13 @@
     <Compile Include="SourceModel\LoopBatchRule.cs" />
     <Compile Include="SourceModel\LoopBorrowTunnel.cs" />
     <Compile Include="SourceModel\LoopConditionTunnel.cs" />
+    <Compile Include="SourceModel\LoopIterateTunnel.cs" />
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
     <Compile Include="SourceModel\MutablePassthroughNode.cs" />
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Primitives.cs" />
+    <Compile Include="SourceModel\Range.cs" />
     <Compile Include="SourceModel\RustyWiresFunction.cs" />
     <Compile Include="SourceModel\RustyWiresNamespaceSchema.cs" />
     <Compile Include="SourceModel\RustyWiresRootDiagram.cs" />
@@ -222,11 +226,13 @@
     <Resource Include="Resources\Diagram\Nodes\ExchangeValues.png" />
     <Resource Include="Resources\Diagram\Nodes\ImmutableBorrowNode.png" />
     <Resource Include="Resources\Diagram\Nodes\Increment.png" />
+    <Resource Include="Resources\Diagram\Nodes\Iterate.png" />
     <Resource Include="Resources\Diagram\Nodes\Lock.png" />
     <Resource Include="Resources\Diagram\Nodes\LoopCondition.png" />
     <Resource Include="Resources\Diagram\Nodes\Multiply.png" />
     <Resource Include="Resources\Diagram\Nodes\Not.png" />
     <Resource Include="Resources\Diagram\Nodes\Or.png" />
+    <Resource Include="Resources\Diagram\Nodes\Range.png" />
     <Resource Include="Resources\Diagram\Nodes\SelectReference.png" />
     <Resource Include="Resources\Diagram\Nodes\Some.png" />
     <Resource Include="Resources\Diagram\Nodes\Subtract.png" />
