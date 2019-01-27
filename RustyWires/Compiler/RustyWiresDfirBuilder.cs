@@ -353,11 +353,14 @@ namespace RustyWires.Compiler
         public void VisitLiteral(ILiteralModel literal)
         {
             NIType dataType = literal.DataType;
-            if (dataType.IsRWReferenceType())
+            if (dataType.IsRWReferenceType() || dataType.IsMutableValueType() || dataType.IsImmutableValueType())
             {
                 dataType = dataType.GetUnderlyingTypeFromRustyWiresType();
             }
-            Constant constant = Constant.Create(_currentDiagram, literal.Data, dataType.CreateImmutableReference());
+            NIType constantType = ValidateVariableUsagesTransform.WireTypeMayFork(dataType)
+                ? dataType
+                : dataType.CreateImmutableReference();
+            Constant constant = Constant.Create(_currentDiagram, literal.Data, constantType);
             _map.AddMapping((Content)literal, constant);
             _map.AddMapping(literal.OutputTerminal, constant.Terminals.ElementAt(0));
         }

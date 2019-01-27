@@ -27,7 +27,7 @@ namespace RustyWires.Compiler
             }
         }
 
-        private bool WireTypeMayFork(NIType wireType)
+        internal static bool WireTypeMayFork(NIType wireType)
         {
             if (wireType.IsImmutableReferenceType())
             {
