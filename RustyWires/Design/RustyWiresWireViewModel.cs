@@ -1,26 +1,54 @@
-﻿using NationalInstruments.Shell;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using NationalInstruments.Core;
-using NationalInstruments.Controls.Shell;
 using NationalInstruments.Composition;
-using NationalInstruments.VI.Design;
+using NationalInstruments.Controls.Shell;
+using NationalInstruments.Core;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Design;
+using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
+using NationalInstruments.VI.Design;
+using RustyWires.Common;
 using RustyWires.SourceModel;
 
 namespace RustyWires.Design
 {
-    public class WireMutabilityViewModelService : IProvideCommandContent
+    /// <summary>
+    /// RustyWires-specific implementation of <see cref="WireViewModel"/> for providing custom wire visuals.
+    /// </summary>
+    public class RustyWiresWireViewModel : WireViewModel
     {
-        public static readonly ICommandEx WireGroupCommand = new ShellRelayCommand()
+        /// <summary>
+        /// Construct a new <see cref="RustyWiresWireViewModel"/>.
+        /// </summary>
+        /// <param name="wire">The wire to create a view model for.</param>
+        public RustyWiresWireViewModel(Wire wire) : base(wire)
+        {
+        }
+
+        #region Commands
+
+        /// <inheritdoc />
+        public override void CreateCommandContent(ICommandPresentationContext context)
+        {
+            base.CreateCommandContent(context);
+            using (context.AddConfigurationPaneContent())
+            {
+                using (context.AddGroup(WireGroupCommand))
+                {
+                    context.Add(WireBeginsMutableVariableCommand);
+                }
+            }
+        }
+
+        private static readonly ICommandEx WireGroupCommand = new ShellRelayCommand()
         {
             UIType = UITypeForCommand.Group,
             LabelTitle = "Wire",
             UniqueId = "NI.RWDiagramNodeCommands:TerminalsGroup"
         };
 
-        public static readonly ICommandEx WireBeginsMutableVariableCommand = new ShellSelectionRelayCommand(
+        private static readonly ICommandEx WireBeginsMutableVariableCommand = new ShellSelectionRelayCommand(
             HandleExecuteWireBeginsMutableVariableCommand,
             HandleCanExecuteWireBeginsMutableVariableCommand)
         {
@@ -48,7 +76,7 @@ namespace RustyWires.Design
             }
             else
             {
-                checkableCommandParameter.IsChecked = selectedWires.Any(wire => wire.GetWireBeginsMutableVariable());
+                checkableCommandParameter.IsChecked = selectedWires.Any(wire => wire.GetWireVariable()?.Mutable ?? false);
                 return false;
             }
         }
@@ -71,21 +99,29 @@ namespace RustyWires.Design
             }
         }
 
-        public string EditingContext => GetType().FullName;
+        #endregion
 
-        public void CreateCommandContent(ICommandPresentationContext context)
+        #region Wire visuals
+
+        /// <inheritdoc />
+        public override WireRenderInfoEnumerable WireRenderInfo
         {
-            using (context.AddConfigurationPaneContent())
+            get
             {
-                using (context.AddGroup(WireGroupCommand))
+                Variable variable = ((Wire)Model).GetWireVariable();
+                if (variable != null && !variable.Type.IsRWReferenceType())
                 {
-                    context.Add(WireBeginsMutableVariableCommand);
+                    var stockResources = Host.GetSharedExportedValue<StockDiagramUIResources>();
+                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
+                    ITypeAssetProvider outerAssetProvider = variable.Mutable
+                        ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
+                        : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
+                    return outerAssetProvider.GetWireRenderInfo(0);
                 }
+                return base.WireRenderInfo;
             }
         }
 
-        public bool GetHandled<T>() => false;
-
-        public double GetWeight<T>() => 0.0;
+        #endregion
     }
 }

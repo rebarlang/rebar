@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Compiler;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Common
 {
     internal sealed class Variable
     {

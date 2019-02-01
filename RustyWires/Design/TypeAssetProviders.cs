@@ -54,20 +54,6 @@ namespace RustyWires.Design
                     int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
                     return new QueryResult<T>(new ImmutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality) as T);
                 }
-                if (type.IsMutableValueType())
-                {
-                    NIType innerType = type.GetUnderlyingTypeFromRustyWiresType();
-                    innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
-                    int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
-                    return new QueryResult<T>(new MutableValueTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality) as T);
-                }
-                if (type.IsImmutableValueType())
-                {
-                    NIType innerType = type.GetUnderlyingTypeFromRustyWiresType();
-                    innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
-                    int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
-                    return new QueryResult<T>(new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality) as T);
-                }
                 if (type.IsLockingCellType())
                 {
                     return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Locking Cell") as T);

@@ -1,7 +1,8 @@
-﻿using NationalInstruments.DynamicProperties;
+﻿using System.Xml.Linq;
+using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
-using System.Xml.Linq;
+using RustyWires.Common;
 
 namespace RustyWires.SourceModel
 {
@@ -52,6 +53,27 @@ namespace RustyWires.SourceModel
                 (mode, reason) => wire.TrySetValue(WireBeginsMutableVariablePropertySymbol, mode),
                 TransactionHints.Semantic);
             wire.TrySetValue(WireBeginsMutableVariablePropertySymbol, value);
+        }
+
+        private static readonly PropertySymbol WireVariablePropertySymbol =
+            Element.ExposeAttachedProperty(
+                XName.Get("WireVariable", RustyWiresFunction.ParsableNamespaceName),
+                PropertySerializers.NullSerializer,
+                null,
+                typeof(Variable),
+                PropertySymbolAttributes.DoNotPersist);
+
+        public static Variable GetWireVariable(this Wire wire)
+        {
+            object value;
+            return wire.TryGetValue(WireVariablePropertySymbol, out value)
+                ? (Variable)value
+                : null;
+        }
+
+        public static void SetWireVariable(this Wire wire, Variable variable)
+        {
+            wire.TrySetValue(WireVariablePropertySymbol, variable);
         }
     }
 }

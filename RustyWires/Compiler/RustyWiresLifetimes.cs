@@ -1,4 +1,5 @@
 ﻿using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler
 {

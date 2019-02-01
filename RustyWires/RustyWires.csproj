@@ -76,7 +76,7 @@
     <Compile Include="Common\NodeSignature.cs" />
     <Compile Include="Common\PrimitiveOps.cs" />
     <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
-    <Compile Include="Compiler\Lifetime.cs" />
+    <Compile Include="Common\Lifetime.cs" />
     <Compile Include="Compiler\Nodes\AssignNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
@@ -118,7 +118,7 @@
     <Compile Include="Compiler\RustyWiresMocPlugin.cs" />
     <Compile Include="Compiler\SetVariableTypesTransform.cs" />
     <Compile Include="Compiler\ValidateVariableUsagesTransform.cs" />
-    <Compile Include="Compiler\Variable.cs" />
+    <Compile Include="Common\Variable.cs" />
     <Compile Include="Compiler\VariableSet.cs" />
     <Compile Include="Compiler\VariableUsageValidator.cs" />
     <Compile Include="Compiler\VisitorTransformBase.cs" />
@@ -136,8 +136,8 @@
     <Compile Include="Design\RustyWiresFlatSequenceSimpleBorderNodeViewModel.cs" />
     <Compile Include="Design\RustyWiresFunctionSignatureCacheService.cs" />
     <Compile Include="Design\RustyWiresProjectItemInfoService.cs" />
+    <Compile Include="Design\RustyWiresWireViewModel.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
-    <Compile Include="Design\WireMutabilityViewModelService.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

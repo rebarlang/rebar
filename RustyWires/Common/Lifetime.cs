@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
-using NationalInstruments.Dfir;
 
-namespace RustyWires.Compiler
+namespace RustyWires.Common
 {
     [DebuggerDisplay("{Category} {Id} : {BaseLifetime}")]
     internal abstract class Lifetime

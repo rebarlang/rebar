@@ -14,6 +14,7 @@ namespace RustyWires
         public RustyWiresViewModelProvider()
         {
             AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
+            AddSupportedModel<Wire>(w => new RustyWiresWireViewModel(w));
 
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value", @"Resources\Diagram\Nodes\Drop.png"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
@@ -60,16 +61,6 @@ namespace RustyWires
             AddSupportedModel<LoopConditionTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\LoopCondition.png"));
             AddSupportedModel<LoopIterateTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\Iterate.png"));
             AddSupportedModel<LoopTerminateLifetimeTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\TerminateLifetime.png"));
-        }
-
-        /// <inheritdoc />
-        public override void OnAnyViewModelCreated(Element model, IElementViewModel viewModel)
-        {
-            base.OnAnyViewModelCreated(model, viewModel);
-            if (model is Wire)
-            {
-                viewModel.AttachService(new WireMutabilityViewModelService());
-            }
         }
     }
 }

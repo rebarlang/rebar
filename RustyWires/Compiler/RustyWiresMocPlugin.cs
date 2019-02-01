@@ -9,6 +9,7 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
+using RustyWires.Common;
 using RustyWires.Compiler.Nodes;
 using RustyWires.SourceModel;
 using Diagram = NationalInstruments.SourceModel.Diagram;
@@ -199,6 +200,9 @@ namespace RustyWires.Compiler
             var dfirWire = (NationalInstruments.Dfir.Wire)_map.GetDfirForModel(wire);
             bool isFirstVariableWire = dfirWire.GetIsFirstVariableWire();
             wire.SetIsFirstVariableWire(isFirstVariableWire);
+
+            wire.SetWireVariable(dfirWire.SourceTerminal?.GetVariable());
+
             if (!isFirstVariableWire)
             {
                 wire.SetWireBeginsMutableVariable(false);

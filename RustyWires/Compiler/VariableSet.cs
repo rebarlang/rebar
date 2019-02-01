@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler
 {
