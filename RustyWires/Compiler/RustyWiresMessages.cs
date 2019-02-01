@@ -1,6 +1,7 @@
 ﻿using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
+using RustyWires.Common;
 using Terminal = NationalInstruments.Dfir.Terminal;
 
 namespace RustyWires.Compiler
@@ -81,7 +82,8 @@ namespace RustyWires.Compiler
 
         public static bool TestTerminalHasMutableTypeConnected(this Terminal terminal)
         {
-            if (terminal.DataType.IsImmutableReferenceType() || terminal.DataType.IsImmutableValueType())
+            Variable variable = terminal.GetVariable();
+            if (!(variable.Mutable || variable.Type.IsMutableReferenceType()))
             {
                 terminal.ParentNode.SetDfirMessage(RustyWiresMessages.TerminalDoesNotAcceptImmutableType);
                 return false;

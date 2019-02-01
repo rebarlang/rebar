@@ -19,7 +19,7 @@ namespace RustyWires.SourceModel
         protected CreateCell()
         {
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void.CreateMutableValue(), "value in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void, "value in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateLockingCell(), "cell out"));
         }
 

@@ -18,8 +18,8 @@ namespace RustyWires.SourceModel
 
         protected SomeConstructorNode()
         {
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void.CreateImmutableValue(), "value in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateOption().CreateMutableValue(), "Some value out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void, "value in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateOption(), "Some value out"));
         }
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]

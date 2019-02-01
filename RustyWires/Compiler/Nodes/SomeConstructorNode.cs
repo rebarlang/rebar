@@ -10,8 +10,8 @@ namespace RustyWires.Compiler.Nodes
     {
         public SomeConstructorNode(Node parentNode) : base(parentNode)
         {
-            CreateTerminal(Direction.Input, PFTypes.Void.CreateImmutableValue(), "value in");
-            CreateTerminal(Direction.Output, PFTypes.Void.CreateOption().CreateMutableValue(), "Some value out");
+            CreateTerminal(Direction.Input, PFTypes.Void, "value in");
+            CreateTerminal(Direction.Output, PFTypes.Void.CreateOption(), "Some value out");
         }
 
         private SomeConstructorNode(Node parentNode, SomeConstructorNode nodeToCopy, NodeCopyInfo nodeCopyInfo)

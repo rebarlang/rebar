@@ -10,10 +10,6 @@ namespace RustyWires
 
         private static NIType ImmutableReferenceGenericType { get; }
 
-        private static NIType MutableValueGenericType { get; }
-
-        private static NIType ImmutableValueGenericType { get; }
-
         private static NIType OptionGenericType { get; }
 
         private static NIType LockingCellGenericType { get; }
@@ -33,16 +29,6 @@ namespace RustyWires
             immutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref");    // TODO: also need a lifetime type parameter
             immutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
             ImmutableReferenceGenericType = immutableReferenceGenericTypeBuilder.CreateType();
-
-            var mutableValueGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableValue");
-            mutableValueGenericTypeBuilder.MakeGenericParameters("T");
-            mutableValueGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
-            MutableValueGenericType = mutableValueGenericTypeBuilder.CreateType();
-
-            var immutableValueGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("ImmutableValue");
-            immutableValueGenericTypeBuilder.MakeGenericParameters("T");
-            immutableValueGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReference");
-            ImmutableValueGenericType = immutableValueGenericTypeBuilder.CreateType();
 
             var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
             optionGenericTypeBuilder.MakeGenericParameters("T");
@@ -109,36 +95,6 @@ namespace RustyWires
                 : type;
         }
 
-        public static NIType CreateMutableValue(this NIType valueType)
-        {
-            return SpecializeGenericType(MutableValueGenericType, valueType);
-        }
-
-        public static bool IsMutableValueType(this NIType type)
-        {
-            return type.IsGenericTypeSpecialization(MutableValueGenericType);
-        }
-
-        public static NIType CreateImmutableValue(this NIType valueType)
-        {
-            return SpecializeGenericType(ImmutableValueGenericType, valueType);
-        }
-
-        public static bool IsImmutableValueType(this NIType type)
-        {
-            return type.IsGenericTypeSpecialization(ImmutableValueGenericType);
-        }
-
-        public static bool IsMutableType(this NIType type)
-        {
-            return type.IsMutableReferenceType() || type.IsMutableValueType();
-        }
-
-        public static NIType CreateValue(this NIType type, bool mutable)
-        {
-            return mutable ? type.CreateMutableValue() : type.CreateImmutableValue();
-        }
-
         public static NIType CreateOption(this NIType valueType)
         {
             return SpecializeGenericType(OptionGenericType, valueType);
@@ -189,9 +145,7 @@ namespace RustyWires
         public static NIType GetUnderlyingTypeFromRustyWiresType(this NIType rustyWiresType)
         {
             if (rustyWiresType.IsImmutableReferenceType() ||
-                rustyWiresType.IsMutableReferenceType() ||
-                rustyWiresType.IsImmutableValueType() ||
-                rustyWiresType.IsMutableValueType())
+                rustyWiresType.IsMutableReferenceType())
             {
                 return rustyWiresType.GetGenericParameters().ElementAt(0);
             }
@@ -243,10 +197,6 @@ namespace RustyWires
             else if (type.IsMutableReferenceType())
             {
                 return TypePermissiveness.MutableReference;
-            }
-            else if (type.IsMutableValueType())
-            {
-                return TypePermissiveness.MutableOwner;
             }
             else
             {

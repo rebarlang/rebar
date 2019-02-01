@@ -17,9 +17,9 @@ namespace RustyWires.SourceModel
 
         protected Range()
         {
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Int32.CreateImmutableValue(), "lower limit"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Int32.CreateImmutableValue(), "upper limit"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Int32.CreateIterator().CreateImmutableValue(), "iterator"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Int32, "lower limit"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Int32, "upper limit"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Int32.CreateIterator(), "iterator"));
         }
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]

@@ -12,7 +12,7 @@ namespace RustyWires.Compiler.Nodes
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
             _refInTerminal = CreateTerminal(Direction.Input, immutableReferenceType, "ref in");
             _refOutTerminal = CreateTerminal(Direction.Output, immutableReferenceType, "ref out");
-            _valueOutTerminal = CreateTerminal(Direction.Output, PFTypes.Void.CreateMutableValue(), "value");
+            _valueOutTerminal = CreateTerminal(Direction.Output, PFTypes.Void, "value");
         }
 
         private CreateCopyNode(Node parentNode, CreateCopyNode nodeToCopy, NodeCopyInfo nodeCopyInfo)

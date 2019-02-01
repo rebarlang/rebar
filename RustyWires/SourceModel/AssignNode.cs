@@ -18,7 +18,7 @@ namespace RustyWires.SourceModel
         protected AssignNode()
         {
             FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void.CreateMutableReference(), "assignee in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void.CreateImmutableValue(), "value in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void, "value in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateMutableReference(), "assignee out"));
         }
 

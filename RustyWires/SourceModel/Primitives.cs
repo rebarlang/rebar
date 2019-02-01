@@ -16,12 +16,11 @@ namespace RustyWires.SourceModel
             Operation = binaryOp;
             NIType inputType = binaryOp.GetExpectedInputType();
             NIType inputReferenceType = inputType.CreateImmutableReference();
-            NIType inputOwnedType = inputType.CreateMutableValue();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "y in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "y out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputOwnedType, "result"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputType, "result"));
         }
 
         protected override void SetIconViewGeometry()
@@ -58,10 +57,9 @@ namespace RustyWires.SourceModel
             Operation = unaryOp;
             NIType inputType = unaryOp.GetExpectedInputType();
             NIType inputReferenceType = inputType.CreateImmutableReference();
-            NIType inputOwnedType = inputType.CreateMutableValue();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputOwnedType, "result"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputType, "result"));
         }
 
         protected override void SetIconViewGeometry()

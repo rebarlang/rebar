@@ -353,7 +353,7 @@ namespace RustyWires.Compiler
         public void VisitLiteral(ILiteralModel literal)
         {
             NIType dataType = literal.DataType;
-            if (dataType.IsRWReferenceType() || dataType.IsMutableValueType() || dataType.IsImmutableValueType())
+            if (dataType.IsRWReferenceType())
             {
                 dataType = dataType.GetUnderlyingTypeFromRustyWiresType();
             }

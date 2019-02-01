@@ -11,12 +11,11 @@ namespace RustyWires.Compiler.Nodes
             Operation = operation;
             NIType inputType = operation.GetExpectedInputType();
             NIType inputReferenceType = inputType.CreateImmutableReference();
-            NIType inputOwnedType = inputType.CreateMutableValue();
             CreateTerminal(Direction.Input, inputReferenceType, "x in");
             CreateTerminal(Direction.Input, inputReferenceType, "y in");
             CreateTerminal(Direction.Output, inputReferenceType, "x out");
             CreateTerminal(Direction.Output, inputReferenceType, "y out");
-            CreateTerminal(Direction.Output, inputOwnedType, "result");
+            CreateTerminal(Direction.Output, inputType, "result");
         }
 
         private PureBinaryPrimitive(Node parentNode, PureBinaryPrimitive nodeToCopy, NodeCopyInfo nodeCopyInfo)

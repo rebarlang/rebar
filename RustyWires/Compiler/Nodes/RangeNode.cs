@@ -10,9 +10,9 @@ namespace RustyWires.Compiler.Nodes
     {
         public RangeNode(Node parentNode) : base(parentNode)
         {
-            CreateTerminal(Direction.Input, PFTypes.Int32.CreateImmutableValue(), "lower bound");
-            CreateTerminal(Direction.Input, PFTypes.Int32.CreateImmutableValue(), "upper bound");
-            CreateTerminal(Direction.Output, PFTypes.Int32.CreateIterator().CreateImmutableValue(), "iterator");
+            CreateTerminal(Direction.Input, PFTypes.Int32, "lower bound");
+            CreateTerminal(Direction.Input, PFTypes.Int32, "upper bound");
+            CreateTerminal(Direction.Output, PFTypes.Int32.CreateIterator(), "iterator");
         }
 
         private RangeNode(Node parentNode, RangeNode nodeToCopy, NodeCopyInfo nodeCopyInfo)

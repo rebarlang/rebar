@@ -17,7 +17,7 @@ namespace RustyWires.SourceModel
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, immutableReferenceType, "reference in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, immutableReferenceType, "reference out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void.CreateMutableValue(), "copy"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void, "copy"));
         }
 
         [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]

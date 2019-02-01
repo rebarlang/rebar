@@ -28,11 +28,7 @@ namespace RustyWires.Compiler
 
         private NIType GetTerminalTypeFromVariable(Variable variable)
         {
-            NIType variableType = variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
-            bool mutableVariable = variable?.Mutable ?? false;
-            return variableType.IsRWReferenceType()
-                ? variableType
-                : variableType.CreateValue(mutableVariable);
+            return variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
         }
     }
 }
