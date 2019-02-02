@@ -255,10 +255,35 @@ namespace RustyWires.Compiler
             NIType input2UnderlyingType = input2Variable.GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = input1UnderlyingType == input2UnderlyingType ? input1UnderlyingType : PFTypes.Void;
 
+            // if the two inputs are both immutable references with the same bounded lifetime, then 
+            // merge their output variables
+            // otherwise, create a new diagram-bounded lifetime with the input variables, and set
+            // that on the output variables.
             Lifetime inputLifetime1 = input1Variable?.Lifetime ?? Lifetime.Empty;
             Lifetime inputLifetime2 = input2Variable?.Lifetime ?? Lifetime.Empty;
-            Lifetime commonLifetime = refInTerminal1.GetVariableSet().ComputeCommonLifetime(inputLifetime1, inputLifetime2);
-            refOutTerminal.GetVariable()?.SetTypeAndLifetime(outputUnderlyingType.CreateImmutableReference(), commonLifetime);
+            Lifetime commonLifetime;
+            Variable output1Variable = selectReferenceNode.Terminals.ElementAt(3).GetVariable(),
+                output2Variable = selectReferenceNode.Terminals.ElementAt(4).GetVariable(),
+                refOutVariable = refOutTerminal.GetVariable();
+            var variableSet = selectReferenceNode.ParentDiagram.GetVariableSet();
+            NIType outputReferenceType = outputUnderlyingType.CreateImmutableReference();
+            if (input1Variable.GetTypeOrVoid().IsImmutableReferenceType()
+                && input2Variable.GetTypeOrVoid().IsImmutableReferenceType()
+                && inputLifetime1 == inputLifetime2 
+                && inputLifetime1.IsBounded)
+            {
+                variableSet.MergeVariables(output1Variable, input1Variable);
+                variableSet.MergeVariables(output2Variable, input2Variable);
+                commonLifetime = inputLifetime1;
+            }
+            else
+            {
+                commonLifetime = variableSet.DefineLifetimeThatIsBoundedByDiagram(
+                    new[] { input1Variable, input2Variable });
+                output1Variable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
+                output2Variable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
+            }
+            refOutVariable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
             return true;
         }
 

@@ -47,7 +47,7 @@ namespace RustyWires.Compiler
             List<Terminal> nonPassthroughInputs = new List<Terminal>(node.InputTerminals), nonPassthroughOutputs = new List<Terminal>(node.OutputTerminals);
             var rustyWiresDfirNode = node as RustyWiresDfirNode;
             var passthroughTerminalPairs = this.VisitRustyWiresNode(node);
-            foreach (var pair in passthroughTerminalPairs)
+            foreach (var pair in passthroughTerminalPairs.Where(p => !p.RelatedToOutParameters))
             {
                 nonPassthroughInputs.Remove(pair.InputTerminal);
                 nonPassthroughOutputs.Remove(pair.OutputTerminal);
@@ -193,8 +193,8 @@ namespace RustyWires.Compiler
 
         IEnumerable<PassthroughTerminalPair> IRustyWiresDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
         {
-            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[0], selectReferenceNode.Terminals[3]);
-            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[1], selectReferenceNode.Terminals[4]);
+            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[0], selectReferenceNode.Terminals[3], true);
+            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[1], selectReferenceNode.Terminals[4], true);
             yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[2], selectReferenceNode.Terminals[5]);
         }
 
