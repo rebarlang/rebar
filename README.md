@@ -7,4 +7,4 @@ See the Contributing.md document for details of how to build RustyWires.
 
 ## Examples
 
-[[https://github.com/ni/rustywires/blob/master/img/borrow-and-increment-int.png|alt=borrow-and-increment-int]]
+![Borrow and increment integer](https://github.com/ni/rustywires/blob/master/img/borrow-and-increment-int.PNG)
