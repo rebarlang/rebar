@@ -1,3 +1,0 @@
-Should be
-"<branch root>\Source\RustyWires\The path to this file.txt"
-stuff
