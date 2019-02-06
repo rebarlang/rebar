@@ -5,18 +5,7 @@
   xmlns:vi="http://www.ni.com/LabVIEW.VI"
   xmlns:rw="http://www.ni.com/RustyWires"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Category Display="Nodes" UniqueId="RustyWires:PaletteCategory.Nodes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
-    <Leaf Display="String Constant" UniqueId="RustyWires:StringConstant" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <Synonyms>String</Synonyms>
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <moc:Literal DataType="String">
-            <moc:StringBehavior/>
-            <vi:p.Data/>
-          </moc:Literal>
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
+  <Category Display="Values" UniqueId="RustyWires:PaletteCategory.Nodes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
     <Leaf Display="Create Copy" UniqueId="RustyWires:CreateCopy" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <Synonyms>Copy</Synonyms>
       <pf:MergeScript>
@@ -37,13 +26,6 @@
       <pf:MergeScript>
         <pf:MergeItem>
           <rw:ExchangeValues />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Create Cell" UniqueId="RustyWires:CreateCell" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rw:CreateCell />
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
@@ -75,6 +57,13 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Leaf Display="Create Cell" UniqueId="RustyWires:CreateCell" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rw:CreateCell />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
     <Leaf Display="Range" UniqueId="RustyWires:Range" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <pf:MergeScript>
         <pf:MergeItem>
@@ -102,18 +91,6 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
-    <Leaf Display="Case Structure" UniqueId="RustyWires:CaseStructure" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
-      <Synonyms>frame</Synonyms>
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rw:RustyWiresCaseStructure Id="1" DataType="Boolean" Selected="3" Default="2">
-            <vi:CaseStructure.Case Pattern="False" Id="2"/>
-            <vi:CaseStructure.Case Pattern="True" Id="3"/>
-            <vi:CaseStructure.Selector TopLeft="0 40" Terminals="1, 2, 3"/>
-          </rw:RustyWiresCaseStructure>
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>  
   </Category>
   <Category Display="Boolean" UniqueId="RustyWires:PaletteCategory.Boolean" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
     <Leaf Display="True Constant" UniqueId="RustyWires:TrueConstant" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">

@@ -3,10 +3,9 @@ using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.VI.Design;
 using NationalInstruments.VI.SourceModel;
-using RustyWires.Design;
 using RustyWires.SourceModel;
 
-namespace RustyWires
+namespace RustyWires.Design
 {
     [ExportProvideViewModels(typeof(RustyWiresDiagramEditor))]
     public class RustyWiresViewModelProvider : ViewModelProvider

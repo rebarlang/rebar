@@ -6,6 +6,7 @@ using NationalInstruments;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
+using RustyWires.Common;
 using RustyWires.SourceModel;
 
 namespace RustyWires.Design

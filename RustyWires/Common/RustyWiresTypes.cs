@@ -2,9 +2,9 @@
 using System.Linq;
 using NationalInstruments.DataTypes;
 
-namespace RustyWires
+namespace RustyWires.Common
 {
-    public static class RWTypes
+    public static class RustyWiresTypes
     {
         private static NIType MutableReferenceGenericType { get; }
 
@@ -18,7 +18,7 @@ namespace RustyWires
 
         private static NIType IteratorGenericType { get; }
 
-        static RWTypes()
+        static RustyWiresTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
             mutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref"); // TODO: also need a lifetime type parameter

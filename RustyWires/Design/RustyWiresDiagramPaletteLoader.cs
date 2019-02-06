@@ -5,7 +5,7 @@ using NationalInstruments.Core;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
 
-namespace RustyWires
+namespace RustyWires.Design
 {
     [ExportPaletteLoader(RustyWiresDiagramPaletteIdentifier)]
     [PartCreationPolicy(CreationPolicy.Shared)]
@@ -19,7 +19,7 @@ namespace RustyWires
     }
 
     /// <summary>
-    /// Defines the sketch diagram palette type
+    /// Defines the RustyWires diagram palette type
     /// </summary>
     [ExportPaletteType(
         RustyWiresDiagramPaletteLoader.RustyWiresDiagramPaletteIdentifier,
@@ -27,7 +27,7 @@ namespace RustyWires
         "RustyWires diagram palette",
         userCreatable: false)]
     [BindsToKeyword(PaletteConstants.NativeTargetKeyword)]
-    public class SketchDocumentDiagramPaletteType : PaletteType
+    public class RustyWiresDocumentDiagramPaletteType : PaletteType
     {
     }
 }

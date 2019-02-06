@@ -20,6 +20,7 @@ using Structure = NationalInstruments.SourceModel.Structure;
 using Terminal = NationalInstruments.SourceModel.Terminal;
 using Tunnel = NationalInstruments.SourceModel.Tunnel;
 using Wire = NationalInstruments.SourceModel.Wire;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler
 {
@@ -461,7 +462,7 @@ namespace RustyWires.Compiler
 
         public void VisitImmutableBorrowNode(ImmutableBorrowNode node)
         {
-            var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.OwnerToImmutable);
+            var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, Nodes.BorrowMode.OwnerToImmutable);
             _map.AddMapping(node, explicitBorrowDfir);
             _map.AddMapping(node.Terminals.ElementAt(0), explicitBorrowDfir.Terminals.ElementAt(0));
             _map.AddMapping(node.Terminals.ElementAt(1), explicitBorrowDfir.Terminals.ElementAt(1));

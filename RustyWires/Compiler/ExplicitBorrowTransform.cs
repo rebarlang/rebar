@@ -3,6 +3,7 @@ using System.Linq;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 using RustyWires.Compiler.Nodes;
 
 namespace RustyWires.Compiler
@@ -64,7 +65,7 @@ namespace RustyWires.Compiler
                         if (connectedPermissiveness > inputPermissiveness)
                         {
                             // add an explicit borrow before the input terminal and an explicit borrow after the output terminal
-                            BorrowMode borrowMode = RWTypes.GetBorrowMode(connectedPermissiveness, inputPermissiveness);
+                            Nodes.BorrowMode borrowMode = RustyWiresTypes.GetBorrowMode(connectedPermissiveness, inputPermissiveness);
                             var explicitBorrow = new ExplicitBorrowNode(node.ParentNode, borrowMode);
                             var explicitUnborrow = new ExplicitUnborrowNode(node.ParentNode, borrowMode);
                             passthroughTerminalPair.InputTerminal.ConnectedTerminal.ConnectTo(explicitBorrow.InputTerminal);

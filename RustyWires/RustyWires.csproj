@@ -34,34 +34,34 @@
   <ItemGroup>
     <Reference Include="NationalInstruments.Common, Version=15.1.40.49152, Culture=neutral, PublicKeyToken=dc6ad606294fc298, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-	  <Private>False</Private>
+      <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.Common.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Compiler, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-	  <Private>False</Private>
+      <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Core">
       <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
-	  <Private>False</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="NationalInstruments.MocCommon">
       <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
-	  <Private>False</Private>
+      <Private>False</Private>
     </Reference>
     <Reference Include="NationalInstruments.PanelCommon, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-	  <Private>False</Private>
+      <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.PanelCommon.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PlatformFramework">
-	  <Private>False</Private>
+      <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.VI, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-	  <Private>False</Private>
+      <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.VI.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
@@ -150,15 +150,15 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>LocalizedStrings.resx</DependentUpon>
     </Compile>
-    <Compile Include="RustyWiresDiagramEditor.xaml.cs">
+    <Compile Include="Design\RustyWiresDiagramEditor.xaml.cs">
       <DependentUpon>RustyWiresDiagramEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RustyWiresDiagramPaletteLoader.cs" />
-    <Compile Include="RustyWiresDocument.cs" />
+    <Compile Include="Design\RustyWiresDiagramPaletteLoader.cs" />
+    <Compile Include="Design\RustyWiresDocument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RustyWiresModelResources.cs" />
-    <Compile Include="RustyWiresViewModelProvider.cs" />
-    <Compile Include="RWTypes.cs" />
+    <Compile Include="Compiler\RustyWiresCompileMessages.cs" />
+    <Compile Include="Design\RustyWiresViewModelProvider.cs" />
+    <Compile Include="Common\RustyWiresTypes.cs" />
     <Compile Include="Common\BorrowMode.cs" />
     <Compile Include="SourceModel\AssignNode.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
@@ -198,7 +198,7 @@
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="RustyWiresDiagramEditor.xaml">
+    <Page Include="Design\RustyWiresDiagramEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using NationalInstruments.Compiler;
-using NationalInstruments.Compiler.SemanticAnalysis;
-using NationalInstruments.Core;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler.Nodes
 {

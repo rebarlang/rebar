@@ -2,6 +2,7 @@
 using System.Linq;
 using NationalInstruments.Dfir;
 using NationalInstruments.DataTypes;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler.Nodes
 {

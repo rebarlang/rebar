@@ -1,11 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using NationalInstruments.Core;
 using NationalInstruments.Design;
-using NationalInstruments.MocCommon.Design;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 
-namespace RustyWires
+namespace RustyWires.Design
 {
     public class RustyWiresDiagramEditorInfo : DocumentEditControlInfo<RustyWiresDiagramEditor>
     {

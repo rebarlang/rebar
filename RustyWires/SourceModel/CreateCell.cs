@@ -8,6 +8,7 @@ using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
+using RustyWires.Common;
 using RustyWires.Compiler;
 
 namespace RustyWires.SourceModel

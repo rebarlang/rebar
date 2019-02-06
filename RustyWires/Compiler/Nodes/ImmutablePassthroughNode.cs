@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using RustyWires.Common;
 
 namespace RustyWires.Compiler.Nodes
 {

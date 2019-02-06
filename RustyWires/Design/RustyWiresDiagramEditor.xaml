@@ -1,4 +1,4 @@
-﻿<smShell:DocumentEditControl x:Class="RustyWires.RustyWiresDiagramEditor"
+﻿<smShell:DocumentEditControl x:Class="RustyWires.Design.RustyWiresDiagramEditor"
                              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                              xmlns:designer="clr-namespace:NationalInstruments.Design;assembly=NationalInstruments.PlatformFramework"

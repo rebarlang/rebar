@@ -1,15 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
-using System.Net.Mime;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Media;
-using NationalInstruments.Composition;
-using NationalInstruments.ContextualHelp;
 using NationalInstruments.ContextualHelp.View;
 using NationalInstruments.Controls.Shell;
 using NationalInstruments.Core;
@@ -17,13 +9,12 @@ using NationalInstruments.Design;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel.Envoys;
-using RustyWires.Design;
 using RustyWires.SourceModel;
 
-namespace RustyWires
+namespace RustyWires.Design
 {
     /// <summary>
-    ///  Sketch document type
+    ///  RustyWires function document type
     /// </summary>
     [ExportDocumentAndFileType(
         nameType: typeof(RustyWiresDocumentType),
@@ -78,7 +69,7 @@ namespace RustyWires
     }
 
     /// <summary>
-    ///  A sketch document
+    ///  A RustyWires function document
     /// </summary>
     [Export(typeof(RustyWiresDocument))]
     [PartCreationPolicy(CreationPolicy.NonShared)]
@@ -89,7 +80,6 @@ namespace RustyWires
         /// <summary>
         /// The default name for a new document.
         /// </summary>
-        /// <remarks>Wish this could be internal... PF tests directly access this, though.</remarks>
         public static readonly string DefaultDocumentName = "Function.rw";
 
         /// <summary>
@@ -156,7 +146,7 @@ namespace RustyWires
         }
 
         /// <summary>
-        ///  Get the associated sketch definition
+        /// Get the associated <see cref="RustyWiresFunction"/>.
         /// </summary>
         public RustyWiresFunction Function => Definition as RustyWiresFunction;
 
@@ -173,60 +163,6 @@ namespace RustyWires
                     context.Add(DocumentCommands.Paste);
                 }
             }
-
-#if FALSE
-            if (!(ActiveEditControl is IconDocumentEditControl))
-            {
-                using (context.AddDocumentToolBarContent())
-                {
-                    using (context.AddGroup(ShellToolBar.LeftGroupCommand))
-                    {
-                        context.AddBefore(DocumentCommands.Copy, DocumentCommands.AlignmentGroupCommand);
-                        DocumentCommands.CreateArrangeCommands(context);
-                        context.AddAfter(DocumentCommands.Paste, DocumentCommands.AlignmentGroupCommand);
-                        FilterCommands.CreateFilteringCommandContent(context);
-                        var imageParameter = new NineGridCommandParameter()
-                        {
-                            Data = new RenderDataCollection(new NineGridData
-                            {
-                                ImageSource = StockDiagramUIResources.GetSmallWideImage(typeof(double)),
-                                VerticalAlignment = VerticalAlignment.Center
-                            })
-                        };
-                        context.Add(TerminalConfigurationCommands.TerminalImageCommand.SetParameter(imageParameter), ImageFactory.ForConfigurationPane);
-                    }
-                }
-            }
-            using (context.AddConfigurationPaneContent(ConfigurationPaneTitle))
-            {
-                // Gets merged with the first named tab
-                using (context.AddGroup(ConfigurationPaneCommands.VisualStyleGroupCommand))
-                {
-                    context.Add(PanelCommands.BackgroundBrushCommand, ColorBoxFactory.ForConfigurationPane);
-                    context.Add(DocumentCommand);
-                }
-
-                using (context.AddGroup(ConfigurationPaneCommands.DefaultGroupCommand))
-                {
-                    context.Add(_showHideEditors, ButtonFactory.ForConfigurationPane);
-                    context.Add(_toggleHeader, ButtonFactory.ForConfigurationPane);
-                    context.Add(_toggleDone, ButtonFactory.ForConfigurationPane);
-                    context.Add(_changeText, TextBoxFactory.ForConfigurationPane);
-                    context.Add(_showModelessWindow, ButtonFactory.ForConfigurationPane);
-                }
-
-                context.AddUserCreatedDocumentationCommandContent(SketchyUserCreatedDocumentationCommands.DescriptionGroupCommand, Function);
-                context.AddSetCustomTitleCommands(ConfigurationPaneCommands.VisualStyleGroupCommand, Function, null, "Spiffy Sketch Name");
-            }
-
-            using (context.AddConfigurationPaneContent(DiagnosticsTabCommand))
-            {
-                using (context.AddGroup(ConfigurationPaneCommands.VisualStyleGroupCommand))
-                {
-                    context.Add(DynamicPaneCommand);
-                }
-            }
-#endif
 
             using (context.AddToolLauncherContent())
             {

@@ -125,7 +125,7 @@ namespace RustyWires.Compiler
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
             VariableUsageValidator validator = iterateTunnel.Terminals[0].GetValidator();
-            validator.TestUnderlyingType(RWTypes.IsIteratorType, PFTypes.Void.CreateIterator());
+            validator.TestUnderlyingType(RustyWiresTypes.IsIteratorType, PFTypes.Void.CreateIterator());
             validator.TestVariableIsMutableType();
             return true;
         }
@@ -133,7 +133,7 @@ namespace RustyWires.Compiler
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             VariableUsageValidator validator = lockTunnel.Terminals[0].GetValidator();
-            validator.TestUnderlyingType(RWTypes.IsLockingCellType, PFTypes.Void.CreateLockingCell());
+            validator.TestUnderlyingType(RustyWiresTypes.IsLockingCellType, PFTypes.Void.CreateLockingCell());
             return true;
         }
 

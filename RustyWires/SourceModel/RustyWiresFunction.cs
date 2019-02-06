@@ -1,9 +1,9 @@
-﻿using System.Linq;
-using NationalInstruments.SourceModel;
-using NationalInstruments.SourceModel.Persistence;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 using NationalInstruments.MocCommon.SourceModel;
-using System.Collections.Generic;
+using NationalInstruments.SourceModel;
+using NationalInstruments.SourceModel.Persistence;
 using NationalInstruments.VI.SourceModel;
 using RustyWires.Compiler;
 
@@ -30,7 +30,7 @@ namespace RustyWires.SourceModel
         public const string RustyWiresFunctionDefinitionType = "RustyWires.SourceModel.RustyWiresFunction";
 
         /// <summary>
-        ///  Get the root diagram of the sketch.
+        ///  Get the root diagram of the function.
         /// </summary>
         public RootDiagram Diagram => Components.OfType<RootDiagram>().Single();
 
