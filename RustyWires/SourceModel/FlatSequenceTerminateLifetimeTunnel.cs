@@ -1,11 +1,33 @@
-﻿using NationalInstruments.Core;
+﻿using System.Xml.Linq;
+using NationalInstruments.Core;
+using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
+using NationalInstruments.SourceModel.Persistence;
 using NationalInstruments.VI.SourceModel;
 
 namespace RustyWires.SourceModel
 {
     public class FlatSequenceTerminateLifetimeTunnel : FlatSequenceTunnel, ITerminateLifetimeTunnel
     {
+        private const string ElementName = "FlatSequenceTerminateLifetimeTunnel";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static FlatSequenceTerminateLifetimeTunnel CreateFlatSequenceTerminateLifetimeTunnel(IElementCreateInfo elementCreateInfo)
+        {
+            var flatSequenceTerminateLifetimeTunnel = new FlatSequenceTerminateLifetimeTunnel();
+            flatSequenceTerminateLifetimeTunnel.Init(elementCreateInfo);
+            return flatSequenceTerminateLifetimeTunnel;
+        }
+
+        public static readonly PropertySymbol BeginLifetimeTunnelPropertySymbol =
+            ExposeIdReferenceProperty<FlatSequenceTerminateLifetimeTunnel>(
+                "BeginLifetimeTunnel",
+                flatSequenceTerminateLifetimeTunnel => flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel,
+                (flatSequenceTerminateLifetimeTunnel, beginLifetimeTunnel) => flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = (IBeginLifetimeTunnel)beginLifetimeTunnel);
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
         public override BorderNodeRelationship Relationship => BorderNodeRelationship.AncestorToDescendant;
 
         public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToOne;
@@ -30,7 +52,11 @@ namespace RustyWires.SourceModel
         private void EnsureViewWork(EnsureViewHints hints, RectDifference oldBoundsMinusNewbounds)
         {
             Docking = BorderNodeDocking.Right;
-            BeginLifetimeTunnel.Top = Top;
+            // BeginLifetimeTunnel may be null during post-parse fixups.
+            if (BeginLifetimeTunnel != null)
+            {
+                BeginLifetimeTunnel.Top = Top;
+            }
             base.EnsureViewDirectional(hints, oldBoundsMinusNewbounds);
         }
     }

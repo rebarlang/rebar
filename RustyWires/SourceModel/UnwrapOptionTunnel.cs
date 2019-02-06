@@ -1,5 +1,7 @@
-﻿using NationalInstruments.Core;
+﻿using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.SourceModel;
+using NationalInstruments.SourceModel.Persistence;
 using NationalInstruments.VI.SourceModel;
 
 namespace RustyWires.SourceModel
@@ -10,6 +12,19 @@ namespace RustyWires.SourceModel
     /// </summary>
     public class UnwrapOptionTunnel : FlatSequenceTunnel
     {
+        private const string ElementName = "UnwrapOptionTunnel";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static UnwrapOptionTunnel CreateUnwrapOptionTunnel(IElementCreateInfo elementCreateInfo)
+        {
+            var unwrapOptionTunnel = new UnwrapOptionTunnel();
+            unwrapOptionTunnel.Init(elementCreateInfo);
+            return unwrapOptionTunnel;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
         public UnwrapOptionTunnel()
         {
             Docking = BorderNodeDocking.Left;

@@ -1,6 +1,8 @@
-﻿using NationalInstruments.Core;
+﻿using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
+using NationalInstruments.SourceModel.Persistence;
 
 namespace RustyWires.SourceModel
 {
@@ -9,11 +11,24 @@ namespace RustyWires.SourceModel
     /// </summary>
     public class LoopIterateTunnel : SimpleTunnel, IBeginLifetimeTunnel
     {
+        private const string ElementName = "LoopIterateTunnel";
+
         public static readonly PropertySymbol TerminateLifetimeTunnelPropertySymbol =
             ExposeIdReferenceProperty<LoopIterateTunnel>(
                 "TerminateLifetimeTunnel",
                 loopIterateTunnel => loopIterateTunnel.TerminateLifetimeTunnel,
                 (loopIterateTunnel, terminateLifetimeTunnel) => loopIterateTunnel.TerminateLifetimeTunnel = (LoopTerminateLifetimeTunnel)terminateLifetimeTunnel);
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static LoopIterateTunnel CreateLoopIterateTunnel(IElementCreateInfo elementCreateInfo)
+        {
+            var loopIterateTunnel = new LoopIterateTunnel();
+            loopIterateTunnel.Init(elementCreateInfo);
+            return loopIterateTunnel;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
 
         public LoopIterateTunnel()
         {

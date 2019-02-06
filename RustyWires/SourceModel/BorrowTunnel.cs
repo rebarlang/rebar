@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Core;
+﻿using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
@@ -9,6 +10,25 @@ namespace RustyWires.SourceModel
 {
     public class BorrowTunnel : FlatSequenceTunnel, IBeginLifetimeTunnel, IBorrowTunnel
     {
+        private const string ElementName = "FlatSequenceBorrowTunnel";
+
+        [XmlParserFactoryMethod(ElementName, RustyWiresFunction.ParsableNamespaceName)]
+        public static BorrowTunnel CreateBorrowTunnel(IElementCreateInfo elementCreateInfo)
+        {
+            var borrowTunnel = new BorrowTunnel();
+            borrowTunnel.Init(elementCreateInfo);
+            return borrowTunnel;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, RustyWiresFunction.ParsableNamespaceName);
+
+        public static readonly PropertySymbol TerminateLifetimeTunnelPropertySymbol =
+            ExposeIdReferenceProperty<BorrowTunnel>(
+                "TerminateLifetimeTunnel",
+                borrowTunnel => borrowTunnel.TerminateLifetimeTunnel,
+                (borrowTunnel, terminateLifetimeTunnel) => borrowTunnel.TerminateLifetimeTunnel = (FlatSequenceTerminateLifetimeTunnel)terminateLifetimeTunnel);
+
         public static readonly PropertySymbol BorrowModePropertySymbol =
             ExposeStaticProperty<BorrowTunnel>(
                 "BorrowMode",
@@ -35,7 +55,7 @@ namespace RustyWires.SourceModel
 
         public BorrowMode BorrowMode
         {
-            get { return _borrowMode;}
+            get { return _borrowMode; }
             set
             {
                 if (_borrowMode != value)
