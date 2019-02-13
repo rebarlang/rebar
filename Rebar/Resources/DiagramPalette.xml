@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PaletteControls PaletteBaseName="FunctionDiagram" 
+  xmlns:pf="http://www.ni.com/PlatformFramework" 
+  xmlns:moc="http://www.ni.com/MocCommon"
+  xmlns:vi="http://www.ni.com/LabVIEW.VI"
+  xmlns:rb="http://www.ni.com/Rebar"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Category Display="Values" UniqueId="Rebar:PaletteCategory.Nodes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Create Copy" UniqueId="Rebar:CreateCopy" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Synonyms>Copy</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:CreateCopyNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Assign" UniqueId="Rebar:Assign" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AssignNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Exchange Values" UniqueId="Rebar:ExchangeValues" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Synonyms>Swap</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:ExchangeValues />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Immutable Borrow" UniqueId="Rebar:ImmutableBorrow" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:ImmutableBorrowNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Drop Value" UniqueId="Rebar:DropValue" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:DropNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Terminate Lifetime" UniqueId="Rebar:TerminateLifetime" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:TerminateLifetime />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Some" UniqueId="Rebar:Some" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:SomeConstructor />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Create Cell" UniqueId="Rebar:CreateCell" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:CreateCell />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Range" UniqueId="Rebar:Range" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Range />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Sequence Structure" UniqueId="Rebar:FlatSequence" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <Synonyms>frame</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:FlatSequence>
+            <vi:FlatSequence.Frame/>
+          </rb:FlatSequence>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Loop" UniqueId="Rebar:Loop" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Loop Id="1" DiagramId="2" Bounds="203 133 156 96">
+            <rb:LoopConditionTunnel Bounds="-5 17 13 10" Docking="Left" Id="3" TerminateLifetimeTunnel="4" Terminals="1, 2" />
+            <rb:LoopTerminateLifetimeTunnel Bounds="146 17 13 10" Docking="Right" Id="4" BeginLifetimeTunnel="3" Terminals="1" />
+          </rb:Loop>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+  </Category>
+  <Category Display="Boolean" UniqueId="Rebar:PaletteCategory.Boolean" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="True Constant" UniqueId="Rebar:TrueConstant" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Synonyms>True</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <moc:Literal DataType="Boolean">
+            <moc:BooleanBehavior />
+            <vi:p.Data>True</vi:p.Data>
+          </moc:Literal>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="False Constant" UniqueId="Rebar:TrueConstant" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Synonyms>False</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <moc:Literal DataType="Boolean">
+            <moc:BooleanBehavior />
+            <vi:p.Data>False</vi:p.Data>
+          </moc:Literal>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Select Reference" UniqueId="Rebar:SelectReferenceNode" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:SelectReferenceNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="And" UniqueId="Rebar:And" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:And />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate And" UniqueId="Rebar:AccumulateAnd" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateAnd />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Or" UniqueId="Rebar:Or" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Or />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Or" UniqueId="Rebar:AccumulateOr" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateOr />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Xor" UniqueId="Rebar:Xor" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Xor />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Xor" UniqueId="Rebar:AccumulateXor" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateXor />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Not" UniqueId="Rebar:Not" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Not />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Not" UniqueId="Rebar:AccumulateNot" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateNot />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+  </Category>
+  <Category Display="Numeric" UniqueId="Rebar:PaletteCategory.Numeric" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Integer Constant" UniqueId="Rebar:IntegerConstant" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Synonyms>Integer</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <moc:Literal DataType="Int32">
+            <moc:NumericBehavior Interpretation="Numeric" ValueFormatter="LV:0" />
+            <vi:p.Data>0.0</vi:p.Data>
+          </moc:Literal>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Add" UniqueId="Rebar:Add" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Add />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Add" UniqueId="Rebar:AccumulateAdd" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateAdd />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Subtract" UniqueId="Rebar:Subtract" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Subtract />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Subtract" UniqueId="Rebar:AccumulateSubtract" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateSubtract />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Multiply" UniqueId="Rebar:Multiply" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Multiply />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Multiply" UniqueId="Rebar:AccumulateMultiply" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateMultiply />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Divide" UniqueId="Rebar:Divide" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Divide />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Divide" UniqueId="Rebar:AccumulateDivide" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateDivide />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Increment" UniqueId="Rebar:Increment" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Increment />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Accumulate Increment" UniqueId="Rebar:AccumulateIncrement" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:AccumulateIncrement />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+  </Category>
+  <Category Display="Test Nodes" UniqueId="Rebar:PaletteCategory.Test" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Immutable Passthrough" UniqueId="Rebar:ImmutablePassthrough" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:ImmutablePassthroughNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Mutable Passthrough" UniqueId="Rebar:MutablePassthroughNode" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:MutablePassthroughNode />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+  </Category>
+</PaletteControls>

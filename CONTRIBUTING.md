@@ -1,11 +1,11 @@
-# Contributing to rustywires 
+# Contributing to rebar 
 
-Contributions to rustywires are welcome from all!
+Contributions to rebar are welcome from all!
 
-rustywires is managed via [git](https://git-scm.com), with the canonical upstream
-repository hosted on [GitHub](https://github.com/ni/rustywires/).
+rebar is managed via [git](https://git-scm.com), with the canonical upstream
+repository hosted on [GitHub](https://github.com/ni/rebar/).
 
-rustywires follows a pull-request model for development.  If you wish to
+rebar follows a pull-request model for development.  If you wish to
 contribute, you will need to create a GitHub account, fork this project, push a
 branch with your changes to your project, and then submit a pull request.
 
@@ -16,9 +16,9 @@ See [GitHub's official documentation](https://help.github.com/articles/using-pul
 Builds with Visual Studio 2015 against .NET Framework 4.6.2.
 
 You will need [LabVIEW NXG 3.0](http://www.ni.com/nl-nl/support/downloads/software-products/download.labview-nxg.html) installed in order
-to build and run the RustyWires addon. Once it is installed, copy the InstallLocation.targets file from the repository top level to the RustyWires
-folder, and update the InstallLocation value with the path to your LabVIEW NXG 3.0 installation. RustyWires builds to the 
-$(InstallLocation)\Addons\rw\RustyWires folder.
+to build and run the Rebar addon. Once it is installed, copy the InstallLocation.targets file from the repository top level to the Rebar
+folder, and update the InstallLocation value with the path to your LabVIEW NXG 3.0 installation. Rebar builds to the 
+$(InstallLocation)\Addons\rb\Rebar folder.
 
 # Testing
 
@@ -54,5 +54,5 @@ Automated tests are TODO.
 
 (taken from [developercertificate.org](https://developercertificate.org/))
 
-See [LICENSE](https://github.com/ni/rustywires/blob/master/LICENSE)
-for details about how rustywires is licensed.
+See [LICENSE](https://github.com/ni/rebar/blob/master/LICENSE)
+for details about how rebar is licensed.
