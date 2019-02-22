@@ -6,7 +6,8 @@ using Rebar.Common;
 
 namespace Rebar.SourceModel
 {
-    internal static class WireProperties
+    [ExposeAttachedProperties(typeof(WireProperties), Function.ParsableNamespaceName)]
+    internal class WireProperties
     {
         internal static readonly PropertySymbol FirstVariableWirePropertySymbol =
             Element.ExposeAttachedProperty(
@@ -16,43 +17,46 @@ namespace Rebar.SourceModel
                 typeof(bool),
                 PropertySymbolAttributes.DoNotPersist);
 
-        public static bool GetIsFirstVariableWire(this Wire wire)
-        {
-            object value;
-            return wire.TryGetValue(FirstVariableWirePropertySymbol, out value) && (bool)value;
-        }
-
-        public static void SetIsFirstVariableWire(this Wire wire, bool value)
-        {
-            wire.TrySetValue(FirstVariableWirePropertySymbol, value);
-        }
-
         internal static readonly PropertySymbol WireBeginsMutableVariablePropertySymbol =
             Element.ExposeAttachedProperty(
                 XName.Get("WireBeginsMutableVariable", Function.ParsableNamespaceName),
                 PropertySerializers.BooleanSerializer,
                 false,
                 typeof(bool));
+    }
+
+    internal static class WirePropertyExtensions
+    {
+        public static bool GetIsFirstVariableWire(this Wire wire)
+        {
+            object value;
+            return wire.TryGetValue(WireProperties.FirstVariableWirePropertySymbol, out value) && (bool)value;
+        }
+
+        public static void SetIsFirstVariableWire(this Wire wire, bool value)
+        {
+            wire.TrySetValue(WireProperties.FirstVariableWirePropertySymbol, value);
+        }
 
         public static bool GetWireBeginsMutableVariable(this Wire wire)
         {
             object mutableTerminalBindingsSetting;
-            return wire.TryGetValue(WireBeginsMutableVariablePropertySymbol, out mutableTerminalBindingsSetting)
+            return wire.TryGetValue(WireProperties.WireBeginsMutableVariablePropertySymbol, out mutableTerminalBindingsSetting)
                 && (bool)mutableTerminalBindingsSetting;
         }
 
         public static void SetWireBeginsMutableVariable(this Wire wire, bool value)
         {
             object oldValue;
-            wire.TryGetValue(WireBeginsMutableVariablePropertySymbol, out oldValue);
+            wire.TryGetValue(WireProperties.WireBeginsMutableVariablePropertySymbol, out oldValue);
             wire.TransactionRecruiter.EnlistPropertyItem(
                 wire,
                 "WireBeginsMutableVariable",
                 oldValue,
                 value,
-                (mode, reason) => wire.TrySetValue(WireBeginsMutableVariablePropertySymbol, mode),
+                (mode, reason) => wire.TrySetValue(WireProperties.WireBeginsMutableVariablePropertySymbol, mode),
                 TransactionHints.Semantic);
-            wire.TrySetValue(WireBeginsMutableVariablePropertySymbol, value);
+            wire.TrySetValue(WireProperties.WireBeginsMutableVariablePropertySymbol, value);
         }
 
         private static readonly PropertySymbol WireVariablePropertySymbol =
