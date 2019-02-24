@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Core;
+﻿using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
@@ -11,6 +12,19 @@ namespace Rebar.SourceModel
     /// </summary>
     public class LoopBorrowTunnel : SimpleTunnel, IBeginLifetimeTunnel, IBorrowTunnel
     {
+        private const string ElementName = "LoopBorrowTunnel";
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static LoopBorrowTunnel CreateLoopBorrowTunnel(IElementCreateInfo elementCreateInfo)
+        {
+            var loopBorrowTunnel = new LoopBorrowTunnel();
+            loopBorrowTunnel.Init(elementCreateInfo);
+            return loopBorrowTunnel;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
         public static readonly PropertySymbol TerminateLifetimeTunnelPropertySymbol =
             ExposeIdReferenceProperty<LoopBorrowTunnel>(
                 "TerminateLifetimeTunnel",
