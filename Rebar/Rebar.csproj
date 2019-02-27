@@ -42,13 +42,26 @@
       <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.Compiler.dll</HintPath>
     </Reference>
-    <Reference Include="NationalInstruments.Core">
-      <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
+    <Reference Include="NationalInstruments.ComponentEditor">
       <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.ComponentEditor.dll</HintPath>
+    </Reference>
+    <Reference Include="NationalInstruments.Core">
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NationalInstruments.ExecutionFramework, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.MocCommon">
-      <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
       <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
+    </Reference>
+    <Reference Include="NationalInstruments.NativeTarget">
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.NativeTarget.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PanelCommon, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -58,6 +71,14 @@
     <Reference Include="NationalInstruments.PlatformFramework">
       <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="NationalInstruments.RuntimeSerialization">
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.RuntimeSerialization.dll</HintPath>
+    </Reference>
+    <Reference Include="NationalInstruments.SystemDesigner">
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.SystemDesigner.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.VI, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -84,6 +105,9 @@
     <Compile Include="Common\PrimitiveOps.cs" />
     <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
     <Compile Include="Common\Lifetime.cs" />
+    <Compile Include="Compiler\FunctionExecutionService.cs" />
+    <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
+    <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
     <Compile Include="Compiler\Nodes\AssignNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
@@ -123,6 +147,29 @@
     <Compile Include="Compiler\Messages.cs" />
     <Compile Include="Compiler\FunctionDfirBuilder.cs" />
     <Compile Include="Compiler\FunctionMocPlugin.cs" />
+    <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
+    <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
+    <Compile Include="RebarTarget\ApplicationComponentMocReflector.cs" />
+    <Compile Include="RebarTarget\ApplicationComponentSubtype.cs" />
+    <Compile Include="RebarTarget\ApplicationComponentSubtypeProperties.cs" />
+    <Compile Include="RebarTarget\ApplicationComponentSubtypeSemanticProperties.cs" />
+    <Compile Include="RebarTarget\ApplicationIRBuilder.cs" />
+    <Compile Include="RebarTarget\ApplicationCompileHandler.cs" />
+    <Compile Include="RebarTarget\ApplicationComponentMocPluginPlugin.cs" />
+    <Compile Include="RebarTarget\ApplicationRoot.cs" />
+    <Compile Include="RebarTarget\ExecutableFunction.cs" />
+    <Compile Include="RebarTarget\ExecutionTarget.cs" />
+    <Compile Include="RebarTarget\FunctionBuiltPackage.cs" />
+    <Compile Include="RebarTarget\FunctionCompileHandler.cs" />
+    <Compile Include="RebarTarget\FunctionCompileHandlerFactory.cs" />
+    <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
+    <Compile Include="RebarTarget\FunctionDeployedPackage.cs" />
+    <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
+    <Compile Include="RebarTarget\TargetCompiler.cs" />
+    <Compile Include="RebarTarget\TargetCompilerServices.cs" />
+    <Compile Include="RebarTarget\TargetCompilerServicesInitialization.cs" />
+    <Compile Include="RebarTarget\TargetDefinition.cs" />
+    <Compile Include="RebarTarget\TargetDeployer.cs" />
     <Compile Include="Compiler\SetVariableTypesTransform.cs" />
     <Compile Include="Compiler\ValidateVariableUsagesTransform.cs" />
     <Compile Include="Common\Variable.cs" />
@@ -145,6 +192,21 @@
     <Compile Include="Design\FunctionProjectItemInfoService.cs" />
     <Compile Include="Design\FunctionWireViewModel.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
+    <Compile Include="RebarTarget\SystemModel\CreateItemInScopeRulesService.cs" />
+    <Compile Include="RebarTarget\SystemModel\DeviceCatalogItem.cs" />
+    <Compile Include="RebarTarget\SystemModel\DeviceDisplayInfo.cs" />
+    <Compile Include="RebarTarget\SystemModel\DeviceKind.cs" />
+    <Compile Include="RebarTarget\SystemModel\FunctionCatalogItem.cs" />
+    <Compile Include="RebarTarget\SystemModel\FunctionKind.cs" />
+    <Compile Include="RebarTarget\SystemModel\ModuleCatalogItem.cs" />
+    <Compile Include="RebarTarget\SystemModel\ModuleDisplayInfo.cs" />
+    <Compile Include="RebarTarget\SystemModel\ModuleKind.cs" />
+    <Compile Include="RebarTarget\SystemModel\PaletteCategory.cs" />
+    <Compile Include="RebarTarget\SystemModel\ProcessFactoryServiceBuilder.cs" />
+    <Compile Include="RebarTarget\SystemModel\ProcessServiceBuilder.cs" />
+    <Compile Include="RebarTarget\SystemModel\SystemModelNamespaceSchema.cs" />
+    <Compile Include="RebarTarget\SystemModel\TargetEnvoyCreationServiceBuilder.cs" />
+    <Compile Include="RebarTarget\SystemModel\TargetKind.cs" />
     <Compile Include="RebarFeatureToggles.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -249,10 +311,17 @@
     <Resource Include="Resources\Diagram\Nodes\Xor.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\OptionPalette.xml" />
+    <EmbeddedResource Include="Resources\OptionPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\CellPalette.xml" />
+    <EmbeddedResource Include="Resources\CellPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="RebarTarget\Execution\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -37,6 +37,9 @@ namespace Rebar.Compiler
         public FunctionDfirBuilder()
         {
             CreatedDfirRoot = DfirRoot.Create();
+            CreatedDfirRoot.RuntimeType = RebarFeatureToggles.IsRebarTargetEnabled
+                ? FunctionMocPlugin.FunctionRuntimeType
+                : DfirRootRuntimeType.FunctionType;
         }
 
         public void VisitElement(Element element)

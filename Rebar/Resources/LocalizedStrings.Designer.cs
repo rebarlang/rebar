@@ -61,6 +61,15 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rebar Device.
+        /// </summary>
+        internal static string DeviceDisplayInfo_RebarTargetDisplayName {
+            get {
+                return ResourceManager.GetString("DeviceDisplayInfo_RebarTargetDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function.
         /// </summary>
         internal static string FunctionDocumentType_DefaultDocumentName {
@@ -75,6 +84,24 @@ namespace Rebar.Resources {
         internal static string FunctionDocumentType_DisplayName {
             get {
                 return ResourceManager.GetString("FunctionDocumentType_DisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar Module.
+        /// </summary>
+        internal static string ModuleDisplayInfo_RebarModuleDisplayName {
+            get {
+                return ResourceManager.GetString("ModuleDisplayInfo_RebarModuleDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string RebarPaletteCategory_RebarPaletteDisplayName {
+            get {
+                return ResourceManager.GetString("RebarPaletteCategory_RebarPaletteDisplayName", resourceCulture);
             }
         }
         

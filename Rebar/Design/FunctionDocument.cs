@@ -1,14 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
+using System.Windows.Input;
 using NationalInstruments.ContextualHelp.View;
 using NationalInstruments.Controls.Shell;
 using NationalInstruments.Core;
 using NationalInstruments.Design;
+using NationalInstruments.MocCommon.Design;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel.Envoys;
+using NationalInstruments.VI.Design;
 using Rebar.SourceModel;
 
 namespace Rebar.Design
@@ -73,7 +77,7 @@ namespace Rebar.Design
     /// </summary>
     [Export(typeof(FunctionDocument))]
     [PartCreationPolicy(CreationPolicy.NonShared)]
-    public class FunctionDocument : SourceFileDocument, IProvideOverlayHelp
+    public class FunctionDocument : DataflowDocument, IProvideOverlayHelp
     {
         private static readonly string _functionDocumentUniqueIdPrefix = "FunctionDocument:";
 
@@ -458,7 +462,7 @@ namespace Rebar.Design
         }
 
         /// <inheritdoc />
-        public IEnumerable<DocumentOverlayHelpContent> GetOverlayHelpContent()
+        public override IEnumerable<DocumentOverlayHelpContent> GetOverlayHelpContent()
         {
             return new List<DocumentOverlayHelpContent>
             {
@@ -483,6 +487,9 @@ namespace Rebar.Design
 
         /// <inheritdoc />
         public override IEnumerable<BindingKeyword> BindingKeywords => base.BindingKeywords.Concat(new BindingKeyword[] { Identifier });
+
+        /// <inheritdoc />
+        protected override Type DiagramControlType => typeof(FunctionDiagramEditor);
 
 #if FALSE
         private ImageSource _statusMessageIcon;

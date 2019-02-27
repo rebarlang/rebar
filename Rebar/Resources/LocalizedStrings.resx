@@ -117,11 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="DeviceDisplayInfo_RebarTargetDisplayName" xml:space="preserve">
+    <value>Rebar Device</value>
+  </data>
   <data name="FunctionDocumentType_DefaultDocumentName" xml:space="preserve">
     <value>Function</value>
   </data>
   <data name="FunctionDocumentType_DisplayName" xml:space="preserve">
     <value>Rebar Function</value>
+  </data>
+  <data name="ModuleDisplayInfo_RebarModuleDisplayName" xml:space="preserve">
+    <value>Rebar Module</value>
+  </data>
+  <data name="RebarPaletteCategory_RebarPaletteDisplayName" xml:space="preserve">
+    <value>Rebar</value>
   </data>
   <data name="TerminalDoesNotAcceptImmutableType" xml:space="preserve">
     <value>This terminal cannot accept a wired immutable type.</value>

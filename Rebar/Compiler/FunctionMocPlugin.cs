@@ -90,10 +90,18 @@ namespace Rebar.Compiler
                 new ReflectVariablesToTerminalsTransform(),
                 // new ExplicitBorrowTransform(),
                 // new PropagateTypePermissivenessTransform(),
-                new StandardTypeReflectionTransform(),
             };
+
+            if (RebarFeatureToggles.IsRebarTargetEnabled)
+            {
+                semanticAnalysisTransforms.Add(new RebarSupportedTargetTransform());
+            }
+            semanticAnalysisTransforms.Add(new StandardTypeReflectionTransform());
             ReflectErrorsTransform.AddErrorReflection(semanticAnalysisTransforms, CompilePhase.SemanticAnalysis);
-            semanticAnalysisTransforms.Add(new EmptyTargetDfirTransform());
+            if (!RebarFeatureToggles.IsRebarTargetEnabled)
+            {
+                semanticAnalysisTransforms.Add(new EmptyTargetDfirTransform());
+            }
 
             return new StandardMocTransformManager(
                 specAndQName,
@@ -103,7 +111,7 @@ namespace Rebar.Compiler
                 _host.GetSharedExportedValue<ScheduledActivityManager>());
         }
 
-        public override DfirRootRuntimeType GetRuntimeType(IReadOnlySymbolTable symbolTable) => DfirRootRuntimeType.FunctionType;
+        public override DfirRootRuntimeType GetRuntimeType(IReadOnlySymbolTable symbolTable) => FunctionRuntimeType;
 
         private class EmptyTargetDfirTransform : IDfirTransform
         {
@@ -113,6 +121,8 @@ namespace Rebar.Compiler
                 dfirRoot.BlockDiagram.DisconnectAndRemoveNodes(dfirRoot.BlockDiagram.Nodes);
             }
         }
+
+        public static DfirRootRuntimeType FunctionRuntimeType { get; } = new DfirRootRuntimeType("RebarFunction");
     }
 
     internal class FunctionMocReflector : MocReflector, IReflectTypes
