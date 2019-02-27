@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PaletteControls PaletteBaseName="FunctionDiagram" 
+  xmlns:pf="http://www.ni.com/PlatformFramework" 
+  xmlns:moc="http://www.ni.com/MocCommon"
+  xmlns:vi="http://www.ni.com/LabVIEW.VI"
+  xmlns:rb="http://www.ni.com/Rebar"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Category Display="Values" UniqueId="Rebar:PaletteCategory.Nodes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Category 
+      Display="Option" 
+      UniqueId="Rebar:PaletteCategory.Option" 
+      Weight=".5" 
+      BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml"
+      RequiredFeatureToggle="Rebar.FeatureToggles.OptionDataType">
+      <Leaf Display="Some" UniqueId="Rebar:Some" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:SomeConstructor />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+    </Category>
+  </Category>
+</PaletteControls>

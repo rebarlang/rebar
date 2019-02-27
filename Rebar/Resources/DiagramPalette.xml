@@ -6,6 +6,26 @@
   xmlns:rb="http://www.ni.com/Rebar"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Category Display="Values" UniqueId="Rebar:PaletteCategory.Nodes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Sequence Structure" UniqueId="Rebar:FlatSequence" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <Synonyms>frame</Synonyms>
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:FlatSequence>
+            <vi:FlatSequence.Frame/>
+          </rb:FlatSequence>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Loop" UniqueId="Rebar:Loop" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:Loop Id="1" DiagramId="2" Bounds="203 133 156 96">
+            <rb:LoopConditionTunnel Bounds="-5 17 13 10" Docking="Left" Id="3" TerminateLifetimeTunnel="4" Terminals="1, 2" />
+            <rb:LoopTerminateLifetimeTunnel Bounds="146 17 13 10" Docking="Right" Id="4" BeginLifetimeTunnel="3" Terminals="1" />
+          </rb:Loop>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
     <Leaf Display="Create Copy" UniqueId="Rebar:CreateCopy" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <Synonyms>Copy</Synonyms>
       <pf:MergeScript>
@@ -50,44 +70,10 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
-    <Leaf Display="Some" UniqueId="Rebar:Some" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:SomeConstructor />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Create Cell" UniqueId="Rebar:CreateCell" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:CreateCell />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
     <Leaf Display="Range" UniqueId="Rebar:Range" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <pf:MergeScript>
         <pf:MergeItem>
           <rb:Range />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Sequence Structure" UniqueId="Rebar:FlatSequence" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
-      <Synonyms>frame</Synonyms>
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:FlatSequence>
-            <vi:FlatSequence.Frame/>
-          </rb:FlatSequence>
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Loop" UniqueId="Rebar:Loop" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:Loop Id="1" DiagramId="2" Bounds="203 133 156 96">
-            <rb:LoopConditionTunnel Bounds="-5 17 13 10" Docking="Left" Id="3" TerminateLifetimeTunnel="4" Terminals="1, 2" />
-            <rb:LoopTerminateLifetimeTunnel Bounds="146 17 13 10" Docking="Right" Id="4" BeginLifetimeTunnel="3" Terminals="1" />
-          </rb:Loop>
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>

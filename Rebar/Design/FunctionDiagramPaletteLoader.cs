@@ -2,6 +2,7 @@
 using NationalInstruments;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
+using NationalInstruments.FeatureToggles;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
 
@@ -29,5 +30,25 @@ namespace Rebar.Design
     [BindsToKeyword(PaletteConstants.NativeTargetKeyword)]
     public class FunctionDocumentDiagramPaletteType : PaletteType
     {
+    }
+
+    [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
+    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.OptionDataType)]
+    public class OptionDiagramPaletteLoader : ResourcePaletteLoader
+    {
+        /// <inheritdoc />
+        protected override string ResourcePath => "Rebar.Resources.OptionPalette.xml";
+    }
+
+    [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
+    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.CellDataType)]
+    public class CellDiagramPaletteLoader : ResourcePaletteLoader
+    {
+        /// <inheritdoc />
+        protected override string ResourcePath => "Rebar.Resources.CellPalette.xml";
     }
 }

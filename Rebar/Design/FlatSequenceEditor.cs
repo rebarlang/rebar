@@ -1,6 +1,5 @@
 ﻿using NationalInstruments.Core;
 using NationalInstruments.Design;
-using NationalInstruments.VI.Design;
 using Rebar.SourceModel;
 
 namespace Rebar.Design
@@ -21,8 +20,14 @@ namespace Rebar.Design
                 using (context.AddGroup(ConfigurationPaneCommands.BehaviorGroupCommand))
                 {
                     context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddBorrowTunnelCommand.SetWeight(0.6));
-                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
-                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
+                    if (RebarFeatureToggles.IsCellDataTypeEnabled)
+                    {
+                        context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
+                    }
+                    if (RebarFeatureToggles.IsOptionDataTypeEnabled)
+                    {
+                        context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
+                    }
                 }
             }
         }
