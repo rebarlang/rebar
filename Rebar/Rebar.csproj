@@ -145,6 +145,7 @@
     <Compile Include="Design\FunctionProjectItemInfoService.cs" />
     <Compile Include="Design\FunctionWireViewModel.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
+    <Compile Include="RebarFeatureToggles.cs" />
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
