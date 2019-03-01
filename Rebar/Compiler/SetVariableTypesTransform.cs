@@ -22,16 +22,20 @@ namespace Rebar.Compiler
 
         protected override void VisitWire(Wire wire)
         {
-            if (wire.SinkTerminals.HasMoreThan(1))
+            if (!wire.SinkTerminals.HasMoreThan(1))
             {
-                Variable sourceVariable = wire.SourceTerminal.GetVariable();
-                if (sourceVariable != null)
-                {
-                    foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableSetExtensions.GetVariable))
-                    {
-                        sinkVariable?.SetTypeAndLifetime(sourceVariable.Type, sourceVariable.Lifetime);
-                    }
-                }
+                return;
+            }
+            Terminal sourceTerminal;
+            wire.TryGetSourceTerminal(out sourceTerminal);
+            Variable sourceVariable = sourceTerminal?.GetVariable();
+            if (sourceVariable == null)
+            {
+                return;
+            }
+            foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableSetExtensions.GetVariable))
+            {
+                sinkVariable?.SetTypeAndLifetime(sourceVariable.Type, sourceVariable.Lifetime);
             }
         }
 

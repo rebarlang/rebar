@@ -211,7 +211,11 @@ namespace Rebar.Compiler
             bool isFirstVariableWire = dfirWire.GetIsFirstVariableWire();
             wire.SetIsFirstVariableWire(isFirstVariableWire);
 
-            wire.SetWireVariable(dfirWire.SourceTerminal?.GetVariable());
+            bool hasSourceTerminal = wire.InputTerminals.Any();
+            if (hasSourceTerminal)
+            {
+                wire.SetWireVariable(dfirWire.SourceTerminal?.GetVariable());
+            }
 
             if (!isFirstVariableWire)
             {

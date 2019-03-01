@@ -17,28 +17,32 @@ namespace Rebar.Compiler
 
         protected override void VisitWire(Wire wire)
         {
-            Terminal connectedTerminal = wire.SourceTerminal.ConnectedTerminal;
-            if (connectedTerminal != null)
+            Terminal sourceTerminal;
+            if (!wire.TryGetSourceTerminal(out sourceTerminal))
             {
-                Variable sourceVariable = connectedTerminal.GetVariable();
-                wire.SourceTerminal.AddTerminalToVariable(sourceVariable);
-                bool reuseSource = true;
-                foreach (Terminal sinkTerminal in wire.SinkTerminals)
-                {
-                    if (reuseSource)
-                    {
-                        sinkTerminal.AddTerminalToVariable(sourceVariable);
-                        reuseSource = false;
-                    }
-                    else
-                    {
-                        sinkTerminal.AddTerminalToNewVariable(sourceVariable.Mutable);
-                    }
-                }
+                // source does not exist; nothing to do here
+                return;
             }
-            else
+            Terminal connectedTerminal = sourceTerminal?.ConnectedTerminal;
+            if (connectedTerminal == null)
             {
-                // source is not connected somehow; not sure what to do here
+                // source is not connected; nothing to do here
+                return;
+            }
+            Variable sourceVariable = connectedTerminal.GetVariable();
+            sourceTerminal.AddTerminalToVariable(sourceVariable);
+            bool reuseSource = true;
+            foreach (Terminal sinkTerminal in wire.SinkTerminals)
+            {
+                if (reuseSource)
+                {
+                    sinkTerminal.AddTerminalToVariable(sourceVariable);
+                    reuseSource = false;
+                }
+                else
+                {
+                    sinkTerminal.AddTerminalToNewVariable(sourceVariable.Mutable);
+                }
             }
         }
 

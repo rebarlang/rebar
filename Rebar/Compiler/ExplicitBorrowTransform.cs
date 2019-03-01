@@ -38,7 +38,11 @@ namespace Rebar.Compiler
 
         private void VisitWire(Wire wire)
         {
-            Terminal sourceTerminal = wire.SourceTerminal;
+            Terminal sourceTerminal;
+            if (!wire.TryGetSourceTerminal(out sourceTerminal))
+            {
+                return;
+            }
             sourceTerminal.PullInputType();
             foreach (var sinkTerminal in wire.SinkTerminals)
             {

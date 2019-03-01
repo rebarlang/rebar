@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using NationalInstruments;
+using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -20,10 +21,22 @@ namespace Rebar.Compiler
 
         protected override void VisitWire(Wire wire)
         {
-            Variable sourceVariable = wire.SourceTerminal.GetVariable();
-            if (wire.SinkTerminals.HasMoreThan(1) && sourceVariable != null && !WireTypeMayFork(sourceVariable.Type))
+            Terminal sourceTerminal;
+            if (wire.TryGetSourceTerminal(out sourceTerminal))
             {
-                wire.SetDfirMessage(Messages.WireCannotFork);
+                Variable sourceVariable = sourceTerminal.GetVariable();
+                if (wire.SinkTerminals.HasMoreThan(1) && sourceVariable != null && !WireTypeMayFork(sourceVariable.Type))
+                {
+                    wire.SetDfirMessage(Messages.WireCannotFork);
+                }
+                if (wire.Terminals.Any(t => !t.IsConnected))
+                {
+                    wire.SetDfirMessage(WireSpecificUserMessages.LooseEnds);
+                }
+            }
+            else
+            {
+                wire.SetDfirMessage(WireSpecificUserMessages.NoSource);
             }
         }
 

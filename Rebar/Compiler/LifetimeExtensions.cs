@@ -17,13 +17,17 @@ namespace Rebar.Compiler
             if (connectedTerminalVariable.Lifetime == null && connectedTerminal.ParentNode is Wire)
             {
                 Wire wire = (Wire)connectedTerminal.ParentNode;
-                Lifetime sourceLifetime = wire.SourceTerminal.GetSourceLifetime();
-                Variable sourceVariable = wire.SourceTerminal.GetVariable();
-                sourceVariable.SetTypeAndLifetime(sourceVariable.Type, sourceLifetime);
-                foreach (var sinkTerminal in wire.SinkTerminals)
+                Terminal sourceTerminal;
+                if (wire.TryGetSourceTerminal(out sourceTerminal))
                 {
-                    Variable sinkVariable = sinkTerminal.GetVariable();
-                    sinkVariable.SetTypeAndLifetime(sinkVariable.Type, sourceLifetime);
+                    Lifetime sourceLifetime = sourceTerminal.GetSourceLifetime();
+                    Variable sourceVariable = sourceTerminal.GetVariable();
+                    sourceVariable.SetTypeAndLifetime(sourceVariable.Type, sourceLifetime);
+                    foreach (var sinkTerminal in wire.SinkTerminals)
+                    {
+                        Variable sinkVariable = sinkTerminal.GetVariable();
+                        sinkVariable.SetTypeAndLifetime(sinkVariable.Type, sourceLifetime);
+                    }
                 }
             }
             return connectedTerminalVariable.Lifetime;
