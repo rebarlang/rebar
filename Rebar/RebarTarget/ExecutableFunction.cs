@@ -110,7 +110,6 @@ namespace Rebar.RebarTarget
         public void StartRun()
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
-            Host.GetSharedExportedValue<IDebugHost>().LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, "Run started"));
             _context.ExecuteFunctionTopLevel(CompiledName);
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;

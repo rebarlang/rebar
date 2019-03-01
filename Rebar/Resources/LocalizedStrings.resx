@@ -120,6 +120,9 @@
   <data name="DeviceDisplayInfo_RebarTargetDisplayName" xml:space="preserve">
     <value>Rebar Device</value>
   </data>
+  <data name="FeatureNotEnabled" xml:space="preserve">
+    <value>Using this node requires a preview feature to be enabled.</value>
+  </data>
   <data name="FunctionDocumentType_DefaultDocumentName" xml:space="preserve">
     <value>Function</value>
   </data>

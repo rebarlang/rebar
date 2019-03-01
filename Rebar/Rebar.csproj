@@ -127,6 +127,7 @@
     <Compile Include="Compiler\Nodes\MutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\MutatingBinaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\MutatingUnaryPrimitive.cs" />
+    <Compile Include="Compiler\Nodes\OutputNode.cs" />
     <Compile Include="Compiler\Nodes\PureBinaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\PureUnaryPrimitive.cs" />
     <Compile Include="Compiler\Nodes\RangeNode.cs" />
@@ -248,6 +249,7 @@
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
     <Compile Include="SourceModel\MutablePassthroughNode.cs" />
+    <Compile Include="SourceModel\Output.cs" />
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Primitives.cs" />
     <Compile Include="SourceModel\Range.cs" />
@@ -324,6 +326,14 @@
     <EmbeddedResource Include="Resources\CellPalette.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\OutputPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Diagram\Nodes\Output.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

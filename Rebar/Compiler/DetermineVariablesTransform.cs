@@ -175,6 +175,11 @@ namespace Rebar.Compiler
             yield return new PassthroughTerminalPair(mutatingUnaryPrimitive.Terminals[0], mutatingUnaryPrimitive.Terminals[1]);
         }
 
+        IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitOutputNode(OutputNode outputNode)
+        {
+            yield return new PassthroughTerminalPair(outputNode.Terminals[0], outputNode.Terminals[1]);
+        }
+
         IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
         {
             yield return new PassthroughTerminalPair(pureBinaryPrimitive.Terminals[0], pureBinaryPrimitive.Terminals[2]);

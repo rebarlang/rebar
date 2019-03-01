@@ -65,6 +65,14 @@ namespace Rebar.Compiler
                 MessageSeverity.Error,
                 SemanticAnalysisMessageCategories.Connection,
                 WireCannotForkDescriptor);
+
+        private static readonly MessageDescriptor FeatureNotEnabledDescriptor = new MessageDescriptor(ResourceDictionaryName, "FeatureNotEnabled");
+
+        public static readonly DfirMessage FeatureNotEnabled =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                FeatureNotEnabledDescriptor);
     }
 
     internal static class SemanticAnalysisHelpers

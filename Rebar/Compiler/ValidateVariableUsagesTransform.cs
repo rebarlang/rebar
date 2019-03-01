@@ -173,6 +173,18 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitOutputNode(OutputNode outputNode)
+        {
+            VariableUsageValidator validator = outputNode.Terminals[0].GetValidator();
+            // For now, only outputing i32 is supported
+            validator.TestExpectedUnderlyingType(PFTypes.Int32);
+            if (!RebarFeatureToggles.IsOutputNodeEnabled)
+            {
+                outputNode.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
+            return true;
+        }
+
         public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
         {
             NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();

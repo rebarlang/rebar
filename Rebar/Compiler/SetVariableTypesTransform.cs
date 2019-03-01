@@ -201,6 +201,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitOutputNode(OutputNode outputNode)
+        {
+            return true;
+        }
+
         public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
         {
             return true;

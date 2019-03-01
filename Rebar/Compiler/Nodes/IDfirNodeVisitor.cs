@@ -20,6 +20,7 @@ namespace Rebar.Compiler.Nodes
         T VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode);
         T VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive);
         T VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive);
+        T VisitOutputNode(OutputNode outputNode);
         T VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive);
         T VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive);
         T VisitRangeNode(RangeNode rangeNode);

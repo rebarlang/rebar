@@ -212,6 +212,15 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitOutputNode(OutputNode outputNode)
+        {
+            Variable input = outputNode.InputTerminals.ElementAt(0).GetVariable();
+            LoadLocalAddressAndDerefIfReference(input);
+            _builder.EmitDerefInteger();
+            _builder.EmitOutput_TEMP();
+            return true;
+        }
+
         public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
         {
             Variable input1 = pureBinaryPrimitive.InputTerminals.ElementAt(0).GetVariable(),

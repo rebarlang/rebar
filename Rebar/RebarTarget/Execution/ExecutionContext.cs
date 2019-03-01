@@ -9,11 +9,13 @@ namespace Rebar.RebarTarget.Execution
 {
     public class ExecutionContext
     {
+        private readonly IDebugHost _debugHost;
         private Dictionary<string, Function> _loadedFunctions = new Dictionary<string, Function>();
 
         public ExecutionContext(ICompositionHost host)
         {
             Host = host;
+            _debugHost = host.GetSharedExportedValue<IDebugHost>();
         }
 
         public ICompositionHost Host { get; }
@@ -81,7 +83,6 @@ namespace Rebar.RebarTarget.Execution
                                     address = operandStack.Pop();
                                 DataHelpers.WriteIntToByteArray(value, memory, address);
                                 string message = $"Stored {value} at {address}";
-                                Host.GetSharedExportedValue<IDebugHost>().LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
                             }
                             break;
                         case OpCodes.DerefInteger:
@@ -149,6 +150,13 @@ namespace Rebar.RebarTarget.Execution
                                 operandStack.Push(next);
                             }
                             break;
+                        case OpCodes.Output_TEMP:
+                            {
+                                int value = operandStack.Pop();
+                                string message = $"Output: {value}";
+                                _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
+                            }
+                            break;
                         default:
                             throw new NotSupportedException("Invalid opcode: " + opcode);
                     }
@@ -212,6 +220,8 @@ namespace Rebar.RebarTarget.Execution
         // Neq = 0x4D,
         Dup = 0x50,
         Swap = 0x51,
+
+        Output_TEMP = 0xFF
     }
 
     [Serializable]
@@ -418,6 +428,11 @@ namespace Rebar.RebarTarget.Execution
         public void EmitSwap()
         {
             EmitStandaloneOpcode(OpCodes.Swap);
+        }
+
+        public void EmitOutput_TEMP()
+        {
+            EmitStandaloneOpcode(OpCodes.Output_TEMP);
         }
     }
 

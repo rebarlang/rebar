@@ -534,6 +534,14 @@ namespace Rebar.Compiler
             _map.AddMapping(range.Terminals.ElementAt(2), rangeDfir.Terminals.ElementAt(2));
         }
 
+        public void VisitOutput(Output output)
+        {
+            var outputDfir = new OutputNode(_currentDiagram);
+            _map.AddMapping(output, outputDfir);
+            _map.AddMapping(output.Terminals.ElementAt(0), outputDfir.Terminals.ElementAt(0));
+            _map.AddMapping(output.Terminals.ElementAt(1), outputDfir.Terminals.ElementAt(1));
+        }
+
         public void VisitFunction(Function function)
         {
             if (CreatedDfirRoot.Name.IsEmpty)

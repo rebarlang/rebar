@@ -18,6 +18,7 @@ namespace Rebar.Compiler
         void VisitExchangeValuesNode(SourceModel.ExchangeValues node);
 
         void VisitImmutableBorrowNode(SourceModel.ImmutableBorrowNode node);
+        void VisitOutput(SourceModel.Output node);
 
         void VisitCreateCellNode(SourceModel.CreateCell node);
 
