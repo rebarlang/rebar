@@ -33,6 +33,8 @@ namespace Rebar.Compiler.Nodes
             : base(parentNode, copyFrom, copyInfo)
         {
             BorrowMode = copyFrom.BorrowMode;
+            InputTerminal = InputTerminals.First();
+            OutputTerminal = OutputTerminals.First();
         }
 
         public BorrowMode BorrowMode { get; }

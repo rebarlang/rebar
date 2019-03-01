@@ -39,6 +39,7 @@ namespace Rebar.Compiler
 
         private void TraverseStructure(Structure structure)
         {
+            VisitStructure(structure, Nodes.StructureTraversalPoint.BeforeLeftBorderNodes);
             Diagram diagram = structure.Diagrams.First();
             VisitDiagram(diagram);
 
@@ -46,17 +47,22 @@ namespace Rebar.Compiler
             {
                 VisitBorderNode(inputBorderNode);
             }
-
+            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram);
             TraverseDiagram(diagram);
-
+            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterDiagramAndBeforeRightBorderNodes);
             foreach (BorderNode outputBorderNode in structure.BorderNodes.Where(bn => bn.Direction == Direction.Output))
             {
                 VisitBorderNode(outputBorderNode);
             }
+            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterRightBorderNodes);
         }
 
         protected abstract void VisitNode(Node node);
         protected abstract void VisitWire(Wire wire);
         protected abstract void VisitBorderNode(BorderNode borderNode);
+
+        protected virtual void VisitStructure(Structure structure, Nodes.StructureTraversalPoint traversalPoint)
+        {
+        }
     }
 }

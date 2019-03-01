@@ -10,6 +10,8 @@ using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.Compiler;
+using Rebar.RebarTarget.Execution;
+using Rebar.Common;
 
 namespace Rebar.RebarTarget
 {
@@ -67,6 +69,29 @@ namespace Rebar.RebarTarget
                 CallingConvention.StdCall);
             BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
+            var variableAllocations = new Dictionary<Variable, Allocation>();
+            var allocator = new Allocator(variableAllocations);
+            await allocator.ExecuteTransform(targetDfir, cancellationToken);
+
+            int[] localSizes = new int[variableAllocations.Count];
+            foreach (var allocation in variableAllocations.Values)
+            {
+                localSizes[allocation.Index] = allocation.Size;
+            }
+
+            var functionBuilder = new FunctionBuilder()
+            {
+                Name = specAndQName.EditorName,
+                LocalSizes = localSizes
+            };
+            var functionCompiler = new FunctionCompiler(functionBuilder, variableAllocations);
+            await functionCompiler.ExecuteTransform(targetDfir, cancellationToken);
+            
+            // TODO: need to be able to put this in FunctionCompiler:
+            functionBuilder.EmitReturn();
+
+            var compiledFunction = functionBuilder.CreateFunction();
+
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
                 var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.SpecAndQName, cancellationToken, progressToken, compileThreadState);
@@ -78,7 +103,7 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            IBuiltPackage builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName);
+            IBuiltPackage builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,

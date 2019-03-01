@@ -1,4 +1,5 @@
 ﻿using NationalInstruments.ExecutionFramework;
+using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
@@ -7,10 +8,16 @@ namespace Rebar.RebarTarget
     /// </summary>
     public class FunctionDeployedPackage : IDeployedPackage
     {
-        public FunctionDeployedPackage(FunctionBuiltPackage builtPackage, ExecutionTarget executionTarget)
+        public static FunctionDeployedPackage DeployFunction(FunctionBuiltPackage builtPackage, ExecutionTarget target, ExecutionContext context)
         {
-            DeployedPackageIdentity = builtPackage.RuntimeEntityIdentity;
-            Executable = new ExecutableFunction(executionTarget, builtPackage);
+            context.LoadFunction(builtPackage.Function);
+            return new FunctionDeployedPackage(builtPackage.RuntimeEntityIdentity, target, context);
+        }
+
+        private FunctionDeployedPackage(IRuntimeEntityIdentity identity, ExecutionTarget executionTarget, ExecutionContext context)
+        {
+            DeployedPackageIdentity = identity;
+            Executable = new ExecutableFunction(executionTarget, context, identity);
         }
 
         /// <inheritdoc />

@@ -21,6 +21,7 @@ namespace Rebar.Compiler.Nodes
         private MutatingBinaryPrimitive(Node parentNode, MutatingBinaryPrimitive nodeToCopy, NodeCopyInfo nodeCopyInfo)
             : base(parentNode, nodeToCopy, nodeCopyInfo)
         {
+            Operation = nodeToCopy.Operation;
         }
 
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)

@@ -2,12 +2,14 @@
 using System.IO;
 using System.Threading.Tasks;
 using NationalInstruments.ExecutionFramework;
+using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
     public class TargetDeployer : NationalInstruments.ExecutionFramework.TargetDeployer
     {
         private readonly ExecutionTarget _executionTarget;
+        private ExecutionContext _context;
 
         public TargetDeployer(GetBuiltPackage getBuildPackageDelegate, GetTargetDeployer getTargetDeployer, ExecutionTarget executionTarget)
             : base(getBuildPackageDelegate, getTargetDeployer)
@@ -29,7 +31,7 @@ namespace Rebar.RebarTarget
 
         private void HandleDeploymentStarting(IBuiltPackage topLevelPackage)
         {
-            // TODO: set up a top-level container module to link everything into
+            _context = new ExecutionContext(_executionTarget.Host);
         }
 
         private void HandleDeploymentFinished(IDeployedPackage topLevelDeployedPackage)
@@ -39,7 +41,7 @@ namespace Rebar.RebarTarget
 
         public override Task<IDeployedPackage> DeploySinglePackageAsync(IBuiltPackage package, bool isTopLevel)
         {
-            var deployedPackage = new FunctionDeployedPackage((FunctionBuiltPackage)package, _executionTarget);
+            var deployedPackage = FunctionDeployedPackage.DeployFunction((FunctionBuiltPackage)package, _executionTarget, _context);
             _executionTarget.OnExecutableCreated(deployedPackage.Executable);
             return Task.FromResult((IDeployedPackage)deployedPackage);
         }

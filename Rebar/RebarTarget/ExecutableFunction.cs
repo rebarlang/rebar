@@ -7,6 +7,7 @@ using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.DataValues;
 using NationalInstruments.ExecutionFramework;
+using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
@@ -19,13 +20,15 @@ namespace Rebar.RebarTarget
     internal class ExecutableFunction : ITopLevelPanelExecutable
     {
         private ISimpleExecutionState _currentSimpleExecutionState = DefaultExecutionState.Idle;
+        private readonly ExecutionContext _context;
 
-        public ExecutableFunction(ExecutionTarget target, FunctionBuiltPackage builtPackage)
+        public ExecutableFunction(ExecutionTarget target, ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
         {
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;
-            CompiledName = builtPackage.RuntimeEntityIdentity.EditorName;
-            RuntimeName = builtPackage.RuntimeEntityIdentity.RuntimeName;
+            CompiledName = runtimeIdentity.EditorName;
+            RuntimeName = runtimeIdentity.RuntimeName;
+            _context = context;
         }
 
         /// <inheritdoc />
@@ -108,6 +111,7 @@ namespace Rebar.RebarTarget
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
             Host.GetSharedExportedValue<IDebugHost>().LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, "Run started"));
+            _context.ExecuteFunctionTopLevel(CompiledName);
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;
         }
