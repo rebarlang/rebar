@@ -138,8 +138,15 @@ namespace Rebar.Compiler
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
             VariableUsageValidator validator = iterateTunnel.Terminals[0].GetValidator();
-            validator.TestUnderlyingType(DataTypes.IsIteratorType, PFTypes.Void.CreateIterator());
-            validator.TestVariableIsMutableType();
+            validator.TestUnderlyingType(
+                type => type.IsIteratorType() || type.IsVectorType(),
+                PFTypes.Void.CreateIterator());
+
+            NIType underlyingType = iterateTunnel.Terminals[0].GetVariable().GetTypeOrVoid().GetUnderlyingTypeFromRebarType();
+            if (underlyingType.IsIteratorType())
+            {
+                validator.TestVariableIsMutableType();
+            }
             return true;
         }
 
@@ -286,6 +293,15 @@ namespace Rebar.Compiler
             VariableUsageValidator validator = unwrapOptionTunnel.GetOuterTerminal(0).GetValidator();
             validator.TestVariableIsOwnedType();
             validator.TestUnderlyingType(t => t.IsOptionType(), PFTypes.Void.CreateOption());
+            return true;
+        }
+
+        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
+        {
+            if (!RebarFeatureToggles.IsVectorAndSliceTypesEnabled)
+            {
+                vectorCreateNode.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
             return true;
         }
     }

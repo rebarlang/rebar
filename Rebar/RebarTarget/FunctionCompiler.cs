@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler.Nodes;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.RebarTarget.Execution;
-using NationalInstruments.DataTypes;
 
 namespace Rebar.RebarTarget
 {
@@ -344,6 +344,11 @@ namespace Rebar.RebarTarget
         public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)
         {
             return true;
+        }
+        
+        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
+        {
+            throw new NotImplementedException();
         }
 
         private void CopyValue(NIType type)

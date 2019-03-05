@@ -30,5 +30,7 @@ namespace Rebar.Compiler
         void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node);
 
         void VisitRange(SourceModel.Range node);
+
+        void VisitVectorCreate(SourceModel.VectorCreate node);
     }
 }

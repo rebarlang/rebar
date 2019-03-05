@@ -30,6 +30,7 @@ namespace Rebar.Compiler.Nodes
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);
         T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
+        T VisitVectorCreateNode(VectorCreateNode vectorCreateNode);
     }
 
     internal static class DfirNodeVisitorExtensions

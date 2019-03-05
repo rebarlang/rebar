@@ -542,6 +542,13 @@ namespace Rebar.Compiler
             _map.AddMapping(output.Terminals.ElementAt(1), outputDfir.Terminals.ElementAt(1));
         }
 
+        public void VisitVectorCreate(VectorCreate vectorCreate)
+        {
+            var vectorCreateDfir = new VectorCreateNode(_currentDiagram);
+            _map.AddMapping(vectorCreate, vectorCreateDfir);
+            _map.AddMapping(vectorCreate.Terminals.ElementAt(0), vectorCreateDfir.Terminals.ElementAt(0));
+        }
+
         public void VisitFunction(Function function)
         {
             if (CreatedDfirRoot.Name.IsEmpty)

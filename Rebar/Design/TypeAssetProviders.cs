@@ -66,6 +66,10 @@ namespace Rebar.Design
                 {
                     return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Iterator") as T);
                 }
+                if (type.IsVectorType())
+                {
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Vector") as T);
+                }
             }
             return new QueryResult<T>();
         }

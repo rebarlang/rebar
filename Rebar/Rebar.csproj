@@ -143,6 +143,7 @@
     <Compile Include="Compiler\IPassthroughTerminalsNode.cs" />
     <Compile Include="Compiler\IFunctionVisitor.cs" />
     <Compile Include="Compiler\Nodes\UnwrapOptionTunnel.cs" />
+    <Compile Include="Compiler\Nodes\VectorCreateNode.cs" />
     <Compile Include="Compiler\PropagateTypePermissivenessTransform.cs" />
     <Compile Include="Compiler\ReflectVariablesToTerminalsTransform.cs" />
     <Compile Include="Compiler\LifetimeExtensions.cs" />
@@ -265,6 +266,7 @@
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
+    <Compile Include="SourceModel\VectorCreate.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -334,6 +336,11 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Diagram\Nodes\Output.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\VectorPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

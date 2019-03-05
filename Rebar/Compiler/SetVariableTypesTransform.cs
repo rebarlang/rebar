@@ -148,7 +148,9 @@ namespace Rebar.Compiler
         {
             Variable inputVariable = iterateTunnel.Terminals.ElementAt(0).GetVariable();
             NIType outputType;
-            if (!inputVariable.GetTypeOrVoid().TryDestructureIteratorType(out outputType))
+            NIType inputType = inputVariable.GetTypeOrVoid();
+            if (!inputType.TryDestructureIteratorType(out outputType)
+                && !inputType.TryDestructureVectorType(out outputType))
             {
                 outputType = PFTypes.Void;
             }
@@ -461,6 +463,13 @@ namespace Rebar.Compiler
                     PFTypes.Void,
                     Lifetime.Unbounded);
             }
+            return true;
+        }
+
+        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
+        {
+            Variable outputVariable = vectorCreateNode.Terminals.ElementAt(0).GetVariable();
+            outputVariable?.SetTypeAndLifetime(PFTypes.Int32.CreateVector(), Lifetime.Unbounded);
             return true;
         }
     }

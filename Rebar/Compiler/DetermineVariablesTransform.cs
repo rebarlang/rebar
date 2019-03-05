@@ -217,6 +217,11 @@ namespace Rebar.Compiler
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
+        IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
+        {
+            return Enumerable.Empty<PassthroughTerminalPair>();
+        }
+
         IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             PullInputTerminalVariable(borrowTunnel.GetOuterTerminal(0));

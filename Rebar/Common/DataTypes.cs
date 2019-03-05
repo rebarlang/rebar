@@ -20,6 +20,8 @@ namespace Rebar.Common
 
         private static NIType IteratorGenericType { get; }
 
+        private static NIType VectorGenericType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -51,6 +53,11 @@ namespace Rebar.Common
             iteratorGenericTypeBuilder.MakeGenericParameters("T");
             iteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             IteratorGenericType = iteratorGenericTypeBuilder.CreateType();
+
+            var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
+            vectorGenericTypeBuilder.MakeGenericParameters("T");
+            vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReferece");
+            VectorGenericType = vectorGenericTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, NIType typeParameter)
@@ -187,6 +194,33 @@ namespace Rebar.Common
                 return false;
             }
             valueType = type.GetGenericParameters().ElementAt(0);
+            return true;
+        }
+
+        public static NIType CreateVector(this NIType itemType)
+        {
+            return SpecializeGenericType(VectorGenericType, itemType);
+        }
+
+        public static bool IsVectorType(this NIType type)
+        {
+            return type.IsGenericTypeSpecialization(VectorGenericType);
+        }
+
+        /// <summary>
+        /// If the given <see cref="type"/> is a Vector type, outputs the inner value type and returns true; otherwise, returns false.
+        /// </summary>
+        /// <param name="type">The <see cref="NIType"/> to try to destructure as an Vector type.</param>
+        /// <param name="itemType">The inner value type of the given type if it is an Vector.</param>
+        /// <returns>True if the given type was an Vector type; false otherwise.</returns>
+        public static bool TryDestructureVectorType(this NIType type, out NIType itemType)
+        {
+            if (!IsVectorType(type))
+            {
+                itemType = NIType.Unset;
+                return false;
+            }
+            itemType = type.GetGenericParameters().ElementAt(0);
             return true;
         }
 

@@ -61,4 +61,14 @@ namespace Rebar.Design
         /// <inheritdoc />
         protected override string ResourcePath => "Rebar.Resources.OutputPalette.xml";
     }
+
+    [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
+    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.VectorAndSliceTypes)]
+    public class VectorDiagramPaletteLoader : ResourcePaletteLoader
+    {
+        /// <inheritdoc />
+        protected override string ResourcePath => "Rebar.Resources.VectorPalette.xml";
+    }
 }

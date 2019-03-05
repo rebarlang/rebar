@@ -48,6 +48,8 @@ namespace Rebar.Design
             AddSupportedModel<AccumulateIncrement>(n => new BasicNodeViewModel(n, "Accumulate Increment", @"Resources\Diagram\Nodes\Increment.png"));
             AddSupportedModel<AccumulateNot>(n => new BasicNodeViewModel(n, "Accumulate Not", @"Resources\Diagram\Nodes\AccumulateNot.png"));
 
+            AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
+
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));
