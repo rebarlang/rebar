@@ -25,6 +25,22 @@ namespace Rebar.SourceModel
                 IBeginLifetimeTunnel beginLifetimeTunnel = beginLifetimeTunnelBoundsChange.TargetElement;
                 beginLifetimeTunnel.TerminateLifetimeTunnel.Top = beginLifetimeTunnel.Top;
             }
+            var removedBorderNode = item.AsComponentRemove<BorderNode, Structure>();
+            if (removedBorderNode != null)
+            {
+                Element toDelete = null;
+                var beginLifetimeTunnel = removedBorderNode as IBeginLifetimeTunnel;
+                var terminateLifetimeTunnel = removedBorderNode as ITerminateLifetimeTunnel;
+                if (beginLifetimeTunnel != null)
+                {
+                    toDelete = (Element)beginLifetimeTunnel.TerminateLifetimeTunnel;
+                }
+                else if (terminateLifetimeTunnel != null)
+                {
+                    toDelete = (Element)terminateLifetimeTunnel.BeginLifetimeTunnel;
+                }
+                toDelete?.Delete();
+            }
         }
     }
 }

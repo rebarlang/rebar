@@ -57,5 +57,15 @@ namespace Rebar.SourceModel
             BeginLifetimeTunnel.Top = Top;
             base.EnsureViewDirectional(hints, oldBoundsMinusNewbounds);
         }
+
+        /// <inheritdoc />
+        public override bool CanDelete
+        {
+            get
+            {
+                Element beginLifetimeTunnel = BeginLifetimeTunnel as Element;
+                return beginLifetimeTunnel?.CanDelete ?? true;
+            }
+        }
     }
 }
