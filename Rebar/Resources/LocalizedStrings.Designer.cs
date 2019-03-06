@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -75,6 +75,96 @@ namespace Rebar.Resources {
         internal static string FeatureNotEnabled {
             get {
                 return ResourceManager.GetString("FeatureNotEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_CellDataType_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_CellDataType_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Cell data type and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_CellDataType_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_CellDataType_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_OptionDataType_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OptionDataType_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Option data type and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_OptionDataType_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OptionDataType_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_OutputNode_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OutputNode_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Output node.
+        /// </summary>
+        internal static string FeatureToggle_OutputNode_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OutputNode_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_RebarTarget_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_RebarTarget_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Rebar execution target.
+        /// </summary>
+        internal static string FeatureToggle_RebarTarget_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_RebarTarget_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_VectorAndSliceTypes_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VectorAndSliceTypes_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable vector and slice data types and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_VectorAndSliceTypes_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VectorAndSliceTypes_Description", resourceCulture);
             }
         }
         

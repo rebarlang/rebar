@@ -1,13 +1,14 @@
-﻿using NationalInstruments.FeatureToggles;
+﻿using NationalInstruments.Core;
+using NationalInstruments.FeatureToggles;
 
 namespace Rebar
 {
     [ExportFeatureToggles]
-    [ExposeFeatureToggle(RebarFeatureCategory, CellDataTypeDescription, CellDataType)]
-    [ExposeFeatureToggle(RebarFeatureCategory, OptionDataTypeDescription, OptionDataType)]
-    [ExposeFeatureToggle(RebarFeatureCategory, RebarTargetDescription, RebarTarget)]
-    [ExposeFeatureToggle(RebarFeatureCategory, OutputNodeDescription, OutputNode)]
-    [ExposeFeatureToggle(RebarFeatureCategory, VectorAndSliceTypesDescription, VectorAndSliceTypes)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), CellDataType, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), OptionDataType, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), RebarTarget, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), OutputNode, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), VectorAndSliceTypes, CodeReadiness.Release)]
     public sealed class RebarFeatureToggles : FeatureTogglesProvider<RebarFeatureToggles>
     {
         private const string RebarFeatureCategory = "Rebar";

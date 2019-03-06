@@ -123,6 +123,36 @@
   <data name="FeatureNotEnabled" xml:space="preserve">
     <value>Using this node requires a preview feature to be enabled.</value>
   </data>
+  <data name="FeatureToggle_CellDataType_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_CellDataType_Description" xml:space="preserve">
+    <value>Enable the Cell data type and related nodes</value>
+  </data>
+  <data name="FeatureToggle_OptionDataType_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_OptionDataType_Description" xml:space="preserve">
+    <value>Enable the Option data type and related nodes</value>
+  </data>
+  <data name="FeatureToggle_OutputNode_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_OutputNode_Description" xml:space="preserve">
+    <value>Enable the Output node</value>
+  </data>
+  <data name="FeatureToggle_RebarTarget_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_RebarTarget_Description" xml:space="preserve">
+    <value>Enable the Rebar execution target</value>
+  </data>
+  <data name="FeatureToggle_VectorAndSliceTypes_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_VectorAndSliceTypes_Description" xml:space="preserve">
+    <value>Enable vector and slice data types and related nodes</value>
+  </data>
   <data name="FunctionDocumentType_DefaultDocumentName" xml:space="preserve">
     <value>Function</value>
   </data>
