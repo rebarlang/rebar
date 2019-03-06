@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
-using System.Windows.Input;
 using NationalInstruments.ContextualHelp.View;
 using NationalInstruments.Controls.Shell;
 using NationalInstruments.Core;
-using NationalInstruments.Design;
-using NationalInstruments.MocCommon.Design;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel.Envoys;
@@ -165,20 +162,6 @@ namespace Rebar.Design
                 {
                     context.Add(DocumentCommands.Copy);
                     context.Add(DocumentCommands.Paste);
-                }
-            }
-
-            using (context.AddToolLauncherContent())
-            {
-                context.Add(DocumentToolCommand);
-            }
-
-            using (context.AddConfigurationPaneFooterContent())
-            {
-                using (context.AddGroup(ConfigurationPaneCommands.FooterCommand, new NColumnLayoutFactory { NumberOfColumns = 3 }))
-                {
-                    context.Add(DiagnosticsCommand);
-                    context.Add(DocumentCommand);
                 }
             }
         }
