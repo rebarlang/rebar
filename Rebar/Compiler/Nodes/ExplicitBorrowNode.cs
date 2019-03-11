@@ -9,19 +9,13 @@ namespace Rebar.Compiler.Nodes
         public ExplicitBorrowNode(Node parentNode, BorrowMode borrowMode) : base(parentNode)
         {
             BorrowMode = borrowMode;
-            NIType inputType, outputType;
+            NIType inputType = PFTypes.Void, outputType;
             switch (borrowMode)
             {
-                case BorrowMode.OwnerToMutable:
-                    inputType = PFTypes.Void;
+                case BorrowMode.Mutable:
                     outputType = PFTypes.Void.CreateMutableReference();
                     break;
-                case BorrowMode.OwnerToImmutable:
-                    inputType = PFTypes.Void;
-                    outputType = PFTypes.Void.CreateImmutableReference();
-                    break;
                 default:
-                    inputType = PFTypes.Void.CreateMutableReference();
                     outputType = PFTypes.Void.CreateImmutableReference();
                     break;
             }
@@ -53,12 +47,5 @@ namespace Rebar.Compiler.Nodes
         {
             return visitor.VisitExplicitBorrowNode(this);
         }
-    }
-
-    internal enum BorrowMode
-    {
-        OwnerToMutable,
-        OwnerToImmutable,
-        MutableToImmutable
     }
 }

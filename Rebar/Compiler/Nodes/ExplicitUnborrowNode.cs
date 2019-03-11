@@ -10,20 +10,16 @@ namespace Rebar.Compiler.Nodes
         public ExplicitUnborrowNode(Node parentNode, BorrowMode borrowMode) : base(parentNode)
         {
             BorrowMode = borrowMode;
-            NIType inputType, outputType;
+            NIType inputType, outputType = PFTypes.Void;
             switch (borrowMode)
             {
-                case BorrowMode.OwnerToMutable:
+                case BorrowMode.Mutable:
                     inputType = PFTypes.Void.CreateMutableReference();
-                    outputType = PFTypes.Void;
-                    break;
-                case BorrowMode.OwnerToImmutable:
-                    inputType = PFTypes.Void.CreateImmutableReference();
                     outputType = PFTypes.Void;
                     break;
                 default:
                     inputType = PFTypes.Void.CreateImmutableReference();
-                    outputType = PFTypes.Void.CreateMutableReference();
+                    outputType = PFTypes.Void;
                     break;
             }
             InputTerminal = CreateTerminal(Direction.Input, inputType, "in");

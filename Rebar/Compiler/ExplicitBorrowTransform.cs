@@ -69,7 +69,7 @@ namespace Rebar.Compiler
                         if (connectedPermissiveness > inputPermissiveness)
                         {
                             // add an explicit borrow before the input terminal and an explicit borrow after the output terminal
-                            Nodes.BorrowMode borrowMode = DataTypes.GetBorrowMode(connectedPermissiveness, inputPermissiveness);
+                            BorrowMode borrowMode = DataTypes.GetBorrowMode(connectedPermissiveness, inputPermissiveness);
                             var explicitBorrow = new ExplicitBorrowNode(node.ParentNode, borrowMode);
                             var explicitUnborrow = new ExplicitUnborrowNode(node.ParentNode, borrowMode);
                             passthroughTerminalPair.InputTerminal.ConnectedTerminal.ConnectTo(explicitBorrow.InputTerminal);

@@ -128,7 +128,7 @@ namespace Rebar.Compiler
             Terminal outputTerminal = explicitBorrowNode.Terminals.ElementAt(1);
             Variable inputVariable = inputTerminal.GetVariable();
             NIType outputUnderlyingType = inputVariable.GetTypeOrVoid();
-            NIType outputType = explicitBorrowNode.BorrowMode == Nodes.BorrowMode.OwnerToImmutable
+            NIType outputType = explicitBorrowNode.BorrowMode == BorrowMode.Immutable
                 ? outputUnderlyingType.CreateImmutableReference()
                 : outputUnderlyingType.CreateMutableReference();
 

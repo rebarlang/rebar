@@ -258,24 +258,24 @@ namespace Rebar.Common
             }
         }
 
-        internal static Compiler.Nodes.BorrowMode GetBorrowMode(TypePermissiveness borrowFrom, TypePermissiveness borrowTo)
+        internal static BorrowMode GetBorrowMode(TypePermissiveness borrowFrom, TypePermissiveness borrowTo)
         {
             if (borrowFrom == TypePermissiveness.Owner)
             {
                 if (borrowTo == TypePermissiveness.MutableReference)
                 {
-                    return Compiler.Nodes.BorrowMode.OwnerToMutable;
+                    return BorrowMode.Mutable;
                 }
 
                 if (borrowTo == TypePermissiveness.ImmutableReference)
                 {
-                    return Compiler.Nodes.BorrowMode.OwnerToImmutable;
+                    return BorrowMode.Immutable;
                 }
             }
             else if (borrowFrom == TypePermissiveness.MutableReference &&
                      borrowTo == TypePermissiveness.ImmutableReference)
             {
-                return Compiler.Nodes.BorrowMode.MutableToImmutable;
+                return BorrowMode.Immutable;
             }
             throw new InvalidOperationException($"Borrowing {borrowTo} from {borrowFrom} is not necessary.");
         }
