@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using NationalInstruments.Dfir;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
@@ -41,6 +40,57 @@ namespace Rebar.Compiler.Nodes
         public override T AcceptVisitor<T>(IDfirNodeVisitor<T> visitor)
         {
             return visitor.VisitTerminateLifetimeNode(this);
+        }
+
+        public void UpdateTerminals(int inputTerminalCount, int outputTerminalCount)
+        {
+            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            int currentInputTerminalCount = InputTerminals.Count();
+            if (currentInputTerminalCount < inputTerminalCount)
+            {
+                for (; currentInputTerminalCount < inputTerminalCount; ++currentInputTerminalCount)
+                {
+                    var terminal = CreateTerminal(Direction.Input, immutableReferenceType, "inner lifetime");
+                    MoveTerminalToIndex(terminal, currentInputTerminalCount);
+                }
+            }
+            else if (currentInputTerminalCount > inputTerminalCount)
+            {
+                int i = currentInputTerminalCount - 1;
+                while (i >= 0 && currentInputTerminalCount > inputTerminalCount)
+                {
+                    Terminal inputTerminal = InputTerminals.ElementAt(i);
+                    if (!inputTerminal.IsConnected)
+                    {
+                        RemoveTerminalAtIndex(inputTerminal.Index);
+                        --currentInputTerminalCount;
+                    }
+                    --i;
+                }
+            }
+
+            int currentOutputTerminalCount = OutputTerminals.Count();
+            if (currentOutputTerminalCount < outputTerminalCount)
+            {
+                for (; currentOutputTerminalCount < outputTerminalCount; ++currentOutputTerminalCount)
+                {
+                    CreateTerminal(Direction.Output, immutableReferenceType, "outer lifetime");
+                }
+            }
+            else if (currentOutputTerminalCount > outputTerminalCount)
+            {
+                int i = currentOutputTerminalCount - 1;
+                while (i >= 0 && currentOutputTerminalCount > outputTerminalCount)
+                {
+                    Terminal outputTerminal = OutputTerminals.ElementAt(i);
+                    if (!outputTerminal.IsConnected)
+                    {
+                        RemoveTerminalAtIndex(outputTerminal.Index);
+                        --currentOutputTerminalCount;
+                    }
+                    --i;
+                }
+            }
         }
     }
 

@@ -36,5 +36,10 @@ namespace Rebar.Compiler
         {
             return _terminalPairs.FirstOrDefault(pair => pair.Item1 == terminal).Item2;
         }
+
+        public bool ContainsTerminal(SMTerminal terminal)
+        {
+            return _terminalPairs.Any(pair => pair.Item1 == terminal);
+        }
     }
 }

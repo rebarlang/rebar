@@ -342,14 +342,19 @@ namespace Rebar.Compiler
             else
             {
                 errorState = TerminateLifetimeErrorState.NoError;
+                // TODO: this does not account for Variables in singleLifetime that have already been consumed
                 IEnumerable<Variable> variablesMatchingLifetime = variableSet.Variables.Where(v => v.Lifetime == singleLifetime);
-                terminateLifetimeNode.RequiredInputCount = variablesMatchingLifetime.Count();
+                int requiredInputCount = variablesMatchingLifetime.Count();
+                terminateLifetimeNode.RequiredInputCount = requiredInputCount;
                 if (inputVariables.Count() != terminateLifetimeNode.RequiredInputCount)
                 {
                     errorState = TerminateLifetimeErrorState.NotAllVariablesInLifetimeConnected;
                 }
                 decomposedVariables = variableSet.GetVariablesInterruptedByLifetime(singleLifetime);
-                terminateLifetimeNode.RequiredOutputCount = decomposedVariables.Count();
+                int outputCount = decomposedVariables.Count();
+                terminateLifetimeNode.RequiredOutputCount = outputCount;
+
+                terminateLifetimeNode.UpdateTerminals(requiredInputCount, outputCount);
             }
             terminateLifetimeNode.ErrorState = errorState;
 
@@ -361,7 +366,14 @@ namespace Rebar.Compiler
                 if (decomposedVariable != null)
                 {
                     Variable originalOutputVariable = variableSet.GetVariableForTerminal(outputTerminal);
-                    variableSet.MergeVariables(originalOutputVariable, decomposedVariable);
+                    if (originalOutputVariable != null)
+                    {
+                        variableSet.MergeVariables(originalOutputVariable, decomposedVariable);
+                    }
+                    else
+                    {
+                        outputTerminal.AddTerminalToVariable(decomposedVariable);
+                    }
                 }
                 else
                 {

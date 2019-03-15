@@ -81,7 +81,7 @@ namespace Rebar.SourceModel
             int currentOutputTerminalCount = OutputTerminals.Count();
             if (currentOutputTerminalCount < outputTerminalCount)
             {
-                for (; currentOutputTerminalCount < inputTerminalCount; ++currentOutputTerminalCount)
+                for (; currentOutputTerminalCount < outputTerminalCount; ++currentOutputTerminalCount)
                 {
                     var outputTerminal = new NodeTerminal(Direction.Output, immutableReferenceType, "outer scope");
                     InsertComponent(currentInputTerminalCount + currentOutputTerminalCount, outputTerminal);

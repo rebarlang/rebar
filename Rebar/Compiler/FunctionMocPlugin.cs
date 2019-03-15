@@ -2,6 +2,7 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 using Foundation;
+using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
@@ -188,6 +189,13 @@ namespace Rebar.Compiler
 
         private void VisitConnectable(Connectable connectable)
         {
+            // Update terminals on a TerminateLifetime before reflecting types
+            var terminateLifetime = connectable as TerminateLifetime;
+            if (terminateLifetime != null)
+            {
+                VisitTerminateLifetime(terminateLifetime);
+            }
+
             foreach (var nodeTerminal in connectable.Terminals)
             {
                 NationalInstruments.Dfir.Terminal dfirTerminal = _map.GetDfirForTerminal(nodeTerminal);
@@ -196,12 +204,6 @@ namespace Rebar.Compiler
                 {
                     nodeTerminal.DataType = typeToReflect;
                 }
-            }
-
-            var terminateLifetime = connectable as TerminateLifetime;
-            if (terminateLifetime != null)
-            {
-                VisitTerminateLifetime(terminateLifetime);
             }
         }
 
@@ -229,6 +231,13 @@ namespace Rebar.Compiler
             if (terminateLifetimeDfir.RequiredInputCount != null && terminateLifetimeDfir.RequiredOutputCount != null)
             {
                 terminateLifetime.UpdateTerminals(terminateLifetimeDfir.RequiredInputCount.Value, terminateLifetimeDfir.RequiredOutputCount.Value);
+            }
+            foreach (var pair in terminateLifetime.Terminals.Zip(terminateLifetimeDfir.Terminals))
+            {
+                if (!_map.ContainsTerminal(pair.Key))
+                {
+                    _map.AddMapping(pair.Key, pair.Value);
+                }
             }
         }
     }
