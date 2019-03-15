@@ -431,8 +431,6 @@ namespace Rebar.Compiler
             _map.AddMapping(node.Terminals.ElementAt(2), selectReferenceDfir.Terminals.ElementAt(2));
             _map.AddMapping(node.Terminals.ElementAt(3), selectReferenceDfir.Terminals.ElementAt(3));
             _map.AddMapping(node.Terminals.ElementAt(4), selectReferenceDfir.Terminals.ElementAt(4));
-            _map.AddMapping(node.Terminals.ElementAt(5), selectReferenceDfir.Terminals.ElementAt(5));
-            _map.AddMapping(node.Terminals.ElementAt(6), selectReferenceDfir.Terminals.ElementAt(6));
         }
 
         public void VisitCreateCopyNode(SourceModel.CreateCopyNode node)

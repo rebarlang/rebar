@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
@@ -257,44 +258,29 @@ namespace Rebar.Compiler
 
         public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
         {
-            Terminal refInTerminal1 = selectReferenceNode.Terminals.ElementAt(0),
-                refInTerminal2 = selectReferenceNode.Terminals.ElementAt(1),
-                refOutTerminal = selectReferenceNode.Terminals.ElementAt(6);
+            Terminal refInTerminal1 = selectReferenceNode.Terminals.ElementAt(1),
+                refInTerminal2 = selectReferenceNode.Terminals.ElementAt(2),
+                refOutTerminal = selectReferenceNode.Terminals.ElementAt(4);
             Variable input1Variable = refInTerminal1.GetVariable();
             Variable input2Variable = refInTerminal2.GetVariable();
             NIType input1UnderlyingType = input1Variable.GetTypeOrVoid().GetTypeOrReferentType();
             NIType input2UnderlyingType = input2Variable.GetTypeOrVoid().GetTypeOrReferentType();
             NIType outputUnderlyingType = input1UnderlyingType == input2UnderlyingType ? input1UnderlyingType : PFTypes.Void;
 
-            // if the two inputs are both immutable references with the same bounded lifetime, then 
-            // merge their output variables
-            // otherwise, create a new diagram-bounded lifetime with the input variables, and set
-            // that on the output variables.
-            Lifetime inputLifetime1 = input1Variable?.Lifetime ?? Lifetime.Empty;
-            Lifetime inputLifetime2 = input2Variable?.Lifetime ?? Lifetime.Empty;
-            Lifetime commonLifetime;
-            Variable output1Variable = selectReferenceNode.Terminals.ElementAt(3).GetVariable(),
-                output2Variable = selectReferenceNode.Terminals.ElementAt(4).GetVariable(),
-                refOutVariable = refOutTerminal.GetVariable();
             var variableSet = selectReferenceNode.ParentDiagram.GetVariableSet();
-            NIType outputReferenceType = outputUnderlyingType.CreateImmutableReference();
-            if (input1Variable.GetTypeOrVoid().IsImmutableReferenceType()
-                && input2Variable.GetTypeOrVoid().IsImmutableReferenceType()
-                && inputLifetime1 == inputLifetime2 
-                && inputLifetime1.IsBounded)
-            {
-                variableSet.MergeVariables(output1Variable, input1Variable);
-                variableSet.MergeVariables(output2Variable, input2Variable);
-                commonLifetime = inputLifetime1;
-            }
-            else
-            {
-                commonLifetime = variableSet.DefineLifetimeThatIsBoundedByDiagram(
-                    new[] { input1Variable, input2Variable });
-                output1Variable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
-                output2Variable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
-            }
-            refOutVariable.SetTypeAndLifetime(outputReferenceType, commonLifetime);
+
+            bool outputReferenceIsMutable;
+            Lifetime commonLifetime;
+            ComputeOutputTypeAndLifetimeForMutabilityPolymorphicNode(
+                out outputReferenceIsMutable,
+                out commonLifetime,
+                variableSet,
+                input1Variable,
+                input2Variable);
+            NIType outputReferenceType = outputReferenceIsMutable
+                ? outputUnderlyingType.CreateMutableReference()
+                : outputUnderlyingType.CreateImmutableReference();
+            refOutTerminal.GetVariable().SetTypeAndLifetime(outputReferenceType, commonLifetime);
             return true;
         }
 
@@ -483,6 +469,52 @@ namespace Rebar.Compiler
             Variable outputVariable = vectorCreateNode.Terminals.ElementAt(0).GetVariable();
             outputVariable?.SetTypeAndLifetime(PFTypes.Int32.CreateVector(), Lifetime.Unbounded);
             return true;
+        }
+
+        /// <summary>
+        /// Given some number of <see cref="Variable"/>s representing inputs to a node that is polymorphic in the
+        /// mutability of the references it accepts for those inputs, computes whether the corresponding node output
+        /// references should be mutable and what their lifetime should be.
+        /// </summary>
+        /// <param name="outputIsMutableReference">Whether any output references corresponding to the inputs can be mutable.</param>
+        /// <param name="outputLifetime">The lifetime to associate with output references corresponding to the inputs.</param>
+        /// <param name="variables">The input variables to compute the output information for.</param>
+        private static void ComputeOutputTypeAndLifetimeForMutabilityPolymorphicNode(out bool outputIsMutableReference, out Lifetime outputLifetime, VariableSet variableSet, params Variable[] variables)
+        {
+            if (variables.Length < 1)
+            {
+                throw new ArgumentException("Expected at least one variable.", "variables");
+            }
+            // 1. If all inputs are mutable references with the same bounded lifetime, then
+            // output a mutable reference in that lifetime
+            Lifetime firstLifetime = variables[0].Lifetime ?? Lifetime.Empty;
+            if (variables.All(v => v.GetTypeOrVoid().IsMutableReferenceType())
+                && variables.All(v => v.Lifetime == firstLifetime))
+            {
+                outputIsMutableReference = true;
+                outputLifetime = firstLifetime;
+            }
+            // 2. If all inputs can be borrowed into mutable references, then output a mutable
+            // reference in a new diagram-bounded lifetime
+            else if (variables.All(v => v.GetTypeOrVoid().IsMutableReferenceType() || v.Mutable))
+            {
+                outputIsMutableReference = true;
+                outputLifetime = variableSet.DefineLifetimeThatIsBoundedByDiagram(variables);
+            }
+            // 3. If all inputs are immutable references with the same bounded lifetime, then
+            // output an immutable reference in that lifetime
+            else if (variables.All(v => v.GetTypeOrVoid().IsImmutableReferenceType())
+                && variables.All(v => v.Lifetime == firstLifetime))
+            {
+                outputIsMutableReference = false;
+                outputLifetime = firstLifetime;
+            }
+            // 4. Otherwise, output an immutable reference in a new diagram-bounded lifetime.
+            else
+            {
+                outputIsMutableReference = false;
+                outputLifetime = variableSet.DefineLifetimeThatIsBoundedByDiagram(variables);
+            }
         }
     }
 }

@@ -275,38 +275,29 @@ namespace Rebar.RebarTarget
             // handle auto-borrowed tunnels
             // NOTE: this is a great example of why it would be better to have an auto-borrowing
             // transform
-            Variable input1 = selectReferenceNode.InputTerminals.ElementAt(0).GetVariable(),
-                input2 = selectReferenceNode.InputTerminals.ElementAt(1).GetVariable(),
-                output1 = selectReferenceNode.OutputTerminals.ElementAt(0).GetVariable(),
-                output2 = selectReferenceNode.OutputTerminals.ElementAt(1).GetVariable();
-            if (input1 != output1)
-            {
-                BorrowFromVariableIntoVariable(input1, output1);
-            }
-            if (input2 != output2)
-            {
-                BorrowFromVariableIntoVariable(input2, output2);
-            }
+            Variable input1 = selectReferenceNode.InputTerminals.ElementAt(1).GetVariable(),
+                input2 = selectReferenceNode.InputTerminals.ElementAt(2).GetVariable();
+            bool input1IsReference = input1.Type.IsRebarReferenceType(),
+                input2IsReference = input2.Type.IsRebarReferenceType();
 
             // select reference
-            Variable selector = selectReferenceNode.InputTerminals.ElementAt(2).GetVariable(),
-                selectedReference = selectReferenceNode.OutputTerminals.ElementAt(3).GetVariable();
+            Variable selector = selectReferenceNode.InputTerminals.ElementAt(0).GetVariable(),
+                selectedReference = selectReferenceNode.OutputTerminals.ElementAt(1).GetVariable();
             _builder.EmitLoadLocalAddress(GetVariableIndex(selectedReference));            
             LoadLocalAddressAndDerefIfReference(selector);
             _builder.EmitDerefInteger();
             _builder.EmitBranchIfFalse(falseLabel);
 
             // true
-            _builder.EmitLoadLocalAddress(GetVariableIndex(output1));
+            LoadLocalAddressAndDerefIfReference(input1);
             _builder.EmitBranch(endLabel);
 
             // false
             _builder.SetLabel(falseLabel);
-            _builder.EmitLoadLocalAddress(GetVariableIndex(output2));
+            LoadLocalAddressAndDerefIfReference(input2);
 
             // end
             _builder.SetLabel(endLabel);
-            _builder.EmitDerefPointer();
             _builder.EmitStorePointer();
 
             return true;
@@ -449,7 +440,7 @@ namespace Rebar.RebarTarget
             this.VisitRebarStructure(structure, traversalPoint);
         }
 
-        #region Frame
+#region Frame
 
         private struct FrameData
         {
@@ -533,9 +524,9 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        #endregion
+#endregion
 
-        #region Loop
+#region Loop
 
         private struct LoopData
         {
@@ -653,6 +644,6 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        #endregion
+#endregion
     }
 }

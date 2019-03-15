@@ -10,11 +10,9 @@ namespace Rebar.Compiler.Nodes
         {
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
             var booleanImmutableReferenceType = PFTypes.Boolean.CreateImmutableReference();
+            CreateTerminal(Direction.Input, booleanImmutableReferenceType, "selector in");
             CreateTerminal(Direction.Input, immutableReferenceType, "ref in 1");
             CreateTerminal(Direction.Input, immutableReferenceType, "ref in 2");
-            CreateTerminal(Direction.Input, booleanImmutableReferenceType, "selector in");
-            CreateTerminal(Direction.Output, immutableReferenceType, "ref 1 out");
-            CreateTerminal(Direction.Output, immutableReferenceType, "ref 2 out");
             CreateTerminal(Direction.Output, booleanImmutableReferenceType, "selector out");
             CreateTerminal(Direction.Output, immutableReferenceType, "selected ref out");
         }

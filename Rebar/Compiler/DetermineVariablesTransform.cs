@@ -202,9 +202,7 @@ namespace Rebar.Compiler
 
         IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
         {
-            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[0], selectReferenceNode.Terminals[3], true);
-            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[1], selectReferenceNode.Terminals[4], true);
-            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[2], selectReferenceNode.Terminals[5]);
+            yield return new PassthroughTerminalPair(selectReferenceNode.Terminals[0], selectReferenceNode.Terminals[3]);
         }
 
         IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)

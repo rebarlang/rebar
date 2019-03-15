@@ -10,7 +10,6 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
-using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.SourceModel;
 using Diagram = NationalInstruments.SourceModel.Diagram;
