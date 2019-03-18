@@ -153,6 +153,12 @@
   <data name="FeatureToggle_VectorAndSliceTypes_Description" xml:space="preserve">
     <value>Enable vector and slice data types and related nodes</value>
   </data>
+  <data name="FeatureToggle_VisualizeVariableIdentity_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_VisualizeVariableIdentity_Description" xml:space="preserve">
+    <value>Enable visualization of variable identities on wires</value>
+  </data>
   <data name="FunctionDocumentType_DefaultDocumentName" xml:space="preserve">
     <value>Function</value>
   </data>

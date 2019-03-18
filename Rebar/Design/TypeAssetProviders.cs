@@ -39,20 +39,15 @@ namespace Rebar.Design
         {
             if (typeof(T) == typeof(ITypeAssetProvider))
             {
-                ITypeAssetProvider innerTypeAssetProvider;
-                if (type.IsMutableReferenceType())
+                if (type.IsRebarReferenceType())
                 {
                     NIType innerType = type.GetUnderlyingTypeFromRebarType();
-                    innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
+                    ITypeAssetProvider innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
                     int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
-                    return new QueryResult<T>(new MutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality) as T);
-                }
-                if (type.IsImmutableReferenceType())
-                {
-                    NIType innerType = type.GetUnderlyingTypeFromRebarType();
-                    innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
-                    int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
-                    return new QueryResult<T>(new ImmutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality) as T);
+                    ITypeAssetProvider outerTypeAssetProvider = type.IsMutableReferenceType()
+                        ? (ITypeAssetProvider)new MutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality)
+                        : new ImmutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality);
+                    return new QueryResult<T>(outerTypeAssetProvider as T);
                 }
                 if (type.IsLockingCellType())
                 {
@@ -84,6 +79,58 @@ namespace Rebar.Design
                 StockTypeAssets.ReferenceAndPathTypeColor,
                 name)
         {
+        }
+    }
+
+    internal class VariableIdentityTypeAssetProvider : NationalInstruments.SourceModel.TypeAssetProvider
+    {
+        public static PlatformColor[] Colors = new[]
+        {
+            PlatformColor.FromArgb(0xFF, 0x80, 0x00, 0x00),
+            PlatformColor.FromArgb(0xFF, 0x9A, 0x63, 0x24),
+            PlatformColor.FromArgb(0xFF, 0x80, 0x80, 0x00),
+            PlatformColor.FromArgb(0xFF, 0x46, 0x99, 0x90),
+            PlatformColor.FromArgb(0xFF, 0x00, 0x00, 0x75),
+            PlatformColor.FromArgb(0xFF, 0x00, 0x00, 0x00),
+            PlatformColor.FromArgb(0xFF, 0xE6, 0x19, 0x4B),
+            PlatformColor.FromArgb(0xFF, 0xF5, 0x82, 0x31),
+            PlatformColor.FromArgb(0xFF, 0xFF, 0xE1, 0x19),
+            PlatformColor.FromArgb(0xFF, 0xBF, 0xEF, 0x45),
+            PlatformColor.FromArgb(0xFF, 0x3C, 0xB4, 0x4B),
+            PlatformColor.FromArgb(0xFF, 0x42, 0xD4, 0xF4),
+            PlatformColor.FromArgb(0xFF, 0x43, 0x63, 0xD8),
+            PlatformColor.FromArgb(0xFF, 0x91, 0x1E, 0xB4),
+            PlatformColor.FromArgb(0xFF, 0xF0, 0x32, 0xE6),
+            PlatformColor.FromArgb(0xFF, 0xA9, 0xA9, 0xA9),
+        };
+
+        public static PlatformColor GetColor(int id)
+        {
+            return Colors[id % Colors.Length];
+        }
+
+        private readonly PlatformColor _variableIdentityColor;
+
+        public VariableIdentityTypeAssetProvider(string name, PlatformColor variableIdentityColor)
+            : base(
+                typeof(PlatformFrameworkResourceKey),
+                "Resources/Reference",
+                variableIdentityColor,
+                name)
+        {
+            _variableIdentityColor = variableIdentityColor;
+        }
+
+        public override WireRenderInfoEnumerable GetWireRenderInfo(int dimensionality)
+        {
+            var baseRenderInfo = base.GetWireRenderInfo(dimensionality).Items.First();
+            var brush = PlatformBrush.CreateSolidColorBrush(_variableIdentityColor);
+            baseRenderInfo.HorizontalBrush = brush;
+            baseRenderInfo.VerticalBrush = brush;
+            return new WireRenderInfoEnumerable()
+            {
+                Items = baseRenderInfo.ToEnumerable()
+            };
         }
     }
 

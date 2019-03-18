@@ -3,6 +3,7 @@ using System.Linq;
 using NationalInstruments.Composition;
 using NationalInstruments.Controls.Shell;
 using NationalInstruments.Core;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Design;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
@@ -108,17 +109,62 @@ namespace Rebar.Design
             get
             {
                 Variable variable = ((Wire)Model).GetWireVariable();
-                if (variable != null && !variable.Type.IsRebarReferenceType())
+                if (variable != null)
                 {
                     var stockResources = Host.GetSharedExportedValue<StockDiagramUIResources>();
-                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
-                    ITypeAssetProvider outerAssetProvider = variable.Mutable
-                        ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
-                        : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
-                    return outerAssetProvider.GetWireRenderInfo(0);
+                    if (RebarFeatureToggles.IsVisualizeVariableIdentityEnabled)
+                    {
+                        return CreateVariableIdentityRenderInfo(variable, stockResources);
+                    }
+
+                    if (!variable.Type.IsRebarReferenceType())
+                    {
+                        ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
+                        ITypeAssetProvider outerAssetProvider = variable.Mutable
+                            ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
+                            : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
+                        return outerAssetProvider.GetWireRenderInfo(0);
+                    }
                 }
                 return base.WireRenderInfo;
             }
+        }
+
+        private static WireRenderInfoEnumerable CreateVariableIdentityRenderInfo(Variable variable, StockDiagramUIResources stockResources)
+        {
+            NIType innerType = variable.Type.IsRebarReferenceType()
+                ? variable.Type.GetUnderlyingTypeFromRebarType()
+                : variable.Type;
+            int id = variable.Id;
+            ITypeAssetProvider innerTypeAssetProvider = new VariableIdentityTypeAssetProvider(
+                stockResources.GetTypeAssets(null, variable.Type).GetShortName(innerType),
+                VariableIdentityTypeAssetProvider.GetColor(id));
+            ITypeAssetProvider outerTypeAssetProvider;
+            if (variable.Type.IsMutableReferenceType())
+            {
+                outerTypeAssetProvider = new MutableReferenceTypeAssetProvider(
+                    innerTypeAssetProvider,
+                    0);
+            }
+            else if (variable.Type.IsImmutableReferenceType())
+            {
+                outerTypeAssetProvider = new ImmutableReferenceTypeAssetProvider(
+                    innerTypeAssetProvider,
+                    0);
+            }
+            else if (variable.Mutable)
+            {
+                outerTypeAssetProvider = new MutableValueTypeAssetProvider(
+                    innerTypeAssetProvider,
+                    0);
+            }
+            else
+            {
+                outerTypeAssetProvider = new ImmutableValueTypeAssetProvider(
+                    innerTypeAssetProvider,
+                    0);
+            }
+            return outerTypeAssetProvider.GetWireRenderInfo(0);
         }
 
         #endregion

@@ -169,6 +169,24 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_VisualizeVariableIdentity_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VisualizeVariableIdentity_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable visualization of variable identities on wires.
+        /// </summary>
+        internal static string FeatureToggle_VisualizeVariableIdentity_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VisualizeVariableIdentity_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Function.
         /// </summary>
         internal static string FunctionDocumentType_DefaultDocumentName {
