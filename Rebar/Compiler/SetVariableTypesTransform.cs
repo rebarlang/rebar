@@ -471,6 +471,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
+        {
+            return true;
+        }
+
         /// <summary>
         /// Given some number of <see cref="Variable"/>s representing inputs to a node that is polymorphic in the
         /// mutability of the references it accepts for those inputs, computes whether the corresponding node output

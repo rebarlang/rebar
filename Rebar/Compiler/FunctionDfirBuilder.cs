@@ -514,6 +514,13 @@ namespace Rebar.Compiler
             MapTerminalsInOrder(vectorCreate, vectorCreateDfir);
         }
 
+        public void VisitVectorInsert(VectorInsert vectorInsert)
+        {
+            var vectorInsertDfir = new VectorInsertNode(_currentDiagram);
+            _map.AddMapping(vectorInsert, vectorInsertDfir);
+            MapTerminalsInOrder(vectorInsert, vectorInsertDfir);
+        }
+
         public void VisitFunction(Function function)
         {
             if (CreatedDfirRoot.Name.IsEmpty)

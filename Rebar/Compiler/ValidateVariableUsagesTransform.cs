@@ -304,5 +304,32 @@ namespace Rebar.Compiler
             }
             return true;
         }
+
+        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
+        {
+            if (!RebarFeatureToggles.IsVectorAndSliceTypesEnabled)
+            {
+                vectorInsertNode.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
+            else
+            {
+                Terminal vectorInputTerminal = vectorInsertNode.InputTerminals[0];
+                VariableUsageValidator validator = vectorInputTerminal.GetValidator();
+                validator.TestVariableIsMutableType();
+                validator.TestUnderlyingType(t => t.IsVectorType(), PFTypes.Void.CreateVector());
+
+                validator = vectorInsertNode.InputTerminals[1].GetValidator();
+                validator.TestExpectedUnderlyingType(PFTypes.Int32);
+                
+                NIType elementType;
+                validator = vectorInsertNode.InputTerminals[2].GetValidator();
+                validator.TestVariableIsOwnedType(); // hmm
+                if (vectorInputTerminal.GetVariable().GetTypeOrVoid().TryDestructureVectorType(out elementType))
+                {
+                    validator.TestExpectedUnderlyingType(elementType);
+                }
+            }
+            return true;
+        }
     }
 }

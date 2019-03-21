@@ -40,10 +40,10 @@ namespace Rebar.SourceModel
         /// <inheritdoc />
         public override void AcceptVisitor(IElementVisitor visitor)
         {
-            var rustyWiresVisitor = visitor as IFunctionVisitor;
-            if (rustyWiresVisitor != null)
+            var functionVisitor = visitor as IFunctionVisitor;
+            if (functionVisitor != null)
             {
-                rustyWiresVisitor.VisitVectorCreate(this);
+                functionVisitor.VisitVectorCreate(this);
             }
             else
             {

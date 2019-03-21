@@ -32,5 +32,6 @@ namespace Rebar.Compiler
         void VisitRange(SourceModel.Range node);
 
         void VisitVectorCreate(SourceModel.VectorCreate node);
+        void VisitVectorInsert(SourceModel.VectorInsert node);
     }
 }

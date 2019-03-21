@@ -144,6 +144,7 @@
     <Compile Include="Compiler\IFunctionVisitor.cs" />
     <Compile Include="Compiler\Nodes\UnwrapOptionTunnel.cs" />
     <Compile Include="Compiler\Nodes\VectorCreateNode.cs" />
+    <Compile Include="Compiler\Nodes\VectorInsertNode.cs" />
     <Compile Include="Compiler\PropagateTypePermissivenessTransform.cs" />
     <Compile Include="Compiler\ReflectVariablesToTerminalsTransform.cs" />
     <Compile Include="Compiler\LifetimeExtensions.cs" />
@@ -267,6 +268,7 @@
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
     <Compile Include="SourceModel\VectorCreate.cs" />
+    <Compile Include="SourceModel\VectorInsert.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>

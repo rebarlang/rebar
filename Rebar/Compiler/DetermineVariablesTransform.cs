@@ -220,6 +220,12 @@ namespace Rebar.Compiler
             return Enumerable.Empty<PassthroughTerminalPair>();
         }
 
+        IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
+        {
+            yield return new PassthroughTerminalPair(vectorInsertNode.Terminals[0], vectorInsertNode.Terminals[3]);
+            yield return new PassthroughTerminalPair(vectorInsertNode.Terminals[1], vectorInsertNode.Terminals[4]);
+        }
+
         IEnumerable<PassthroughTerminalPair> IDfirNodeVisitor<IEnumerable<PassthroughTerminalPair>>.VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             PullInputTerminalVariable(borrowTunnel.GetOuterTerminal(0));

@@ -342,6 +342,11 @@ namespace Rebar.RebarTarget
             throw new NotImplementedException();
         }
 
+        public bool VisitVectorInsertNode(VectorInsertNode vectorCreateNode)
+        {
+            throw new NotImplementedException();
+        }
+
         private void CopyValue(NIType type)
         {
             // TODO: this should just be a generic Deref and Store
