@@ -389,162 +389,129 @@ namespace Rebar.Compiler
             throw new NotImplementedException();
         }
 
-        public void VisitDropNode(SourceModel.DropNode node)
+        public void VisitDropNode(SourceModel.DropNode dropNode)
         {
             var dropDfir = new Nodes.DropNode(_currentDiagram);
-            _map.AddMapping(node, dropDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), dropDfir.Terminals.ElementAt(0));
+            _map.AddMapping(dropNode, dropDfir);
+            MapTerminalsInOrder(dropNode, dropDfir);
         }
 
-        public void VisitImmutablePassthroughNode(SourceModel.ImmutablePassthroughNode node)
+        public void VisitImmutablePassthroughNode(SourceModel.ImmutablePassthroughNode immutablePassthroughNode)
         {
             var immutablePassthroughDfir = new Nodes.ImmutablePassthroughNode(_currentDiagram);
-            _map.AddMapping(node, immutablePassthroughDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), immutablePassthroughDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), immutablePassthroughDfir.Terminals.ElementAt(1));
+            _map.AddMapping(immutablePassthroughNode, immutablePassthroughDfir);
+            MapTerminalsInOrder(immutablePassthroughNode, immutablePassthroughDfir);
         }
 
-        public void VisitMutablePassthroughNode(SourceModel.MutablePassthroughNode node)
+        public void VisitMutablePassthroughNode(SourceModel.MutablePassthroughNode mutablePassthroughNode)
         {
             var mutablePassthroughDfir = new Nodes.MutablePassthroughNode(_currentDiagram);
-            _map.AddMapping(node, mutablePassthroughDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), mutablePassthroughDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), mutablePassthroughDfir.Terminals.ElementAt(1));
+            _map.AddMapping(mutablePassthroughNode, mutablePassthroughDfir);
+            MapTerminalsInOrder(mutablePassthroughNode, mutablePassthroughDfir);
         }
 
         public void VisitTerminateLifetimeNode(TerminateLifetime node)
         {
             var terminateLifetimeDfir = new TerminateLifetimeNode(_currentDiagram, node.InputTerminals.Count(), node.OutputTerminals.Count());
             _map.AddMapping(node, terminateLifetimeDfir);
-            foreach (var pair in node.Terminals.Zip(terminateLifetimeDfir.Terminals))
-            {
-                _map.AddMapping(pair.Key, pair.Value);
-            }
+            MapTerminalsInOrder(node, terminateLifetimeDfir);
         }
 
-        public void VisitSelectReferenceNode(SourceModel.SelectReferenceNode node)
+        public void VisitSelectReferenceNode(SourceModel.SelectReferenceNode selectReferenceNode)
         {
             var selectReferenceDfir = new Nodes.SelectReferenceNode(_currentDiagram);
-            _map.AddMapping(node, selectReferenceDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), selectReferenceDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), selectReferenceDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), selectReferenceDfir.Terminals.ElementAt(2));
-            _map.AddMapping(node.Terminals.ElementAt(3), selectReferenceDfir.Terminals.ElementAt(3));
-            _map.AddMapping(node.Terminals.ElementAt(4), selectReferenceDfir.Terminals.ElementAt(4));
+            _map.AddMapping(selectReferenceNode, selectReferenceDfir);
+            MapTerminalsInOrder(selectReferenceNode, selectReferenceDfir);
         }
 
-        public void VisitCreateCopyNode(SourceModel.CreateCopyNode node)
+        public void VisitCreateCopyNode(SourceModel.CreateCopyNode createCopyNode)
         {
             var createCopyDfir = new Nodes.CreateCopyNode(_currentDiagram);
-            _map.AddMapping(node, createCopyDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), createCopyDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), createCopyDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), createCopyDfir.Terminals.ElementAt(2));
+            _map.AddMapping(createCopyNode, createCopyDfir);
+            MapTerminalsInOrder(createCopyNode, createCopyDfir);
         }
 
-        public void VisitAssignNode(SourceModel.AssignNode node)
+        public void VisitAssignNode(SourceModel.AssignNode assignNode)
         {
             var assignDfir = new Nodes.AssignNode(_currentDiagram);
-            _map.AddMapping(node, assignDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), assignDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), assignDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), assignDfir.Terminals.ElementAt(2));
+            _map.AddMapping(assignNode, assignDfir);
+            MapTerminalsInOrder(assignNode, assignDfir);
         }
 
-        public void VisitExchangeValuesNode(ExchangeValues node)
+        public void VisitExchangeValuesNode(ExchangeValues exchangeValues)
         {
             var exchangeValuesDfir = new ExchangeValuesNode(_currentDiagram);
-            _map.AddMapping(node, exchangeValuesDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), exchangeValuesDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), exchangeValuesDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), exchangeValuesDfir.Terminals.ElementAt(2));
-            _map.AddMapping(node.Terminals.ElementAt(3), exchangeValuesDfir.Terminals.ElementAt(3));
+            _map.AddMapping(exchangeValues, exchangeValuesDfir);
+            MapTerminalsInOrder(exchangeValues, exchangeValuesDfir);
         }
 
-        public void VisitImmutableBorrowNode(ImmutableBorrowNode node)
+        public void VisitImmutableBorrowNode(ImmutableBorrowNode immutableBorrowNode)
         {
             var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.Immutable);
-            _map.AddMapping(node, explicitBorrowDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), explicitBorrowDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), explicitBorrowDfir.Terminals.ElementAt(1));
+            _map.AddMapping(immutableBorrowNode, explicitBorrowDfir);
+            MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
         }
 
-        public void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive node)
+        public void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive pureUnaryPrimitive)
         {
-            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram, node.Operation);
-            _map.AddMapping(node, pureUnaryPrimitiveDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), pureUnaryPrimitiveDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), pureUnaryPrimitiveDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), pureUnaryPrimitiveDfir.Terminals.ElementAt(2));
+            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram, pureUnaryPrimitive.Operation);
+            _map.AddMapping(pureUnaryPrimitive, pureUnaryPrimitiveDfir);
+            MapTerminalsInOrder(pureUnaryPrimitive, pureUnaryPrimitiveDfir);
         }
 
-        public void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive node)
+        public void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive pureBinaryPrimitive)
         {
-            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram, node.Operation);
-            _map.AddMapping(node, pureBinaryPrimitiveDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), pureBinaryPrimitiveDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), pureBinaryPrimitiveDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), pureBinaryPrimitiveDfir.Terminals.ElementAt(2));
-            _map.AddMapping(node.Terminals.ElementAt(3), pureBinaryPrimitiveDfir.Terminals.ElementAt(3));
-            _map.AddMapping(node.Terminals.ElementAt(4), pureBinaryPrimitiveDfir.Terminals.ElementAt(4));
+            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram, pureBinaryPrimitive.Operation);
+            _map.AddMapping(pureBinaryPrimitive, pureBinaryPrimitiveDfir);
+            MapTerminalsInOrder(pureBinaryPrimitive, pureBinaryPrimitiveDfir);
         }
 
         public void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node)
         {
             var mutatingUnaryPrimitiveDfir = new Nodes.MutatingUnaryPrimitive(_currentDiagram, node.Operation);
             _map.AddMapping(node, mutatingUnaryPrimitiveDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), mutatingUnaryPrimitiveDfir.Terminals.ElementAt(1));
+            MapTerminalsInOrder(node, mutatingUnaryPrimitiveDfir);
         }
 
-        public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive node)
+        public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive mutatingBinaryPrimitive)
         {
-            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram, node.Operation);
-            _map.AddMapping(node, mutatingBinaryPrimitiveDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(1));
-            _map.AddMapping(node.Terminals.ElementAt(2), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(2));
-            _map.AddMapping(node.Terminals.ElementAt(3), mutatingBinaryPrimitiveDfir.Terminals.ElementAt(3));
+            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram, mutatingBinaryPrimitive.Operation);
+            _map.AddMapping(mutatingBinaryPrimitive, mutatingBinaryPrimitiveDfir);
+            MapTerminalsInOrder(mutatingBinaryPrimitive, mutatingBinaryPrimitiveDfir);
         }
 
-        public void VisitCreateCellNode(CreateCell node)
+        public void VisitCreateCellNode(CreateCell createCell)
         {
             var createCellDfir = new CreateCellNode(_currentDiagram);
-            _map.AddMapping(node, createCellDfir);
-            _map.AddMapping(node.Terminals.ElementAt(0), createCellDfir.Terminals.ElementAt(0));
-            _map.AddMapping(node.Terminals.ElementAt(1), createCellDfir.Terminals.ElementAt(1));
+            _map.AddMapping(createCell, createCellDfir);
+            MapTerminalsInOrder(createCell, createCellDfir);
         }
 
         public void VisitSomeConstructorNode(SourceModel.SomeConstructorNode someConstructorNode)
         {
             var someConstructorNodeDfir = new Nodes.SomeConstructorNode(_currentDiagram);
-            _map.AddMapping(someConstructorNode, someConstructorNodeDfir);
-            _map.AddMapping(someConstructorNode.Terminals.ElementAt(0), someConstructorNodeDfir.Terminals.ElementAt(0));
-            _map.AddMapping(someConstructorNode.Terminals.ElementAt(1), someConstructorNodeDfir.Terminals.ElementAt(1));
+            MapTerminalsInOrder(someConstructorNode, someConstructorNodeDfir);
         }
 
         public void VisitRange(Range range)
         {
             var rangeDfir = new Nodes.RangeNode(_currentDiagram);
             _map.AddMapping(range, rangeDfir);
-            _map.AddMapping(range.Terminals.ElementAt(0), rangeDfir.Terminals.ElementAt(0));
-            _map.AddMapping(range.Terminals.ElementAt(1), rangeDfir.Terminals.ElementAt(1));
-            _map.AddMapping(range.Terminals.ElementAt(2), rangeDfir.Terminals.ElementAt(2));
+            MapTerminalsInOrder(range, rangeDfir);
         }
 
         public void VisitOutput(Output output)
         {
             var outputDfir = new OutputNode(_currentDiagram);
             _map.AddMapping(output, outputDfir);
-            _map.AddMapping(output.Terminals.ElementAt(0), outputDfir.Terminals.ElementAt(0));
-            _map.AddMapping(output.Terminals.ElementAt(1), outputDfir.Terminals.ElementAt(1));
+            MapTerminalsInOrder(output, outputDfir);
         }
 
         public void VisitVectorCreate(VectorCreate vectorCreate)
         {
             var vectorCreateDfir = new VectorCreateNode(_currentDiagram);
             _map.AddMapping(vectorCreate, vectorCreateDfir);
-            _map.AddMapping(vectorCreate.Terminals.ElementAt(0), vectorCreateDfir.Terminals.ElementAt(0));
+            MapTerminalsInOrder(vectorCreate, vectorCreateDfir);
         }
 
         public void VisitFunction(Function function)
@@ -559,12 +526,19 @@ namespace Rebar.Compiler
             ConnectWires();
         }
 
-        private void MapTerminalAndType(NationalInstruments.SourceModel.Terminal modelTerminal,
-            NationalInstruments.Dfir.Terminal dfirTerminal)
+        private void MapTerminalAndType(Terminal modelTerminal, NationalInstruments.Dfir.Terminal dfirTerminal)
         {
             _map.AddMapping(modelTerminal, dfirTerminal);
             dfirTerminal.SetSourceModelId(modelTerminal);
             dfirTerminal.DataType = modelTerminal.DataType.IsUnset() ? PFTypes.Void : modelTerminal.DataType;
+        }
+
+        private void MapTerminalsInOrder(Node sourceModelNode, NationalInstruments.Dfir.Node dfirNode)
+        {
+            foreach (var pair in sourceModelNode.Terminals.Zip(dfirNode.Terminals))
+            {
+                _map.AddMapping(pair.Key, pair.Value);
+            }
         }
 
         /// <summary>
