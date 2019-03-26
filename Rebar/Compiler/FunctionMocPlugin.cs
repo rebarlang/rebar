@@ -84,12 +84,10 @@ namespace Rebar.Compiler
         {
             List<IDfirTransformBase> semanticAnalysisTransforms = new List<IDfirTransformBase>()
             {
-                new DetermineVariablesTransform(),
+                new CreateNodeFacadesTransform(),
                 new SetVariableTypesAndLifetimesTransform(),
                 new ValidateVariableUsagesTransform(),
                 new ReflectVariablesToTerminalsTransform(),
-                // new ExplicitBorrowTransform(),
-                // new PropagateTypePermissivenessTransform(),
             };
 
             if (RebarFeatureToggles.IsRebarTargetEnabled)
@@ -103,11 +101,16 @@ namespace Rebar.Compiler
                 semanticAnalysisTransforms.Add(new EmptyTargetDfirTransform());
             }
 
+            List<IDfirTransformBase> toTargetDfirTransforms = new List<IDfirTransformBase>()
+            {
+                new AutoBorrowTransform()
+            };
+
             return new StandardMocTransformManager(
                 specAndQName,
                 sourceDfir,
                 semanticAnalysisTransforms,
-                Enumerable.Empty<IDfirTransformBase>(), 
+                toTargetDfirTransforms, 
                 _host.GetSharedExportedValue<ScheduledActivityManager>());
         }
 
@@ -215,7 +218,7 @@ namespace Rebar.Compiler
             NationalInstruments.Dfir.Terminal dfirSourceTerminal;
             if (dfirWire.TryGetSourceTerminal(out dfirSourceTerminal))
             {
-                wire.SetWireVariable(dfirSourceTerminal.GetVariable());
+                wire.SetWireVariable(dfirSourceTerminal.GetFacadeVariable());
             }
 
             if (!isFirstVariableWire)

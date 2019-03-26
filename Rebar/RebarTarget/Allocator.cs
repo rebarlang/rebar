@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
+using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
     /// <summary>
-    /// Transform that associates a local slot with each <see cref="Variable"/> in a <see cref="DfirRoot"/>.
+    /// Transform that associates a local slot with each <see cref="VariableReference"/> in a <see cref="DfirRoot"/>.
     /// </summary>
     /// <remarks>For now, the implementation is the most naive one possible; it assigns every Variable
     /// its own unique local slot. Future implementations can improve on this by:
@@ -17,38 +20,33 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal sealed class Allocator : VisitorTransformBase
+    internal sealed class Allocator : VisitorTransformBase, IDfirNodeVisitor<bool>
     {
-        private readonly Dictionary<Variable, Allocation> _variableLocalIndices;
+        private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
         private int _currentIndex = 0;
 
-        public Allocator(Dictionary<Variable, Allocation> variableLocalIndices)
+        public Allocator(Dictionary<VariableReference, ValueSource> variableAllocations)
         {
-            _variableLocalIndices = variableLocalIndices;
+            _variableAllocations = variableAllocations;
         }
 
-        protected override void VisitDiagram(Diagram diagram)
+        private LocalAllocationValueSource CreateLocalAllocationForVariable(VariableReference variable)
         {
-            base.VisitDiagram(diagram);
-            VariableSet diagramSet = diagram.GetVariableSet();
-            foreach (Variable variable in diagramSet.Variables)
+            int size = GetTypeSize(variable.Type);
+            var localAllocation = new LocalAllocationValueSource(_currentIndex, size);
+            _variableAllocations[variable] = localAllocation;
+            ++_currentIndex;
+            return localAllocation;
+        }
+
+        private void CreateConstantLocalReferenceForVariable(VariableReference referencingVariable, VariableReference referencedVariable)
+        {
+            var localAllocation = _variableAllocations[referencedVariable] as LocalAllocationValueSource;
+            if (localAllocation == null)
             {
-                int size = GetTypeSize(variable.Type);
-                _variableLocalIndices[variable] = new Allocation(_currentIndex, size);
-                ++_currentIndex;
+                throw new ArgumentException("Referenced variable does not have a local allocation.", "referencedVariable");
             }
-        }
-
-        protected override void VisitBorderNode(BorderNode borderNode)
-        {
-        }
-
-        protected override void VisitNode(Node node)
-        {
-        }
-
-        protected override void VisitWire(Wire wire)
-        {
+            _variableAllocations[referencingVariable] = new ConstantLocalReferenceValueSource(localAllocation.Index);
         }
 
         private int GetTypeSize(NIType type)
@@ -74,11 +72,247 @@ namespace Rebar.RebarTarget
             }
             throw new NotImplementedException("Unknown size for type " + type);
         }
+
+        private void CreateReferenceValueSource(VariableReference referenceVariable, VariableReference referencedVariable)
+        {
+            if (referenceVariable.Mutable)
+            {
+                CreateLocalAllocationForVariable(referenceVariable);
+                return;
+            }
+
+            // If the created reference binding is non-mutable, then we can create a ConstantLocalReferenceValueSource
+            CreateConstantLocalReferenceForVariable(referenceVariable, referencedVariable);
+            return;
+        }
+
+        protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
+        {
+            this.VisitRebarNode(borderNode);
+        }
+
+        protected override void VisitNode(Node node)
+        {
+            this.VisitRebarNode(node);
+        }
+
+        protected override void VisitWire(Wire wire)
+        {
+            if (!wire.SinkTerminals.HasMoreThan(1))
+            {
+                return;
+            }
+            VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
+            ValueSource sourceValueSource = _variableAllocations[sourceVariable];
+            foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable))
+            {
+                if (sourceValueSource is LocalAllocationValueSource)
+                {
+                    CreateLocalAllocationForVariable(sinkVariable);
+                }
+                else if (sourceValueSource is ConstantLocalReferenceValueSource)
+                {
+                    _variableAllocations[sinkVariable] = sourceValueSource;
+                }
+            }
+        }
+
+        #region IDfirNodeVisitor implementation
+        // This visitor implementation parallels that of SetVariableTypesTransform:
+        // For each variable created by a visited node, this should determine the appropriate ValueSource for that variable.
+
+        public bool VisitAssignNode(AssignNode assignNode)
+        {
+            return true;
+        }
+
+        public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
+        {
+            Terminal inputTerminal = borrowTunnel.Terminals.ElementAt(0),
+                outputTerminal = borrowTunnel.Terminals.ElementAt(1);
+            VariableReference inputVariable = inputTerminal.GetTrueVariable(),
+                outputVariable = outputTerminal.GetTrueVariable();
+            CreateReferenceValueSource(outputVariable, inputVariable);
+            return true;
+        }
+
+        public bool VisitConstant(Constant constant)
+        {
+            CreateLocalAllocationForVariable(constant.OutputTerminal.GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitCreateCellNode(CreateCellNode createCellNode)
+        {
+            CreateLocalAllocationForVariable(createCellNode.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
+        {
+            CreateLocalAllocationForVariable(createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitDropNode(DropNode dropNode)
+        {
+            return true;
+        }
+
+        public bool VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode)
+        {
+            return true;
+        }
+
+        public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
+        {
+            foreach (KeyValuePair<Terminal, Terminal> terminalPair in explicitBorrowNode.InputTerminals.Zip(explicitBorrowNode.OutputTerminals))
+            {
+                VariableReference inputVariable = terminalPair.Key.GetTrueVariable(),
+                    outputVariable = terminalPair.Value.GetTrueVariable();
+                if (explicitBorrowNode.AlwaysCreateReference || inputVariable.Type != outputVariable.Type)
+                {
+                    CreateReferenceValueSource(outputVariable, inputVariable);
+                }
+            }
+            return true;
+        }
+
+        public bool VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        {
+            return true;
+        }
+
+        public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
+        {
+            CreateLocalAllocationForVariable(iterateTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitLockTunnel(LockTunnel lockTunnel)
+        {
+            CreateLocalAllocationForVariable(lockTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
+        {
+            Terminal inputTerminal = loopConditionTunnel.Terminals.ElementAt(0),
+                outputTerminal = loopConditionTunnel.Terminals.ElementAt(1);
+            VariableReference inputVariable = inputTerminal.GetTrueVariable();
+            LocalAllocationValueSource loopConditionAllocation;
+            if (!inputTerminal.IsConnected)
+            {
+                loopConditionAllocation = CreateLocalAllocationForVariable(inputVariable);
+            }
+            else
+            {
+                loopConditionAllocation = (LocalAllocationValueSource)_variableAllocations[inputVariable];
+            }
+            CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
+            return true;
+        }
+
+        public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
+        {
+            return true;
+        }
+
+        public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
+        {
+            return true;
+        }
+
+        public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
+        {
+            return true;
+        }
+
+        public bool VisitOutputNode(OutputNode outputNode)
+        {
+            return true;
+        }
+
+        public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
+        {
+            CreateLocalAllocationForVariable(pureBinaryPrimitive.OutputTerminals.ElementAt(2).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
+        {
+            CreateLocalAllocationForVariable(pureUnaryPrimitive.OutputTerminals.ElementAt(1).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitRangeNode(RangeNode rangeNode)
+        {
+            CreateLocalAllocationForVariable(rangeNode.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
+        {
+            CreateLocalAllocationForVariable(someConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
+        {
+            CreateLocalAllocationForVariable(selectReferenceNode.OutputTerminals.ElementAt(1).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
+        {
+            return true;
+        }
+
+        public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)
+        {
+            return true;
+        }
+
+        public bool VisitTunnel(Tunnel tunnel)
+        {
+            VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
+                outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
+            _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+            return true;
+        }
+
+        public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
+        {
+            // TODO: it would be nice to allow the output value source to reference an offset from the input value source,
+            // rather than needing a separate allocation.
+            CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
+        {
+            CreateLocalAllocationForVariable(vectorCreateNode.OutputTerminals.ElementAt(0).GetTrueVariable());
+            return true;
+        }
+
+        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
+        {
+            return true;
+        }
+
+        #endregion
     }
 
-    internal struct Allocation
+    internal abstract class ValueSource
     {
-        public Allocation(int index, int size)
+        public ValueSource()
+        {
+        }
+    }
+
+    internal class LocalAllocationValueSource : ValueSource
+    {
+        public LocalAllocationValueSource(int index, int size)
         {
             Index = index;
             Size = size;
@@ -87,5 +321,16 @@ namespace Rebar.RebarTarget
         public int Index { get; }
 
         public int Size { get; }
+    }
+
+    internal class ConstantLocalReferenceValueSource : ValueSource
+    {
+        public ConstantLocalReferenceValueSource(int referencedIndex)
+            : base()
+        {
+            ReferencedIndex = referencedIndex;
+        }
+
+        public int ReferencedIndex { get; }
     }
 }

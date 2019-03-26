@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Rebar.Common;
 
-namespace Rebar.Compiler
+namespace Rebar.Common
 {
     internal class BoundedLifetimeGraph
     {
+        [DebuggerDisplay("{DebuggerDisplay}")]
         private class BoundedLifetime : Lifetime
         {
             private readonly BoundedLifetimeGraph _graph;
@@ -21,6 +22,10 @@ namespace Rebar.Compiler
             public override bool DoesOutlastDiagram => _graph.DoesOutlast(this, _graph.DiagramLifetime);
 
             public override bool IsBounded => true;
+
+            private string DebuggerDisplay => DoesOutlastDiagram
+                ? "Lifetime : Diagram"
+                : "Diagram : Lifetime";
         }
 
         private readonly Dictionary<BoundedLifetime, HashSet<BoundedLifetime>> _lifetimeSupertypes = new Dictionary<BoundedLifetime, HashSet<BoundedLifetime>>();

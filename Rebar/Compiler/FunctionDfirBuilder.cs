@@ -447,7 +447,7 @@ namespace Rebar.Compiler
 
         public void VisitImmutableBorrowNode(ImmutableBorrowNode immutableBorrowNode)
         {
-            var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.Immutable);
+            var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.Immutable, 1, true, true);
             _map.AddMapping(immutableBorrowNode, explicitBorrowDfir);
             MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
         }

@@ -90,7 +90,7 @@ namespace Rebar.Compiler
 
         public static bool TestTerminalHasMutableTypeConnected(this Terminal terminal)
         {
-            Variable variable = terminal.GetVariable();
+            VariableReference variable = terminal.GetFacadeVariable();
             if (!(variable.Mutable || variable.Type.IsMutableReferenceType()))
             {
                 terminal.ParentNode.SetDfirMessage(Messages.TerminalDoesNotAcceptImmutableType);

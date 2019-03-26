@@ -9,6 +9,7 @@ using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.VI.Design;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.SourceModel;
 
 namespace Rebar.Design
@@ -76,7 +77,7 @@ namespace Rebar.Design
             }
             else
             {
-                checkableCommandParameter.IsChecked = selectedWires.Any(wire => wire.GetWireVariable()?.Mutable ?? false);
+                checkableCommandParameter.IsChecked = selectedWires.Any(wire => wire.GetWireVariable().Mutable);
                 return false;
             }
         }
@@ -108,29 +109,26 @@ namespace Rebar.Design
         {
             get
             {
-                Variable variable = ((Wire)Model).GetWireVariable();
-                if (variable != null)
+                VariableReference variable = ((Wire)Model).GetWireVariable();
+                var stockResources = Host.GetSharedExportedValue<StockDiagramUIResources>();
+                if (RebarFeatureToggles.IsVisualizeVariableIdentityEnabled)
                 {
-                    var stockResources = Host.GetSharedExportedValue<StockDiagramUIResources>();
-                    if (RebarFeatureToggles.IsVisualizeVariableIdentityEnabled)
-                    {
-                        return CreateVariableIdentityRenderInfo(variable, stockResources);
-                    }
+                    return CreateVariableIdentityRenderInfo(variable, stockResources);
+                }
 
-                    if (!variable.Type.IsRebarReferenceType())
-                    {
-                        ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
-                        ITypeAssetProvider outerAssetProvider = variable.Mutable
-                            ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
-                            : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
-                        return outerAssetProvider.GetWireRenderInfo(0);
-                    }
+                if (!variable.Type.IsRebarReferenceType())
+                {
+                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
+                    ITypeAssetProvider outerAssetProvider = variable.Mutable
+                        ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
+                        : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
+                    return outerAssetProvider.GetWireRenderInfo(0);
                 }
                 return base.WireRenderInfo;
             }
         }
 
-        private static WireRenderInfoEnumerable CreateVariableIdentityRenderInfo(Variable variable, StockDiagramUIResources stockResources)
+        private static WireRenderInfoEnumerable CreateVariableIdentityRenderInfo(VariableReference variable, StockDiagramUIResources stockResources)
         {
             NIType innerType = variable.Type.IsRebarReferenceType()
                 ? variable.Type.GetUnderlyingTypeFromRebarType()

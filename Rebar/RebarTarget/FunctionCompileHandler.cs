@@ -69,12 +69,13 @@ namespace Rebar.RebarTarget
                 CallingConvention.StdCall);
             BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
-            var variableAllocations = new Dictionary<Variable, Allocation>();
+            var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
             var allocator = new Allocator(variableAllocations);
             await allocator.ExecuteTransform(targetDfir, cancellationToken);
 
-            int[] localSizes = new int[variableAllocations.Count];
-            foreach (var allocation in variableAllocations.Values)
+            IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
+            int[] localSizes = new int[localAllocations.Count()];
+            foreach (var allocation in localAllocations)
             {
                 localSizes[allocation.Index] = allocation.Size;
             }

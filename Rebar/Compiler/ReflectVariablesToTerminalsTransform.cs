@@ -1,6 +1,7 @@
 ﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler.Nodes;
 
 namespace Rebar.Compiler
 {
@@ -8,27 +9,30 @@ namespace Rebar.Compiler
     {
         protected override void VisitNode(Node node)
         {
-            foreach (Terminal terminal in node.Terminals)
-            {
-                terminal.DataType = GetTerminalTypeFromVariable(terminal.GetVariable());
-            }
+            ReflectAllTerminalTypes(node);
         }
 
         protected override void VisitWire(Wire wire)
         {
         }
 
-        protected override void VisitBorderNode(BorderNode borderNode)
+        protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
         {
-            foreach (Terminal terminal in borderNode.Terminals)
-            {
-                terminal.DataType = GetTerminalTypeFromVariable(terminal.GetVariable());
-            }
+            ReflectAllTerminalTypes(borderNode);
         }
 
-        private NIType GetTerminalTypeFromVariable(Variable variable)
+        private void ReflectAllTerminalTypes(Node node)
         {
-            return variable != null && !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+            foreach (Terminal terminal in node.Terminals)
+            {
+                if (terminal.ParentNode is TerminateLifetimeTunnel && terminal.Direction == Direction.Input)
+                {
+                    // HACK
+                    continue;
+                }
+                VariableReference variable = terminal.GetFacadeVariable();
+                terminal.DataType = !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+            }
         }
     }
 }

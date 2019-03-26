@@ -131,7 +131,7 @@ namespace Rebar.Common
                     }
                 }
 
-                Variable terminalVariable = terminal.GetVariable();
+                VariableReference terminalVariable = terminal.GetTrueVariable();
                 switch (outputPermission)
                 {
                     case TypePermissiveness.ImmutableReference:

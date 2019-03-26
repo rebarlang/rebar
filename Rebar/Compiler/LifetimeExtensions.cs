@@ -13,7 +13,7 @@ namespace Rebar.Compiler
             }
 
             var connectedTerminal = terminal.ConnectedTerminal;
-            var connectedTerminalVariable = connectedTerminal.GetVariable();
+            var connectedTerminalVariable = connectedTerminal.GetFacadeVariable();
             if (connectedTerminalVariable.Lifetime == null && connectedTerminal.ParentNode is Wire)
             {
                 Wire wire = (Wire)connectedTerminal.ParentNode;
@@ -21,11 +21,11 @@ namespace Rebar.Compiler
                 if (wire.TryGetSourceTerminal(out sourceTerminal))
                 {
                     Lifetime sourceLifetime = sourceTerminal.GetSourceLifetime();
-                    Variable sourceVariable = sourceTerminal.GetVariable();
+                    VariableReference sourceVariable = sourceTerminal.GetFacadeVariable();
                     sourceVariable.SetTypeAndLifetime(sourceVariable.Type, sourceLifetime);
                     foreach (var sinkTerminal in wire.SinkTerminals)
                     {
-                        Variable sinkVariable = sinkTerminal.GetVariable();
+                        VariableReference sinkVariable = sinkTerminal.GetFacadeVariable();
                         sinkVariable.SetTypeAndLifetime(sinkVariable.Type, sourceLifetime);
                     }
                 }
@@ -35,7 +35,7 @@ namespace Rebar.Compiler
 
         public static Lifetime ComputeInputTerminalEffectiveLifetime(this Terminal inputTerminal)
         {
-            Variable inputVariable = inputTerminal.GetVariable();
+            VariableReference inputVariable = inputTerminal.GetFacadeVariable();
             // TODO: this should take a parameter for the type permission level above which to consider the input to be re-borrowed;
             // for now, assume that this level is ImmutableReference.
             if (inputVariable.Type.IsImmutableReferenceType())

@@ -2,7 +2,6 @@
 
 namespace Rebar.Common
 {
-    [DebuggerDisplay("{Category} {Id} : {BaseLifetime}")]
     internal abstract class Lifetime
     {
         [DebuggerDisplay("{_name}")]

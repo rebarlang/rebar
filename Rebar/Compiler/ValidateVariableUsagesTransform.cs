@@ -9,8 +9,8 @@ using Rebar.Compiler.Nodes;
 namespace Rebar.Compiler
 {
     /// <summary>
-    /// Checks that all <see cref="Variable"/> usages associated with input terminals on each node are correct.
-    /// Can assume that all <see cref="Variable"/>s associated with input terminals have initial types and lifetimes set.
+    /// Checks that all <see cref="VariableReference"/> usages associated with input terminals on each node are correct.
+    /// Can assume that all <see cref="VariableReference"/>s associated with input terminals have initial types and lifetimes set.
     /// </summary>
     internal class ValidateVariableUsagesTransform : VisitorTransformBase, IDfirNodeVisitor<bool>
     {
@@ -24,8 +24,8 @@ namespace Rebar.Compiler
             Terminal sourceTerminal;
             if (wire.TryGetSourceTerminal(out sourceTerminal))
             {
-                Variable sourceVariable = sourceTerminal.GetVariable();
-                if (wire.SinkTerminals.HasMoreThan(1) && sourceVariable != null && !WireTypeMayFork(sourceVariable.Type))
+                VariableReference sourceVariable = sourceTerminal.GetFacadeVariable();
+                if (wire.SinkTerminals.HasMoreThan(1) && !WireTypeMayFork(sourceVariable.Type))
                 {
                     wire.SetDfirMessage(Messages.WireCannotFork);
                 }
@@ -125,7 +125,10 @@ namespace Rebar.Compiler
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
         {
-            VariableUsageValidator validator = explicitBorrowNode.Terminals[0].GetValidator();
+            foreach (var inputTerminal in explicitBorrowNode.InputTerminals)
+            {
+                VariableUsageValidator validator = inputTerminal.GetValidator();
+            }
             return true;
         }
 
@@ -137,12 +140,13 @@ namespace Rebar.Compiler
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            VariableUsageValidator validator = iterateTunnel.Terminals[0].GetValidator();
+            Terminal inputTerminal = iterateTunnel.Terminals[0];
+            VariableUsageValidator validator = inputTerminal.GetValidator();
             validator.TestUnderlyingType(
                 type => type.IsIteratorType() || type.IsVectorType(),
                 PFTypes.Void.CreateIterator());
 
-            NIType underlyingType = iterateTunnel.Terminals[0].GetVariable().GetTypeOrVoid().GetUnderlyingTypeFromRebarType();
+            NIType underlyingType = inputTerminal.GetFacadeVariable().Type.GetUnderlyingTypeFromRebarType();
             if (underlyingType.IsIteratorType())
             {
                 validator.TestVariableIsMutableType();
@@ -160,7 +164,7 @@ namespace Rebar.Compiler
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
         {
             Terminal inputTerminal = loopConditionTunnel.InputTerminals.ElementAt(0);
-            var validator = new VariableUsageValidator(inputTerminal.GetVariable(), inputTerminal, true, false);
+            var validator = new VariableUsageValidator(inputTerminal, true, false);
             validator.TestVariableIsOwnedType();
             validator.TestExpectedUnderlyingType(PFTypes.Boolean);
             return true;
@@ -254,7 +258,7 @@ namespace Rebar.Compiler
         {
             foreach (var inputTerminal in terminateLifetimeNode.InputTerminals)
             {
-                VariableUsageValidator validator = new VariableUsageValidator(inputTerminal.GetVariable(), inputTerminal, false);
+                VariableUsageValidator validator = new VariableUsageValidator(inputTerminal, false);
             }
 
             switch (terminateLifetimeNode.ErrorState)
@@ -324,7 +328,7 @@ namespace Rebar.Compiler
                 NIType elementType;
                 validator = vectorInsertNode.InputTerminals[2].GetValidator();
                 validator.TestVariableIsOwnedType(); // hmm
-                if (vectorInputTerminal.GetVariable().GetTypeOrVoid().TryDestructureVectorType(out elementType))
+                if (vectorInputTerminal.GetTrueVariable().Type.TryDestructureVectorType(out elementType))
                 {
                     validator.TestExpectedUnderlyingType(elementType);
                 }

@@ -100,10 +100,15 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\BoundedLifetimeGraph.cs" />
     <Compile Include="Common\CommonNodes.cs" />
+    <Compile Include="Common\InputReferenceMutability.cs" />
     <Compile Include="Common\NodeSignature.cs" />
     <Compile Include="Common\PrimitiveOps.cs" />
-    <Compile Include="Compiler\BoundedLifetimeGraph.cs" />
+    <Compile Include="Common\VariableReference.cs" />
+    <Compile Include="Common\VariableSet.cs" />
+    <Compile Include="Compiler\AutoBorrowNodeFacade.cs" />
+    <Compile Include="Compiler\AutoBorrowTransform.cs" />
     <Compile Include="Common\Lifetime.cs" />
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
@@ -137,20 +142,23 @@
     <Compile Include="Compiler\Nodes\SomeConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeTunnel.cs" />
-    <Compile Include="Compiler\DetermineVariablesTransform.cs" />
+    <Compile Include="Compiler\CreateNodeFacadesTransform.cs" />
     <Compile Include="Compiler\DfirModelMap.cs" />
-    <Compile Include="Compiler\ExplicitBorrowTransform.cs" />
     <Compile Include="Compiler\IPassthroughTerminalsNode.cs" />
     <Compile Include="Compiler\IFunctionVisitor.cs" />
     <Compile Include="Compiler\Nodes\UnwrapOptionTunnel.cs" />
     <Compile Include="Compiler\Nodes\VectorCreateNode.cs" />
     <Compile Include="Compiler\Nodes\VectorInsertNode.cs" />
-    <Compile Include="Compiler\PropagateTypePermissivenessTransform.cs" />
+    <Compile Include="Compiler\ReferenceInputTerminalLifetimeGroup.cs" />
     <Compile Include="Compiler\ReflectVariablesToTerminalsTransform.cs" />
     <Compile Include="Compiler\LifetimeExtensions.cs" />
     <Compile Include="Compiler\Messages.cs" />
     <Compile Include="Compiler\FunctionDfirBuilder.cs" />
     <Compile Include="Compiler\FunctionMocPlugin.cs" />
+    <Compile Include="Compiler\SimpleTerminalFacade.cs" />
+    <Compile Include="Compiler\TerminalFacade.cs" />
+    <Compile Include="Compiler\TerminalId.cs" />
+    <Compile Include="Compiler\TerminateLifetimeOutputTerminalFacade.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -180,8 +188,7 @@
     <Compile Include="RebarTarget\TargetDeployer.cs" />
     <Compile Include="Compiler\SetVariableTypesTransform.cs" />
     <Compile Include="Compiler\ValidateVariableUsagesTransform.cs" />
-    <Compile Include="Common\Variable.cs" />
-    <Compile Include="Compiler\VariableSet.cs" />
+    <Compile Include="Compiler\VariableExtensions.cs" />
     <Compile Include="Compiler\VariableUsageValidator.cs" />
     <Compile Include="Compiler\VisitorTransformBase.cs" />
     <Compile Include="Compiler\WireProperties.cs" />

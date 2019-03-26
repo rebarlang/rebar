@@ -104,6 +104,15 @@ namespace Rebar.Common
                 : type;
         }
 
+        public static NIType GetReferentType(this NIType type)
+        {
+            if (!type.IsRebarReferenceType())
+            {
+                throw new ArgumentException("Expected a reference type.", "type");
+            }
+            return type.GetGenericParameters().ElementAt(0);
+        }
+
         public static NIType CreateOption(this NIType valueType)
         {
             return SpecializeGenericType(OptionGenericType, valueType);
@@ -168,6 +177,23 @@ namespace Rebar.Common
                 return rebarType.GetGenericParameters().ElementAt(0);
             }
             throw new ArgumentException("Expected a LockingCell type.");
+        }
+
+        /// <summary>
+        /// If the given <see cref="type"/> is a LockingCell type, outputs the inner value type and returns true; otherwise, returns false.
+        /// </summary>
+        /// <param name="type">The <see cref="NIType"/> to try to destructure as an LockingCell type.</param>
+        /// <param name="valueType">The inner value type of the given type if it is an LockingCell.</param>
+        /// <returns>True if the given type was an LockingCell type; false otherwise.</returns>
+        public static bool TryDestructureLockingCellType(this NIType type, out NIType valueType)
+        {
+            if (!IsLockingCellType(type))
+            {
+                valueType = NIType.Unset;
+                return false;
+            }
+            valueType = type.GetGenericParameters().ElementAt(0);
+            return true;
         }
 
         public static NIType CreateIterator(this NIType itemType)

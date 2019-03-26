@@ -3,6 +3,7 @@ using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using Rebar.Common;
+using Rebar.Compiler;
 
 namespace Rebar.SourceModel
 {
@@ -64,18 +65,17 @@ namespace Rebar.SourceModel
                 XName.Get("WireVariable", Function.ParsableNamespaceName),
                 PropertySerializers.NullSerializer,
                 null,
-                typeof(Variable),
+                typeof(VariableReference),
                 PropertySymbolAttributes.DoNotPersist);
 
-        public static Variable GetWireVariable(this Wire wire)
+        public static VariableReference GetWireVariable(this Wire wire)
         {
             object value;
-            return wire.TryGetValue(WireVariablePropertySymbol, out value)
-                ? (Variable)value
-                : null;
+            wire.TryGetValue(WireVariablePropertySymbol, out value);
+            return value != null ? (VariableReference)value : new VariableReference();
         }
 
-        public static void SetWireVariable(this Wire wire, Variable variable)
+        public static void SetWireVariable(this Wire wire, VariableReference variable)
         {
             wire.TrySetValue(WireVariablePropertySymbol, variable);
         }

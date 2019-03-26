@@ -8,16 +8,19 @@ namespace Rebar.Compiler
 {
     internal struct VariableUsageValidator
     {
-        private readonly Variable _variable;
+        private readonly VariableReference _facadeVariable, _trueVariable;
         private readonly Terminal _terminal;
+        private readonly bool _terminalHasType;
 
-        public VariableUsageValidator(Variable variable, Terminal terminal, bool validateUsageWithinLifetime = true, bool validateTerminalConnected = true)
+        public VariableUsageValidator(Terminal terminal, bool validateUsageWithinLifetime = true, bool validateTerminalConnected = true)
         {
-            _variable = variable;
+            _facadeVariable = terminal.GetFacadeVariable();
+            _trueVariable = terminal.GetTrueVariable();
             _terminal = terminal;
+            _terminalHasType = true;
             if (validateTerminalConnected)
             {
-                _terminal.TestRequiredTerminalConnected();
+                _terminalHasType = _terminal.TestRequiredTerminalConnected();                
             }
             if (validateUsageWithinLifetime)
             {
@@ -28,9 +31,9 @@ namespace Rebar.Compiler
         private void TestUsageWithinLifetime()
         {
             // TODO: need a more generic check for whether a type has a lifetime
-            if (_variable != null && _variable.Type.IsRebarReferenceType())
+            if (_facadeVariable.Type.IsRebarReferenceType())
             {
-                Lifetime lifetime = _variable.Lifetime;
+                Lifetime lifetime = _facadeVariable.Lifetime;
                 bool isUsageWithinLifetime = lifetime.IsBounded || !lifetime.IsEmpty;
                 if (!isUsageWithinLifetime)
                 {
@@ -41,14 +44,13 @@ namespace Rebar.Compiler
 
         public bool TestVariableIsMutableType()
         {
-            if (_variable == null)
+            if (!_terminalHasType)
             {
                 return false;
             }
-            bool isMutable =  _variable.Type.IsRebarReferenceType()
-                ? _variable.Type.IsMutableReferenceType()
-                : _variable.Mutable;
-            // TODO: change to using _variable.Mutable || _variable.Type.IsMutableReference
+            bool isMutable = _facadeVariable.Type.IsRebarReferenceType()
+                ? _facadeVariable.Type.IsMutableReferenceType()
+                : _facadeVariable.Mutable;
             if (!isMutable)
             {
                 _terminal.ParentNode.SetDfirMessage(Messages.TerminalDoesNotAcceptImmutableType);
@@ -59,11 +61,11 @@ namespace Rebar.Compiler
 
         public bool TestVariableIsOwnedType()
         {
-            if (_variable == null)
+            if (!_terminalHasType)
             {
                 return false;
             }
-            if (_variable.Type.IsRebarReferenceType())
+            if (_trueVariable.Type.IsRebarReferenceType())
             {
                 _terminal.ParentNode.SetDfirMessage(Messages.TerminalDoesNotAcceptReference);
                 return false;
@@ -73,11 +75,11 @@ namespace Rebar.Compiler
 
         public bool TestExpectedUnderlyingType(NIType expectedType)
         {
-            if (_variable == null)
+            if (!_terminalHasType)
             {
                 return false;
             }
-            NIType underlyingType = _variable.Type.GetTypeOrReferentType();
+            NIType underlyingType = _facadeVariable.Type.GetTypeOrReferentType();
             if (underlyingType != expectedType)
             {
                 _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedType));
@@ -88,11 +90,11 @@ namespace Rebar.Compiler
 
         public bool TestUnderlyingType(Func<NIType, bool> underlyingTypePredicate, NIType expectedTypeExample)
         {
-            if (_variable == null)
+            if (!_terminalHasType)
             {
                 return false;
             }
-            NIType underlyingType = _variable.Type.GetTypeOrReferentType();
+            NIType underlyingType = _facadeVariable.Type.GetTypeOrReferentType();
             if (!underlyingTypePredicate(underlyingType))
             {
                 _terminal.SetDfirMessage(TerminalUserMessages.CreateTypeConflictMessage(underlyingType, expectedTypeExample));
@@ -103,11 +105,11 @@ namespace Rebar.Compiler
 
         public bool TestSameUnderlyingTypeAs(VariableUsageValidator other)
         {
-            if (other._variable == null)
+            if (!_terminalHasType)
             {
                 return false;
             }
-            NIType otherUnderlyingType = other._variable.Type.GetTypeOrReferentType();
+            NIType otherUnderlyingType = other._facadeVariable.Type.GetTypeOrReferentType();
             return TestExpectedUnderlyingType(otherUnderlyingType);
         }
     }
