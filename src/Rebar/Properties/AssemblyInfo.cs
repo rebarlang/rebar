@@ -37,3 +37,4 @@ using NationalInstruments.Composition;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: ParticipatesInComposition]
+[assembly: InternalsVisibleTo("Tests.Rebar")]
