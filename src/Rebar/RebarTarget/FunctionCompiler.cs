@@ -13,6 +13,129 @@ namespace Rebar.RebarTarget
 {
     internal class FunctionCompiler : VisitorTransformBase, IDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
     {
+        #region Functional Nodes
+
+        private static readonly Dictionary<string, Action<FunctionCompiler, FunctionalNode>> _functionalNodeCompilers;
+
+        static FunctionCompiler()
+        {
+            _functionalNodeCompilers = new Dictionary<string, Action<FunctionCompiler, FunctionalNode>>();
+            _functionalNodeCompilers["ImmutPass"] = CompileNothing;
+            _functionalNodeCompilers["MutPass"] = CompileNothing;
+            _functionalNodeCompilers["CreateCopy"] = CompileCreateCopy;
+            _functionalNodeCompilers["Output"] = CompileOutput;
+            _functionalNodeCompilers["VectorCreate"] = CompileNothing;
+            _functionalNodeCompilers["VectorInsert"] = CompileNothing;
+
+            _functionalNodeCompilers["Increment"] = (_, __) => CompilePureUnaryPrimitive(_, __, UnaryPrimitiveOps.Increment);
+            _functionalNodeCompilers["Not"] = (_, __) => CompilePureUnaryPrimitive(_, __, UnaryPrimitiveOps.Not);
+            _functionalNodeCompilers["Add"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Add);
+            _functionalNodeCompilers["Subtract"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Subtract);
+            _functionalNodeCompilers["Multiply"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Multiply);
+            _functionalNodeCompilers["Divide"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Divide);
+            _functionalNodeCompilers["And"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.And);
+            _functionalNodeCompilers["Or"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Or);
+            _functionalNodeCompilers["Xor"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Xor);
+
+            _functionalNodeCompilers["AccumulateAdd"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Add);
+            _functionalNodeCompilers["AccumulateSubtract"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Subtract);
+            _functionalNodeCompilers["AccumulateMultiply"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Multiply);
+            _functionalNodeCompilers["AccumulateDivide"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Divide);
+            _functionalNodeCompilers["AccumulateAnd"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.And);
+            _functionalNodeCompilers["AccumulateOr"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Or);
+            _functionalNodeCompilers["AccumulateXor"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Xor);
+        }
+
+        private static void CompileNothing(FunctionCompiler compiler, FunctionalNode noopNode)
+        {
+        }
+
+        private static void CompileCreateCopy(FunctionCompiler compiler, FunctionalNode createCopyNode)
+        {
+            VariableReference copyFrom = createCopyNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                copyTo = createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(copyTo);
+            // TODO: this should be a generic load/store
+            compiler.LoadValueAsReference(copyFrom);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileOutput(FunctionCompiler compiler, FunctionalNode outputNode)
+        {
+            VariableReference input = outputNode.InputTerminals.ElementAt(0).GetTrueVariable();
+            compiler.LoadValueAsReference(input);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitOutput_TEMP();
+        }
+
+        private static void CompilePureUnaryPrimitive(FunctionCompiler compiler, FunctionalNode primitiveNode, UnaryPrimitiveOps operation)
+        {
+            VariableReference input = primitiveNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                output = primitiveNode.OutputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(output);
+            compiler.EmitUnaryOperationOnVariable(input, operation);
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompilePureBinaryPrimitive(FunctionCompiler compiler, FunctionalNode primitiveNode, BinaryPrimitiveOps operation)
+        {
+            VariableReference input1 = primitiveNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                input2 = primitiveNode.InputTerminals.ElementAt(1).GetTrueVariable(),
+                output = primitiveNode.OutputTerminals.ElementAt(2).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(output);
+            compiler.LoadValueAsReference(input1);
+            compiler._builder.EmitDerefInteger();
+            compiler.LoadValueAsReference(input2);
+            compiler._builder.EmitDerefInteger();
+            compiler.EmitBinaryOperation(operation);
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileMutatingUnaryPrimitive(FunctionCompiler compiler, FunctionalNode primitiveNode, UnaryPrimitiveOps operation)
+        {
+            VariableReference input = primitiveNode.InputTerminals.ElementAt(0).GetTrueVariable();
+            compiler.LoadValueAsReference(input);
+            compiler.EmitUnaryOperationOnVariable(input, operation);
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileMutatingBinaryPrimitive(FunctionCompiler compiler, FunctionalNode primitiveNode, BinaryPrimitiveOps operation)
+        {
+            VariableReference input1 = primitiveNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                input2 = primitiveNode.InputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadValueAsReference(input1);
+            compiler._builder.EmitDuplicate();
+            compiler._builder.EmitDerefInteger();
+            compiler.LoadValueAsReference(input2);
+            compiler._builder.EmitDerefInteger();
+            compiler.EmitBinaryOperation(operation);
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileRange(FunctionCompiler compiler, FunctionalNode rangeNode)
+        {
+            VariableReference lowInput = rangeNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                highInput = rangeNode.InputTerminals.ElementAt(1).GetTrueVariable(),
+                output = rangeNode.OutputTerminals.ElementAt(0).GetTrueVariable();
+
+            compiler.LoadLocalAllocationReference(output);
+            compiler._builder.EmitDuplicate();
+            compiler.LoadLocalAllocationReference(lowInput);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitLoadIntegerImmediate(1);
+            compiler._builder.EmitSubtract();
+            compiler._builder.EmitStoreInteger();
+
+            compiler._builder.EmitLoadIntegerImmediate(4);
+            compiler._builder.EmitAdd();
+            compiler.LoadLocalAllocationReference(highInput);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
+        #endregion
+
         private readonly FunctionBuilder _builder;
         private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
 
@@ -152,18 +275,6 @@ namespace Rebar.RebarTarget
             throw new NotImplementedException();
         }
 
-        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
-        {
-            VariableReference copyFrom = createCopyNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                copyTo = createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable();
-            LoadLocalAllocationReference(copyTo);
-            // TODO: this should be a generic load/store
-            LoadValueAsReference(copyFrom);
-            _builder.EmitDerefInteger();
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             throw new NotImplementedException();
@@ -193,98 +304,21 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        public bool VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            return true;
+            Action<FunctionCompiler, FunctionalNode> compiler;
+            string functionName = functionalNode.Signature.GetName();
+            if (_functionalNodeCompilers.TryGetValue(functionName, out compiler))
+            {
+                compiler(this, functionalNode);
+                return true;
+            }
+            throw new NotImplementedException();
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             throw new NotImplementedException();
-        }
-
-        public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
-        {
-            return true;
-        }
-
-        public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            VariableReference input1 = mutatingBinaryPrimitive.InputTerminals.ElementAt(0).GetTrueVariable(),
-                input2 = mutatingBinaryPrimitive.InputTerminals.ElementAt(1).GetTrueVariable();
-            LoadValueAsReference(input1);
-            _builder.EmitDuplicate();
-            _builder.EmitDerefInteger();
-            LoadValueAsReference(input2);
-            _builder.EmitDerefInteger();
-            EmitBinaryOperation(mutatingBinaryPrimitive.Operation);
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
-        public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
-        {
-            VariableReference input = mutatingUnaryPrimitive.InputTerminals.ElementAt(0).GetTrueVariable();
-            LoadValueAsReference(input);
-            EmitUnaryOperationOnVariable(input, mutatingUnaryPrimitive.Operation);
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
-        public bool VisitOutputNode(OutputNode outputNode)
-        {
-            VariableReference input = outputNode.InputTerminals.ElementAt(0).GetTrueVariable();
-            LoadValueAsReference(input);
-            _builder.EmitDerefInteger();
-            _builder.EmitOutput_TEMP();
-            return true;
-        }
-
-        public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            VariableReference input1 = pureBinaryPrimitive.InputTerminals.ElementAt(0).GetTrueVariable(),
-                input2 = pureBinaryPrimitive.InputTerminals.ElementAt(1).GetTrueVariable(),
-                output = pureBinaryPrimitive.OutputTerminals.ElementAt(2).GetTrueVariable();
-            LoadLocalAllocationReference(output);
-            LoadValueAsReference(input1);
-            _builder.EmitDerefInteger();
-            LoadValueAsReference(input2);
-            _builder.EmitDerefInteger();
-            EmitBinaryOperation(pureBinaryPrimitive.Operation);
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
-        public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            VariableReference input = pureUnaryPrimitive.InputTerminals.ElementAt(0).GetTrueVariable(),
-                output = pureUnaryPrimitive.OutputTerminals.ElementAt(1).GetTrueVariable();
-            LoadLocalAllocationReference(output);
-            EmitUnaryOperationOnVariable(input, pureUnaryPrimitive.Operation);
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
-        public bool VisitRangeNode(RangeNode rangeNode)
-        {
-            VariableReference lowInput = rangeNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                highInput = rangeNode.InputTerminals.ElementAt(1).GetTrueVariable(),
-                output = rangeNode.OutputTerminals.ElementAt(0).GetTrueVariable();
-
-            LoadLocalAllocationReference(output);
-            _builder.EmitDuplicate();
-            LoadLocalAllocationReference(lowInput);
-            _builder.EmitDerefInteger();
-            _builder.EmitLoadIntegerImmediate(1);
-            _builder.EmitSubtract();
-            _builder.EmitStoreInteger();
-
-            _builder.EmitLoadIntegerImmediate(4);
-            _builder.EmitAdd();
-            LoadLocalAllocationReference(highInput);
-            _builder.EmitDerefInteger();
-            _builder.EmitStoreInteger();
-            return true;
         }
 
         public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
@@ -347,16 +381,6 @@ namespace Rebar.RebarTarget
         public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)
         {
             return true;
-        }
-        
-        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool VisitVectorInsertNode(VectorInsertNode vectorCreateNode)
-        {
-            throw new NotImplementedException();
         }
 
         private void CopyValue(NIType type)

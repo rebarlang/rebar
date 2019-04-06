@@ -112,14 +112,6 @@ namespace Rebar.Compiler
             return true;
         }
 
-        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
-        {
-            VariableReference inputVariable = createCopyNode.InputTerminals.ElementAt(0).GetTrueVariable();
-            VariableReference outputVariable = createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable();
-            outputVariable.SetTypeAndLifetime(inputVariable.Type.GetReferentType(), Lifetime.Unbounded);
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             return true;
@@ -139,7 +131,7 @@ namespace Rebar.Compiler
 
             Lifetime firstLifetime = inputVariables.First().Lifetime;
             Lifetime outputLifetime = explicitBorrowNode.AlwaysBeginLifetime 
-                || !(firstLifetime.IsBounded && inputVariables.All(inputVariable => inputVariable.Lifetime == firstLifetime))
+                || !((firstLifetime?.IsBounded ?? false) && inputVariables.All(inputVariable => inputVariable.Lifetime == firstLifetime))
                 ? explicitBorrowNode.ParentDiagram.GetVariableSet().DefineLifetimeThatIsBoundedByDiagram(inputVariables)
                 : firstLifetime;
 
@@ -163,8 +155,52 @@ namespace Rebar.Compiler
                 : outputUnderlyingType.CreateMutableReference();
         }
 
-        public bool VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
+            // type propagation: figure out substitutions for any type parameters based on inputs
+            var genericParameters = functionalNode.Signature.GetGenericParameters();
+            Dictionary<NIType, NIType> substitutions = new Dictionary<NIType, NIType>();
+            Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
+            foreach (var inputPair in functionalNode.InputTerminals.Zip(signature.Inputs))
+            {
+                Terminal input = inputPair.Key;
+                SignatureTerminal signatureInput = inputPair.Value;
+                if (signatureInput.SignatureType.IsImmutableReferenceType() || signatureInput.SignatureType.IsMutableReferenceType())
+                {
+                    NIType genericParameter = signatureInput.SignatureType.GetGenericParameters().ElementAt(0);
+                    if (genericParameter.IsGenericParameter())
+                    {
+                        NIType referentType = input.GetTrueVariable().Type.GetReferentType();
+                        substitutions[genericParameter] = referentType;
+                    }
+                }
+            }
+
+            // SetTypeAndLifetime for any output parameters based on type parameter substitutions
+            foreach (var outputPair in functionalNode.OutputTerminals.Zip(signature.Outputs))
+            {
+                SignatureTerminal signatureOutput = outputPair.Value;
+                if (signatureOutput.IsPassthrough)
+                {
+                    continue;
+                }
+                Terminal output = outputPair.Key;
+                NIType outputType = NIType.Unset;
+                if (signatureOutput.SignatureType.IsGenericParameter())
+                {
+                    substitutions.TryGetValue(signatureOutput.SignatureType, out outputType);
+                }
+                else
+                {
+                    outputType = signatureOutput.SignatureType;
+                }
+                if (!outputType.IsRebarReferenceType())
+                {
+                    output.GetTrueVariable().SetTypeAndLifetime(outputType, Lifetime.Unbounded);
+                    continue;
+                }
+                throw new System.NotImplementedException();
+            }
             return true;
         }
 
@@ -216,64 +252,6 @@ namespace Rebar.Compiler
 
             Lifetime outputLifetime = outputTerminal.GetVariableSet().DefineLifetimeThatOutlastsDiagram();
             outputTerminal.GetTrueVariable().SetTypeAndLifetime(outputType, outputLifetime);
-            return true;
-        }
-
-        public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
-        {
-            return true;
-        }
-
-        public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            return true;
-        }
-
-        public bool VisitOutputNode(OutputNode outputNode)
-        {
-            return true;
-        }
-
-        public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
-        {
-            return true;
-        }
-
-        public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            Terminal refInTerminal1 = pureBinaryPrimitive.Terminals.ElementAt(0),
-                refInTerminal2 = pureBinaryPrimitive.Terminals.ElementAt(1),
-                resultOutTerminal = pureBinaryPrimitive.Terminals.ElementAt(4);
-            NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();
-            NIType input1UnderlyingType = refInTerminal1.GetTrueVariable().Type.GetReferentType();
-            NIType input2UnderlyingType = refInTerminal2.GetTrueVariable().Type.GetReferentType();
-            NIType outputUnderlyingType = input1UnderlyingType == expectedInputUnderlyingType 
-                && input2UnderlyingType == expectedInputUnderlyingType
-                ? expectedInputUnderlyingType
-                : PFTypes.Void;
-            resultOutTerminal.GetTrueVariable().SetTypeAndLifetime(
-                outputUnderlyingType,
-                Lifetime.Unbounded);
-            return true;
-        }
-
-        public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            Terminal refInTerminal = pureUnaryPrimitive.Terminals.ElementAt(0),
-                resultOutTerminal = pureUnaryPrimitive.Terminals.ElementAt(2);
-            NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
-            NIType inputUnderlyingType = refInTerminal.GetTrueVariable().Type.GetReferentType();
-            NIType outputUnderlyingType = inputUnderlyingType == expectedInputUnderlyingType ? expectedInputUnderlyingType : PFTypes.Void;
-            resultOutTerminal.GetTrueVariable().SetTypeAndLifetime(
-                outputUnderlyingType,
-                Lifetime.Unbounded);
-            return true;
-        }
-
-        public bool VisitRangeNode(RangeNode rangeNode)
-        {
-            VariableReference outputVariable = rangeNode.Terminals.ElementAt(2).GetTrueVariable();
-            outputVariable.SetTypeAndLifetime(PFTypes.Int32.CreateIterator(), Lifetime.Unbounded);
             return true;
         }
 
@@ -431,18 +409,6 @@ namespace Rebar.Compiler
             outputVariable.SetTypeAndLifetime(
                 PFTypes.Void,
                 Lifetime.Unbounded);
-            return true;
-        }
-
-        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
-        {
-            VariableReference outputVariable = vectorCreateNode.Terminals.ElementAt(0).GetTrueVariable();
-            outputVariable.SetTypeAndLifetime(PFTypes.Int32.CreateVector(), Lifetime.Unbounded);
-            return true;
-        }
-
-        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
-        {
             return true;
         }
     }

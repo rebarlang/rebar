@@ -101,10 +101,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\BoundedLifetimeGraph.cs" />
-    <Compile Include="Common\CommonNodes.cs" />
     <Compile Include="Common\InputReferenceMutability.cs" />
-    <Compile Include="Common\NodeSignature.cs" />
     <Compile Include="Common\PrimitiveOps.cs" />
+    <Compile Include="Common\Signatures.cs" />
     <Compile Include="Common\VariableReference.cs" />
     <Compile Include="Common\VariableSet.cs" />
     <Compile Include="Compiler\AutoBorrowNodeFacade.cs" />
@@ -116,26 +115,18 @@
     <Compile Include="Compiler\Nodes\AssignNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\CreateCellNode.cs" />
-    <Compile Include="Compiler\Nodes\CreateCopyNode.cs" />
     <Compile Include="Compiler\Nodes\DropNode.cs" />
     <Compile Include="Compiler\Nodes\ExchangeValuesNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitUnborrowNode.cs" />
+    <Compile Include="Compiler\Nodes\FunctionalNode.cs" />
     <Compile Include="Compiler\Nodes\IBeginLifetimeTunnel.cs" />
     <Compile Include="Compiler\Nodes\IDfirStructureVisitor.cs" />
-    <Compile Include="Compiler\Nodes\ImmutablePassthroughNode.cs" />
     <Compile Include="Compiler\Nodes\IDfirNodeVisitor.cs" />
     <Compile Include="Compiler\Nodes\IterateTunnel.cs" />
     <Compile Include="Compiler\Nodes\LockTunnel.cs" />
     <Compile Include="Compiler\Nodes\Loop.cs" />
     <Compile Include="Compiler\Nodes\LoopConditionTunnel.cs" />
-    <Compile Include="Compiler\Nodes\MutablePassthroughNode.cs" />
-    <Compile Include="Compiler\Nodes\MutatingBinaryPrimitive.cs" />
-    <Compile Include="Compiler\Nodes\MutatingUnaryPrimitive.cs" />
-    <Compile Include="Compiler\Nodes\OutputNode.cs" />
-    <Compile Include="Compiler\Nodes\PureBinaryPrimitive.cs" />
-    <Compile Include="Compiler\Nodes\PureUnaryPrimitive.cs" />
-    <Compile Include="Compiler\Nodes\RangeNode.cs" />
     <Compile Include="Compiler\Nodes\BorderNode.cs" />
     <Compile Include="Compiler\Nodes\DfirNode.cs" />
     <Compile Include="Compiler\Nodes\SelectReferenceNode.cs" />
@@ -147,11 +138,8 @@
     <Compile Include="Compiler\IPassthroughTerminalsNode.cs" />
     <Compile Include="Compiler\IFunctionVisitor.cs" />
     <Compile Include="Compiler\Nodes\UnwrapOptionTunnel.cs" />
-    <Compile Include="Compiler\Nodes\VectorCreateNode.cs" />
-    <Compile Include="Compiler\Nodes\VectorInsertNode.cs" />
     <Compile Include="Compiler\ReferenceInputTerminalLifetimeGroup.cs" />
     <Compile Include="Compiler\ReflectVariablesToTerminalsTransform.cs" />
-    <Compile Include="Compiler\LifetimeExtensions.cs" />
     <Compile Include="Compiler\Messages.cs" />
     <Compile Include="Compiler\FunctionDfirBuilder.cs" />
     <Compile Include="Compiler\FunctionMocPlugin.cs" />
@@ -241,13 +229,13 @@
     <Compile Include="SourceModel\AssignNode.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\CreateCell.cs" />
-    <Compile Include="SourceModel\CreateCopyNode.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\ExchangeValues.cs" />
+    <Compile Include="SourceModel\FunctionalNode.cs" />
+    <Compile Include="SourceModel\Functions.cs" />
     <Compile Include="SourceModel\IBeginLifetimeTunnel.cs" />
     <Compile Include="SourceModel\IBorrowTunnel.cs" />
     <Compile Include="SourceModel\ImmutableBorrowNode.cs" />
-    <Compile Include="SourceModel\ImmutablePassthroughNode.cs" />
     <Compile Include="SourceModel\ITerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LockTunnel.cs" />
     <Compile Include="SourceModel\Loop.cs" />
@@ -257,11 +245,7 @@
     <Compile Include="SourceModel\LoopIterateTunnel.cs" />
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
-    <Compile Include="SourceModel\MutablePassthroughNode.cs" />
-    <Compile Include="SourceModel\Output.cs" />
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
-    <Compile Include="SourceModel\Primitives.cs" />
-    <Compile Include="SourceModel\Range.cs" />
     <Compile Include="SourceModel\Function.cs" />
     <Compile Include="SourceModel\NamespaceSchema.cs" />
     <Compile Include="SourceModel\RootDiagram.cs" />
@@ -274,8 +258,6 @@
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
-    <Compile Include="SourceModel\VectorCreate.cs" />
-    <Compile Include="SourceModel\VectorInsert.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -389,25 +389,18 @@ namespace Rebar.Compiler
             throw new NotImplementedException();
         }
 
+        public void VisitFunctionalNode(SourceModel.FunctionalNode functionalNode)
+        {
+            var functionalNodeDfir = new Nodes.FunctionalNode(_currentDiagram, functionalNode.Signature, functionalNode.RequiredFeatureToggles);
+            _map.AddMapping(functionalNode, functionalNodeDfir);
+            MapTerminalsInOrder(functionalNode, functionalNodeDfir);
+        }
+
         public void VisitDropNode(SourceModel.DropNode dropNode)
         {
             var dropDfir = new Nodes.DropNode(_currentDiagram);
             _map.AddMapping(dropNode, dropDfir);
             MapTerminalsInOrder(dropNode, dropDfir);
-        }
-
-        public void VisitImmutablePassthroughNode(SourceModel.ImmutablePassthroughNode immutablePassthroughNode)
-        {
-            var immutablePassthroughDfir = new Nodes.ImmutablePassthroughNode(_currentDiagram);
-            _map.AddMapping(immutablePassthroughNode, immutablePassthroughDfir);
-            MapTerminalsInOrder(immutablePassthroughNode, immutablePassthroughDfir);
-        }
-
-        public void VisitMutablePassthroughNode(SourceModel.MutablePassthroughNode mutablePassthroughNode)
-        {
-            var mutablePassthroughDfir = new Nodes.MutablePassthroughNode(_currentDiagram);
-            _map.AddMapping(mutablePassthroughNode, mutablePassthroughDfir);
-            MapTerminalsInOrder(mutablePassthroughNode, mutablePassthroughDfir);
         }
 
         public void VisitTerminateLifetimeNode(TerminateLifetime node)
@@ -422,13 +415,6 @@ namespace Rebar.Compiler
             var selectReferenceDfir = new Nodes.SelectReferenceNode(_currentDiagram);
             _map.AddMapping(selectReferenceNode, selectReferenceDfir);
             MapTerminalsInOrder(selectReferenceNode, selectReferenceDfir);
-        }
-
-        public void VisitCreateCopyNode(SourceModel.CreateCopyNode createCopyNode)
-        {
-            var createCopyDfir = new Nodes.CreateCopyNode(_currentDiagram);
-            _map.AddMapping(createCopyNode, createCopyDfir);
-            MapTerminalsInOrder(createCopyNode, createCopyDfir);
         }
 
         public void VisitAssignNode(SourceModel.AssignNode assignNode)
@@ -452,34 +438,6 @@ namespace Rebar.Compiler
             MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
         }
 
-        public void VisitPureUnaryPrimitive(SourceModel.PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            var pureUnaryPrimitiveDfir = new Nodes.PureUnaryPrimitive(_currentDiagram, pureUnaryPrimitive.Operation);
-            _map.AddMapping(pureUnaryPrimitive, pureUnaryPrimitiveDfir);
-            MapTerminalsInOrder(pureUnaryPrimitive, pureUnaryPrimitiveDfir);
-        }
-
-        public void VisitPureBinaryPrimitive(SourceModel.PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            var pureBinaryPrimitiveDfir = new Nodes.PureBinaryPrimitive(_currentDiagram, pureBinaryPrimitive.Operation);
-            _map.AddMapping(pureBinaryPrimitive, pureBinaryPrimitiveDfir);
-            MapTerminalsInOrder(pureBinaryPrimitive, pureBinaryPrimitiveDfir);
-        }
-
-        public void VisitMutatingUnaryPrimitive(SourceModel.MutatingUnaryPrimitive node)
-        {
-            var mutatingUnaryPrimitiveDfir = new Nodes.MutatingUnaryPrimitive(_currentDiagram, node.Operation);
-            _map.AddMapping(node, mutatingUnaryPrimitiveDfir);
-            MapTerminalsInOrder(node, mutatingUnaryPrimitiveDfir);
-        }
-
-        public void VisitMutatingBinaryPrimitive(SourceModel.MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            var mutatingBinaryPrimitiveDfir = new Nodes.MutatingBinaryPrimitive(_currentDiagram, mutatingBinaryPrimitive.Operation);
-            _map.AddMapping(mutatingBinaryPrimitive, mutatingBinaryPrimitiveDfir);
-            MapTerminalsInOrder(mutatingBinaryPrimitive, mutatingBinaryPrimitiveDfir);
-        }
-
         public void VisitCreateCellNode(CreateCell createCell)
         {
             var createCellDfir = new CreateCellNode(_currentDiagram);
@@ -491,34 +449,6 @@ namespace Rebar.Compiler
         {
             var someConstructorNodeDfir = new Nodes.SomeConstructorNode(_currentDiagram);
             MapTerminalsInOrder(someConstructorNode, someConstructorNodeDfir);
-        }
-
-        public void VisitRange(Range range)
-        {
-            var rangeDfir = new Nodes.RangeNode(_currentDiagram);
-            _map.AddMapping(range, rangeDfir);
-            MapTerminalsInOrder(range, rangeDfir);
-        }
-
-        public void VisitOutput(Output output)
-        {
-            var outputDfir = new OutputNode(_currentDiagram);
-            _map.AddMapping(output, outputDfir);
-            MapTerminalsInOrder(output, outputDfir);
-        }
-
-        public void VisitVectorCreate(VectorCreate vectorCreate)
-        {
-            var vectorCreateDfir = new VectorCreateNode(_currentDiagram);
-            _map.AddMapping(vectorCreate, vectorCreateDfir);
-            MapTerminalsInOrder(vectorCreate, vectorCreateDfir);
-        }
-
-        public void VisitVectorInsert(VectorInsert vectorInsert)
-        {
-            var vectorInsertDfir = new VectorInsertNode(_currentDiagram);
-            _map.AddMapping(vectorInsert, vectorInsertDfir);
-            MapTerminalsInOrder(vectorInsert, vectorInsertDfir);
         }
 
         public void VisitFunction(Function function)

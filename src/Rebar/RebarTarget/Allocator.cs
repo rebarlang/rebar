@@ -148,12 +148,6 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
-        {
-            CreateLocalAllocationForVariable(createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable());
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             return true;
@@ -178,8 +172,18 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        public bool VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
+            Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
+            foreach (var terminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs))
+            {
+                SignatureTerminal signatureTerminal = terminalPair.Value;
+                if (signatureTerminal.IsPassthrough)
+                {
+                    continue;
+                }
+                CreateLocalAllocationForVariable(terminalPair.Key.GetTrueVariable());
+            }
             return true;
         }
 
@@ -210,44 +214,6 @@ namespace Rebar.RebarTarget
                 loopConditionAllocation = (LocalAllocationValueSource)_variableAllocations[inputVariable];
             }
             CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
-            return true;
-        }
-
-        public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
-        {
-            return true;
-        }
-
-        public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            return true;
-        }
-
-        public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
-        {
-            return true;
-        }
-
-        public bool VisitOutputNode(OutputNode outputNode)
-        {
-            return true;
-        }
-
-        public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            CreateLocalAllocationForVariable(pureBinaryPrimitive.OutputTerminals.ElementAt(2).GetTrueVariable());
-            return true;
-        }
-
-        public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            CreateLocalAllocationForVariable(pureUnaryPrimitive.OutputTerminals.ElementAt(1).GetTrueVariable());
-            return true;
-        }
-
-        public bool VisitRangeNode(RangeNode rangeNode)
-        {
-            CreateLocalAllocationForVariable(rangeNode.OutputTerminals.ElementAt(0).GetTrueVariable());
             return true;
         }
 
@@ -286,17 +252,6 @@ namespace Rebar.RebarTarget
             // TODO: it would be nice to allow the output value source to reference an offset from the input value source,
             // rather than needing a separate allocation.
             CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
-            return true;
-        }
-
-        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
-        {
-            CreateLocalAllocationForVariable(vectorCreateNode.OutputTerminals.ElementAt(0).GetTrueVariable());
-            return true;
-        }
-
-        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
-        {
             return true;
         }
 

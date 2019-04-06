@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -70,16 +71,6 @@ namespace Rebar.Compiler
             return true;
         }
 
-        bool IDfirNodeVisitor<bool>.VisitCreateCopyNode(CreateCopyNode createCopyNode)
-        {
-            Terminal originalInput = createCopyNode.InputTerminals.ElementAt(0),
-                originalOutput = createCopyNode.OutputTerminals.ElementAt(0),
-                copyOutput = createCopyNode.OutputTerminals.ElementAt(1);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(originalInput, originalOutput);
-            _nodeFacade[copyOutput] = new SimpleTerminalFacade(copyOutput);
-            return true;
-        }
-
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             Terminal valueInput = dropNode.InputTerminals.ElementAt(0);
@@ -108,80 +99,57 @@ namespace Rebar.Compiler
             return true;
         }
 
-        bool IDfirNodeVisitor<bool>.VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        bool IDfirNodeVisitor<bool>.VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            Terminal inputTerminal = immutablePassthroughNode.InputTerminals.ElementAt(0),
-                outputTerminal = immutablePassthroughNode.OutputTerminals.ElementAt(0);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(inputTerminal, outputTerminal);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
-        {
-            Terminal inputTerminal = mutablePassthroughNode.InputTerminals.ElementAt(0),
-                outputTerminal = mutablePassthroughNode.OutputTerminals.ElementAt(0);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable).AddTerminalFacade(inputTerminal, outputTerminal);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            Terminal accumulateInputTerminal = mutatingBinaryPrimitive.InputTerminals.ElementAt(0),
-                operandInputTerminal = mutatingBinaryPrimitive.InputTerminals.ElementAt(1),
-                accumulateOutputTerminal = mutatingBinaryPrimitive.OutputTerminals.ElementAt(0),
-                operandOutputTerminal = mutatingBinaryPrimitive.OutputTerminals.ElementAt(1);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable).AddTerminalFacade(accumulateInputTerminal, accumulateOutputTerminal);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(operandInputTerminal, operandOutputTerminal);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
-        {
-            Terminal inputTerminal = mutatingUnaryPrimitive.InputTerminals.ElementAt(0),
-                outputTerminal = mutatingUnaryPrimitive.OutputTerminals.ElementAt(0);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable).AddTerminalFacade(inputTerminal, outputTerminal);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitOutputNode(OutputNode outputNode)
-        {
-            Terminal inputTerminal = outputNode.InputTerminals.ElementAt(0),
-                outputTerminal = outputNode.OutputTerminals.ElementAt(0);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(inputTerminal, outputTerminal);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            Terminal operand1Input = pureBinaryPrimitive.InputTerminals.ElementAt(0),
-                operand2Input = pureBinaryPrimitive.InputTerminals.ElementAt(1),
-                operand1Output = pureBinaryPrimitive.OutputTerminals.ElementAt(0),
-                operand2Output = pureBinaryPrimitive.OutputTerminals.ElementAt(1),
-                resultOutput = pureBinaryPrimitive.OutputTerminals.ElementAt(2);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(operand1Input, operand1Output);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(operand2Input, operand2Output);
-            _nodeFacade[resultOutput] = new SimpleTerminalFacade(resultOutput);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            Terminal originalInput = pureUnaryPrimitive.InputTerminals.ElementAt(0),
-                originalOutput = pureUnaryPrimitive.OutputTerminals.ElementAt(0),
-                resultOutput = pureUnaryPrimitive.OutputTerminals.ElementAt(1);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(originalInput, originalOutput);
-            _nodeFacade[resultOutput] = new SimpleTerminalFacade(resultOutput);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitRangeNode(RangeNode rangeNode)
-        {
-            Terminal lowInput = rangeNode.InputTerminals.ElementAt(0),
-                highInput = rangeNode.InputTerminals.ElementAt(1),
-                rangeOutput = rangeNode.OutputTerminals.ElementAt(0);
-            _nodeFacade[lowInput] = new SimpleTerminalFacade(lowInput);
-            _nodeFacade[highInput] = new SimpleTerminalFacade(highInput);
-            _nodeFacade[rangeOutput] = new SimpleTerminalFacade(rangeOutput);
+            int inputIndex = 0, outputIndex = 0;
+            foreach (NIType parameter in functionalNode.Signature.GetParameters())
+            {
+                NIType parameterDataType = parameter.GetDataType();
+                bool isInput = parameter.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
+                    isOutput = parameter.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
+                Terminal inputTerminal = null, outputTerminal = null;
+                if (isInput)
+                {
+                    inputTerminal = functionalNode.InputTerminals[inputIndex];
+                    ++inputIndex;
+                }
+                if (isOutput)
+                {
+                    outputTerminal = functionalNode.OutputTerminals[outputIndex];
+                    ++outputIndex;
+                }
+                if (isInput && isOutput)
+                {
+                    if (parameterDataType.IsImmutableReferenceType())
+                    {
+                        // TODO: sharing lifetime groups
+                        _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable)
+                            .AddTerminalFacade(inputTerminal, outputTerminal);
+                    }
+                    else if (parameterDataType.IsMutableReferenceType())
+                    {
+                        // TODO: sharing lifetime groups
+                        _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable)
+                            .AddTerminalFacade(inputTerminal, outputTerminal);
+                    }
+                    else
+                    {
+                        throw new System.NotSupportedException("Inout parameters must be reference types.");
+                    }
+                }
+                else if (isOutput)
+                {
+                    _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal);
+                }
+                else if (isInput)
+                {
+                    _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal);
+                }
+                else
+                {
+                    throw new System.NotSupportedException("Parameter is neither input nor output");
+                }
+            }
             return true;
         }
 
@@ -216,26 +184,6 @@ namespace Rebar.Compiler
                 // TODO: when updating terminals during SA, also update the TerminalFacades
                 _nodeFacade[terminal] = new SimpleTerminalFacade(terminal);
             }
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
-        {
-            Terminal vectorOutput = vectorCreateNode.OutputTerminals.ElementAt(0);
-            _nodeFacade[vectorOutput] = new SimpleTerminalFacade(vectorOutput);
-            return true;
-        }
-
-        bool IDfirNodeVisitor<bool>.VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
-        {
-            Terminal vectorInput = vectorInsertNode.InputTerminals.ElementAt(0),
-                indexInput = vectorInsertNode.InputTerminals.ElementAt(1),
-                elementInput = vectorInsertNode.InputTerminals.ElementAt(2),
-                vectorOutput = vectorInsertNode.OutputTerminals.ElementAt(0),
-                indexOutput = vectorInsertNode.OutputTerminals.ElementAt(1);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable).AddTerminalFacade(vectorInput, vectorOutput);
-            _nodeFacade.CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable).AddTerminalFacade(indexInput, indexOutput);
-            _nodeFacade[elementInput] = new SimpleTerminalFacade(elementInput);
             return true;
         }
 

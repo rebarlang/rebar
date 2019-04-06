@@ -9,29 +9,19 @@ namespace Rebar.Compiler.Nodes
         T VisitBorrowTunnel(BorrowTunnel borrowTunnel);
         T VisitConstant(Constant constant);
         T VisitCreateCellNode(CreateCellNode createCellNode);
-        T VisitCreateCopyNode(CreateCopyNode createCopyNode);
         T VisitDropNode(DropNode dropNode);
         T VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode);
         T VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode);
-        T VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode);
+        T VisitFunctionalNode(FunctionalNode functionalNode);
         T VisitIterateTunnel(IterateTunnel iterateTunnel);
         T VisitLockTunnel(LockTunnel lockTunnel);
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
-        T VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode);
-        T VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive);
-        T VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive);
-        T VisitOutputNode(OutputNode outputNode);
-        T VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive);
-        T VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive);
-        T VisitRangeNode(RangeNode rangeNode);
         T VisitSomeConstructorNode(SomeConstructorNode someConstructorNode);
         T VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);
         T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
-        T VisitVectorCreateNode(VectorCreateNode vectorCreateNode);
-        T VisitVectorInsertNode(VectorInsertNode vectorInsertNode);
     }
 
     internal static class DfirNodeVisitorExtensions

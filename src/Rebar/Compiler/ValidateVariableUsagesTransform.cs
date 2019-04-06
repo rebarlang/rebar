@@ -3,6 +3,7 @@ using NationalInstruments;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.FeatureToggles;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -99,13 +100,6 @@ namespace Rebar.Compiler
             return true;
         }
 
-        public bool VisitCreateCopyNode(CreateCopyNode createCopyNode)
-        {
-            VariableUsageValidator validator = createCopyNode.InputTerminals.ElementAt(0).GetValidator();
-            // TODO: check that the underlying type can be copied
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableUsageValidator validator = dropNode.Terminals[0].GetValidator();
@@ -132,9 +126,36 @@ namespace Rebar.Compiler
             return true;
         }
 
-        public bool VisitImmutablePassthroughNode(ImmutablePassthroughNode immutablePassthroughNode)
+        public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            VariableUsageValidator validator = immutablePassthroughNode.InputTerminals.ElementAt(0).GetValidator();
+            foreach (var inputTerminalPair in functionalNode.InputTerminals.Zip(Signatures.GetSignatureForNIType(functionalNode.Signature).Inputs))
+            {
+                Terminal inputTerminal = inputTerminalPair.Key;
+                SignatureTerminal signatureInputTerminal = inputTerminalPair.Value;
+                VariableUsageValidator validator = inputTerminal.GetValidator();
+                if (signatureInputTerminal.DisplayType.IsMutableReferenceType())
+                {
+                    validator.TestVariableIsMutableType();
+                }
+                if (!signatureInputTerminal.SignatureType.IsGenericParameter())
+                {
+                    NIType underlyingType = signatureInputTerminal.SignatureType;
+                    if (signatureInputTerminal.SignatureType.IsRebarReferenceType())
+                    {
+                        underlyingType = underlyingType.GetReferentType();
+                    }
+                    else
+                    {
+                        validator.TestVariableIsOwnedType();
+                    }
+                    validator.TestExpectedUnderlyingType(underlyingType);
+                }
+            }
+
+            if (functionalNode.RequiredFeatureToggles.Any(feature => !FeatureToggleSupport.IsFeatureEnabled(feature)))
+            {
+                functionalNode.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
             return true;
         }
 
@@ -167,74 +188,6 @@ namespace Rebar.Compiler
             var validator = new VariableUsageValidator(inputTerminal, true, false);
             validator.TestVariableIsOwnedType();
             validator.TestExpectedUnderlyingType(PFTypes.Boolean);
-            return true;
-        }
-
-        public bool VisitMutablePassthroughNode(MutablePassthroughNode mutablePassthroughNode)
-        {
-            VariableUsageValidator validator = mutablePassthroughNode.Terminals[0].GetValidator();
-            validator.TestVariableIsMutableType();
-            return true;
-        }
-
-        public bool VisitMutatingBinaryPrimitive(MutatingBinaryPrimitive mutatingBinaryPrimitive)
-        {
-            NIType expectedInputUnderlyingType = mutatingBinaryPrimitive.Operation.GetExpectedInputType();
-            VariableUsageValidator validator1 = mutatingBinaryPrimitive.Terminals[0].GetValidator();
-            validator1.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            validator1.TestVariableIsMutableType();
-            VariableUsageValidator validator2 = mutatingBinaryPrimitive.Terminals[1].GetValidator();
-            validator2.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            return true;
-        }
-
-        public bool VisitMutatingUnaryPrimitive(MutatingUnaryPrimitive mutatingUnaryPrimitive)
-        {
-            NIType expectedInputUnderlyingType = mutatingUnaryPrimitive.Operation.GetExpectedInputType();
-            VariableUsageValidator validator = mutatingUnaryPrimitive.Terminals[0].GetValidator();
-            validator.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            validator.TestVariableIsMutableType();
-            return true;
-        }
-
-        public bool VisitOutputNode(OutputNode outputNode)
-        {
-            VariableUsageValidator validator = outputNode.Terminals[0].GetValidator();
-            // For now, only outputing i32 is supported
-            validator.TestExpectedUnderlyingType(PFTypes.Int32);
-            if (!RebarFeatureToggles.IsOutputNodeEnabled)
-            {
-                outputNode.SetDfirMessage(Messages.FeatureNotEnabled);
-            }
-            return true;
-        }
-
-        public bool VisitPureBinaryPrimitive(PureBinaryPrimitive pureBinaryPrimitive)
-        {
-            NIType expectedInputUnderlyingType = pureBinaryPrimitive.Operation.GetExpectedInputType();
-            VariableUsageValidator validator1 = pureBinaryPrimitive.Terminals[0].GetValidator();
-            validator1.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            VariableUsageValidator validator2 = pureBinaryPrimitive.Terminals[1].GetValidator();
-            validator2.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            return true;
-        }
-
-        public bool VisitPureUnaryPrimitive(PureUnaryPrimitive pureUnaryPrimitive)
-        {
-            NIType expectedInputUnderlyingType = pureUnaryPrimitive.Operation.GetExpectedInputType();
-            VariableUsageValidator validator = pureUnaryPrimitive.Terminals[0].GetValidator();
-            validator.TestExpectedUnderlyingType(expectedInputUnderlyingType);
-            return true;
-        }
-
-        public bool VisitRangeNode(RangeNode rangeNode)
-        {
-            VariableUsageValidator validator = rangeNode.Terminals[0].GetValidator();
-            validator.TestExpectedUnderlyingType(PFTypes.Int32);
-            validator.TestVariableIsOwnedType();
-            validator = rangeNode.Terminals[1].GetValidator();
-            validator.TestExpectedUnderlyingType(PFTypes.Int32);
-            validator.TestVariableIsOwnedType();
             return true;
         }
 
@@ -297,42 +250,6 @@ namespace Rebar.Compiler
             VariableUsageValidator validator = unwrapOptionTunnel.GetOuterTerminal(0).GetValidator();
             validator.TestVariableIsOwnedType();
             validator.TestUnderlyingType(t => t.IsOptionType(), PFTypes.Void.CreateOption());
-            return true;
-        }
-
-        public bool VisitVectorCreateNode(VectorCreateNode vectorCreateNode)
-        {
-            if (!RebarFeatureToggles.IsVectorAndSliceTypesEnabled)
-            {
-                vectorCreateNode.SetDfirMessage(Messages.FeatureNotEnabled);
-            }
-            return true;
-        }
-
-        public bool VisitVectorInsertNode(VectorInsertNode vectorInsertNode)
-        {
-            if (!RebarFeatureToggles.IsVectorAndSliceTypesEnabled)
-            {
-                vectorInsertNode.SetDfirMessage(Messages.FeatureNotEnabled);
-            }
-            else
-            {
-                Terminal vectorInputTerminal = vectorInsertNode.InputTerminals[0];
-                VariableUsageValidator validator = vectorInputTerminal.GetValidator();
-                validator.TestVariableIsMutableType();
-                validator.TestUnderlyingType(t => t.IsVectorType(), PFTypes.Void.CreateVector());
-
-                validator = vectorInsertNode.InputTerminals[1].GetValidator();
-                validator.TestExpectedUnderlyingType(PFTypes.Int32);
-                
-                NIType elementType;
-                validator = vectorInsertNode.InputTerminals[2].GetValidator();
-                validator.TestVariableIsOwnedType(); // hmm
-                if (vectorInputTerminal.GetTrueVariable().Type.TryDestructureVectorType(out elementType))
-                {
-                    validator.TestExpectedUnderlyingType(elementType);
-                }
-            }
             return true;
         }
     }

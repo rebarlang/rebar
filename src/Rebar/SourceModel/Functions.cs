@@ -1,165 +1,116 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
 using System.Xml.Linq;
-using NationalInstruments.Core;
-using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
-using Rebar.Compiler;
 using Rebar.Common;
 
 namespace Rebar.SourceModel
 {
-    public abstract class PureBinaryPrimitive : SimpleNode
+    #region Value manipulation
+
+    public class CreateCopyNode : FunctionalNode
     {
-        protected PureBinaryPrimitive(BinaryPrimitiveOps binaryOp)
+        private const string ElementName = "CreateCopyNode";
+
+        protected CreateCopyNode()
+            : base(Signatures.CreateCopyType)
         {
-            Operation = binaryOp;
-            NIType inputType = binaryOp.GetExpectedInputType();
-            NIType inputReferenceType = inputType.CreateImmutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "y in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "y out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputType, "result"));
         }
 
-        protected override void SetIconViewGeometry()
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static CreateCopyNode CreateCreateCopyNode(IElementCreateInfo elementCreateInfo)
         {
-            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 6);
-            var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
-            terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
-            terminals[1].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 3);
-            terminals[2].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);
-            terminals[3].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 3);
-            terminals[4].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 5);
+            var createCopyNode = new CreateCopyNode();
+            createCopyNode.Init(elementCreateInfo);
+            return createCopyNode;
         }
 
-        public override void AcceptVisitor(IElementVisitor visitor)
-        {
-            var functionVisitor = visitor as IFunctionVisitor;
-            if (functionVisitor != null)
-            {
-                functionVisitor.VisitPureBinaryPrimitive(this);
-            }
-            else
-            {
-                base.AcceptVisitor(visitor);
-            }
-        }
-
-        public BinaryPrimitiveOps Operation { get; }
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public abstract class PureUnaryPrimitive : SimpleNode
+    /// <summary>
+    /// Testing node that prints a value to the debug output window.
+    /// </summary>
+    public class Output : FunctionalNode
+    {
+        private const string ElementName = "Output";
+
+        protected Output()
+            : base(Signatures.OutputType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Output CreateOutput(IElementCreateInfo elementCreateInfo)
+        {
+            var outputNode = new Output();
+            outputNode.Init(elementCreateInfo);
+            return outputNode;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.OutputNode };
+    }
+
+    #endregion
+
+    #region Primitives
+
+    public abstract class PureUnaryPrimitive : FunctionalNode
     {
         protected PureUnaryPrimitive(UnaryPrimitiveOps unaryOp)
+            : base(Signatures.DefinePureUnaryFunction(unaryOp.ToString(), unaryOp.GetExpectedInputType(), unaryOp.GetExpectedInputType()))
         {
-            Operation = unaryOp;
-            NIType inputType = unaryOp.GetExpectedInputType();
-            NIType inputReferenceType = inputType.CreateImmutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputType, "result"));
         }
-
-        protected override void SetIconViewGeometry()
-        {
-            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
-            var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
-            terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
-            terminals[1].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);
-            terminals[2].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 3);
-        }
-
-        public override void AcceptVisitor(IElementVisitor visitor)
-        {
-            var functionVisitor = visitor as IFunctionVisitor;
-            if (functionVisitor != null)
-            {
-                functionVisitor.VisitPureUnaryPrimitive(this);
-            }
-            else
-            {
-                base.AcceptVisitor(visitor);
-            }
-        }
-
-        public UnaryPrimitiveOps Operation { get; }
     }
 
-    public abstract class MutatingBinaryPrimitive : SimpleNode
+    public class Increment : PureUnaryPrimitive
     {
-        protected MutatingBinaryPrimitive(BinaryPrimitiveOps binaryOp)
+        public Increment() : base(UnaryPrimitiveOps.Increment) { }
+
+        private const string ElementName = "Increment";
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Increment CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
-            Operation = binaryOp;
-            NIType inputType = binaryOp.GetExpectedInputType();
-            NIType inputMutableReferenceType = inputType.CreateMutableReference();
-            NIType inputImmutableReferenceType = inputType.CreateImmutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputMutableReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, inputImmutableReferenceType, "y in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputMutableReferenceType, "x out"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, inputImmutableReferenceType, "y out"));
+            var increment = new Increment();
+            increment.Init(elementCreateInfo);
+            return increment;
         }
 
-        protected override void SetIconViewGeometry()
-        {
-            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
-            var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
-            terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
-            terminals[1].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 3);
-            terminals[2].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);
-            terminals[3].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 3);
-        }
-
-        public override void AcceptVisitor(IElementVisitor visitor)
-        {
-            var functionVisitor = visitor as IFunctionVisitor;
-            if (functionVisitor != null)
-            {
-                functionVisitor.VisitMutatingBinaryPrimitive(this);
-            }
-            else
-            {
-                base.AcceptVisitor(visitor);
-            }
-        }
-
-        public BinaryPrimitiveOps Operation { get; }
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public abstract class MutatingUnaryPrimitive : SimpleNode
+    public class Not : PureUnaryPrimitive
     {
-        protected MutatingUnaryPrimitive(UnaryPrimitiveOps unaryOp)
+        public Not() : base(UnaryPrimitiveOps.Not) { }
+
+        private const string ElementName = "Not";
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Not CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
-            Operation = unaryOp;
-            NIType inputType = unaryOp.GetExpectedInputType();
-            NIType intMutableReferenceType = inputType.CreateMutableReference();
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, intMutableReferenceType, "x in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, intMutableReferenceType, "x out"));
+            var not = new Not();
+            not.Init(elementCreateInfo);
+            return not;
         }
 
-        protected override void SetIconViewGeometry()
-        {
-            Bounds = new SMRect(Left, Top, StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
-            var terminals = FixedTerminals.OfType<NodeTerminal>().ToArray();
-            terminals[0].Hotspot = new SMPoint(0, StockDiagramGeometries.GridSize * 1);
-            terminals[1].Hotspot = new SMPoint(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 1);
-        }
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
 
-        public override void AcceptVisitor(IElementVisitor visitor)
+    public abstract class PureBinaryPrimitive : FunctionalNode
+    {
+        protected PureBinaryPrimitive(BinaryPrimitiveOps binaryOp)
+            : base(Signatures.DefinePureBinaryFunction(binaryOp.ToString(), binaryOp.GetExpectedInputType(), binaryOp.GetExpectedInputType()))
         {
-            var functionVisitor = visitor as IFunctionVisitor;
-            if (functionVisitor != null)
-            {
-                functionVisitor.VisitMutatingUnaryPrimitive(this);
-            }
-            else
-            {
-                base.AcceptVisitor(visitor);
-            }
         }
-
-        public UnaryPrimitiveOps Operation { get; }
     }
 
     public class Add : PureBinaryPrimitive
@@ -281,38 +232,54 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public class Increment : PureUnaryPrimitive
+    public abstract class MutatingUnaryPrimitive : FunctionalNode
     {
-        public Increment() : base(UnaryPrimitiveOps.Increment) { }
+        protected MutatingUnaryPrimitive(UnaryPrimitiveOps unaryOp)
+            : base(Signatures.DefineMutatingUnaryFunction("Accumulate" + unaryOp.ToString(), unaryOp.GetExpectedInputType()))
+        {
+        }
+    }
 
-        private const string ElementName = "Increment";
+    public class AccumulateIncrement : MutatingUnaryPrimitive
+    {
+        public AccumulateIncrement() : base(UnaryPrimitiveOps.Increment) { }
+
+        private const string ElementName = "AccumulateIncrement";
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static Increment CreateIncrement(IElementCreateInfo elementCreateInfo)
+        public static AccumulateIncrement CreateAccumulateIncrement(IElementCreateInfo elementCreateInfo)
         {
-            var increment = new Increment();
-            increment.Init(elementCreateInfo);
-            return increment;
+            var accumulateIncrement = new AccumulateIncrement();
+            accumulateIncrement.Init(elementCreateInfo);
+            return accumulateIncrement;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public class Not : PureUnaryPrimitive
+    public class AccumulateNot : MutatingUnaryPrimitive
     {
-        public Not() : base(UnaryPrimitiveOps.Not) { }
+        public AccumulateNot() : base(UnaryPrimitiveOps.Not) { }
 
-        private const string ElementName = "Not";
+        private const string ElementName = "AccumulateNot";
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static Not CreateIncrement(IElementCreateInfo elementCreateInfo)
+        public static AccumulateNot CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
-            var not = new Not();
-            not.Init(elementCreateInfo);
-            return not;
+            var accumulateNot = new AccumulateNot();
+            accumulateNot.Init(elementCreateInfo);
+            return accumulateNot;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public abstract class MutatingBinaryPrimitive : FunctionalNode
+    {
+        protected MutatingBinaryPrimitive(BinaryPrimitiveOps binaryOp)
+            : base(Signatures.DefineMutatingBinaryFunction("Accumulate" + binaryOp.ToString(), binaryOp.GetExpectedInputType()))
+        {
+        }
     }
 
     public class AccumulateAdd : MutatingBinaryPrimitive
@@ -434,37 +401,134 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public class AccumulateIncrement : MutatingUnaryPrimitive
+    #endregion
+
+    #region Iterator
+
+    /// <summary>
+    /// Function that takes integer lower (inclusive) and upper (exclusive) bounds and returns an integer iterator.
+    /// </summary>
+    public class Range : FunctionalNode
     {
-        public AccumulateIncrement() : base(UnaryPrimitiveOps.Increment) { }
+        private const string ElementName = "Range";
 
-        private const string ElementName = "AccumulateIncrement";
-
-        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static AccumulateIncrement CreateAccumulateIncrement(IElementCreateInfo elementCreateInfo)
+        protected Range()
+            : base(Signatures.RangeType)
         {
-            var accumulateIncrement = new AccumulateIncrement();
-            accumulateIncrement.Init(elementCreateInfo);
-            return accumulateIncrement;
         }
 
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Range CreateRange(IElementCreateInfo elementCreateInfo)
+        {
+            var range = new Range();
+            range.Init(elementCreateInfo);
+            return range;
+        }
+
+        /// <inheritdoc />
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
-    public class AccumulateNot : MutatingUnaryPrimitive
+    #endregion
+
+    #region Vector
+
+    public class VectorCreate : FunctionalNode
     {
-        public AccumulateNot() : base(UnaryPrimitiveOps.Not) { }
+        private const string ElementName = "VectorCreate";
 
-        private const string ElementName = "AccumulateNot";
-
-        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static AccumulateNot CreateIncrement(IElementCreateInfo elementCreateInfo)
+        protected VectorCreate()
+            : base(Signatures.VectorCreateType)
         {
-            var accumulateNot = new AccumulateNot();
-            accumulateNot.Init(elementCreateInfo);
-            return accumulateNot;
         }
 
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static VectorCreate CreateVectorCreate(IElementCreateInfo elementCreateInfo)
+        {
+            var vectorCreate = new VectorCreate();
+            vectorCreate.Init(elementCreateInfo);
+            return vectorCreate;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.VectorAndSliceTypes };
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+    }
+
+    public class VectorInsert : FunctionalNode
+    {
+        private const string ElementName = "VectorInsert";
+
+        protected VectorInsert()
+            : base(Signatures.VectorInsertType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static VectorInsert CreateVectorInsert(IElementCreateInfo elementCreateInfo)
+        {
+            var vectorInsert = new VectorInsert();
+            vectorInsert.Init(elementCreateInfo);
+            return vectorInsert;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
+    #endregion
+
+    #region Test nodes
+
+    public class ImmutablePassthroughNode : FunctionalNode
+    {
+        private const string ElementName = "ImmutablePassthroughNode";
+
+        protected ImmutablePassthroughNode()
+            : base(Signatures.ImmutablePassthroughType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static ImmutablePassthroughNode CreateImmutablePassthroughNode(IElementCreateInfo elementCreateInfo)
+        {
+            var immutablePassthroughNode = new ImmutablePassthroughNode();
+            immutablePassthroughNode.Init(elementCreateInfo);
+            return immutablePassthroughNode;
+        }
+
+        /// <inheritdoc />
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
+
+    public class MutablePassthroughNode : FunctionalNode
+    {
+        private const string ElementName = "MutablePassthroughNode";
+
+        protected MutablePassthroughNode()
+            : base(Signatures.MutablePassthroughType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static MutablePassthroughNode CreateMutablePassthroughNode(IElementCreateInfo elementCreateInfo)
+        {
+            var mutablePassthroughNode = new MutablePassthroughNode();
+            mutablePassthroughNode.Init(elementCreateInfo);
+            return mutablePassthroughNode;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    #endregion
 }
