@@ -238,6 +238,9 @@ namespace Rebar.SourceModel
             : base(Signatures.DefineMutatingUnaryFunction("Accumulate" + unaryOp.ToString(), unaryOp.GetExpectedInputType()))
         {
         }
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
     }
 
     public class AccumulateIncrement : MutatingUnaryPrimitive
