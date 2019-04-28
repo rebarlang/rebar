@@ -404,6 +404,108 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
+    public class Equal : FunctionalNode
+    {
+        private const string ElementName = "Equal";
+
+        public Equal() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Equal CreateAccumulateXor(IElementCreateInfo elementCreateInfo)
+        {
+            var equal = new Equal();
+            equal.Init(elementCreateInfo);
+            return equal;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class NotEqual : FunctionalNode
+    {
+        private const string ElementName = "NotEqual";
+
+        public NotEqual() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static NotEqual CreateNotEqual(IElementCreateInfo elementCreateInfo)
+        {
+            var notEqual = new NotEqual();
+            notEqual.Init(elementCreateInfo);
+            return notEqual;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class LessThan : FunctionalNode
+    {
+        private const string ElementName = "LessThan";
+
+        public LessThan() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static LessThan CreateLessThan(IElementCreateInfo elementCreateInfo)
+        {
+            var lessThan = new LessThan();
+            lessThan.Init(elementCreateInfo);
+            return lessThan;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class LessEqual : FunctionalNode
+    {
+        private const string ElementName = "LessEqual";
+
+        public LessEqual() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static LessEqual CreateLessEqual(IElementCreateInfo elementCreateInfo)
+        {
+            var lessEqual = new LessEqual();
+            lessEqual.Init(elementCreateInfo);
+            return lessEqual;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class GreaterThan : FunctionalNode
+    {
+        private const string ElementName = "GreaterThan";
+
+        public GreaterThan() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static GreaterThan CreateGreaterThan(IElementCreateInfo elementCreateInfo)
+        {
+            var greaterThan = new GreaterThan();
+            greaterThan.Init(elementCreateInfo);
+            return greaterThan;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class GreaterEqual : FunctionalNode
+    {
+        private const string ElementName = "GreaterEqual";
+
+        public GreaterEqual() : base(Signatures.DefineComparisonFunction(ElementName)) { }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static GreaterEqual CreateGreaterEqual(IElementCreateInfo elementCreateInfo)
+        {
+            var greaterEqual = new GreaterEqual();
+            greaterEqual.Init(elementCreateInfo);
+            return greaterEqual;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
     #endregion
 
     #region Iterator

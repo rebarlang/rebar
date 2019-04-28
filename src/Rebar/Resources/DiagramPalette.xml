@@ -247,6 +247,50 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Category Display="Comparison" UniqueId="Rebar:PaletteCategory.Comparison" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+      <Leaf Display="Equal" UniqueId="Rebar:Equal" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:Equal />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Not Equal" UniqueId="Rebar:NotEqual" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:NotEqual />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Less Than" UniqueId="Rebar:LessThan" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:LessThan />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Less Than Or Equal" UniqueId="Rebar:LessEqual" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:LessEqual />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Greater Than" UniqueId="Rebar:GreaterThan" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:GreaterThan />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Greater Than Or Equal" UniqueId="Rebar:GreaterEqual" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:GreaterEqual />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    </Category>
   </Category>
   <Category Display="Test Nodes" UniqueId="Rebar:PaletteCategory.Test" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
     <Leaf Display="Immutable Passthrough" UniqueId="Rebar:ImmutablePassthrough" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">

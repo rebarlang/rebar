@@ -47,6 +47,12 @@ namespace Rebar.Design
             AddSupportedModel<AccumulateXor>(n => new BasicNodeViewModel(n, "Accumulate Xor", @"Resources\Diagram\Nodes\AccumulateXor.png"));
             AddSupportedModel<AccumulateIncrement>(n => new BasicNodeViewModel(n, "Accumulate Increment", @"Resources\Diagram\Nodes\Increment.png"));
             AddSupportedModel<AccumulateNot>(n => new BasicNodeViewModel(n, "Accumulate Not", @"Resources\Diagram\Nodes\AccumulateNot.png"));
+            AddSupportedModel<Equal>(n => new BasicNodeViewModel(n, "Equal", @"Resources\Diagram\Nodes\Equal.png"));
+            AddSupportedModel<NotEqual>(n => new BasicNodeViewModel(n, "Not Equal", @"Resources\Diagram\Nodes\NotEqual.png"));
+            AddSupportedModel<LessThan>(n => new BasicNodeViewModel(n, "Less Than", @"Resources\Diagram\Nodes\LessThan.png"));
+            AddSupportedModel<LessEqual>(n => new BasicNodeViewModel(n, "Less Than Or Equal", @"Resources\Diagram\Nodes\LessEqual.png"));
+            AddSupportedModel<GreaterThan>(n => new BasicNodeViewModel(n, "Greater Than", @"Resources\Diagram\Nodes\GreaterThan.png"));
+            AddSupportedModel<GreaterEqual>(n => new BasicNodeViewModel(n, "Greater Than Or Equal", @"Resources\Diagram\Nodes\GreaterEqual.png"));
 
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));

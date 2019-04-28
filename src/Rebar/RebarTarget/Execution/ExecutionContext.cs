@@ -101,6 +101,11 @@ namespace Rebar.RebarTarget.Execution
                         case OpCodes.Or:
                         case OpCodes.Xor:
                         case OpCodes.Gt:
+                        case OpCodes.Gte:
+                        case OpCodes.Lt:
+                        case OpCodes.Lte:
+                        case OpCodes.Eq:
+                        case OpCodes.Neq:
                             {
                                 int rhs = operandStack.Pop();
                                 int lhs = operandStack.Pop();
@@ -130,6 +135,21 @@ namespace Rebar.RebarTarget.Execution
                                         break;
                                     case OpCodes.Gt:
                                         result = (lhs > rhs) ? 1 : 0;
+                                        break;
+                                    case OpCodes.Gte:
+                                        result = (lhs >= rhs) ? 1 : 0;
+                                        break;
+                                    case OpCodes.Lt:
+                                        result = (lhs < rhs) ? 1 : 0;
+                                        break;
+                                    case OpCodes.Lte:
+                                        result = (lhs <= rhs) ? 1 : 0;
+                                        break;
+                                    case OpCodes.Eq:
+                                        result = (lhs == rhs) ? 1 : 0;
+                                        break;
+                                    case OpCodes.Neq:
+                                        result = (lhs != rhs) ? 1 : 0;
                                         break;
                                 }
                                 operandStack.Push(result);
@@ -213,11 +233,11 @@ namespace Rebar.RebarTarget.Execution
         Or = 0x45,
         Xor = 0x46,
         Gt = 0x48,
-        // Gte = 0x49,
-        // Lt = 0x4A,
-        // Lte = 0x4B,
-        // Eq = 0x4C,
-        // Neq = 0x4D,
+        Gte = 0x49,
+        Lt = 0x4A,
+        Lte = 0x4B,
+        Eq = 0x4C,
+        Neq = 0x4D,
         Dup = 0x50,
         Swap = 0x51,
 
@@ -418,6 +438,31 @@ namespace Rebar.RebarTarget.Execution
         public void EmitGreaterThan()
         {
             EmitStandaloneOpcode(OpCodes.Gt);
+        }
+
+        public void EmitGreaterThanOrEqual()
+        {
+            EmitStandaloneOpcode(OpCodes.Gte);
+        }
+
+        public void EmitLessThan()
+        {
+            EmitStandaloneOpcode(OpCodes.Lt);
+        }
+
+        public void EmitLessThanOrEqual()
+        {
+            EmitStandaloneOpcode(OpCodes.Lte);
+        }
+
+        public void EmitEquals()
+        {
+            EmitStandaloneOpcode(OpCodes.Eq);
+        }
+
+        public void EmitNotEquals()
+        {
+            EmitStandaloneOpcode(OpCodes.Neq);
         }
 
         public void EmitDuplicate()

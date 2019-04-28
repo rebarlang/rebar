@@ -182,6 +182,25 @@ namespace Rebar.Common
             return functionTypeBuilder.CreateType();
         }
 
+        public static NIType DefineComparisonFunction(string name)
+        {
+            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
+            NIType inputType = PFTypes.Int32, outputType = PFTypes.Boolean;
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                inputType.CreateImmutableReference(),
+                "operand1Ref");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                inputType.CreateImmutableReference(),
+                "operand2Ref");
+            AddOutputParameter(
+                functionTypeBuilder,
+                outputType,
+                "result");
+            return functionTypeBuilder.CreateType();
+        }
+
         internal static Signature GetSignatureForNIType(NIType functionSignature)
         {
             List<SignatureTerminal> inputs = new List<SignatureTerminal>(),

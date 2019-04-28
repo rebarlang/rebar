@@ -293,15 +293,22 @@
     <Resource Include="Resources\Diagram\Nodes\CreateCopy.png" />
     <Resource Include="Resources\Diagram\Nodes\Divide.png" />
     <Resource Include="Resources\Diagram\Nodes\Drop.png" />
+    <Resource Include="Resources\Diagram\Nodes\Equal.png" />
     <Resource Include="Resources\Diagram\Nodes\ExchangeValues.png" />
+    <Resource Include="Resources\Diagram\Nodes\GreaterEqual.png" />
+    <Resource Include="Resources\Diagram\Nodes\GreaterThan.png" />
     <Resource Include="Resources\Diagram\Nodes\ImmutableBorrowNode.png" />
     <Resource Include="Resources\Diagram\Nodes\Increment.png" />
     <Resource Include="Resources\Diagram\Nodes\Iterate.png" />
+    <Resource Include="Resources\Diagram\Nodes\LessEqual.png" />
+    <Resource Include="Resources\Diagram\Nodes\LessThan.png" />
     <Resource Include="Resources\Diagram\Nodes\Lock.png" />
     <Resource Include="Resources\Diagram\Nodes\LoopCondition.png" />
     <Resource Include="Resources\Diagram\Nodes\Multiply.png" />
     <Resource Include="Resources\Diagram\Nodes\Not.png" />
+    <Resource Include="Resources\Diagram\Nodes\NotEqual.png" />
     <Resource Include="Resources\Diagram\Nodes\Or.png" />
+    <Resource Include="Resources\Diagram\Nodes\Output.png" />
     <Resource Include="Resources\Diagram\Nodes\Range.png" />
     <Resource Include="Resources\Diagram\Nodes\SelectReference.png" />
     <Resource Include="Resources\Diagram\Nodes\Some.png" />
@@ -324,9 +331,6 @@
     <EmbeddedResource Include="Resources\OutputPalette.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Diagram\Nodes\Output.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\VectorPalette.xml">
