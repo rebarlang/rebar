@@ -164,8 +164,15 @@ namespace Rebar.RebarTarget
             {
                 VariableReference inputVariable = terminalPair.Key.GetTrueVariable(),
                     outputVariable = terminalPair.Value.GetTrueVariable();
-                if (explicitBorrowNode.AlwaysCreateReference || inputVariable.Type != outputVariable.Type)
+                if (inputVariable.Type == outputVariable.Type || inputVariable.Type.IsReferenceToSameTypeAs(outputVariable.Type))
                 {
+                    _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+                }
+                else
+                {
+                    // TODO: there is a bug here with creating a reference to an immutable reference binding;
+                    // in CreateReferenceValueSource we create a constant reference value source for the immutable reference,
+                    // which means we can't create a reference to an allocation for it.
                     CreateReferenceValueSource(outputVariable, inputVariable);
                 }
             }

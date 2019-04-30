@@ -53,7 +53,8 @@ namespace Rebar.Common
             }
         }
 
-        private int _currentVariableId = 1;
+        private int _currentVariableId = 0;
+        private int _currentVariableReferenceId = 1;
 
         private readonly List<Variable> _variables = new List<Variable>();
         private readonly List<Variable> _variableReferences = new List<Variable>();
@@ -62,7 +63,9 @@ namespace Rebar.Common
 
         private Variable CreateNewVariable(bool mutableVariable, int firstReferenceIndex)
         {
-            var variable = new Variable(_variables.Count, firstReferenceIndex, mutableVariable);
+            int variableId = _currentVariableId;
+            _currentVariableId++;
+            var variable = new Variable(variableId, firstReferenceIndex, mutableVariable);
             _variables.Add(variable);
             return variable;
         }
@@ -88,7 +91,7 @@ namespace Rebar.Common
 
         public VariableReference CreateNewVariable(bool mutable = false)
         {
-            int id = _currentVariableId++;
+            int id = _currentVariableReferenceId++;
             Variable variable = CreateNewVariable(mutable, id);
             SetVariableAtReferenceIndex(variable, id);
             return new VariableReference(this, id);
@@ -156,6 +159,12 @@ namespace Rebar.Common
         internal Lifetime GetLifetime(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Lifetime;
 
         internal int GetId(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Id;
+
+        internal string GetDebuggerDisplay(VariableReference variableReference)
+        {
+            Variable variable = GetVariableForVariableReference(variableReference);
+            return variable.ToString();
+        }
 
         internal void SetTypeAndLifetime(VariableReference variableReference, NIType type, Lifetime lifetime)
         {

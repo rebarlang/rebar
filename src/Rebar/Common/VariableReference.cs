@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using NationalInstruments.DataTypes;
 
 namespace Rebar.Common
 {
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public struct VariableReference
     {
         private readonly VariableSet _variableSet;
@@ -57,5 +59,7 @@ namespace Rebar.Common
             }
             _variableSet.MergeVariables(this, intoVariable);
         }
+
+        private string DebuggerDisplay => _variableSet?.GetDebuggerDisplay(this);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler;
+using Rebar.RebarTarget;
 
 namespace Tests.Rebar.Unit.Compiler
 {
@@ -20,11 +21,20 @@ namespace Tests.Rebar.Unit.Compiler
             new SetVariableTypesAndLifetimesTransform().Execute(dfirRoot, cancellationToken);
         }
 
-        protected void RunSemanticAnalysisUpToValidation(DfirRoot dfirRoot)
+        protected void RunSemanticAnalysisUpToValidation(DfirRoot dfirRoot, NationalInstruments.Compiler.CompileCancellationToken cancellationToken = null)
         {
-            var cancellationToken = new NationalInstruments.Compiler.CompileCancellationToken();
+            cancellationToken = cancellationToken ?? new NationalInstruments.Compiler.CompileCancellationToken();
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot, cancellationToken);
             new ValidateVariableUsagesTransform().Execute(dfirRoot, cancellationToken);
+        }
+
+        protected void RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
+        {
+            var cancellationToken = new NationalInstruments.Compiler.CompileCancellationToken();
+            RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
+
+            new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
+            FunctionCompileHandler.CompileFunction(dfirRoot, cancellationToken);
         }
 
         protected void ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, bool mutable)

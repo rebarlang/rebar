@@ -69,29 +69,7 @@ namespace Rebar.RebarTarget
                 CallingConvention.StdCall);
             BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
-            var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
-            var allocator = new Allocator(variableAllocations);
-            await allocator.ExecuteTransform(targetDfir, cancellationToken);
-
-            IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
-            int[] localSizes = new int[localAllocations.Count()];
-            foreach (var allocation in localAllocations)
-            {
-                localSizes[allocation.Index] = allocation.Size;
-            }
-
-            var functionBuilder = new FunctionBuilder()
-            {
-                Name = specAndQName.EditorName,
-                LocalSizes = localSizes
-            };
-            var functionCompiler = new FunctionCompiler(functionBuilder, variableAllocations);
-            await functionCompiler.ExecuteTransform(targetDfir, cancellationToken);
-            
-            // TODO: need to be able to put this in FunctionCompiler:
-            functionBuilder.EmitReturn();
-
-            var compiledFunction = functionBuilder.CreateFunction();
+            Function compiledFunction = CompileFunction(targetDfir, cancellationToken);
 
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
@@ -119,7 +97,35 @@ namespace Rebar.RebarTarget
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-#endregion
+        internal static Function CompileFunction(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        {
+            ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
+
+            var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
+            var allocator = new Allocator(variableAllocations);
+            allocator.Execute(dfirRoot, cancellationToken);
+
+            IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
+            int[] localSizes = new int[localAllocations.Count()];
+            foreach (var allocation in localAllocations)
+            {
+                localSizes[allocation.Index] = allocation.Size;
+            }
+
+            var functionBuilder = new FunctionBuilder()
+            {
+                Name = dfirRoot.SpecAndQName.EditorName,
+                LocalSizes = localSizes
+            };
+            new FunctionCompiler(functionBuilder, variableAllocations).Execute(dfirRoot, cancellationToken);
+
+            // TODO: need to be able to put this in FunctionCompiler:
+            functionBuilder.EmitReturn();
+
+            return functionBuilder.CreateFunction();
+        }
+
+        #endregion
 
         /// <inheritdoc/>
         public override CompileSignature PredictCompileSignatureCore(DfirRoot targetDfir, CompileSignature previousSignature)

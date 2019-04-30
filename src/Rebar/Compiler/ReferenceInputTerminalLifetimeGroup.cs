@@ -150,6 +150,7 @@ namespace Rebar.Compiler
                     foreach (var terminate in terminates)
                     {
                         InsertTerminateLifetimeBehindTerminal(terminate.Terminal, terminateLifetime, index);
+                        ++index;
                     }
                 }
                 else if (terminates.Count > 0)
