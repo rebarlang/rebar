@@ -221,12 +221,5 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(functionalNode.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.TypeConflict));
         }
         #endregion
-
-        private void ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, bool mutable)
-        {
-            Constant constant = Constant.Create(inputTerminal.ParentDiagram, variableType.CreateDefaultValue(), variableType);
-            Wire wire = Wire.Create(inputTerminal.ParentDiagram, constant.OutputTerminal, inputTerminal);
-            wire.SetWireBeginsMutableVariable(mutable);
-        }
     }
 }
