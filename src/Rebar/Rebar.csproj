@@ -299,6 +299,7 @@
     <Resource Include="Resources\Diagram\Nodes\Lock.png" />
     <Resource Include="Resources\Diagram\Nodes\LoopCondition.png" />
     <Resource Include="Resources\Diagram\Nodes\Multiply.png" />
+    <Resource Include="Resources\Diagram\Nodes\None.png" />
     <Resource Include="Resources\Diagram\Nodes\Not.png" />
     <Resource Include="Resources\Diagram\Nodes\NotEqual.png" />
     <Resource Include="Resources\Diagram\Nodes\Or.png" />

@@ -168,6 +168,14 @@ namespace Rebar.Common
                 "option");
             SomeConstructorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("None");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateOption(),
+                "option");
+            NoneConstructorType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
             // TODO
 #if FALSE
@@ -239,6 +247,8 @@ namespace Rebar.Common
         public static NIType RangeType { get; }
 
         public static NIType SomeConstructorType { get; }
+
+        public static NIType NoneConstructorType { get; }
 
         public static NIType VectorCreateType { get; }
 

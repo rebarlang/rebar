@@ -28,6 +28,7 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["SelectReference"] = CompileSelectReference;
             _functionalNodeCompilers["Output"] = CompileOutput;
             _functionalNodeCompilers["Some"] = CompileSomeConstructor;
+            _functionalNodeCompilers["None"] = CompileNoneConstructor;
             _functionalNodeCompilers["VectorCreate"] = CompileNothing;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
@@ -235,6 +236,14 @@ namespace Rebar.RebarTarget
                 compiler._builder.EmitDerefInteger();
                 compiler._builder.EmitStoreInteger();
             }
+        }
+
+        private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
+        {
+            VariableReference output = noneConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(output);
+            compiler._builder.EmitLoadIntegerImmediate(0);
+            compiler._builder.EmitStoreInteger();
         }
 
         #endregion

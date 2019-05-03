@@ -605,7 +605,7 @@ namespace Rebar.SourceModel
     #region Option
 
     /// <summary>
-    /// Node that constructs a mutable Some(x) value from an input value x; the output type is Option&lt;T&gt; 
+    /// Node that constructs a Some(x) value from an input value x; the output type is Option&lt;T&gt; 
     /// when the input type is T.
     /// </summary>
     public class SomeConstructorNode : FunctionalNode
@@ -624,6 +624,37 @@ namespace Rebar.SourceModel
             var someConstructor = new SomeConstructorNode();
             someConstructor.Init(elementCreateInfo);
             return someConstructor;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
+    }
+
+    /// <summary>
+    /// Node that constructs a None value; the output type is Option&lt;T&gt; for some T determined by the downstream usage.
+    /// </summary>
+    public class NoneConstructorNode : FunctionalNode
+    {
+        private const string ElementName = "NoneConstructor";
+
+        protected NoneConstructorNode()
+            : base(Signatures.NoneConstructorType)
+        {
+            Width = StockDiagramGeometries.GridSize * 8;
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static NoneConstructorNode CreateNoneConstructorNode(IElementCreateInfo elementCreateInfo)
+        {
+            var noneConstructor = new NoneConstructorNode();
+            noneConstructor.Init(elementCreateInfo);
+            return noneConstructor;
         }
 
         /// <inheritdoc />
