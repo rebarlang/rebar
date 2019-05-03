@@ -14,6 +14,8 @@ namespace Rebar.Compiler.Nodes
             : base(parentNode)
         {
             BorrowMode = borrowMode;
+            AlwaysBeginLifetime = alwaysBeginLifetime;
+            AlwaysCreateReference = alwaysCreateReference;
             NIType inputType = PFTypes.Void, outputType;
             switch (borrowMode)
             {

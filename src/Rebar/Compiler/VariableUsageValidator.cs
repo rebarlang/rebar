@@ -53,7 +53,7 @@ namespace Rebar.Compiler
                 : _facadeVariable.Mutable;
             if (!isMutable)
             {
-                _terminal.ParentNode.SetDfirMessage(Messages.TerminalDoesNotAcceptImmutableType);
+                _terminal.SetDfirMessage(Messages.TerminalDoesNotAcceptImmutableType);
                 return false;
             }
             return true;

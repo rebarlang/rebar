@@ -12,6 +12,8 @@ namespace Rebar.Common
 
         private static NIType ImmutableReferenceGenericType { get; }
 
+        private static NIType PolymorphicReferenceGenericType { get; }
+
         private static NIType OptionGenericType { get; }
 
         private static NIType LockingCellGenericType { get; }
@@ -25,14 +27,19 @@ namespace Rebar.Common
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
-            mutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref"); // TODO: also need a lifetime type parameter
+            mutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife");
             mutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             MutableReferenceGenericType = mutableReferenceGenericTypeBuilder.CreateType();
 
             var immutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("ImmutableReference");
-            immutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref");    // TODO: also need a lifetime type parameter
+            immutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife");
             immutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             ImmutableReferenceGenericType = immutableReferenceGenericTypeBuilder.CreateType();
+
+            var polymorphicReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("PolymorphicReference");
+            polymorphicReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife", "TMut");
+            polymorphicReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            PolymorphicReferenceGenericType = polymorphicReferenceGenericTypeBuilder.CreateType();
 
             var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
             optionGenericTypeBuilder.MakeGenericParameters("T");
@@ -60,10 +67,10 @@ namespace Rebar.Common
             VectorGenericType = vectorGenericTypeBuilder.CreateType();
         }
 
-        private static NIType SpecializeGenericType(NIType genericTypeDefinition, NIType typeParameter)
+        private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
         {
             var specializationTypeBuilder = genericTypeDefinition.DefineClassFromExisting();
-            specializationTypeBuilder.ReplaceGenericParameters(typeParameter);
+            specializationTypeBuilder.ReplaceGenericParameters(typeParameters);
             return specializationTypeBuilder.CreateType();
         }
 
@@ -72,9 +79,9 @@ namespace Rebar.Common
             return type.IsGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
         }
 
-        public static NIType CreateMutableReference(this NIType dereferenceType)
+        public static NIType CreateMutableReference(this NIType dereferenceType, NIType lifetimeType = default(NIType))
         {
-            return SpecializeGenericType(MutableReferenceGenericType, dereferenceType);
+            return SpecializeGenericType(MutableReferenceGenericType, dereferenceType, lifetimeType);
         }
 
         public static bool IsMutableReferenceType(this NIType type)
@@ -82,9 +89,9 @@ namespace Rebar.Common
             return type.IsGenericTypeSpecialization(MutableReferenceGenericType);
         }
 
-        public static NIType CreateImmutableReference(this NIType dereferenceType)
+        public static NIType CreateImmutableReference(this NIType dereferenceType, NIType lifetimeType = default(NIType))
         {
-            return SpecializeGenericType(ImmutableReferenceGenericType, dereferenceType);
+            return SpecializeGenericType(ImmutableReferenceGenericType, dereferenceType, lifetimeType);
         }
 
         public static bool IsImmutableReferenceType(this NIType type)
@@ -94,7 +101,7 @@ namespace Rebar.Common
 
         public static bool IsRebarReferenceType(this NIType type)
         {
-            return type.IsImmutableReferenceType() || type.IsMutableReferenceType();
+            return type.IsImmutableReferenceType() || type.IsMutableReferenceType() || type.IsPolymorphicReferenceType();
         }
 
         public static NIType GetTypeOrReferentType(this NIType type)
@@ -111,6 +118,51 @@ namespace Rebar.Common
                 throw new ArgumentException("Expected a reference type.", "type");
             }
             return type.GetGenericParameters().ElementAt(0);
+        }
+
+        public static NIType GetReferenceLifetimeType(this NIType type)
+        {
+            if (!type.IsRebarReferenceType())
+            {
+                throw new ArgumentException("Expected a reference type.", "type");
+            }
+            return type.GetGenericParameters().ElementAt(1);
+        }
+
+        public static NIType CreatePolymorphicReference(this NIType dereferenceType, NIType lifetimeType, NIType mutabilityType)
+        {
+            return SpecializeGenericType(PolymorphicReferenceGenericType, dereferenceType, lifetimeType, mutabilityType);
+        }
+
+        public static bool IsPolymorphicReferenceType(this NIType type)
+        {
+            return type.IsGenericTypeSpecialization(PolymorphicReferenceGenericType);
+        }
+
+        public static NIType GetReferenceMutabilityType(this NIType type)
+        {
+            if (!type.IsPolymorphicReferenceType())
+            {
+                throw new ArgumentException("Expected a polymorphic reference type.", "type");
+            }
+            return type.GetGenericParameters().ElementAt(2);
+        }
+
+        internal static InputReferenceMutability GetInputReferenceMutabilityFromType(this NIType type)
+        {
+            if (!type.IsRebarReferenceType())
+            {
+                throw new ArgumentException("Expected a reference type.", "type");
+            }
+            if (type.IsImmutableReferenceType())
+            {
+                return InputReferenceMutability.AllowImmutable;
+            }
+            if (type.IsMutableReferenceType())
+            {
+                return InputReferenceMutability.RequireMutable;
+            }
+            return InputReferenceMutability.Polymorphic;
         }
 
         public static bool IsReferenceToSameTypeAs(this NIType type, NIType other)
@@ -171,8 +223,7 @@ namespace Rebar.Common
 
         public static NIType GetUnderlyingTypeFromRebarType(this NIType rebarType)
         {
-            if (rebarType.IsImmutableReferenceType() ||
-                rebarType.IsMutableReferenceType())
+            if (rebarType.IsRebarReferenceType())
             {
                 return rebarType.GetGenericParameters().ElementAt(0);
             }
@@ -259,68 +310,25 @@ namespace Rebar.Common
             return true;
         }
 
-        internal static TypePermissiveness GetTypePermissiveness(this NIType type)
+        internal static bool WireTypeMayFork(this NIType wireType)
         {
-            if (type.IsImmutableReferenceType())
+            if (wireType.IsImmutableReferenceType())
             {
-                return TypePermissiveness.ImmutableReference;
+                return true;
             }
-            else if (type.IsMutableReferenceType())
+
+            if (wireType.IsNumeric() || wireType.IsBoolean())
             {
-                return TypePermissiveness.MutableReference;
+                return true;
             }
-            else
+
+            NIType optionValueType;
+            if (wireType.TryDestructureOptionType(out optionValueType))
             {
-                return TypePermissiveness.Owner;
+                return WireTypeMayFork(optionValueType);
             }
+
+            return false;
         }
-
-        public static NIType PromoteTypePermissivenessToMatch(this NIType typeToPromote, NIType typeToMatch)
-        {
-            TypePermissiveness toPromotePermissiveness = typeToPromote.GetTypePermissiveness(),
-                toMatchPermissiveness = typeToMatch.GetTypePermissiveness();
-            if (toPromotePermissiveness >= toMatchPermissiveness)
-            {
-                return typeToPromote;
-            }
-            else if (toMatchPermissiveness == TypePermissiveness.Owner)
-            {
-                return typeToPromote.GetGenericParameters().First();
-            }
-            else // toMatchPermissiveness == TypePermissiveness.MutableReference
-            {
-                return typeToPromote.GetGenericParameters().First().CreateMutableReference();
-            }
-        }
-
-        internal static BorrowMode GetBorrowMode(TypePermissiveness borrowFrom, TypePermissiveness borrowTo)
-        {
-            if (borrowFrom == TypePermissiveness.Owner)
-            {
-                if (borrowTo == TypePermissiveness.MutableReference)
-                {
-                    return BorrowMode.Mutable;
-                }
-
-                if (borrowTo == TypePermissiveness.ImmutableReference)
-                {
-                    return BorrowMode.Immutable;
-                }
-            }
-            else if (borrowFrom == TypePermissiveness.MutableReference &&
-                     borrowTo == TypePermissiveness.ImmutableReference)
-            {
-                return BorrowMode.Immutable;
-            }
-            throw new InvalidOperationException($"Borrowing {borrowTo} from {borrowFrom} is not necessary.");
-        }
-    }
-
-    internal enum TypePermissiveness
-    {
-        ImmutableReference,
-        MutableReference,
-        Owner,
-        MutableOwner
     }
 }

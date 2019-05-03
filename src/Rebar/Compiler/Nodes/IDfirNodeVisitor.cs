@@ -5,19 +5,14 @@ namespace Rebar.Compiler.Nodes
 {
     internal interface IDfirNodeVisitor<T>
     {
-        T VisitAssignNode(AssignNode assignNode);
         T VisitBorrowTunnel(BorrowTunnel borrowTunnel);
         T VisitConstant(Constant constant);
-        T VisitCreateCellNode(CreateCellNode createCellNode);
         T VisitDropNode(DropNode dropNode);
-        T VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode);
         T VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode);
         T VisitFunctionalNode(FunctionalNode functionalNode);
         T VisitIterateTunnel(IterateTunnel iterateTunnel);
         T VisitLockTunnel(LockTunnel lockTunnel);
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
-        T VisitSomeConstructorNode(SomeConstructorNode someConstructorNode);
-        T VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);

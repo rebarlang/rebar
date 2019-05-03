@@ -361,7 +361,7 @@ namespace Rebar.Compiler
             {
                 dataType = dataType.GetUnderlyingTypeFromRebarType();
             }
-            NIType constantType = ValidateVariableUsagesTransform.WireTypeMayFork(dataType)
+            NIType constantType = dataType.WireTypeMayFork()
                 ? dataType
                 : dataType.CreateImmutableReference();
             Constant constant = Constant.Create(_currentDiagram, literal.Data, constantType);
@@ -410,45 +410,11 @@ namespace Rebar.Compiler
             MapTerminalsInOrder(node, terminateLifetimeDfir);
         }
 
-        public void VisitSelectReferenceNode(SourceModel.SelectReferenceNode selectReferenceNode)
-        {
-            var selectReferenceDfir = new Nodes.SelectReferenceNode(_currentDiagram);
-            _map.AddMapping(selectReferenceNode, selectReferenceDfir);
-            MapTerminalsInOrder(selectReferenceNode, selectReferenceDfir);
-        }
-
-        public void VisitAssignNode(SourceModel.AssignNode assignNode)
-        {
-            var assignDfir = new Nodes.AssignNode(_currentDiagram);
-            _map.AddMapping(assignNode, assignDfir);
-            MapTerminalsInOrder(assignNode, assignDfir);
-        }
-
-        public void VisitExchangeValuesNode(ExchangeValues exchangeValues)
-        {
-            var exchangeValuesDfir = new ExchangeValuesNode(_currentDiagram);
-            _map.AddMapping(exchangeValues, exchangeValuesDfir);
-            MapTerminalsInOrder(exchangeValues, exchangeValuesDfir);
-        }
-
         public void VisitImmutableBorrowNode(ImmutableBorrowNode immutableBorrowNode)
         {
             var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.Immutable, 1, true, true);
             _map.AddMapping(immutableBorrowNode, explicitBorrowDfir);
             MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
-        }
-
-        public void VisitCreateCellNode(CreateCell createCell)
-        {
-            var createCellDfir = new CreateCellNode(_currentDiagram);
-            _map.AddMapping(createCell, createCellDfir);
-            MapTerminalsInOrder(createCell, createCellDfir);
-        }
-
-        public void VisitSomeConstructorNode(SourceModel.SomeConstructorNode someConstructorNode)
-        {
-            var someConstructorNodeDfir = new Nodes.SomeConstructorNode(_currentDiagram);
-            MapTerminalsInOrder(someConstructorNode, someConstructorNodeDfir);
         }
 
         public void VisitFunction(Function function)

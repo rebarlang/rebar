@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 
@@ -44,29 +44,21 @@ namespace Rebar.Compiler
             }
         }
 
-        public ReferenceInputTerminalLifetimeGroup CreateInputLifetimeGroup(InputReferenceMutability mutability)
+        public ReferenceInputTerminalLifetimeGroup CreateInputLifetimeGroup(InputReferenceMutability mutability, Lazy<Lifetime> lazyNewLifetime, TypeVariableReference lifetimeType)
         {
-            var lifetimeGroup = new ReferenceInputTerminalLifetimeGroup(this, mutability);
+            var lifetimeGroup = new ReferenceInputTerminalLifetimeGroup(this, mutability, lazyNewLifetime, lifetimeType);
             _lifetimeGroups = _lifetimeGroups ?? new List<ReferenceInputTerminalLifetimeGroup>();
             _lifetimeGroups.Add(lifetimeGroup);
             return lifetimeGroup;
         }
 
-        public void UpdateInputsFromFacadeTypes()
+        public void SetLifetimeInterruptedVariables(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             if (_lifetimeGroups != null)
             {
                 foreach (var lifetimeGroup in _lifetimeGroups)
                 {
-                    lifetimeGroup.UpdateFacadesFromInput();
-                }
-            }
-            if (_terminalFacades != null)
-            {
-                // TODO: need better way to distinguish which facades were not handled by lifetime groups
-                foreach (TerminalFacade inputTerminalFacade in _terminalFacades.Values.Where(f => f.Terminal.IsInput).OfType<SimpleTerminalFacade>())
-                {
-                    inputTerminalFacade.UpdateFromFacadeInput();
+                    lifetimeGroup.SetInterruptedVariables(lifetimeVariableAssociation);
                 }
             }
         }

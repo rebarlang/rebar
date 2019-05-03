@@ -110,6 +110,10 @@ namespace Rebar.Design
             get
             {
                 VariableReference variable = ((Wire)Model).GetWireVariable();
+                if (!variable.IsValid)
+                {
+                    return base.WireRenderInfo;
+                }
                 var stockResources = Host.GetSharedExportedValue<StockDiagramUIResources>();
                 if (RebarFeatureToggles.IsVisualizeVariableIdentityEnabled)
                 {

@@ -23,7 +23,8 @@ namespace Rebar.Design
             AddSupportedModel<CreateCopyNode>(n => new BasicNodeViewModel(n, "Create Copy", @"Resources\Diagram\Nodes\CreateCopy.png"));
             AddSupportedModel<AssignNode>(n => new BasicNodeViewModel(n, "Assign", @"Resources\Diagram\Nodes\Assign.png"));
             AddSupportedModel<ExchangeValues>(n => new BasicNodeViewModel(n, "Exchange Values", @"Resources\Diagram\Nodes\ExchangeValues.png"));
-            AddSupportedModel<CreateCell>(n => new BasicNodeViewModel(n, "Create Cell"));
+            AddSupportedModel<CreateLockingCell>(n => new BasicNodeViewModel(n, "Create Locking Cell"));
+            AddSupportedModel<CreateNonLockingCell>(n => new BasicNodeViewModel(n, "Create Non-Locking Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow", @"Resources\Diagram\Nodes\ImmutableBorrowNode.png"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some", @"Resources\Diagram\Nodes\Some.png"));
             AddSupportedModel<Range>(n => new BasicNodeViewModel(n, "Range", @"Resources\Diagram\Nodes\Range.png"));

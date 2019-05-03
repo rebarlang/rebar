@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Compiler
@@ -11,7 +12,7 @@ namespace Tests.Rebar.Unit.Compiler
         public void ExchangeValuesNode_FullyCompile()
         {
             DfirRoot function = DfirRoot.Create();
-            ExchangeValuesNode exchangeValues = new ExchangeValuesNode(function.ParentDiagram);
+            FunctionalNode exchangeValues = new FunctionalNode(function.BlockDiagram, Signatures.ExchangeValuesType);
         }
     }
 }

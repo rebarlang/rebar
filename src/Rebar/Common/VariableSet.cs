@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.DataTypes;
+using NationalInstruments.Dfir;
 
 namespace Rebar.Common
 {
@@ -29,27 +30,22 @@ namespace Rebar.Common
             /// cannot be rebound).</remarks>
             public bool Mutable { get; }
 
-            /// <summary>
-            /// The data <see cref="NIType"/> stored by the <see cref="Variable"/>.
-            /// </summary>
-            /// <remarks>This property should not store ImmutableValue or MutableValue types.
-            /// ImmutableReference and MutableReference types are allowed.</remarks>
-            public NIType Type { get; set; }
+            public TypeVariableReference TypeVariableReference { get; }
 
             public Lifetime Lifetime { get; set; }
 
-            public Variable(int id, int firstReferenceIndex, bool mutable)
+            public Variable(int id, int firstReferenceIndex, TypeVariableReference variableType, bool mutable)
             {
-                Type = PFTypes.Void;
                 Id = id;
                 FirstReferenceIndex = firstReferenceIndex;
+                TypeVariableReference = variableType;
                 Mutable = mutable;
             }
 
             public override string ToString()
             {
                 string mut = Mutable ? "mut" : string.Empty;
-                return $"v_{Id} : {mut} {Type}";
+                return $"v_{Id} : {mut} Type";
             }
         }
 
@@ -58,14 +54,24 @@ namespace Rebar.Common
 
         private readonly List<Variable> _variables = new List<Variable>();
         private readonly List<Variable> _variableReferences = new List<Variable>();
-        private readonly Dictionary<Lifetime, List<Variable>> _variablesInterruptedByLifetimes = new Dictionary<Lifetime, List<Variable>>();
-        private readonly BoundedLifetimeGraph _boundedLifetimeGraph = new BoundedLifetimeGraph();
 
-        private Variable CreateNewVariable(bool mutableVariable, int firstReferenceIndex)
+        public VariableSet()
+            : this(null)
+        {
+        }
+
+        public VariableSet(TypeVariableSet typeVariableSet)
+        {
+            TypeVariableSet = typeVariableSet;
+        }
+
+        public TypeVariableSet TypeVariableSet { get; }
+
+        private Variable CreateNewVariable(bool mutableVariable, int firstReferenceIndex, TypeVariableReference variableType)
         {
             int variableId = _currentVariableId;
             _currentVariableId++;
-            var variable = new Variable(variableId, firstReferenceIndex, mutableVariable);
+            var variable = new Variable(variableId, firstReferenceIndex, variableType, mutableVariable);
             _variables.Add(variable);
             return variable;
         }
@@ -89,12 +95,17 @@ namespace Rebar.Common
             return new VariableReference(this, variable.FirstReferenceIndex);
         }
 
-        public VariableReference CreateNewVariable(bool mutable = false)
+        public VariableReference CreateNewVariable(TypeVariableReference variableType, bool mutable = false)
         {
             int id = _currentVariableReferenceId++;
-            Variable variable = CreateNewVariable(mutable, id);
+            Variable variable = CreateNewVariable(mutable, id, variableType);
             SetVariableAtReferenceIndex(variable, id);
             return new VariableReference(this, id);
+        }
+
+        public VariableReference CreateNewVariableForUnwiredTerminal()
+        {
+            return CreateNewVariable(TypeVariableSet.CreateReferenceToLiteralType(PFTypes.Void));
         }
 
         public IEnumerable<VariableReference> GetUniqueVariableReferences()
@@ -106,6 +117,7 @@ namespace Rebar.Common
         {
             Variable mergeWithVariable = GetVariableForVariableReference(mergeWith),
                 toMergeVariable = GetVariableForVariableReference(toMerge);
+
             for (int i = 0; i < _variableReferences.Count; ++i)
             {
                 if (_variableReferences[i] == toMergeVariable)
@@ -116,47 +128,7 @@ namespace Rebar.Common
             _variables.Remove(toMergeVariable);
         }
 
-        public IEnumerable<VariableReference> GetVariablesInterruptedByLifetime(Lifetime lifetime)
-        {
-            List<Variable> variables;
-            if (_variablesInterruptedByLifetimes.TryGetValue(lifetime, out variables))
-            {
-                // TODO: create new reference indices for these variables?
-                return variables.Select(GetExistingReferenceForVariable);
-            }
-            return Enumerable.Empty<VariableReference>();
-        }
-
-        public Lifetime DefineLifetimeThatOutlastsDiagram()
-        {
-            return _boundedLifetimeGraph.CreateLifetimeThatOutlastsDiagram();
-        }
-
-        public Lifetime DefineLifetimeThatIsBoundedByDiagram(IEnumerable<VariableReference> decomposedVariables)
-        {
-            Lifetime lifetime = _boundedLifetimeGraph.CreateLifetimeThatIsBoundedByDiagram();
-            _variablesInterruptedByLifetimes.Add(lifetime, decomposedVariables.Select(GetVariableForVariableReference).ToList());
-            return lifetime;
-        }
-
-        public Lifetime ComputeCommonLifetime(Lifetime left, Lifetime right)
-        {
-            if (_boundedLifetimeGraph.DoesOutlast(left, right))
-            {
-                return right;
-            }
-            if (_boundedLifetimeGraph.DoesOutlast(right, left))
-            {
-                return left;
-            }
-            return Lifetime.Empty;
-        }
-
         internal bool GetMutable(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Mutable;
-
-        internal NIType GetType(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Type;
-
-        internal Lifetime GetLifetime(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Lifetime;
 
         internal int GetId(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Id;
 
@@ -166,11 +138,15 @@ namespace Rebar.Common
             return variable.ToString();
         }
 
-        internal void SetTypeAndLifetime(VariableReference variableReference, NIType type, Lifetime lifetime)
+        internal TypeVariableReference GetTypeVariableReference(VariableReference variableReference)
         {
             Variable variable = GetVariableForVariableReference(variableReference);
-            variable.Type = type;
-            variable.Lifetime = lifetime;
+            TypeVariableReference typeVariableReference = variable.TypeVariableReference;
+            if (typeVariableReference.TypeVariableSet == null)
+            {
+                throw new ArgumentException("Getting TypeVariableReference for a variable that hasn't set one.");
+            }
+            return typeVariableReference;
         }
 
         internal bool ReferenceSameVariable(VariableReference x, VariableReference y) => GetVariableForVariableReference(x) == GetVariableForVariableReference(y);

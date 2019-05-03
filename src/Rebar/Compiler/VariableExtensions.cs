@@ -5,7 +5,44 @@ namespace Rebar.Compiler
 {
     internal static class VariableExtensions
     {
+        private static readonly AttributeDescriptor _typeVariableSetTokenName = new AttributeDescriptor("Rebar.Compiler.TypeVariableSet", true);
+        private static readonly AttributeDescriptor _lifetimeGraphTreeTokenName = new AttributeDescriptor("Rebar.Compiler.LifetimeGraphTree", true);
         private static readonly AttributeDescriptor _variableSetTokenName = new AttributeDescriptor("Rebar.Compiler.VariableSet", true);
+        private static readonly AttributeDescriptor _lifetimeGraphIdentifierTokenName = new AttributeDescriptor("Rebar.Compiler.LifetimeGraphIdentifier", true);
+
+        public static TypeVariableSet GetTypeVariableSet(this DfirRoot dfirRoot)
+        {
+            var token = dfirRoot.GetOrCreateNamedSparseAttributeToken<TypeVariableSet>(_typeVariableSetTokenName);
+            return token.GetAttribute(dfirRoot);
+        }
+
+        public static LifetimeGraphTree GetLifetimeGraphTree(this DfirRoot dfirRoot)
+        {
+            var token = dfirRoot.GetOrCreateNamedSparseAttributeToken<LifetimeGraphTree>(_lifetimeGraphTreeTokenName);
+            return token.GetAttribute(dfirRoot);
+        }
+
+        public static LifetimeGraphIdentifier GetLifetimeGraphIdentifier(this Diagram diagram)
+        {
+            var token = diagram.DfirRoot.GetOrCreateNamedSparseAttributeToken<LifetimeGraphIdentifier>(_lifetimeGraphIdentifierTokenName);
+            return token.GetAttribute(diagram);
+        }
+
+        public static void SetLifetimeGraphIdentifier(this Diagram diagram, LifetimeGraphIdentifier identifier)
+        {
+            var token = diagram.DfirRoot.GetOrCreateNamedSparseAttributeToken<LifetimeGraphIdentifier>(_lifetimeGraphIdentifierTokenName);
+            token.SetAttribute(diagram, identifier);
+        }
+
+        public static TypeVariableSet GetTypeVariableSet(this Node node)
+        {
+            return node.DfirRoot.GetTypeVariableSet();
+        }
+
+        public static TypeVariableSet GetTypeVariableSet(this Terminal terminal)
+        {
+            return terminal.DfirRoot.GetTypeVariableSet();
+        }
 
         public static void SetVariableSet(this Diagram diagram, VariableSet variableSet)
         {
@@ -52,6 +89,26 @@ namespace Rebar.Compiler
         public static VariableUsageValidator GetValidator(this Terminal terminal)
         {
             return new VariableUsageValidator(terminal);
+        }
+
+        public static Lifetime GetDiagramLifetime(this Terminal terminal)
+        {
+            return terminal.DfirRoot.GetLifetimeGraphTree().GetLifetimeGraphRootLifetime(terminal.ParentDiagram.GetLifetimeGraphIdentifier());
+        }
+
+        public static Lifetime DefineLifetimeThatIsBoundedByDiagram(this Terminal terminal)
+        {
+            return terminal.DfirRoot.GetLifetimeGraphTree().CreateLifetimeThatIsBoundedByLifetimeGraph(terminal.ParentDiagram.GetLifetimeGraphIdentifier());
+        }
+
+        public static bool IsDiagramLifetime(this Lifetime lifetime, Diagram diagram)
+        {
+            return lifetime == diagram.DfirRoot.GetLifetimeGraphTree().GetLifetimeGraphRootLifetime(diagram.GetLifetimeGraphIdentifier());
+        }
+
+        public static bool DoesOutlastDiagram(this Lifetime lifetime, Diagram diagram)
+        {
+            return lifetime.DoesOutlastLifetimeGraph(diagram.GetLifetimeGraphIdentifier());
         }
     }
 }

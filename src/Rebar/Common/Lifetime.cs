@@ -18,7 +18,7 @@ namespace Rebar.Common
 
             public override bool IsEmpty => _isEmpty;
 
-            public override bool DoesOutlastDiagram => !_isEmpty;
+            public override bool DoesOutlastLifetimeGraph(LifetimeGraphIdentifier lifetimeGraphIdentifier) => !_isEmpty;
 
             public override bool IsBounded => false;
         }
@@ -37,6 +37,6 @@ namespace Rebar.Common
 
         public abstract bool IsBounded { get; }
 
-        public abstract bool DoesOutlastDiagram { get; }
+        public abstract bool DoesOutlastLifetimeGraph(LifetimeGraphIdentifier lifetimeGraphIdentifier);
     }
 }

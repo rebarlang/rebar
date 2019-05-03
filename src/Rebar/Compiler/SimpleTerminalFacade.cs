@@ -10,7 +10,7 @@ namespace Rebar.Compiler
     /// </summary>
     internal class SimpleTerminalFacade : TerminalFacade
     {
-        public SimpleTerminalFacade(Terminal terminal)
+        public SimpleTerminalFacade(Terminal terminal, TypeVariableReference terminalTypeReference)
             : base(terminal)
         {
             bool terminalIsWireFirst = terminal.IsOutput && !(terminal.ParentNode is TerminateLifetimeNode);
@@ -26,16 +26,21 @@ namespace Rebar.Compiler
                 connectedWire.SetIsFirstVariableWire(true);
                 mutableVariable = connectedWire.GetWireBeginsMutableVariable();
             }
-            TrueVariable = terminal.GetVariableSet().CreateNewVariable(mutableVariable);
+            TrueVariable = terminal.GetVariableSet().CreateNewVariable(terminalTypeReference, mutableVariable);
         }
 
         public override VariableReference FacadeVariable => TrueVariable;
 
         public override VariableReference TrueVariable { get; }
 
-        public override void UpdateFromFacadeInput()
+        public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
         {
-            // Nothing to do here; TrueVariable is already the same as FacadeVariable
+            ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
+                Terminal,
+                FacadeVariable.TypeVariableReference,
+                wireFacadeVariable.TypeVariableReference);
+            FacadeVariable.UnifyTypeVariableInto(wireFacadeVariable, unificationResult);
+            FacadeVariable.MergeInto(wireFacadeVariable);
         }
     }
 }

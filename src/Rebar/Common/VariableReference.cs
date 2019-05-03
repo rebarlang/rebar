@@ -39,17 +39,17 @@ namespace Rebar.Common
             ReferenceIndex = referenceIndex;
         }
 
+        public bool IsValid => _variableSet != null;
+
         public int ReferenceIndex { get; }
 
         public int Id => _variableSet?.GetId(this) ?? 0;
 
         public bool Mutable => _variableSet?.GetMutable(this) ?? false;
 
-        public NIType Type => _variableSet?.GetType(this) ?? NIType.Unset;
+        public NIType Type => TypeVariableReference.RenderNIType();
 
-        internal Lifetime Lifetime => _variableSet?.GetLifetime(this);
-
-        internal void SetTypeAndLifetime(NIType type, Lifetime lifetime) => _variableSet?.SetTypeAndLifetime(this, type, lifetime);
+        internal Lifetime Lifetime => TypeVariableReference.Lifetime;
 
         public void MergeInto(VariableReference intoVariable)
         {
@@ -58,6 +58,18 @@ namespace Rebar.Common
                 throw new ArgumentException("Attempting to merge into a variable in a different set.");
             }
             _variableSet.MergeVariables(this, intoVariable);
+        }
+
+        public bool ReferencesSame(VariableReference other)
+        {
+            return _variableSet.ReferenceSameVariable(this, other);
+        }
+
+        internal TypeVariableReference TypeVariableReference => _variableSet.GetTypeVariableReference(this);
+
+        internal void UnifyTypeVariableInto(VariableReference intoVariable, ITypeUnificationResult unificationResult)
+        {
+            _variableSet.TypeVariableSet.Unify(TypeVariableReference, intoVariable.TypeVariableReference, unificationResult);
         }
 
         private string DebuggerDisplay => _variableSet?.GetDebuggerDisplay(this);

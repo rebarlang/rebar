@@ -10,6 +10,7 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.SourceModel;
 using Diagram = NationalInstruments.SourceModel.Diagram;
@@ -82,11 +83,13 @@ namespace Rebar.Compiler
         public override MocTransformManager GenerateMocTransformManager(SpecAndQName specAndQName, DfirRoot sourceDfir,
             CompileCancellationToken cancellationToken)
         {
+            TerminalTypeUnificationResults unificationResults = new TerminalTypeUnificationResults();
+            LifetimeVariableAssociation lifetimeVariableAssocation = new LifetimeVariableAssociation();
             List<IDfirTransformBase> semanticAnalysisTransforms = new List<IDfirTransformBase>()
             {
                 new CreateNodeFacadesTransform(),
-                new SetVariableTypesAndLifetimesTransform(),
-                new ValidateVariableUsagesTransform(),
+                new MergeVariablesAcrossWiresTransform(lifetimeVariableAssocation, unificationResults),
+                new ValidateVariableUsagesTransform(unificationResults),
                 new ReflectVariablesToTerminalsTransform(),
             };
 

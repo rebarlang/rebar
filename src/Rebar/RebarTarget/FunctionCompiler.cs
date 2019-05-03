@@ -22,10 +22,16 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers = new Dictionary<string, Action<FunctionCompiler, FunctionalNode>>();
             _functionalNodeCompilers["ImmutPass"] = CompileNothing;
             _functionalNodeCompilers["MutPass"] = CompileNothing;
+
+            _functionalNodeCompilers["Assign"] = CompileAssign;
             _functionalNodeCompilers["CreateCopy"] = CompileCreateCopy;
+            _functionalNodeCompilers["SelectReference"] = CompileSelectReference;
             _functionalNodeCompilers["Output"] = CompileOutput;
+            _functionalNodeCompilers["SomeConstructor"] = CompileSomeConstructor;
             _functionalNodeCompilers["VectorCreate"] = CompileNothing;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
+            _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
+            _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
 
             _functionalNodeCompilers["Increment"] = (_, __) => CompilePureUnaryPrimitive(_, __, UnaryPrimitiveOps.Increment);
             _functionalNodeCompilers["Not"] = (_, __) => CompilePureUnaryPrimitive(_, __, UnaryPrimitiveOps.Not);
@@ -37,6 +43,8 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["Or"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Or);
             _functionalNodeCompilers["Xor"] = (_, __) => CompilePureBinaryPrimitive(_, __, BinaryPrimitiveOps.Xor);
 
+            _functionalNodeCompilers["AccumulateIncrement"] = (_, __) => CompileMutatingUnaryPrimitive(_, __, UnaryPrimitiveOps.Increment);
+            _functionalNodeCompilers["AccumulateNot"] = (_, __) => CompileMutatingUnaryPrimitive(_, __, UnaryPrimitiveOps.Not);
             _functionalNodeCompilers["AccumulateAdd"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Add);
             _functionalNodeCompilers["AccumulateSubtract"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Subtract);
             _functionalNodeCompilers["AccumulateMultiply"] = (_, __) => CompileMutatingBinaryPrimitive(_, __, BinaryPrimitiveOps.Multiply);
@@ -57,6 +65,31 @@ namespace Rebar.RebarTarget
         {
         }
 
+        private static void CompileAssign(FunctionCompiler compiler, FunctionalNode assignNode)
+        {
+            VariableReference assignee = assignNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                value = assignNode.InputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadValueAsReference(assignee);
+            compiler.LoadLocalAllocationReference(value);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileExchangeValues(FunctionCompiler compiler, FunctionalNode exchangeValuesNode)
+        {
+            VariableReference var1 = exchangeValuesNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                var2 = exchangeValuesNode.InputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadValueAsReference(var2);
+            compiler.LoadValueAsReference(var1);
+            compiler._builder.EmitDuplicate();
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitSwap();
+            compiler.LoadValueAsReference(var2);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
         private static void CompileCreateCopy(FunctionCompiler compiler, FunctionalNode createCopyNode)
         {
             VariableReference copyFrom = createCopyNode.InputTerminals.ElementAt(0).GetTrueVariable(),
@@ -66,6 +99,32 @@ namespace Rebar.RebarTarget
             compiler.LoadValueAsReference(copyFrom);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileSelectReference(FunctionCompiler compiler, FunctionalNode selectReferenceNode)
+        {
+            LabelBuilder falseLabel = compiler._builder.CreateLabel(),
+                endLabel = compiler._builder.CreateLabel();
+            VariableReference input1 = selectReferenceNode.InputTerminals.ElementAt(1).GetTrueVariable(),
+                input2 = selectReferenceNode.InputTerminals.ElementAt(2).GetTrueVariable(),
+                selector = selectReferenceNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                selectedReference = selectReferenceNode.OutputTerminals.ElementAt(1).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(selectedReference);
+            compiler.LoadValueAsReference(selector);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitBranchIfFalse(falseLabel);
+
+            // true
+            compiler.LoadValueAsReference(input1);
+            compiler._builder.EmitBranch(endLabel);
+
+            // false
+            compiler._builder.SetLabel(falseLabel);
+            compiler.LoadValueAsReference(input2);
+
+            // end
+            compiler._builder.SetLabel(endLabel);
+            compiler._builder.EmitStorePointer();
         }
 
         private static void CompileOutput(FunctionCompiler compiler, FunctionalNode outputNode)
@@ -153,6 +212,29 @@ namespace Rebar.RebarTarget
             compiler.LoadLocalAllocationReference(highInput);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitStoreInteger();
+        }
+        
+        private static void CompileSomeConstructor(FunctionCompiler compiler, FunctionalNode someConstructorNode)
+        {
+            VariableReference input = someConstructorNode.InputTerminals.ElementAt(0).GetTrueVariable(),
+                output = someConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable();
+            compiler.LoadLocalAllocationReference(output);
+            compiler._builder.EmitDuplicate();
+            compiler._builder.EmitLoadIntegerImmediate(1);
+            compiler._builder.EmitStoreInteger();
+            compiler._builder.EmitLoadIntegerImmediate(4);
+            compiler._builder.EmitAdd();
+            if (input.Type.IsRebarReferenceType())
+            {
+                compiler.LoadValueAsReference(input);
+                compiler._builder.EmitStorePointer();
+            }
+            else
+            {
+                compiler.LoadLocalAllocationReference(input);
+                compiler._builder.EmitDerefInteger();
+                compiler._builder.EmitStoreInteger();
+            }
         }
 
         #endregion
@@ -251,17 +333,6 @@ namespace Rebar.RebarTarget
             }
         }
 
-        public bool VisitAssignNode(AssignNode assignNode)
-        {
-            VariableReference assignee = assignNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                value = assignNode.InputTerminals.ElementAt(1).GetTrueVariable();
-            LoadValueAsReference(assignee);
-            LoadLocalAllocationReference(value);
-            _builder.EmitDerefInteger();
-            _builder.EmitStoreInteger();
-            return true;
-        }
-
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             VariableReference input = borrowTunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
@@ -291,30 +362,9 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        public bool VisitCreateCellNode(CreateCellNode createCellNode)
-        {
-            throw new NotImplementedException();
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             throw new NotImplementedException();
-        }
-
-        public bool VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode)
-        {
-            VariableReference var1 = exchangeValuesNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                var2 = exchangeValuesNode.InputTerminals.ElementAt(1).GetTrueVariable();
-            LoadValueAsReference(var2);
-            LoadValueAsReference(var1);
-            _builder.EmitDuplicate();
-            _builder.EmitDerefInteger();
-            _builder.EmitSwap();
-            LoadValueAsReference(var2);
-            _builder.EmitDerefInteger();
-            _builder.EmitStoreInteger();
-            _builder.EmitStoreInteger();
-            return true;
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
@@ -340,58 +390,6 @@ namespace Rebar.RebarTarget
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             throw new NotImplementedException();
-        }
-
-        public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
-        {
-            LabelBuilder falseLabel = _builder.CreateLabel(),
-                endLabel = _builder.CreateLabel();
-            VariableReference input1 = selectReferenceNode.InputTerminals.ElementAt(1).GetTrueVariable(),
-                input2 = selectReferenceNode.InputTerminals.ElementAt(2).GetTrueVariable(),
-                selector = selectReferenceNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                selectedReference = selectReferenceNode.OutputTerminals.ElementAt(1).GetTrueVariable();
-            LoadLocalAllocationReference(selectedReference);
-            LoadValueAsReference(selector);
-            _builder.EmitDerefInteger();
-            _builder.EmitBranchIfFalse(falseLabel);
-
-            // true
-            LoadValueAsReference(input1);
-            _builder.EmitBranch(endLabel);
-
-            // false
-            _builder.SetLabel(falseLabel);
-            LoadValueAsReference(input2);
-            
-            // end
-            _builder.SetLabel(endLabel);
-            _builder.EmitStorePointer();
-
-            return true;
-        }
-
-        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
-        {
-            VariableReference input = someConstructorNode.InputTerminals.ElementAt(0).GetTrueVariable(),
-                output = someConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable();
-            LoadLocalAllocationReference(output);
-            _builder.EmitDuplicate();
-            _builder.EmitLoadIntegerImmediate(1);
-            _builder.EmitStoreInteger();
-            _builder.EmitLoadIntegerImmediate(4);
-            _builder.EmitAdd();
-            if (input.Type.IsRebarReferenceType())
-            {
-                LoadValueAsReference(input);
-                _builder.EmitStorePointer();
-            }
-            else
-            {
-                LoadLocalAllocationReference(input);
-                _builder.EmitDerefInteger();
-                _builder.EmitStoreInteger();
-            }
-            return true;
         }
 
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)

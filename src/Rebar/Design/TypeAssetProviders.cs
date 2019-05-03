@@ -41,7 +41,7 @@ namespace Rebar.Design
             {
                 if (type.IsRebarReferenceType())
                 {
-                    NIType innerType = type.GetUnderlyingTypeFromRebarType();
+                    NIType innerType = type.GetReferentType();
                     ITypeAssetProvider innerTypeAssetProvider = StockResources.GetTypeAssets(null, innerType);
                     int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
                     ITypeAssetProvider outerTypeAssetProvider = type.IsMutableReferenceType()

@@ -121,11 +121,6 @@ namespace Rebar.RebarTarget
         // This visitor implementation parallels that of SetVariableTypesTransform:
         // For each variable created by a visited node, this should determine the appropriate ValueSource for that variable.
 
-        public bool VisitAssignNode(AssignNode assignNode)
-        {
-            return true;
-        }
-
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             Terminal inputTerminal = borrowTunnel.Terminals.ElementAt(0),
@@ -142,18 +137,7 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        public bool VisitCreateCellNode(CreateCellNode createCellNode)
-        {
-            CreateLocalAllocationForVariable(createCellNode.OutputTerminals.ElementAt(0).GetTrueVariable());
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
-        {
-            return true;
-        }
-
-        public bool VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode)
         {
             return true;
         }
@@ -221,18 +205,6 @@ namespace Rebar.RebarTarget
                 loopConditionAllocation = (LocalAllocationValueSource)_variableAllocations[inputVariable];
             }
             CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
-            return true;
-        }
-
-        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
-        {
-            CreateLocalAllocationForVariable(someConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable());
-            return true;
-        }
-
-        public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
-        {
-            CreateLocalAllocationForVariable(selectReferenceNode.OutputTerminals.ElementAt(1).GetTrueVariable());
             return true;
         }
 

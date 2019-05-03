@@ -8,6 +8,50 @@ namespace Rebar.SourceModel
 {
     #region Value manipulation
 
+    /// <summary>
+    /// Node that consumes one variable and assigns its value into another, whose old value is dropped.
+    /// </summary>
+    public class AssignNode : FunctionalNode
+    {
+        private const string ElementName = "AssignNode";
+
+        protected AssignNode()
+            : base(Signatures.AssignType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static AssignNode CreateAssignNode(IElementCreateInfo elementCreateInfo)
+        {
+            var assignNode = new AssignNode();
+            assignNode.Init(elementCreateInfo);
+            return assignNode;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class ExchangeValues : FunctionalNode
+    {
+        private const string ElementName = "ExchangeValues";
+
+        protected ExchangeValues()
+            : base(Signatures.ExchangeValuesType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static ExchangeValues CreateExchangeValues(IElementCreateInfo elementCreateInfo)
+        {
+            var exchangeValues = new ExchangeValues();
+            exchangeValues.Init(elementCreateInfo);
+            return exchangeValues;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
     public class CreateCopyNode : FunctionalNode
     {
         private const string ElementName = "CreateCopyNode";
@@ -23,6 +67,28 @@ namespace Rebar.SourceModel
             var createCopyNode = new CreateCopyNode();
             createCopyNode.Init(elementCreateInfo);
             return createCopyNode;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
+    public class SelectReferenceNode : FunctionalNode
+    {
+        private const string ElementName = "SelectReferenceNode";
+
+        protected SelectReferenceNode()
+            : base(Signatures.SelectReferenceType)
+        {
+            Width = StockDiagramGeometries.GridSize * 8;
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SelectReferenceNode CreateSelectReferenceNode(IElementCreateInfo elementCreateInfo)
+        {
+            var selectReferenceNode = new SelectReferenceNode();
+            selectReferenceNode.Init(elementCreateInfo);
+            return selectReferenceNode;
         }
 
         /// <inheritdoc />
@@ -536,6 +602,42 @@ namespace Rebar.SourceModel
 
     #endregion
 
+    #region Option
+
+    /// <summary>
+    /// Node that constructs a mutable Some(x) value from an input value x; the output type is Option&lt;T&gt; 
+    /// when the input type is T.
+    /// </summary>
+    public class SomeConstructorNode : FunctionalNode
+    {
+        private const string ElementName = "SomeConstructor";
+
+        protected SomeConstructorNode()
+            : base(Signatures.SomeConstructorType)
+        {
+            Width = StockDiagramGeometries.GridSize * 8;
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SomeConstructorNode CreateSomeConstructorNode(IElementCreateInfo elementCreateInfo)
+        {
+            var someConstructor = new SomeConstructorNode();
+            someConstructor.Init(elementCreateInfo);
+            return someConstructor;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
+    }
+
+    #endregion
+
     #region Vector
 
     public class VectorCreate : FunctionalNode
@@ -587,6 +689,64 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
+    #endregion
+
+    #region Cell
+
+    public class CreateLockingCell : FunctionalNode
+    {
+        private const string ElementName = "CreateLockingCell";
+
+        protected CreateLockingCell()
+            : base(Signatures.CreateLockingCellType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static CreateLockingCell CreateCreateLockingCell(IElementCreateInfo elementCreateInfo)
+        {
+            var createLockingCell = new CreateLockingCell();
+            createLockingCell.Init(elementCreateInfo);
+            return createLockingCell;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.CellDataType };
+    }
+
+    public class CreateNonLockingCell : FunctionalNode
+    {
+        private const string ElementName = "CreateNonLockingCell";
+
+        protected CreateNonLockingCell()
+            : base(Signatures.CreateNonLockingCellType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static CreateNonLockingCell CreateCreateNonLockingCell(IElementCreateInfo elementCreateInfo)
+        {
+            var createNonLockingCell = new CreateNonLockingCell();
+            createNonLockingCell.Init(elementCreateInfo);
+            return createNonLockingCell;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.CellDataType };
     }
 
     #endregion

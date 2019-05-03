@@ -18,6 +18,7 @@ namespace Rebar.SourceModel
             {
                 FixedTerminals.Add(terminal);
             }
+            Width = StockDiagramGeometries.GridSize * 4;
         }
 
         public NIType Signature { get; }
@@ -49,7 +50,6 @@ namespace Rebar.SourceModel
 
         private static void SetIconNodeGeometry(FunctionalNode node, IEnumerable<NodeTerminal> terminals)
         {
-            const int width = StockDiagramGeometries.GridSize * 4;
             int inputs = 0, outputs = 0;
             foreach (NodeTerminal terminal in terminals)
             {
@@ -61,7 +61,7 @@ namespace Rebar.SourceModel
                 else
                 {
                     ++outputs;
-                    terminal.Hotspot = new SMPoint(width, StockDiagramGeometries.GridSize * (2 * outputs - 1));
+                    terminal.Hotspot = new SMPoint(node.Width, StockDiagramGeometries.GridSize * (2 * outputs - 1));
                 }
             }
             int rows = Math.Max(1, Math.Max(inputs, outputs));
@@ -69,7 +69,7 @@ namespace Rebar.SourceModel
             node.Bounds = new SMRect(
                 node.Left,
                 node.Top,
-                width,
+                node.Width,
                 Math.Max(node.MinimumHeight, StockDiagramGeometries.GridSize * 2 * rows));
         }
 

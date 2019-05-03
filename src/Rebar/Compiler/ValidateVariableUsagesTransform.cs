@@ -1,7 +1,5 @@
 ﻿using System.Linq;
-using NationalInstruments;
 using NationalInstruments.Compiler.SemanticAnalysis;
-using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.FeatureToggles;
 using Rebar.Common;
@@ -15,6 +13,13 @@ namespace Rebar.Compiler
     /// </summary>
     internal class ValidateVariableUsagesTransform : VisitorTransformBase, IDfirNodeVisitor<bool>
     {
+        private readonly TerminalTypeUnificationResults _typeUnificationResults;
+
+        public ValidateVariableUsagesTransform(TerminalTypeUnificationResults typeUnificationResults)
+        {
+            _typeUnificationResults = typeUnificationResults;
+        }
+
         protected override void VisitNode(Node node)
         {
             this.VisitRebarNode(node);
@@ -25,11 +30,8 @@ namespace Rebar.Compiler
             Terminal sourceTerminal;
             if (wire.TryGetSourceTerminal(out sourceTerminal))
             {
+                _typeUnificationResults.SetMessagesOnTerminal(sourceTerminal);
                 VariableReference sourceVariable = sourceTerminal.GetFacadeVariable();
-                if (wire.SinkTerminals.HasMoreThan(1) && !WireTypeMayFork(sourceVariable.Type))
-                {
-                    wire.SetDfirMessage(Messages.WireCannotFork);
-                }
                 if (wire.Terminals.Any(t => !t.IsConnected))
                 {
                     wire.SetDfirMessage(WireSpecificUserMessages.LooseEnds);
@@ -41,46 +43,15 @@ namespace Rebar.Compiler
             }
         }
 
-        internal static bool WireTypeMayFork(NIType wireType)
-        {
-            if (wireType.IsImmutableReferenceType())
-            {
-                return true;
-            }
-
-            if (wireType.IsNumeric() || wireType.IsBoolean())
-            {
-                return true;
-            }
-
-            NIType optionValueType;
-            if (wireType.TryDestructureOptionType(out optionValueType))
-            {
-                return WireTypeMayFork(optionValueType);
-            }
-
-            return false;
-        }
-
         protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
         {
             this.VisitRebarNode(borderNode);
         }
 
-        public bool VisitAssignNode(AssignNode assignNode)
-        {
-            VariableUsageValidator assigneeValidator = assignNode.InputTerminals[0].GetValidator();
-            assigneeValidator.TestVariableIsMutableType();
-            VariableUsageValidator valueValidator = assignNode.InputTerminals[1].GetValidator();
-            valueValidator.TestVariableIsOwnedType();
-            assigneeValidator.TestSameUnderlyingTypeAs(valueValidator);
-            return true;
-        }
-
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             var validator = borrowTunnel.Terminals[0].GetValidator();
-            if (borrowTunnel.BorrowMode == Common.BorrowMode.Mutable)
+            if (borrowTunnel.BorrowMode == BorrowMode.Mutable)
             {
                 validator.TestVariableIsMutableType();
             }
@@ -93,27 +64,10 @@ namespace Rebar.Compiler
             return true;
         }
 
-        public bool VisitCreateCellNode(CreateCellNode createCellNode)
-        {
-            VariableUsageValidator validator = createCellNode.Terminals[0].GetValidator();
-            validator.TestVariableIsOwnedType();
-            return true;
-        }
-
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableUsageValidator validator = dropNode.Terminals[0].GetValidator();
             validator.TestVariableIsOwnedType();
-            return true;
-        }
-
-        public bool VisitExchangeValuesNode(ExchangeValuesNode exchangeValuesNode)
-        {
-            VariableUsageValidator validator1 = exchangeValuesNode.Terminals[0].GetValidator();
-            validator1.TestVariableIsMutableType();
-            VariableUsageValidator validator2 = exchangeValuesNode.Terminals[1].GetValidator();
-            validator2.TestVariableIsMutableType();
-            // TODO: ensure that lifetimes of exchanged values and references are compatible
             return true;
         }
 
@@ -128,29 +82,7 @@ namespace Rebar.Compiler
 
         public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            foreach (var inputTerminalPair in functionalNode.InputTerminals.Zip(Signatures.GetSignatureForNIType(functionalNode.Signature).Inputs))
-            {
-                Terminal inputTerminal = inputTerminalPair.Key;
-                SignatureTerminal signatureInputTerminal = inputTerminalPair.Value;
-                VariableUsageValidator validator = inputTerminal.GetValidator();
-                if (signatureInputTerminal.DisplayType.IsMutableReferenceType())
-                {
-                    validator.TestVariableIsMutableType();
-                }
-                if (!signatureInputTerminal.SignatureType.IsGenericParameter())
-                {
-                    NIType underlyingType = signatureInputTerminal.SignatureType;
-                    if (signatureInputTerminal.SignatureType.IsRebarReferenceType())
-                    {
-                        underlyingType = underlyingType.GetReferentType();
-                    }
-                    else
-                    {
-                        validator.TestVariableIsOwnedType();
-                    }
-                    validator.TestExpectedUnderlyingType(underlyingType);
-                }
-            }
+            functionalNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
 
             if (functionalNode.RequiredFeatureToggles.Any(feature => !FeatureToggleSupport.IsFeatureEnabled(feature)))
             {
@@ -161,49 +93,19 @@ namespace Rebar.Compiler
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            Terminal inputTerminal = iterateTunnel.Terminals[0];
-            VariableUsageValidator validator = inputTerminal.GetValidator();
-            validator.TestUnderlyingType(
-                type => type.IsIteratorType() || type.IsVectorType(),
-                PFTypes.Void.CreateIterator());
-
-            NIType underlyingType = inputTerminal.GetFacadeVariable().Type.GetUnderlyingTypeFromRebarType();
-            if (underlyingType.IsIteratorType())
-            {
-                validator.TestVariableIsMutableType();
-            }
+            ValidateRequiredInputTerminal(iterateTunnel.InputTerminals[0]);
             return true;
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
-            VariableUsageValidator validator = lockTunnel.Terminals[0].GetValidator();
-            validator.TestUnderlyingType(DataTypes.IsLockingCellType, PFTypes.Void.CreateLockingCell());
+            ValidateRequiredInputTerminal(lockTunnel.InputTerminals[0]);
             return true;
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
         {
-            Terminal inputTerminal = loopConditionTunnel.InputTerminals.ElementAt(0);
-            var validator = new VariableUsageValidator(inputTerminal, true, false);
-            validator.TestVariableIsOwnedType();
-            validator.TestExpectedUnderlyingType(PFTypes.Boolean);
-            return true;
-        }
-
-        public bool VisitSelectReferenceNode(SelectReferenceNode selectReferenceNode)
-        {
-            VariableUsageValidator validator1 = selectReferenceNode.Terminals[1].GetValidator();
-            VariableUsageValidator validator2 = selectReferenceNode.Terminals[2].GetValidator();
-            validator2.TestSameUnderlyingTypeAs(validator1);
-            VariableUsageValidator selectorValidator = selectReferenceNode.Terminals[0].GetValidator();
-            selectorValidator.TestExpectedUnderlyingType(PFTypes.Boolean);
-            return true;
-        }
-
-        public bool VisitSomeConstructorNode(SomeConstructorNode someConstructorNode)
-        {
-            VariableUsageValidator validator = someConstructorNode.Terminals[0].GetValidator();
+            ValidateOptionalInputTerminal(loopConditionTunnel.InputTerminals[0]);
             return true;
         }
 
@@ -231,6 +133,7 @@ namespace Rebar.Compiler
 
         public bool VisitTunnel(Tunnel tunnel)
         {
+            ValidateRequiredInputTerminal(tunnel.InputTerminals[0]);
             return true;
         }
 
@@ -242,15 +145,21 @@ namespace Rebar.Compiler
 
         public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
-            if (unwrapOptionTunnel.Direction != Direction.Input)
-            {
-                // TODO: report an error; this tunnel can only be an input
-                return true;
-            }
-            VariableUsageValidator validator = unwrapOptionTunnel.GetOuterTerminal(0).GetValidator();
-            validator.TestVariableIsOwnedType();
-            validator.TestUnderlyingType(t => t.IsOptionType(), PFTypes.Void.CreateOption());
+            ValidateRequiredInputTerminal(unwrapOptionTunnel.InputTerminals[0]);
             return true;
+        }
+
+        private void ValidateRequiredInputTerminal(Terminal inputTerminal)
+        {
+            if (inputTerminal.TestRequiredTerminalConnected())
+            {
+                _typeUnificationResults.SetMessagesOnTerminal(inputTerminal);
+            }
+        }
+
+        private void ValidateOptionalInputTerminal(Terminal inputTerminal)
+        {
+            _typeUnificationResults.SetMessagesOnTerminal(inputTerminal);
         }
     }
 }
