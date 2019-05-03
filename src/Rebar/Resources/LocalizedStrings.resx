@@ -147,6 +147,12 @@
   <data name="FeatureToggle_RebarTarget_Description" xml:space="preserve">
     <value>Enable the Rebar execution target</value>
   </data>
+  <data name="FeatureToggle_StringDataType_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_StringDataType_Description" xml:space="preserve">
+    <value>Enable string and string slice data types and related nodes</value>
+  </data>
   <data name="FeatureToggle_VectorAndSliceTypes_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

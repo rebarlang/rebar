@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -147,6 +147,24 @@ namespace Rebar.Resources {
         internal static string FeatureToggle_RebarTarget_Description {
             get {
                 return ResourceManager.GetString("FeatureToggle_RebarTarget_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_StringDataType_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_StringDataType_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable string and string slice data types and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_StringDataType_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_StringDataType_Description", resourceCulture);
             }
         }
         
