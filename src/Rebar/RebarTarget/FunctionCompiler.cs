@@ -27,7 +27,7 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["CreateCopy"] = CompileCreateCopy;
             _functionalNodeCompilers["SelectReference"] = CompileSelectReference;
             _functionalNodeCompilers["Output"] = CompileOutput;
-            _functionalNodeCompilers["SomeConstructor"] = CompileSomeConstructor;
+            _functionalNodeCompilers["Some"] = CompileSomeConstructor;
             _functionalNodeCompilers["VectorCreate"] = CompileNothing;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
