@@ -119,7 +119,6 @@
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\DropNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
-    <Compile Include="Compiler\Nodes\ExplicitUnborrowNode.cs" />
     <Compile Include="Compiler\Nodes\FunctionalNode.cs" />
     <Compile Include="Compiler\Nodes\IBeginLifetimeTunnel.cs" />
     <Compile Include="Compiler\Nodes\IDfirStructureVisitor.cs" />
