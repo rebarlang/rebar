@@ -131,6 +131,11 @@ namespace Rebar.RebarTarget
         private static void CompileOutput(FunctionCompiler compiler, FunctionalNode outputNode)
         {
             VariableReference input = outputNode.InputTerminals.ElementAt(0).GetTrueVariable();
+            NIType referentType = input.Type.GetReferentType();
+            if (!referentType.IsInt32())
+            {
+                throw new NotImplementedException($"Don't know how to display type {referentType} yet.");
+            }
             compiler.LoadValueAsReference(input);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitOutput_TEMP();

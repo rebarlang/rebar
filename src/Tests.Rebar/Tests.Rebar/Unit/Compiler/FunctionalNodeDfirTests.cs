@@ -264,6 +264,22 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(outputTerminalType.GetReferentType().IsVoid());
         }
 
+        [TestMethod]
+        public void FunctionNodeWithConstrainedGenericReferenceInputParameterAndAllowableInputWired_SetVariableTypes_InputTerminalTypeSet()
+        {
+            NIType signatureType = Signatures.OutputType;
+            DfirRoot dfirRoot = DfirRoot.Create();
+            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
+
+            Terminal inputTerminal = functionalNode.InputTerminals[0];
+            NIType inputType = inputTerminal.GetTrueVariable().Type;
+            Assert.IsTrue(inputType.IsImmutableReferenceType());
+            Assert.IsTrue(inputType.GetReferentType().IsInt32());
+        }
+
         #endregion
 
         #region ValidateVariableUsages
@@ -352,8 +368,10 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void FunctionNodeWithNonGenericSignatureParameterAndIncorrectTypeWired_ValidateVariableUsages_ErrorCreated()
         {
-            NIType signatureType = Signatures.OutputType;
             DfirRoot dfirRoot = DfirRoot.Create();
+            NIFunctionBuilder signatureTypeBuilder = PFTypes.Factory.DefineFunction("NonGenericInput");
+            Signatures.AddInputParameter(signatureTypeBuilder, PFTypes.Int32, "input");
+            NIType signatureType = signatureTypeBuilder.CreateType();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
 
@@ -400,6 +418,19 @@ namespace Tests.Rebar.Unit.Compiler
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
             AssertTerminalHasTypeConflictMessage(functionalNode.InputTerminals[2]);
+        }
+
+        [TestMethod]
+        public void FunctionNodeWithConstrainedGenericInputParameterAndDisallowedTypeWired_ValidateVariableUsages_ErrorCreated()
+        {
+            NIType signatureType = Signatures.OutputType;
+            DfirRoot dfirRoot = DfirRoot.Create();
+            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
+
+            RunSemanticAnalysisUpToValidation(dfirRoot);
+
+            Assert.IsTrue(functionalNode.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
         }
 
         #endregion

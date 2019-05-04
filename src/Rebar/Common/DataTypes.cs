@@ -330,5 +330,10 @@ namespace Rebar.Common
 
             return false;
         }
+
+        internal static bool TypeHasDisplayTrait(this NIType type)
+        {
+            return type.IsInt32();
+        }
     }
 }

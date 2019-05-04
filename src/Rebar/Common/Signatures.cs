@@ -7,10 +7,16 @@ namespace Rebar.Common
 {
     public static class Signatures
     {
-        public static NIType AddGenericDataTypeParameter(NIFunctionBuilder functionBuilder, string name)
+        public static NIType AddGenericDataTypeParameter(NIFunctionBuilder functionBuilder, string name, params NITypeBuilder[] constraints)
         {
             var genericTypeParameters = functionBuilder.MakeGenericParameters(name);
-            return genericTypeParameters.ElementAt(0).CreateType();
+            NITypeBuilder typeBuilder = genericTypeParameters.ElementAt(0);
+
+            // HACK, but there seems to be no other public way to add constraints to an NITypeBuilder
+            List<NITypeBuilder> builderConstraints = (List<NITypeBuilder>)((NIGenericTypeBuilder)typeBuilder).Constraints;
+            builderConstraints.AddRange(constraints);
+
+            return typeBuilder.CreateType();
         }
 
         private static NIType AddGenericLifetimeTypeParameter(NIFunctionBuilder functionBuilder, string name)
@@ -111,10 +117,11 @@ namespace Rebar.Common
             CreateCopyType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("Output");
-            // TODO: allow other types later
+            NITypeBuilder displayTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Display");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", displayTraitConstraintBuilder);
             AddInputOutputParameter(
                 functionTypeBuilder,
-                PFTypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                tDataParameter.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
                 "valueRef");
             OutputType = functionTypeBuilder.CreateType();
 

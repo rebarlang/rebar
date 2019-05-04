@@ -66,6 +66,14 @@ namespace Rebar.Compiler
                 SemanticAnalysisMessageCategories.Connection,
                 WireCannotForkDescriptor);
 
+        private static readonly MessageDescriptor TypeDoesNotHaveRequiredTraitDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeDoesNotHaveRequiredTrait");
+
+        public static readonly DfirMessage TypeDoesNotHaveRequiredTrait =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                TypeDoesNotHaveRequiredTraitDescriptor);
+
         private static readonly MessageDescriptor FeatureNotEnabledDescriptor = new MessageDescriptor(ResourceDictionaryName, "FeatureNotEnabled");
 
         public static readonly DfirMessage FeatureNotEnabled =

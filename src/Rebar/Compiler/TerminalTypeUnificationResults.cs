@@ -86,13 +86,17 @@ namespace Rebar.Compiler
             }
             if (unificationResult.FailedConstraints != null)
             {
-                if (unificationResult.FailedConstraints.OfType<Constraint>().Any())
+                if (unificationResult.FailedConstraints.OfType<CopyConstraint>().Any())
                 {
                     terminal.ParentNode.SetDfirMessage(Messages.WireCannotFork);
                 }
                 if (unificationResult.FailedConstraints.OfType<OutlastsLifetimeGraphConstraint>().Any())
                 {
                     terminal.SetDfirMessage(Messages.WiredReferenceDoesNotLiveLongEnough);
+                }
+                if (unificationResult.FailedConstraints.OfType<DisplayTraitConstraint>().Any())
+                {
+                    terminal.SetDfirMessage(Messages.TypeDoesNotHaveRequiredTrait);
                 }
             }
         }

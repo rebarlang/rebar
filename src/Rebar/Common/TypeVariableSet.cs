@@ -605,6 +605,17 @@ namespace Rebar.Common
         }
     }
 
+    internal class DisplayTraitConstraint : Constraint
+    {
+        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
+        {
+            if (!type.RenderNIType().TypeHasDisplayTrait())
+            {
+                unificationResult.AddFailedTypeConstraint(this);
+            }
+        }
+    }
+
     internal class OutlastsLifetimeGraphConstraint : Constraint
     {
         private readonly LifetimeGraphIdentifier _lifetimeGraph;

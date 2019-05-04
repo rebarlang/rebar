@@ -163,7 +163,8 @@ namespace Rebar.Compiler
                         }
                         else
                         {
-                            genericTypeParameters[genericParameterNIType] = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                            var typeConstraints = genericParameterNIType.GetConstraints().Select(CreateConstraintFromGenericNITypeConstraint).ToList();
+                            genericTypeParameters[genericParameterNIType] = _typeVariableSet.CreateReferenceToNewTypeVariable(typeConstraints);
                         }
                     }
                 }
@@ -231,6 +232,18 @@ namespace Rebar.Compiler
                 }
             }
             return true;
+        }
+
+        private Constraint CreateConstraintFromGenericNITypeConstraint(NIType niTypeConstraint)
+        {
+            if (niTypeConstraint.IsInterface() && niTypeConstraint.GetName() == "Display")
+            {
+                return new DisplayTraitConstraint();
+            }
+            else
+            {
+                throw new NotImplementedException("Don't know how to translate generic type constraint " + niTypeConstraint);
+            }
         }
 
         private void CreateFacadesForInoutReferenceParameter(
