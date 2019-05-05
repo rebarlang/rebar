@@ -112,6 +112,7 @@
     <Compile Include="Compiler\AutoBorrowNodeFacade.cs" />
     <Compile Include="Compiler\AutoBorrowTransform.cs" />
     <Compile Include="Common\Lifetime.cs" />
+    <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />

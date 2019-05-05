@@ -31,6 +31,7 @@ namespace Tests.Rebar.Unit.Compiler
             lifetimeVariableAssociation = lifetimeVariableAssociation ?? new LifetimeVariableAssociation();
             RunSemanticAnalysisUpToCreateNodeFacades(dfirRoot, cancellationToken);
             new MergeVariablesAcrossWiresTransform(lifetimeVariableAssociation, unificationResults).Execute(dfirRoot, cancellationToken);
+            new FinalizeAutoBorrowsTransform().Execute(dfirRoot, cancellationToken);
         }
 
         protected void RunSemanticAnalysisUpToValidation(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
@@ -65,10 +66,19 @@ namespace Tests.Rebar.Unit.Compiler
             wire.SetWireBeginsMutableVariable(mutable);
         }
 
-        internal static ExplicitBorrowNode ConnectExplicitBorrowToInputTerminal(Terminal inputTerminal)
+        internal static ExplicitBorrowNode ConnectExplicitBorrowToInputTerminals(params Terminal[] inputTerminals)
         {
-            ExplicitBorrowNode borrow = new ExplicitBorrowNode(inputTerminal.ParentDiagram, BorrowMode.Immutable, 1, true, true);
-            Wire wire = Wire.Create(inputTerminal.ParentDiagram, borrow.OutputTerminals[0], inputTerminal);
+            return ConnectExplicitBorrowToInputTerminals(BorrowMode.Immutable, inputTerminals);
+        }
+
+        internal static ExplicitBorrowNode ConnectExplicitBorrowToInputTerminals(BorrowMode borrowMode, params Terminal[] inputTerminals)
+        {
+            Diagram parentDiagram = inputTerminals[0].ParentDiagram;
+            ExplicitBorrowNode borrow = new ExplicitBorrowNode(parentDiagram, borrowMode, inputTerminals.Length, true, true);
+            for (int i = 0; i < inputTerminals.Length; ++i)
+            {
+                Wire.Create(parentDiagram, borrow.OutputTerminals[i], inputTerminals[i]);
+            }
             return borrow;
         }
 

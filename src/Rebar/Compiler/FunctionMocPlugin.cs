@@ -89,6 +89,7 @@ namespace Rebar.Compiler
             {
                 new CreateNodeFacadesTransform(),
                 new MergeVariablesAcrossWiresTransform(lifetimeVariableAssocation, unificationResults),
+                new FinalizeAutoBorrowsTransform(),
                 new ValidateVariableUsagesTransform(unificationResults),
                 new ReflectVariablesToTerminalsTransform(),
             };

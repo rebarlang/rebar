@@ -144,6 +144,20 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
+        public void FunctionNodeWithReferenceWiredToInReferenceParameter_SetVariableTypes_InputTerminalTrueAndFacadeVariablesMerged()
+        {
+            NIType signatureType = Signatures.ImmutablePassthroughType;
+            DfirRoot dfirRoot = DfirRoot.Create();
+            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
+
+            AssertTerminalTrueAndFacadeVariablesReferenceSame(functionalNode.InputTerminals[0]);
+        }
+
+        [TestMethod]
         public void FunctionNodeWithNonGenericOutParameter_SetVariableTypes_TypeSetOnOutput()
         {
             NIType signatureType = Signatures.DefinePureUnaryFunction("unary", PFTypes.Int32, PFTypes.Int32);
@@ -194,9 +208,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.SelectReferenceType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ExplicitBorrowNode borrow = new ExplicitBorrowNode(dfirRoot.BlockDiagram, BorrowMode.Immutable, 2, true, true);
-            Wire wire1 = Wire.Create(dfirRoot.BlockDiagram, borrow.OutputTerminals[0], functionalNode.InputTerminals[1]);
-            Wire wire2 = Wire.Create(dfirRoot.BlockDiagram, borrow.OutputTerminals[1], functionalNode.InputTerminals[2]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
             ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
 
@@ -207,6 +219,22 @@ namespace Tests.Rebar.Unit.Compiler
             Lifetime inputLifetime = inputTerminal.GetTrueVariable().Lifetime;
             Terminal outputTerminal = functionalNode.OutputTerminals[1];
             Assert.AreEqual(inputLifetime, outputTerminal.GetTrueVariable().Lifetime);
+        }
+
+        [TestMethod]
+        public void FunctionNodeWithSelectReferenceSignatureAndSameLifetimeImmutableReferencesWired_SetVariableTypes_InputTerminalsTrueAndFacadeVariablesMerged()
+        {
+            NIType signatureType = Signatures.SelectReferenceType;
+            DfirRoot dfirRoot = DfirRoot.Create();
+            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
+
+            AssertTerminalTrueAndFacadeVariablesReferenceSame(functionalNode.InputTerminals[1]);
+            AssertTerminalTrueAndFacadeVariablesReferenceSame(functionalNode.InputTerminals[2]);
         }
 
         [TestMethod]
@@ -233,11 +261,9 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.SelectReferenceType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ExplicitBorrowNode borrow = new ExplicitBorrowNode(dfirRoot.BlockDiagram, BorrowMode.Mutable, 2, true, true);
-            Wire wire1 = Wire.Create(dfirRoot.BlockDiagram, borrow.OutputTerminals[0], functionalNode.InputTerminals[1]);
-            Wire wire2 = Wire.Create(dfirRoot.BlockDiagram, borrow.OutputTerminals[1], functionalNode.InputTerminals[2]);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], PFTypes.Int32, true);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], PFTypes.Int32, true);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(BorrowMode.Mutable, functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, true);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -247,6 +273,22 @@ namespace Tests.Rebar.Unit.Compiler
             VariableReference outputTerminalVariable = outputTerminal.GetTrueVariable();
             Assert.IsTrue(outputTerminalVariable.Type.IsMutableReferenceType());
             Assert.AreEqual(inputLifetime, outputTerminalVariable.Lifetime);
+        }
+
+        [TestMethod]
+        public void FunctionNodeWithSelectReferenceSignatureAndSameLifetimeMutableReferencesWired_SetVariableTypes_InputTerminalsTrueAndFacadeVariablesMerged()
+        {
+            NIType signatureType = Signatures.SelectReferenceType;
+            DfirRoot dfirRoot = DfirRoot.Create();
+            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(BorrowMode.Mutable, functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, true);
+
+            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
+
+            AssertTerminalTrueAndFacadeVariablesReferenceSame(functionalNode.InputTerminals[1]);
+            AssertTerminalTrueAndFacadeVariablesReferenceSame(functionalNode.InputTerminals[2]);
         }
 
         [TestMethod]
@@ -280,6 +322,11 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(inputType.GetReferentType().IsInt32());
         }
 
+        private void AssertTerminalTrueAndFacadeVariablesReferenceSame(Terminal terminal)
+        {
+            Assert.IsTrue(terminal.GetFacadeVariable().ReferencesSame(terminal.GetTrueVariable()));
+        }
+
         #endregion
 
         #region ValidateVariableUsages
@@ -303,7 +350,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.MutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminal(functionalNode.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
@@ -330,7 +377,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.ImmutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminal(functionalNode.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
@@ -344,7 +391,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.RangeType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminal(functionalNode.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 
@@ -52,26 +53,27 @@ namespace Rebar.Compiler
             return lifetimeGroup;
         }
 
+        private void DoForEachLifetimeGroup(Action<ReferenceInputTerminalLifetimeGroup> action)
+        {
+            foreach (ReferenceInputTerminalLifetimeGroup lifetimeGroup in _lifetimeGroups ?? Enumerable.Empty<ReferenceInputTerminalLifetimeGroup>())
+            {
+                action(lifetimeGroup);
+            }
+        }
+
         public void SetLifetimeInterruptedVariables(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
-            if (_lifetimeGroups != null)
-            {
-                foreach (var lifetimeGroup in _lifetimeGroups)
-                {
-                    lifetimeGroup.SetInterruptedVariables(lifetimeVariableAssociation);
-                }
-            }
+            DoForEachLifetimeGroup(l => l.SetInterruptedVariables(lifetimeVariableAssociation));
+        }
+
+        public void FinalizeAutoBorrows()
+        {
+            DoForEachLifetimeGroup(l => l.FinalizeAutoBorrows());
         }
 
         public void CreateBorrowAndTerminateLifetimeNodes()
         {
-            if (_lifetimeGroups != null)
-            {
-                foreach (var lifetimeGroup in _lifetimeGroups)
-                {
-                    lifetimeGroup.CreateBorrowAndTerminateLifetimeNodes();
-                }
-            }
+            DoForEachLifetimeGroup(l => l.CreateBorrowAndTerminateLifetimeNodes());
         }
     }
 }

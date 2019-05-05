@@ -70,6 +70,20 @@ namespace Rebar.Compiler
             }
         }
 
+        internal void FinalizeAutoBorrows()
+        {
+            // For now, assume that the ReferenceInputTerminalFacades are setting _borrowRequired correctly.
+            // (They're not, in the case where the true variable lifetimes change.)
+            bool borrowRequired = _borrowRequired;
+            if (!borrowRequired)
+            {
+                foreach (ReferenceInputTerminalFacade referenceInput in _facades)
+                {
+                    referenceInput.TrueVariable.MergeInto(referenceInput.FacadeVariable);
+                }
+            }
+        }
+
         public void SetInterruptedVariables(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             if (_borrowRequired)

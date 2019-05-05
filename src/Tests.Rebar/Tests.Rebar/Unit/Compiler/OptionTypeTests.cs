@@ -52,7 +52,7 @@ namespace Tests.Rebar.Unit.Compiler
             UnwrapOptionTunnel unwrapOption = CreateUnwrapOptionTunnel(frame);
             Tunnel outputTunnel = frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
             FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(outputTunnel.InputTerminals[0]);
-            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminal(someConstructor.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(someConstructor.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
