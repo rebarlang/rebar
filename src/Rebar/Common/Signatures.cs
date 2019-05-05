@@ -183,6 +183,18 @@ namespace Rebar.Common
                 "option");
             NoneConstructorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("IsSome");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateOption().CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "option");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.Boolean,
+                "isSome");
+            IsSomeType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
             // TODO
 #if FALSE
@@ -256,6 +268,8 @@ namespace Rebar.Common
         public static NIType SomeConstructorType { get; }
 
         public static NIType NoneConstructorType { get; }
+
+        public static NIType IsSomeType { get; }
 
         public static NIType VectorCreateType { get; }
 

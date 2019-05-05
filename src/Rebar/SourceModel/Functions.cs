@@ -667,6 +667,30 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
     }
 
+    public class IsSome : FunctionalNode
+    {
+        private const string ElementName = "IsSome";
+
+        protected IsSome()
+            : base(Signatures.IsSomeType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static IsSome CreateIsSome(IElementCreateInfo elementCreateInfo)
+        {
+            var isSome = new IsSome();
+            isSome.Init(elementCreateInfo);
+            return isSome;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
+    }
+
     #endregion
 
     #region Vector

@@ -29,6 +29,7 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["Output"] = CompileOutput;
             _functionalNodeCompilers["Some"] = CompileSomeConstructor;
             _functionalNodeCompilers["None"] = CompileNoneConstructor;
+            _functionalNodeCompilers["IsSome"] = CompileIsSome;
             _functionalNodeCompilers["VectorCreate"] = CompileNothing;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
@@ -248,6 +249,16 @@ namespace Rebar.RebarTarget
             VariableReference output = noneConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable();
             compiler.LoadLocalAllocationReference(output);
             compiler._builder.EmitLoadIntegerImmediate(0);
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileIsSome(FunctionCompiler compiler, FunctionalNode isSomeNode)
+        {
+            VariableReference output = isSomeNode.OutputTerminals[1].GetTrueVariable(),
+                input = isSomeNode.InputTerminals[0].GetTrueVariable();
+            compiler.LoadLocalAllocationReference(output);
+            compiler.LoadValueAsReference(input);
+            compiler._builder.EmitDerefInteger();
             compiler._builder.EmitStoreInteger();
         }
 
