@@ -84,15 +84,5 @@ namespace Tests.Rebar.Unit.Compiler
 
             Assert.IsTrue(tunnel.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.WiredReferenceDoesNotLiveLongEnough.Descriptor));
         }
-
-        private Tunnel CreateInputTunnel(Frame frame)
-        {
-            return frame.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
-        }
-
-        private Tunnel CreateOutputTunnel(Frame frame)
-        {
-            return frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
-        }
     }
 }

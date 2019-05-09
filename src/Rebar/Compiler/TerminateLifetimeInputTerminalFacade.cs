@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NationalInstruments;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -44,7 +41,7 @@ namespace Rebar.Compiler
 
         private readonly Diagram _parentDiagram;
         private State _state = State.NoVariableSeen;
-        private Dictionary<VariableReference, bool> _variablesToTerminate;
+        private List<VariableReference> _inputVariables = new List<VariableReference>();
 
         public TerminateLifetimeUnificationState(Diagram parentDiagram)
         {
@@ -70,38 +67,14 @@ namespace Rebar.Compiler
 
                     _state = State.VariablesInLifetimeRemaining;
                     CommonLifetime = inputLifetime;
-                    // TODO: this does not account for Variables in singleLifetime that have already been consumed
-                    _variablesToTerminate = new Dictionary<VariableReference, bool>();
-                    // Problem: accessing VariableReference.Lifetime here is invalid for any Variables we haven't visited yet.
-                    foreach (VariableReference variable in _parentDiagram.GetVariableSet().GetUniqueVariableReferences())
-                    {
-                        // HACK
-                        try
-                        {
-                            if (variable.Lifetime != inputLifetime)
-                            {
-                                continue;
-                            }
-                        }
-                        catch (ArgumentException)
-                        {
-                            continue;
-                        }
-                        _variablesToTerminate[variable] = false;
-                    }
-                    RemoveVariableFromTerminationSet(connectedInput);
+                    _inputVariables.Add(connectedInput);
                     break;
                 case State.VariablesInLifetimeRemaining:
                 case State.AllVariablesInLifetimeTerminated:
-                    if (inputLifetime == CommonLifetime)
-                    {
-                        RemoveVariableFromTerminationSet(connectedInput);
-                    }
-                    else
+                    if (inputLifetime != CommonLifetime)
                     {
                         _state = State.InputLifetimeIsNotUnique;
                         CommonLifetime = null;
-                        // _variablesToTerminate = null;
                     }
                     break;
                 case State.LifetimeCannotBeTerminated:
@@ -110,19 +83,33 @@ namespace Rebar.Compiler
             }
         }
 
-        private void RemoveVariableFromTerminationSet(VariableReference variable)
+        public void FinalizeTerminateLifetimeInputs(TerminateLifetimeNode terminateLifetimeNode, LifetimeVariableAssociation lifetimeVariableAssociation)
         {
-            if (_variablesToTerminate.ContainsKey(variable))
+            if (CommonLifetime != null && _state == State.VariablesInLifetimeRemaining)
             {
-                _variablesToTerminate[variable] = true;
+                // assume that none of the lifetimes of our inputs are going to change after this point
+                foreach (var inputVariable in _inputVariables)
+                {
+                    lifetimeVariableAssociation.MarkVariableConsumed(inputVariable);
+                }
+                List<VariableReference> unconsumedVariables = _parentDiagram
+                    .GetVariableSet()
+                    .GetUniqueVariableReferences()
+                    .Where(variable => variable.Lifetime == CommonLifetime && !lifetimeVariableAssociation.IsVariableConsumed(variable))
+                    .ToList();
+                if (unconsumedVariables.Count == 0)
+                {
+                    _state = State.AllVariablesInLifetimeTerminated;
+                }
+
+                int requiredInputCount = _inputVariables.Count + unconsumedVariables.Count;
+                terminateLifetimeNode.RequiredInputCount = requiredInputCount;
+                terminateLifetimeNode.UpdateInputTerminals(requiredInputCount);
             }
-            if (_variablesToTerminate.All(pair => pair.Value))
-            {
-                _state = State.AllVariablesInLifetimeTerminated;
-            }
+            UpdateTerminateLifetimeErrorState(terminateLifetimeNode);
         }
 
-        public void UpdateTerminateLifetimeOutputs(TerminateLifetimeNode terminateLifetimeNode, LifetimeVariableAssociation lifetimeVariableAssociation)
+        private void UpdateTerminateLifetimeErrorState(TerminateLifetimeNode terminateLifetimeNode)
         {
             switch (_state)
             {
@@ -140,14 +127,16 @@ namespace Rebar.Compiler
                     terminateLifetimeNode.ErrorState = TerminateLifetimeErrorState.InputLifetimeCannotBeTerminated;
                     break;
             }
+        }
+
+        public void UpdateTerminateLifetimeOutputs(TerminateLifetimeNode terminateLifetimeNode, LifetimeVariableAssociation lifetimeVariableAssociation)
+        {
             if (CommonLifetime != null)
             {
-                int requiredInputCount = _variablesToTerminate.Count();
-                terminateLifetimeNode.RequiredInputCount = requiredInputCount;
                 IEnumerable<VariableReference> interruptedVariables = lifetimeVariableAssociation.GetVariablesInterruptedByLifetime(CommonLifetime);
                 int outputCount = interruptedVariables.Count();
                 terminateLifetimeNode.RequiredOutputCount = outputCount;
-                terminateLifetimeNode.UpdateTerminals(requiredInputCount, outputCount);
+                terminateLifetimeNode.UpdateOutputTerminals(outputCount);
 
                 foreach (var outputTerminalPair in terminateLifetimeNode.OutputTerminals.Zip(interruptedVariables))
                 {

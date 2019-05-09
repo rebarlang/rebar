@@ -11,6 +11,8 @@ namespace Rebar.Common
 
         private readonly Dictionary<Lifetime, LifetimeVariableInfo> _lifetimeVariableInfos = new Dictionary<Lifetime, LifetimeVariableInfo>();
 
+        private readonly HashSet<VariableReference> _consumedVariables = VariableReference.CreateUniqueVariableHashSet();
+
         private LifetimeVariableInfo GetLifetimeVariableInfo(Lifetime lifetime)
         {
             LifetimeVariableInfo info;
@@ -30,6 +32,16 @@ namespace Rebar.Common
         public IEnumerable<VariableReference> GetVariablesInterruptedByLifetime(Lifetime lifetime)
         {
             return GetLifetimeVariableInfo(lifetime).InterruptedVariables;
+        }
+
+        public void MarkVariableConsumed(VariableReference variableReference)
+        {
+            _consumedVariables.Add(variableReference);
+        }
+
+        public bool IsVariableConsumed(VariableReference variableReference)
+        {
+            return _consumedVariables.Contains(variableReference);
         }
     }
 }

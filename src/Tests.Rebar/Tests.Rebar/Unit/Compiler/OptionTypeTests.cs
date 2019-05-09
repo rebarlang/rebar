@@ -50,7 +50,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = CreateUnwrapOptionTunnel(frame);
-            Tunnel outputTunnel = frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
             FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(outputTunnel.InputTerminals[0]);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(someConstructor.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
@@ -66,7 +66,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = CreateUnwrapOptionTunnel(frame);
-            Tunnel outputTunnel = frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
@@ -83,7 +83,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = CreateUnwrapOptionTunnel(frame);
-            Tunnel outputTunnel = frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
             FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(outputTunnel.InputTerminals[0]);
             ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
 

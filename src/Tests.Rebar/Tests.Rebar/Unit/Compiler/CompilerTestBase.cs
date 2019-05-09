@@ -32,6 +32,7 @@ namespace Tests.Rebar.Unit.Compiler
             RunSemanticAnalysisUpToCreateNodeFacades(dfirRoot, cancellationToken);
             new MergeVariablesAcrossWiresTransform(lifetimeVariableAssociation, unificationResults).Execute(dfirRoot, cancellationToken);
             new FinalizeAutoBorrowsTransform().Execute(dfirRoot, cancellationToken);
+            new MarkConsumedVariablesTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
         }
 
         protected void RunSemanticAnalysisUpToValidation(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
@@ -89,6 +90,16 @@ namespace Tests.Rebar.Unit.Compiler
             borrowTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
             terminateLifetimeDfir.BeginLifetimeTunnel = borrowTunnel;
             return borrowTunnel;
+        }
+
+        protected Tunnel CreateInputTunnel(Frame frame)
+        {
+            return frame.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+        }
+
+        protected Tunnel CreateOutputTunnel(Frame frame)
+        {
+            return frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
         }
 
         protected void AssertTerminalHasTypeConflictMessage(Terminal terminal)

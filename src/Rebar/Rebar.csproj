@@ -116,6 +116,7 @@
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
+    <Compile Include="Compiler\MarkConsumedVariablesTransform.cs" />
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\DropNode.cs" />

@@ -46,7 +46,7 @@ namespace Rebar.Compiler.Nodes
             return visitor.VisitTerminateLifetimeNode(this);
         }
 
-        public void UpdateTerminals(int inputTerminalCount, int outputTerminalCount)
+        public void UpdateInputTerminals(int inputTerminalCount)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(this);
             var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
@@ -74,7 +74,12 @@ namespace Rebar.Compiler.Nodes
                     --i;
                 }
             }
+        }
 
+        public void UpdateOutputTerminals(int outputTerminalCount)
+        {
+            AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(this);
+            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
             int currentOutputTerminalCount = OutputTerminals.Count();
             if (currentOutputTerminalCount < outputTerminalCount)
             {
