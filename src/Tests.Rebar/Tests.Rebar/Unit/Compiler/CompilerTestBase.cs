@@ -8,6 +8,7 @@ using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
+using Rebar.RebarTarget.Execution;
 
 namespace Tests.Rebar.Unit.Compiler
 {
@@ -43,13 +44,13 @@ namespace Tests.Rebar.Unit.Compiler
             new ValidateVariableUsagesTransform(unificationResults).Execute(dfirRoot, cancellationToken);
         }
 
-        protected void RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
+        protected Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
         {
             var cancellationToken = new CompileCancellationToken();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
-
+            
             new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
-            FunctionCompileHandler.CompileFunction(dfirRoot, cancellationToken);
+            return FunctionCompileHandler.CompileFunction(dfirRoot, cancellationToken);
         }
 
         protected NIType DefineGenericOutputFunctionSignature()
@@ -60,11 +61,12 @@ namespace Tests.Rebar.Unit.Compiler
             return functionBuilder.CreateType();
         }
 
-        protected void ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, bool mutable)
+        protected Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, bool mutable)
         {
             Constant constant = Constant.Create(inputTerminal.ParentDiagram, variableType.CreateDefaultValue(), variableType);
             Wire wire = Wire.Create(inputTerminal.ParentDiagram, constant.OutputTerminal, inputTerminal);
             wire.SetWireBeginsMutableVariable(mutable);
+            return constant;
         }
 
         internal static ExplicitBorrowNode ConnectExplicitBorrowToInputTerminals(params Terminal[] inputTerminals)

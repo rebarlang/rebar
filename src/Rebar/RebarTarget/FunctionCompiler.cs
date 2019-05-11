@@ -60,6 +60,8 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["LessEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitLessThanOrEqual());
             _functionalNodeCompilers["GreaterThan"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThan());
             _functionalNodeCompilers["GreaterEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThanOrEqual());
+
+            _functionalNodeCompilers["Inspect"] = CompileInspect;
         }
 
         private static void CompileNothing(FunctionCompiler compiler, FunctionalNode noopNode)
@@ -251,7 +253,21 @@ namespace Rebar.RebarTarget
             compiler._builder.EmitStoreInteger();
         }
 
-        #endregion
+        private static void CompileInspect(FunctionCompiler compiler, FunctionalNode inspectNode)
+        {
+            VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
+            int typeSize = Allocator.GetTypeSize(input.Type.GetReferentType());
+            StaticDataBuilder staticData = compiler._builder.DefineStaticData();
+            staticData.Data = new byte[typeSize];
+            staticData.Identifier = StaticDataIdentifier.CreateFromNode(inspectNode);
+
+            compiler.LoadValueAsReference(input);
+            compiler._builder.EmitLoadStaticDataAddress(staticData);
+            compiler._builder.EmitLoadIntegerImmediate(typeSize);
+            compiler._builder.EmitCopyBytes_TEMP();
+        }
+
+#endregion
 
         private readonly FunctionBuilder _builder;
         private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;

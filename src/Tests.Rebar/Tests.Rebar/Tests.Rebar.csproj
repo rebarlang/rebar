@@ -52,6 +52,7 @@
     <Reference Include="NationalInstruments.Core">
       <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
     </Reference>
+    <Reference Include="NationalInstruments.ExecutionFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="NationalInstruments.PlatformFramework">
       <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
@@ -72,6 +73,8 @@
     <Compile Include="Unit\Compiler\TerminateLifetimeNodeTests.cs" />
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
     <Compile Include="Unit\Compiler\WireTests.cs" />
+    <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
+    <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
     <Compile Include="Unit\TypeInferenceUnitTests.cs" />
   </ItemGroup>
   <ItemGroup>

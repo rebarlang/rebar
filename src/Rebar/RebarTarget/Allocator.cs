@@ -49,7 +49,7 @@ namespace Rebar.RebarTarget
             _variableAllocations[referencingVariable] = new ConstantLocalReferenceValueSource(localAllocation.Index);
         }
 
-        private int GetTypeSize(NIType type)
+        internal static int GetTypeSize(NIType type)
         {
             if (type.IsRebarReferenceType())
             {

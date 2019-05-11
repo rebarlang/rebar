@@ -125,6 +125,14 @@ namespace Rebar.Common
                 "valueRef");
             OutputType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("Inspect");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "valueRef");
+            InspectType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("SelectReference");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -264,6 +272,8 @@ namespace Rebar.Common
         public static NIType CreateLockingCellType { get; }
 
         public static NIType CreateNonLockingCellType { get; }
+
+        public static NIType InspectType { get; }
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {
