@@ -33,6 +33,11 @@ namespace Rebar.Common
             return new Dictionary<VariableReference, TValue>(new SameReferencedVariableEqualityComparer());
         }
 
+        public static HashSet<VariableReference> CreateUniqueVariableHashSet()
+        {
+            return new HashSet<VariableReference>(new SameReferencedVariableEqualityComparer());
+        }
+
         internal VariableReference(VariableSet variableSet, int referenceIndex)
         {
             _variableSet = variableSet;

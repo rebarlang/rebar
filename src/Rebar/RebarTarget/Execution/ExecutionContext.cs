@@ -1,32 +1,105 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using NationalInstruments.Composition;
-using NationalInstruments.Core;
 using System.Runtime.Serialization;
 
 namespace Rebar.RebarTarget.Execution
 {
     public class ExecutionContext
     {
-        private readonly IDebugHost _debugHost;
+        private bool _loading = true;
+        private readonly IRebarTargetRuntimeServices _runtimeServices;
         private Dictionary<string, Function> _loadedFunctions = new Dictionary<string, Function>();
+        private readonly Dictionary<StaticDataIdentifier, Tuple<int, int>> _staticDataLocations = new Dictionary<StaticDataIdentifier, Tuple<int, int>>();
+        private int _totalStaticDataSize = 0;
+        private byte[] _memory;
+        private int _stackOffset;
+        private int _heapOffset;
 
-        public ExecutionContext(ICompositionHost host)
+        public ExecutionContext(IRebarTargetRuntimeServices runtimeServices)
         {
-            Host = host;
-            _debugHost = host.GetSharedExportedValue<IDebugHost>();
+            _runtimeServices = runtimeServices;
         }
 
-        public ICompositionHost Host { get; }
+        internal byte[] ReadStaticData(StaticDataIdentifier staticDataIdentifier)
+        {
+            if (_loading)
+            {
+                throw new InvalidOperationException("Cannot call ReadStaticData before calling FinalizeLoad");
+            }
+            Tuple<int, int> staticDataLocation;
+            if (_staticDataLocations.TryGetValue(staticDataIdentifier, out staticDataLocation))
+            {
+                byte[] staticData = new byte[staticDataLocation.Item2];
+                Array.Copy(_memory, staticDataLocation.Item1, staticData, 0, staticDataLocation.Item2);
+                return staticData;
+            }
+            throw new ArgumentException("Static data not found", "staticDataIdentifier");
+        }
 
         public void LoadFunction(Function function)
         {
+            if (!_loading)
+            {
+                throw new InvalidOperationException("Cannot call LoadFunction after calling FinalizeLoad");
+            }
             _loadedFunctions[function.Name] = function;
+            _totalStaticDataSize += ComputeStaticDataSize(function);
+        }
+
+        private int RoundUpToNearest(int toRound, int multiplicand)
+        {
+            int remainder = toRound % multiplicand;
+            return remainder == 0 ? toRound : (toRound + multiplicand - remainder);
+        }
+
+        private int ComputeStaticDataSize(Function function)
+        {
+            int size = 0;
+            foreach (var staticDataItem in function.StaticData)
+            {
+                int dataItemSize = RoundUpToNearest(staticDataItem.Data.Length, 4);
+                size += dataItemSize;
+            }
+            return size;
+        }
+
+        public void FinalizeLoad()
+        {
+            _loading = false;
+
+            int dataSectionSize = RoundUpToNearest(_totalStaticDataSize, 1024);
+            int stackSize = 1024;
+            int heapSize = 2048;
+            _memory = new byte[dataSectionSize + stackSize + heapSize];
+            _stackOffset = dataSectionSize;
+            _heapOffset = dataSectionSize + stackSize;
+
+            int currentOffset = 0;
+            foreach (Function loadedFunction in _loadedFunctions.Values)
+            {
+                Dictionary<StaticDataInformation, int> staticOffsets = new Dictionary<StaticDataInformation, int>();
+                foreach (var staticDataInformation in loadedFunction.StaticData)
+                {
+                    staticOffsets[staticDataInformation] = currentOffset;
+                    byte[] staticDataItem = staticDataInformation.Data;
+                    if (staticDataInformation.Identifier != null)
+                    {
+                        _staticDataLocations[staticDataInformation.Identifier] = new Tuple<int, int>(currentOffset, staticDataItem.Length);
+                    }
+                    Array.Copy(staticDataItem, _memory, staticDataItem.Length);
+                    currentOffset += RoundUpToNearest(staticDataItem.Length, 4);
+                }
+                loadedFunction.PatchStaticDataOffsets(staticOffsets);
+            }
         }
 
         public void ExecuteFunctionTopLevel(string functionName)
         {
+            if (_loading)
+            {
+                throw new InvalidOperationException("Cannot call ExecuteFunctionTopLevel before calling FinalizeLoad");
+            }
             try
             {
                 Function function = _loadedFunctions[functionName];
@@ -34,8 +107,7 @@ namespace Rebar.RebarTarget.Execution
                 int ip = 0;
                 bool executing = true;
                 var operandStack = new Stack<int>();
-                var memory = new byte[4 * 256];
-                int stackTop = 0;
+                int stackTop = _stackOffset;
 
                 while (executing)
                 {
@@ -76,12 +148,19 @@ namespace Rebar.RebarTarget.Execution
                                 nextIP = ip + 2;
                             }
                             break;
+                        case OpCodes.LoadStaticAddress:
+                            {
+                                int staticAddress = DataHelpers.ReadIntFromByteArray(code, ip + 1);
+                                operandStack.Push(staticAddress);
+                                nextIP = ip + 5;
+                            }
+                            break;
                         case OpCodes.StoreInteger:
                         case OpCodes.StorePointer:
                             {
                                 int value = operandStack.Pop(),
                                     address = operandStack.Pop();
-                                DataHelpers.WriteIntToByteArray(value, memory, address);
+                                DataHelpers.WriteIntToByteArray(value, _memory, address);
                                 string message = $"Stored {value} at {address}";
                             }
                             break;
@@ -89,7 +168,7 @@ namespace Rebar.RebarTarget.Execution
                         case OpCodes.DerefPointer:
                             {
                                 int address = operandStack.Pop();
-                                int value = DataHelpers.ReadIntFromByteArray(memory, address);
+                                int value = DataHelpers.ReadIntFromByteArray(_memory, address);
                                 operandStack.Push(value);
                             }
                             break;
@@ -170,11 +249,24 @@ namespace Rebar.RebarTarget.Execution
                                 operandStack.Push(next);
                             }
                             break;
+                        case OpCodes.CopyBytes_TEMP:
+                            {
+                                int size = operandStack.Pop(),
+                                    toAddress = operandStack.Pop(),
+                                    fromAddress = operandStack.Pop();
+                                for (int i = 0; i < size; ++i)
+                                {
+                                    _memory[toAddress] = _memory[fromAddress];
+                                    ++toAddress;
+                                    ++fromAddress;
+                                }
+                            }
+                            break;
                         case OpCodes.Output_TEMP:
                             {
                                 int value = operandStack.Pop();
                                 string message = $"Output: {value}";
-                                _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
+                                _runtimeServices.Output(message);
                             }
                             break;
                         default:
@@ -221,6 +313,7 @@ namespace Rebar.RebarTarget.Execution
         // BranchIfTrue = 0x03,
         LoadIntegerImmediate = 0x10,
         LoadLocalAddress = 0x11,
+        LoadStaticAddress = 0x12,
         StoreInteger = 0x20,
         StorePointer = 0x21,
         DerefInteger = 0x30,
@@ -241,17 +334,40 @@ namespace Rebar.RebarTarget.Execution
         Dup = 0x50,
         Swap = 0x51,
 
+        CopyBytes_TEMP = 0xFD,
         Output_TEMP = 0xFF
+    }
+
+    public sealed class StaticDataInformation
+    {
+        public byte[] Data { get; }
+
+        // TODO: shouldn't need this if we can just traverse the bytecode
+        public int[] LoadOffsets { get; }
+
+        public StaticDataIdentifier Identifier { get; }
+
+        public StaticDataInformation(byte[] data, int[] loadOffsets, StaticDataIdentifier identifier)
+        {
+            Data = data;
+            LoadOffsets = loadOffsets;
+            Identifier = identifier;
+        }
     }
 
     [Serializable]
     public class Function : ISerializable
     {
-        internal Function(string name, int[] localOffsets, byte[] code)
+        internal Function(
+            string name, 
+            int[] localOffsets, 
+            byte[] code, 
+            StaticDataInformation[] staticData)
         {
             Name = name;
             LocalOffsets = localOffsets;
             Code = code;
+            StaticData = staticData;
         }
 
         /// <inheritdoc />
@@ -268,20 +384,35 @@ namespace Rebar.RebarTarget.Execution
 
         public byte[] Code { get; }
 
+        public StaticDataInformation[] StaticData { get; }
+
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue(nameof(Name), Name);
             info.AddValue(nameof(LocalOffsets), LocalOffsets);
             info.AddValue(nameof(Code), Code);
         }
+
+        public void PatchStaticDataOffsets(Dictionary<StaticDataInformation, int> staticDataOffsets)
+        {
+            foreach (var staticDataInformation in StaticData)
+            {
+                int staticDataAddress = staticDataOffsets[staticDataInformation];
+                foreach (int instructionOffset in staticDataInformation.LoadOffsets)
+                {
+                    DataHelpers.WriteIntToByteArray(staticDataAddress, Code, instructionOffset + 1);
+                }
+            }
+        }
     } 
 
     public sealed class FunctionBuilder
     {
-        private int[] _localSizes;
         private readonly List<byte[]> _code = new List<byte[]>();
         private readonly Dictionary<int, LabelBuilder> _branches = new Dictionary<int, LabelBuilder>();
         private readonly Dictionary<LabelBuilder, int> _labels = new Dictionary<LabelBuilder, int>();
+        private readonly Dictionary<StaticDataBuilder, int> _staticData = new Dictionary<StaticDataBuilder, int>();
+        private readonly Dictionary<int, StaticDataBuilder> _loadStaticDatas = new Dictionary<int, StaticDataBuilder>();
 
         public Function CreateFunction()
         {
@@ -315,7 +446,26 @@ namespace Rebar.RebarTarget.Execution
             {
                 localOffsets = new int[0];
             }
-            return new Function(Name, localOffsets, _code.SelectMany(i => i).ToArray());
+
+            List<Tuple<StaticDataBuilder, List<int>>> staticDataTuples = new List<Tuple<StaticDataBuilder, List<int>>>();
+            foreach (var staticDataBuilderPair in _staticData)
+            {
+                staticDataTuples.Add(new Tuple<StaticDataBuilder, List<int>>(staticDataBuilderPair.Key, new List<int>()));
+            }
+
+            var loadStaticDataOffsets = new Dictionary<int, int>();
+            foreach (var loadStaticDataPair in _loadStaticDatas)
+            {
+                int loadStaticDataPosition = loadStaticDataPair.Key;
+                StaticDataBuilder staticDataBuilder = loadStaticDataPair.Value;
+                var staticDataTuple = staticDataTuples.First(tuple => tuple.Item1 == staticDataBuilder);
+                staticDataTuple.Item2.Add(finalPositions[loadStaticDataPosition]);
+            }
+            StaticDataInformation[] staticDataInformations = staticDataTuples.Select(
+                tuple => new StaticDataInformation(tuple.Item1.Data, tuple.Item2.ToArray(), tuple.Item1.Identifier)
+            )
+            .ToArray();
+            return new Function(Name, localOffsets, _code.SelectMany(i => i).ToArray(), staticDataInformations);
         }
 
         public string Name { get; set; }
@@ -342,6 +492,14 @@ namespace Rebar.RebarTarget.Execution
             {
                 throw new InvalidOperationException("Label has already been set");
             }
+        }
+
+        public StaticDataBuilder DefineStaticData()
+        {
+            var staticDataBuilder = new StaticDataBuilder();
+            int index = _staticData.Count;
+            _staticData.Add(staticDataBuilder, index);
+            return staticDataBuilder;
         }
 
         public void EmitReturn()
@@ -378,6 +536,15 @@ namespace Rebar.RebarTarget.Execution
         public void EmitLoadLocalAddress(byte localIndex)
         {
             _code.Add(new byte[] { (byte)OpCodes.LoadLocalAddress, localIndex });
+        }
+
+        public void EmitLoadStaticDataAddress(StaticDataBuilder staticData)
+        {
+            byte[] code = new byte[5];
+            code[0] = (byte)OpCodes.LoadStaticAddress;
+            DataHelpers.WriteIntToByteArray(_staticData[staticData], code, 1);
+            _code.Add(code);
+            _loadStaticDatas[_code.Count - 1] = staticData;
         }
 
         public void EmitStoreInteger()
@@ -475,6 +642,11 @@ namespace Rebar.RebarTarget.Execution
             EmitStandaloneOpcode(OpCodes.Swap);
         }
 
+        public void EmitCopyBytes_TEMP()
+        {
+            EmitStandaloneOpcode(OpCodes.CopyBytes_TEMP);
+        }
+
         public void EmitOutput_TEMP()
         {
             EmitStandaloneOpcode(OpCodes.Output_TEMP);
@@ -483,5 +655,12 @@ namespace Rebar.RebarTarget.Execution
 
     public class LabelBuilder
     {
+    }
+
+    public class StaticDataBuilder
+    {
+        public byte[] Data;
+
+        public StaticDataIdentifier Identifier;
     }
 }

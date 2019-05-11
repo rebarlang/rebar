@@ -56,7 +56,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
-            Tunnel tunnel = frame.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            Tunnel tunnel = CreateInputTunnel(frame);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(tunnel.InputTerminals[0]);
             ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(frame.Diagram, 1, 1);
@@ -129,5 +129,71 @@ namespace Tests.Rebar.Unit.Compiler
 
             Assert.IsTrue(genericOutput.OutputTerminals[0].GetTrueVariable().Type.IsInt32());
         }
+
+        #region Lifetimes with consumed variables
+
+        [TestMethod]
+        public void TerminateLifetimeOnLifetimeContainingVariablesConsumedByFunctionalNode_SetVariableTypes_TerminateLifetimeHasNoError()
+        {
+            DfirRoot function = DfirRoot.Create();
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+            FunctionalNode selectReference = new FunctionalNode(function.BlockDiagram, Signatures.SelectReferenceType);
+            Wire.Create(function.BlockDiagram, selectReference.OutputTerminals[1], terminateLifetime.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(selectReference.InputTerminals[1], selectReference.InputTerminals[2]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(function);
+
+            Assert.AreEqual(TerminateLifetimeErrorState.NoError, terminateLifetime.ErrorState);
+            Assert.AreEqual(2, terminateLifetime.OutputTerminals.Count);
+        }
+
+        [TestMethod]
+        public void TerminateLifetimeOnLifetimeContainingVariablesConsumedByTunnel_SetVariableTypes_TerminateLifetimeHasNoError()
+        {
+            DfirRoot function = DfirRoot.Create();
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            Tunnel inputTunnel1 = CreateInputTunnel(frame);
+            Tunnel inputTunnel2 = CreateInputTunnel(frame);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
+            FunctionalNode selectReference = new FunctionalNode(frame.Diagram, Signatures.SelectReferenceType);
+            Wire.Create(frame.Diagram, inputTunnel1.OutputTerminals[0], selectReference.InputTerminals[1]);
+            Wire.Create(frame.Diagram, inputTunnel2.OutputTerminals[0], selectReference.InputTerminals[2]);
+            Wire.Create(frame.Diagram, selectReference.OutputTerminals[1], outputTunnel.InputTerminals[0]);
+            Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(inputTunnel1.InputTerminals[0], inputTunnel2.InputTerminals[0]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(function);
+
+            Assert.AreEqual(TerminateLifetimeErrorState.NoError, terminateLifetime.ErrorState);
+            Assert.AreEqual(2, terminateLifetime.OutputTerminals.Count);
+        }
+
+        [TestMethod]
+        public void TerminateLifetimeOnLifetimeContainingVariablesConsumedByUnwrapOptionTunnel_SetVariableTypes_TerminateLifetimeHasNoError()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
+            Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], outputTunnel.InputTerminals[0]);
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+            Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
+            FunctionalNode someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            Wire.Create(function.BlockDiagram, someConstructor.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(someConstructor.InputTerminals[0]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToSetVariableTypes(function);
+
+            Assert.AreEqual(TerminateLifetimeErrorState.NoError, terminateLifetime.ErrorState);
+            Assert.AreEqual(1, terminateLifetime.OutputTerminals.Count);
+        }
+
+        #endregion
     }
 }
