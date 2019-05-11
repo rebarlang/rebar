@@ -75,6 +75,7 @@
     <Compile Include="Unit\Compiler\WireTests.cs" />
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
     <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
+    <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
     <Compile Include="Unit\TypeInferenceUnitTests.cs" />
   </ItemGroup>
   <ItemGroup>
