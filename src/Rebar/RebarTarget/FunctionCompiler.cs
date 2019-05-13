@@ -24,6 +24,7 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["MutPass"] = CompileNothing;
 
             _functionalNodeCompilers["Assign"] = CompileAssign;
+            _functionalNodeCompilers["Exchange"] = CompileExchangeValues;
             _functionalNodeCompilers["CreateCopy"] = CompileCreateCopy;
             _functionalNodeCompilers["SelectReference"] = CompileSelectReference;
             _functionalNodeCompilers["Output"] = CompileOutput;
@@ -72,36 +73,27 @@ namespace Rebar.RebarTarget
         {
             VariableReference assignee = assignNode.InputTerminals.ElementAt(0).GetTrueVariable(),
                 value = assignNode.InputTerminals.ElementAt(1).GetTrueVariable();
-            compiler.LoadValueAsReference(assignee);
-            compiler.LoadLocalAllocationReference(value);
-            compiler._builder.EmitDerefInteger();
-            compiler._builder.EmitStoreInteger();
+            compiler.CopyValueToReferencedAddress(assignee, value, assignee.Type.GetReferentType());
         }
 
         private static void CompileExchangeValues(FunctionCompiler compiler, FunctionalNode exchangeValuesNode)
         {
             VariableReference var1 = exchangeValuesNode.InputTerminals.ElementAt(0).GetTrueVariable(),
                 var2 = exchangeValuesNode.InputTerminals.ElementAt(1).GetTrueVariable();
-            compiler.LoadValueAsReference(var2);
             compiler.LoadValueAsReference(var1);
-            compiler._builder.EmitDuplicate();
-            compiler._builder.EmitDerefInteger();
-            compiler._builder.EmitSwap();
             compiler.LoadValueAsReference(var2);
-            compiler._builder.EmitDerefInteger();
-            compiler._builder.EmitStoreInteger();
-            compiler._builder.EmitStoreInteger();
+            compiler._builder.EmitLoadIntegerImmediate(Allocator.GetTypeSize(var1.Type.GetReferentType()));
+            compiler._builder.EmitExchangeBytes_TEMP();
         }
 
         private static void CompileCreateCopy(FunctionCompiler compiler, FunctionalNode createCopyNode)
         {
             VariableReference copyFrom = createCopyNode.InputTerminals.ElementAt(0).GetTrueVariable(),
                 copyTo = createCopyNode.OutputTerminals.ElementAt(1).GetTrueVariable();
-            compiler.LoadLocalAllocationReference(copyTo);
-            // TODO: this should be a generic load/store
-            compiler.LoadValueAsReference(copyFrom);
-            compiler._builder.EmitDerefInteger();
-            compiler._builder.EmitStoreInteger();
+            compiler.CopyValue(
+                () => compiler.LoadValueAsReference(copyFrom),
+                () => compiler.LoadLocalAllocationReference(copyTo),
+                copyFrom.Type.GetReferentType());
         }
 
         private static void CompileSelectReference(FunctionCompiler compiler, FunctionalNode selectReferenceNode)
@@ -226,23 +218,7 @@ namespace Rebar.RebarTarget
         {
             VariableReference input = someConstructorNode.InputTerminals.ElementAt(0).GetTrueVariable(),
                 output = someConstructorNode.OutputTerminals.ElementAt(0).GetTrueVariable();
-            compiler.LoadLocalAllocationReference(output);
-            compiler._builder.EmitDuplicate();
-            compiler._builder.EmitLoadIntegerImmediate(1);
-            compiler._builder.EmitStoreInteger();
-            compiler._builder.EmitLoadIntegerImmediate(4);
-            compiler._builder.EmitAdd();
-            if (input.Type.IsRebarReferenceType())
-            {
-                compiler.LoadValueAsReference(input);
-                compiler._builder.EmitStorePointer();
-            }
-            else
-            {
-                compiler.LoadLocalAllocationReference(input);
-                compiler._builder.EmitDerefInteger();
-                compiler._builder.EmitStoreInteger();
-            }
+            compiler.CopyValueToSomeValue(input, output);
         }
 
         private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
@@ -312,6 +288,68 @@ namespace Rebar.RebarTarget
                 LoadLocalAllocationReference(from);
                 _builder.EmitStorePointer();
             }
+        }
+
+        private void CopyValue(
+            Action loadSourceAddress,
+            Action loadDestinationAddress,
+            NIType valueType)
+        {
+            int typeSize = Allocator.GetTypeSize(valueType);
+            if (typeSize == 4)
+            {
+                loadDestinationAddress();
+                loadSourceAddress();
+                _builder.EmitDerefInteger();
+                _builder.EmitStoreInteger();
+            }
+            else if (valueType.IsRebarReferenceType())
+            {
+                loadDestinationAddress();
+                loadSourceAddress();
+                _builder.EmitDerefPointer();
+                _builder.EmitStorePointer();
+            }
+            else
+            {
+                loadSourceAddress();
+                loadDestinationAddress();
+                _builder.EmitLoadIntegerImmediate(typeSize);
+                _builder.EmitCopyBytes_TEMP();
+            }
+        }
+
+        private void CopyValueToReferencedAddress(VariableReference destinationReference, VariableReference copyFromValue, NIType valueType)
+        {
+            CopyValue(
+                () => LoadLocalAllocationReference(copyFromValue),
+                () => LoadValueAsReference(destinationReference),
+                valueType);
+        }
+
+        private void CopyValueToValue(VariableReference destinationValue, VariableReference copyFromValue, NIType valueType)
+        {
+            CopyValue(
+                () => LoadLocalAllocationReference(copyFromValue),
+                () => LoadLocalAllocationReference(destinationValue),
+                valueType);
+        }
+
+        private void CopyValueToSomeValue(VariableReference valueVariableReference, VariableReference someValueVariableReference)
+        {
+            LoadLocalAllocationReference(someValueVariableReference);
+            _builder.EmitLoadIntegerImmediate(1);
+            _builder.EmitStoreInteger();
+
+            CopyValue(
+                () => LoadLocalAllocationReference(valueVariableReference),
+                () =>
+                {
+                    LoadLocalAllocationReference(someValueVariableReference);
+                    _builder.EmitLoadIntegerImmediate(4);
+                    _builder.EmitAdd();
+                },
+                valueVariableReference.Type);
         }
 
         private void EmitUnaryOperationOnVariable(VariableReference variable, UnaryPrimitiveOps operation)
@@ -432,35 +470,13 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        private void CopyValue(NIType type)
-        {
-            // TODO: this should just be a generic Deref and Store
-            if (type.IsRebarReferenceType())
-            {
-                _builder.EmitDerefPointer();
-                _builder.EmitStorePointer();
-            }
-            else
-            {
-                _builder.EmitDerefInteger();
-                _builder.EmitStoreInteger();
-            }
-        }
-
         public bool VisitTunnel(Tunnel tunnel)
         {
             VariableReference input = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
                 output = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
             if (output.Type == input.Type.CreateOption())
             {
-                LoadLocalAllocationReference(output);
-                _builder.EmitLoadIntegerImmediate(1);
-                _builder.EmitStoreInteger();
-                LoadLocalAllocationReference(output);
-                _builder.EmitLoadIntegerImmediate(4);
-                _builder.EmitAdd();
-                LoadLocalAllocationReference(input);
-                CopyValue(input.Type);
+                CopyValueToSomeValue(input, output);
                 return true;
             }
 
@@ -498,36 +514,10 @@ namespace Rebar.RebarTarget
                     return;
                 }
                 VariableReference[] sinkVariables = wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable).ToArray();
+                NIType variableType = sourceVariable.Type;
                 foreach (var sinkVariable in sinkVariables)
                 {
-                    LoadLocalAllocationReference(sinkVariable);
-                }
-                LoadLocalAllocationReference(sourceVariable);
-                if (sourceVariable.Type.IsRebarReferenceType())
-                {
-                    _builder.EmitDerefPointer();
-                }
-                else
-                {
-                    _builder.EmitDerefInteger();
-                }
-
-                for (int i = 0; i < sinkVariables.Length; ++i)
-                {
-                    VariableReference sinkVariable = sinkVariables[i];
-                    if (i < sinkVariables.Length - 1)
-                    {
-                        _builder.EmitDuplicate();
-                    }
-                    // TODO: this should just be a generic Deref and Store
-                    if (sinkVariable.Type.IsRebarReferenceType())
-                    {
-                        _builder.EmitStorePointer();
-                    }
-                    else
-                    {
-                        _builder.EmitStoreInteger();
-                    }
+                    CopyValueToValue(sinkVariable, sourceVariable, variableType);
                 }
             }
         }

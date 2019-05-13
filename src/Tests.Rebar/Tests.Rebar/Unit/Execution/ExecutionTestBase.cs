@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
 using Rebar.RebarTarget.Execution;
@@ -17,6 +18,13 @@ namespace Tests.Rebar.Unit.Execution
             context.FinalizeLoad();
             context.ExecuteFunctionTopLevel(compiledFunction.Name);
             return context;
+        }
+
+        internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)
+        {
+            FunctionalNode inspect = new FunctionalNode(outputTerminal.ParentDiagram, Signatures.InspectType);
+            Wire.Create(outputTerminal.ParentDiagram, outputTerminal, inspect.InputTerminals[0]);
+            return inspect;
         }
 
         internal byte[] GetLastValueFromInspectNode(ExecutionContext context, FunctionalNode inspectNode)

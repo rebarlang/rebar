@@ -94,6 +94,16 @@ namespace Rebar.RebarTarget.Execution
             }
         }
 
+        private void GrowStack(ref int stackTop, int size)
+        {
+            int newStackTop = stackTop + size;
+            if (newStackTop >= _heapOffset)
+            {
+                throw new InvalidOperationException("Ran out of stack space");
+            }
+            stackTop = newStackTop;
+        }
+
         public void ExecuteFunctionTopLevel(string functionName)
         {
             if (_loading)
@@ -107,7 +117,9 @@ namespace Rebar.RebarTarget.Execution
                 int ip = 0;
                 bool executing = true;
                 var operandStack = new Stack<int>();
-                int stackTop = _stackOffset;
+                int stackBottom = _stackOffset;
+                int stackTop = stackBottom;
+                GrowStack(ref stackTop, function.LocalSize);
 
                 while (executing)
                 {
@@ -143,7 +155,7 @@ namespace Rebar.RebarTarget.Execution
                         case OpCodes.LoadLocalAddress:
                             {
                                 byte localIndex = code[ip + 1];
-                                int localAddress = stackTop + function.LocalOffsets[localIndex];
+                                int localAddress = stackBottom + function.LocalOffsets[localIndex];
                                 operandStack.Push(localAddress);
                                 nextIP = ip + 2;
                             }
@@ -249,17 +261,25 @@ namespace Rebar.RebarTarget.Execution
                                 operandStack.Push(next);
                             }
                             break;
+                        case OpCodes.ExchangeBytes_TEMP:
+                            {
+                                int size = operandStack.Pop(),
+                                    address1 = operandStack.Pop(),
+                                    address2 = operandStack.Pop();
+                                int tempAddress = stackTop;
+                                GrowStack(ref stackTop, size);
+                                CopyBytes(address1, tempAddress, size);
+                                CopyBytes(address2, address1, size);
+                                CopyBytes(tempAddress, address2, size);
+                                GrowStack(ref stackTop, -size);
+                            }
+                            break;
                         case OpCodes.CopyBytes_TEMP:
                             {
                                 int size = operandStack.Pop(),
                                     toAddress = operandStack.Pop(),
                                     fromAddress = operandStack.Pop();
-                                for (int i = 0; i < size; ++i)
-                                {
-                                    _memory[toAddress] = _memory[fromAddress];
-                                    ++toAddress;
-                                    ++fromAddress;
-                                }
+                                CopyBytes(fromAddress, toAddress, size);
                             }
                             break;
                         case OpCodes.Output_TEMP:
@@ -278,6 +298,16 @@ namespace Rebar.RebarTarget.Execution
             catch (Exception)
             {
 
+            }
+        }
+
+        private void CopyBytes(int fromAddress, int toAddress, int size)
+        {
+            for (int i = 0; i < size; ++i)
+            {
+                _memory[toAddress] = _memory[fromAddress];
+                ++toAddress;
+                ++fromAddress;
             }
         }
     }
@@ -334,6 +364,7 @@ namespace Rebar.RebarTarget.Execution
         Dup = 0x50,
         Swap = 0x51,
 
+        ExchangeBytes_TEMP = 0xFA,
         CopyBytes_TEMP = 0xFD,
         Output_TEMP = 0xFF
     }
@@ -361,11 +392,13 @@ namespace Rebar.RebarTarget.Execution
         internal Function(
             string name, 
             int[] localOffsets, 
+            int localSize,
             byte[] code, 
             StaticDataInformation[] staticData)
         {
             Name = name;
             LocalOffsets = localOffsets;
+            LocalSize = localSize;
             Code = code;
             StaticData = staticData;
         }
@@ -375,12 +408,15 @@ namespace Rebar.RebarTarget.Execution
         {
             Name = info.GetString(nameof(Name));
             LocalOffsets = (int[])info.GetValue(nameof(LocalOffsets), typeof(int[]));
+            LocalSize = info.GetInt32(nameof(LocalSize));
             Code = (byte[])info.GetValue(nameof(Code), typeof(byte[]));
         }
 
         public string Name { get; }
 
         public int[] LocalOffsets { get; }
+
+        public int LocalSize { get; }
 
         public byte[] Code { get; }
 
@@ -432,9 +468,9 @@ namespace Rebar.RebarTarget.Execution
             }
 
             int[] localOffsets;
+            int offset = 0;
             if (LocalSizes != null)
             {
-                int offset = 0;
                 localOffsets = LocalSizes.Select(size =>
                 {
                     int previousOffset = offset;
@@ -465,7 +501,7 @@ namespace Rebar.RebarTarget.Execution
                 tuple => new StaticDataInformation(tuple.Item1.Data, tuple.Item2.ToArray(), tuple.Item1.Identifier)
             )
             .ToArray();
-            return new Function(Name, localOffsets, _code.SelectMany(i => i).ToArray(), staticDataInformations);
+            return new Function(Name, localOffsets, offset, _code.SelectMany(i => i).ToArray(), staticDataInformations);
         }
 
         public string Name { get; set; }
@@ -640,6 +676,11 @@ namespace Rebar.RebarTarget.Execution
         public void EmitSwap()
         {
             EmitStandaloneOpcode(OpCodes.Swap);
+        }
+
+        public void EmitExchangeBytes_TEMP()
+        {
+            EmitStandaloneOpcode(OpCodes.ExchangeBytes_TEMP);
         }
 
         public void EmitCopyBytes_TEMP()
