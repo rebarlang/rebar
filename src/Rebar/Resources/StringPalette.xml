@@ -16,7 +16,7 @@
         <pf:MergeItem>
           <moc:Literal DataType="String">
             <moc:StringBehavior />
-            <vi:p.Data>0.0</vi:p.Data>
+            <vi:p.Data></vi:p.Data>
           </moc:Literal>
         </pf:MergeItem>
       </pf:MergeScript>

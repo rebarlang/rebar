@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text;
 
 namespace Rebar.RebarTarget.Execution
 {
@@ -274,6 +275,15 @@ namespace Rebar.RebarTarget.Execution
                                 GrowStack(ref stackTop, -size);
                             }
                             break;
+                        case OpCodes.OutputString_TEMP:
+                            {
+                                int stringAddress = operandStack.Pop();
+                                int stringBufferAddress = DataHelpers.ReadIntFromByteArray(_memory, stringAddress);
+                                int size = DataHelpers.ReadIntFromByteArray(_memory, stringAddress + TargetConstants.PointerSize);
+                                string str = Encoding.UTF8.GetString(_memory, stringBufferAddress, size);
+                                _runtimeServices.Output(str);
+                            }
+                            break;
                         case OpCodes.CopyBytes_TEMP:
                             {
                                 int size = operandStack.Pop(),
@@ -282,11 +292,25 @@ namespace Rebar.RebarTarget.Execution
                                 CopyBytes(fromAddress, toAddress, size);
                             }
                             break;
+                        case OpCodes.Alloc_TEMP:
+                            {
+                                int size = operandStack.Pop();
+                                size = RoundUpToNearest(size, 4);
+                                if (_heapOffset + size <= _memory.Length)
+                                {
+                                    operandStack.Push(_heapOffset);
+                                    _heapOffset += size;
+                                }
+                                else
+                                {
+                                    throw new InvalidOperationException("Ran out of heap memory");
+                                }
+                            }
+                            break;
                         case OpCodes.Output_TEMP:
                             {
                                 int value = operandStack.Pop();
-                                string message = $"Output: {value}";
-                                _runtimeServices.Output(message);
+                                _runtimeServices.Output(value.ToString());
                             }
                             break;
                         default:
@@ -365,7 +389,9 @@ namespace Rebar.RebarTarget.Execution
         Swap = 0x51,
 
         ExchangeBytes_TEMP = 0xFA,
+        OutputString_TEMP = 0xFC,
         CopyBytes_TEMP = 0xFD,
+        Alloc_TEMP = 0xFE,
         Output_TEMP = 0xFF
     }
 
@@ -683,9 +709,19 @@ namespace Rebar.RebarTarget.Execution
             EmitStandaloneOpcode(OpCodes.ExchangeBytes_TEMP);
         }
 
+        public void EmitOutputString_TEMP()
+        {
+            EmitStandaloneOpcode(OpCodes.OutputString_TEMP);
+        }
+
         public void EmitCopyBytes_TEMP()
         {
             EmitStandaloneOpcode(OpCodes.CopyBytes_TEMP);
+        }
+
+        public void EmitAlloc_TEMP()
+        {
+            EmitStandaloneOpcode(OpCodes.Alloc_TEMP);
         }
 
         public void EmitOutput_TEMP()

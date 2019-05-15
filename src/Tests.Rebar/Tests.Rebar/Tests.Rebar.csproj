@@ -70,12 +70,14 @@
     <Compile Include="Unit\Compiler\LockTunnelTests.cs" />
     <Compile Include="Unit\Compiler\LoopConditionTunnelTests.cs" />
     <Compile Include="Unit\Compiler\OptionTypeTests.cs" />
+    <Compile Include="Unit\Compiler\StringTypeTests.cs" />
     <Compile Include="Unit\Compiler\TerminateLifetimeNodeTests.cs" />
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
     <Compile Include="Unit\Compiler\WireTests.cs" />
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
     <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
+    <Compile Include="Unit\Execution\StringExecutionTests.cs" />
     <Compile Include="Unit\TypeInferenceUnitTests.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -97,9 +97,21 @@ namespace Rebar.Compiler
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             Terminal valueOutput = constant.OutputTerminals.ElementAt(0);
-            _nodeFacade[valueOutput] = new SimpleTerminalFacade(
-                valueOutput,
-                _typeVariableSet.CreateReferenceToLiteralType(constant.DataType));
+            TypeVariableReference constantTypeReference;
+            if (constant.DataType.IsRebarReferenceType())
+            {
+                constantTypeReference = _typeVariableSet.CreateReferenceToReferenceType(
+                    false,
+                    // TODO: this is not always correct; need a more general way of turning NITypes into TypeVariableReferences
+                    _typeVariableSet.CreateReferenceToLiteralType(constant.DataType.GetReferentType()),
+                    // Assume for now that the reference will be in Lifetime.Static
+                    _typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
+            }
+            else
+            {
+                constantTypeReference = _typeVariableSet.CreateReferenceToLiteralType(constant.DataType);
+            }
+            _nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, constantTypeReference);
             return true;
         }
 

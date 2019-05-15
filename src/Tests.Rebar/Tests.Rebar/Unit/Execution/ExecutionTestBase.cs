@@ -10,10 +10,11 @@ namespace Tests.Rebar.Unit.Execution
 {
     public abstract class ExecutionTestBase : CompilerTestBase
     {
-        protected ExecutionContext CompileAndExecuteFunction(DfirRoot function)
+        protected ExecutionContext CompileAndExecuteFunction(DfirRoot function, IRebarTargetRuntimeServices runtimeServices = null)
         {
+            runtimeServices = runtimeServices ?? new TestRuntimeServices();
             Function compiledFunction = RunSemanticAnalysisUpToCodeGeneration(function);
-            ExecutionContext context = new ExecutionContext(new TestRuntimeServices());
+            ExecutionContext context = new ExecutionContext(runtimeServices);
             context.LoadFunction(compiledFunction);
             context.FinalizeLoad();
             context.ExecuteFunctionTopLevel(compiledFunction.Name);
@@ -43,6 +44,9 @@ namespace Tests.Rebar.Unit.Execution
     {
         public void Output(string value)
         {
+            LastOutputValue = value;
         }
+
+        public string LastOutputValue { get; private set; }
     }
 }

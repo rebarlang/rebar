@@ -53,6 +53,10 @@ namespace Rebar.RebarTarget
         {
             if (type.IsRebarReferenceType())
             {
+                if (type.GetReferentType() == DataTypes.StringSliceType)
+                {
+                    return TargetConstants.PointerSize + 4;
+                }
                 return TargetConstants.PointerSize;
             }
             NIType innerType;
@@ -63,6 +67,10 @@ namespace Rebar.RebarTarget
             if (type.IsInt32() || type.IsBoolean())
             {
                 return 4;
+            }
+            if (type.IsString())
+            {
+                return TargetConstants.PointerSize + 4;
             }
             if (type.IsIteratorType())
             {

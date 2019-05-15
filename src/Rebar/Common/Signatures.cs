@@ -191,6 +191,17 @@ namespace Rebar.Common
                 "option");
             NoneConstructorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringFromSlice");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "slice");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String,
+                "string");
+            StringFromSliceType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
             // TODO
 #if FALSE
@@ -264,6 +275,8 @@ namespace Rebar.Common
         public static NIType SomeConstructorType { get; }
 
         public static NIType NoneConstructorType { get; }
+
+        public static NIType StringFromSliceType { get; }
 
         public static NIType VectorCreateType { get; }
 

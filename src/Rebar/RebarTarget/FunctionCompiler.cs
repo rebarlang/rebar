@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -61,6 +62,8 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["LessEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitLessThanOrEqual());
             _functionalNodeCompilers["GreaterThan"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThan());
             _functionalNodeCompilers["GreaterEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThanOrEqual());
+
+            _functionalNodeCompilers["StringFromSlice"] = CompileStringFromSlice;
 
             _functionalNodeCompilers["Inspect"] = CompileInspect;
         }
@@ -126,13 +129,21 @@ namespace Rebar.RebarTarget
         {
             VariableReference input = outputNode.InputTerminals.ElementAt(0).GetTrueVariable();
             NIType referentType = input.Type.GetReferentType();
-            if (!referentType.IsInt32())
+            if (referentType.IsInt32())
+            {
+                compiler.LoadValueAsReference(input);
+                compiler._builder.EmitDerefInteger();
+                compiler._builder.EmitOutput_TEMP();
+            }
+            else if (referentType.IsString())
+            {
+                compiler.LoadValueAsReference(input);
+                compiler._builder.EmitOutputString_TEMP();
+            }
+            else
             {
                 throw new NotImplementedException($"Don't know how to display type {referentType} yet.");
             }
-            compiler.LoadValueAsReference(input);
-            compiler._builder.EmitDerefInteger();
-            compiler._builder.EmitOutput_TEMP();
         }
 
         private static void CompilePureUnaryPrimitive(FunctionCompiler compiler, FunctionalNode primitiveNode, UnaryPrimitiveOps operation)
@@ -229,6 +240,33 @@ namespace Rebar.RebarTarget
             compiler._builder.EmitStoreInteger();
         }
 
+        private static void CompileStringFromSlice(FunctionCompiler compiler, FunctionalNode stringFromSliceNode)
+        {
+            VariableReference input = stringFromSliceNode.InputTerminals[0].GetTrueVariable(),
+                output = stringFromSliceNode.OutputTerminals[1].GetTrueVariable();
+
+            // Get a pointer to a heap allocation big enough for the string
+            compiler.LoadLocalAllocationReference(output);
+            compiler.LoadStringSliceReferenceSize(input);
+            compiler._builder.EmitAlloc_TEMP();
+            compiler._builder.EmitStorePointer();
+
+            // Copy the data from the string slice to the heap allocation
+            compiler.LoadStringSliceReferencePointer(input);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadLocalAllocationReference(output);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadStringSliceReferenceSize(input);
+            compiler._builder.EmitCopyBytes_TEMP();
+
+            // Copy actual size into string handle
+            compiler.LoadLocalAllocationReference(output);
+            compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
+            compiler._builder.EmitAdd();
+            compiler.LoadStringSliceReferenceSize(input);
+            compiler._builder.EmitStoreInteger();
+        }
+
         private static void CompileInspect(FunctionCompiler compiler, FunctionalNode inspectNode)
         {
             VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
@@ -247,6 +285,7 @@ namespace Rebar.RebarTarget
 
         private readonly FunctionBuilder _builder;
         private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
+        private readonly Dictionary<string, StaticDataBuilder> _stringStaticData = new Dictionary<string, StaticDataBuilder>();
 
         public FunctionCompiler(FunctionBuilder builder, Dictionary<VariableReference, ValueSource> variableAllocations)
         {
@@ -278,6 +317,29 @@ namespace Rebar.RebarTarget
                 throw new ArgumentException("The given variable is not associated with a local allocation.", "local");
             }
             _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
+        }
+
+        private void LoadStringSliceReferencePointer(VariableReference stringSliceReferenceLocal)
+        {
+            var localAllocation = _variableAllocations[stringSliceReferenceLocal] as LocalAllocationValueSource;
+            if (localAllocation == null)
+            {
+                throw new ArgumentException("The given variable is not associated with a local allocation.", "local");
+            }
+            _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
+        }
+
+        private void LoadStringSliceReferenceSize(VariableReference stringSliceReferenceLocal)
+        {
+            var localAllocation = _variableAllocations[stringSliceReferenceLocal] as LocalAllocationValueSource;
+            if (localAllocation == null)
+            {
+                throw new ArgumentException("The given variable is not associated with a local allocation.", "local");
+            }
+            _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
+            _builder.EmitLoadIntegerImmediate(4);
+            _builder.EmitAdd();
+            _builder.EmitDerefInteger();
         }
 
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
@@ -427,7 +489,41 @@ namespace Rebar.RebarTarget
                 _builder.EmitLoadIntegerImmediate((bool)constant.Value ? 1 : 0);
                 _builder.EmitStoreInteger();
             }
+            else if (constant.Value is string)
+            {
+                if (output.Type.IsRebarReferenceType() && output.Type.GetReferentType() == DataTypes.StringSliceType)
+                {
+                    StaticDataBuilder stringStaticData = GetStaticDataForString((string)constant.Value);
+                    int stringSize = stringStaticData.Data.Length;
+
+                    LoadLocalAllocationReference(output);
+                    _builder.EmitLoadStaticDataAddress(stringStaticData);
+                    _builder.EmitStorePointer();
+
+                    LoadLocalAllocationReference(output);
+                    _builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
+                    _builder.EmitAdd();
+                    _builder.EmitLoadIntegerImmediate(stringSize);
+                    _builder.EmitStoreInteger();
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
             return true;
+        }
+
+        private StaticDataBuilder GetStaticDataForString(string str)
+        {
+            StaticDataBuilder staticData;
+            if (!_stringStaticData.TryGetValue(str, out staticData))
+            {
+                staticData = _builder.DefineStaticData();
+                staticData.Data = Encoding.UTF8.GetBytes(str);
+                _stringStaticData[str] = staticData;
+            }
+            return staticData;
         }
 
         public bool VisitDropNode(DropNode dropNode)

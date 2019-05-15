@@ -361,9 +361,31 @@ namespace Rebar.Compiler
             {
                 dataType = dataType.GetUnderlyingTypeFromRebarType();
             }
-            NIType constantType = dataType.WireTypeMayFork()
-                ? dataType
-                : dataType.CreateImmutableReference();
+            NIType constantType;
+            if (dataType.IsString() && RebarFeatureToggles.IsStringDataTypeEnabled)
+            {
+                // Temporary: create a &'static str constant, and wire it through a StringFromSlice node
+                // Get rid of this once there is source model support for &str Literals
+                Constant stringSliceConstant = Constant.Create(_currentDiagram, literal.Data, DataTypes.StringSliceType.CreateImmutableReference());
+                Nodes.FunctionalNode stringFromSliceNode = new Nodes.FunctionalNode(
+                    _currentDiagram, 
+                    Signatures.StringFromSliceType, 
+                    new[] { RebarFeatureToggles.StringDataType });
+                NationalInstruments.Dfir.Wire.Create(_currentDiagram, stringSliceConstant.OutputTerminal, stringFromSliceNode.InputTerminals[0]);
+
+                _map.AddMapping((Content)literal, stringFromSliceNode);
+                _map.AddMapping(literal.OutputTerminal, stringFromSliceNode.OutputTerminals[1]);
+                return;
+            }
+
+            if (dataType.WireTypeMayFork())
+            {
+                constantType = dataType;
+            }
+            else
+            {
+                constantType = dataType.CreateImmutableReference();
+            }
             Constant constant = Constant.Create(_currentDiagram, literal.Data, constantType);
             _map.AddMapping((Content)literal, constant);
             _map.AddMapping(literal.OutputTerminal, constant.Terminals.ElementAt(0));

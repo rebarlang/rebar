@@ -81,7 +81,8 @@ namespace Rebar.RebarTarget
 
         public void Output(string value)
         {
-            _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, value));
+            string message = $"Output: {value}";
+            _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
         }
     }
 }
