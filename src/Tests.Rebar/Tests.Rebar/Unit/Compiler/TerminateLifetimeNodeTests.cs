@@ -114,6 +114,21 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
+        public void TerminateLifetimeWithAllVariablesInLifetimeWired_ValidateVariableUsages_NoError()
+        {
+            DfirRoot function = DfirRoot.Create();
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 2, 1);
+            ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[0], terminateLifetime.InputTerminals[1]);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.AreEqual(TerminateLifetimeErrorState.NoError, terminateLifetime.ErrorState);
+            Assert.IsFalse(terminateLifetime.GetDfirMessages().Any());
+        }
+
+        [TestMethod]
         public void TypeDeterminantDownstreamOfTerminateLifetime_SetVariableTypes_UpstreamTypeSetCorrectly()
         {
             DfirRoot function = DfirRoot.Create();

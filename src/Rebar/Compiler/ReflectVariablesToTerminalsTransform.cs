@@ -31,7 +31,12 @@ namespace Rebar.Compiler
                     continue;
                 }
                 VariableReference variable = terminal.GetFacadeVariable();
-                terminal.DataType = !variable.Type.IsUnset() ? variable.Type : PFTypes.Void;
+                NIType terminalType = PFTypes.Void;
+                if (variable.TypeVariableReference.TypeVariableSet != null && !variable.Type.IsUnset())
+                {
+                    terminalType = variable.Type;
+                }
+                terminal.DataType = terminalType;
             }
         }
     }
