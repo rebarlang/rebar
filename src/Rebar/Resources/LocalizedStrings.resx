@@ -195,6 +195,9 @@
   <data name="TypeDoesNotHaveRequiredTrait" xml:space="preserve">
     <value>The data type connected to this terminal does not have the required trait: Display</value>
   </data>
+  <data name="TypeNotDetermined" xml:space="preserve">
+    <value>The type of value created by this terminal has not been fully determined.</value>
+  </data>
   <data name="WireCannotFork" xml:space="preserve">
     <value>The data type of this wire does not allow it to branch.</value>
   </data>

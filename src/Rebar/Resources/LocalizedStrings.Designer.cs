@@ -295,6 +295,15 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The type of value created by this terminal has not been fully determined..
+        /// </summary>
+        internal static string TypeNotDetermined {
+            get {
+                return ResourceManager.GetString("TypeNotDetermined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The data type of this wire does not allow it to branch..
         /// </summary>
         internal static string WireCannotFork {
