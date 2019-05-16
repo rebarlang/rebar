@@ -631,9 +631,6 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
-
-        /// <inheritdoc />
-        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
     }
 
     /// <summary>
@@ -662,9 +659,6 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
-
-        /// <inheritdoc />
-        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
     }
 
     #endregion

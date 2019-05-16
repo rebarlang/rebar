@@ -99,24 +99,6 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
-        internal static string FeatureToggle_OptionDataType_Category {
-            get {
-                return ResourceManager.GetString("FeatureToggle_OptionDataType_Category", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable the Option data type and related nodes.
-        /// </summary>
-        internal static string FeatureToggle_OptionDataType_Description {
-            get {
-                return ResourceManager.GetString("FeatureToggle_OptionDataType_Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Rebar.
-        /// </summary>
         internal static string FeatureToggle_OutputNode_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_OutputNode_Category", resourceCulture);

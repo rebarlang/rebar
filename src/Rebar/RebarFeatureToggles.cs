@@ -5,7 +5,6 @@ namespace Rebar
 {
     [ExportFeatureToggles]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), CellDataType, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), OptionDataType, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), RebarTarget, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), OutputNode, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), VectorAndSliceTypes, CodeReadiness.Release)]
@@ -17,7 +16,6 @@ namespace Rebar
         private const string FeaturePrefix = "Rebar.FeatureToggles.";
 
         public const string CellDataType = FeaturePrefix + nameof(CellDataType);
-        public const string OptionDataType = FeaturePrefix + nameof(OptionDataType);
         public const string RebarTarget = FeaturePrefix + nameof(RebarTarget);
         public const string OutputNode = FeaturePrefix + nameof(OutputNode);
         public const string VectorAndSliceTypes = FeaturePrefix + nameof(VectorAndSliceTypes);
@@ -25,7 +23,6 @@ namespace Rebar
         public const string StringDataType = FeaturePrefix + nameof(StringDataType);
 
         public static bool IsCellDataTypeEnabled => _cellDataType.IsEnabled;
-        public static bool IsOptionDataTypeEnabled => _optionDataType.IsEnabled;
         public static bool IsRebarTargetEnabled => _rebarTarget.IsEnabled;
         public static bool IsOutputNodeEnabled => _outputNode.IsEnabled;
         public static bool IsVectorAndSliceTypesEnabled => _vectorAndSliceTypes.IsEnabled;
@@ -33,7 +30,6 @@ namespace Rebar
         public static bool IsStringDataTypeEnabled => _stringDataType.IsEnabled;
 
         private static readonly FeatureToggleValueCache _cellDataType = CreateFeatureToggleValueCache(CellDataType);
-        private static readonly FeatureToggleValueCache _optionDataType = CreateFeatureToggleValueCache(OptionDataType);
         private static readonly FeatureToggleValueCache _rebarTarget = CreateFeatureToggleValueCache(RebarTarget);
         private static readonly FeatureToggleValueCache _outputNode = CreateFeatureToggleValueCache(OutputNode);
         private static readonly FeatureToggleValueCache _vectorAndSliceTypes = CreateFeatureToggleValueCache(VectorAndSliceTypes);
