@@ -64,6 +64,7 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["GreaterEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThanOrEqual());
 
             _functionalNodeCompilers["StringFromSlice"] = CompileStringFromSlice;
+            _functionalNodeCompilers["StringToSlice"] = CompileStringToSlice;
 
             _functionalNodeCompilers["Inspect"] = CompileInspect;
         }
@@ -138,6 +139,19 @@ namespace Rebar.RebarTarget
             else if (referentType.IsString())
             {
                 compiler.LoadValueAsReference(input);
+                compiler._builder.EmitDerefPointer();
+                compiler.LoadValueAsReference(input);
+                compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
+                compiler._builder.EmitAdd();
+                compiler._builder.EmitDerefInteger();
+                compiler._builder.EmitOutputString_TEMP();
+            }
+            else if (referentType == DataTypes.StringSliceType)
+            {
+                compiler.LoadStringSliceReferencePointer(input);
+                compiler._builder.EmitDerefPointer();
+                compiler.LoadStringSliceReferenceSizeReference(input);
+                compiler._builder.EmitDerefInteger();
                 compiler._builder.EmitOutputString_TEMP();
             }
             else
@@ -247,7 +261,8 @@ namespace Rebar.RebarTarget
 
             // Get a pointer to a heap allocation big enough for the string
             compiler.LoadLocalAllocationReference(output);
-            compiler.LoadStringSliceReferenceSize(input);
+            compiler.LoadStringSliceReferenceSizeReference(input);
+            compiler._builder.EmitDerefInteger();
             compiler._builder.EmitAlloc_TEMP();
             compiler._builder.EmitStorePointer();
 
@@ -256,14 +271,34 @@ namespace Rebar.RebarTarget
             compiler._builder.EmitDerefPointer();
             compiler.LoadLocalAllocationReference(output);
             compiler._builder.EmitDerefPointer();
-            compiler.LoadStringSliceReferenceSize(input);
+            compiler.LoadStringSliceReferenceSizeReference(input);
+            compiler._builder.EmitDerefInteger();
             compiler._builder.EmitCopyBytes_TEMP();
 
             // Copy actual size into string handle
             compiler.LoadLocalAllocationReference(output);
             compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
             compiler._builder.EmitAdd();
-            compiler.LoadStringSliceReferenceSize(input);
+            compiler.LoadStringSliceReferenceSizeReference(input);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileStringToSlice(FunctionCompiler compiler, FunctionalNode stringToSliceNode)
+        {
+            VariableReference input = stringToSliceNode.InputTerminals[0].GetTrueVariable(),
+                output = stringToSliceNode.OutputTerminals[0].GetTrueVariable();
+
+            compiler.LoadStringSliceReferencePointer(output);
+            compiler.LoadValueAsReference(input);
+            compiler._builder.EmitDerefPointer();
+            compiler._builder.EmitStorePointer();
+
+            compiler.LoadStringSliceReferenceSizeReference(output);
+            compiler.LoadValueAsReference(input);
+            compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
+            compiler._builder.EmitAdd();
+            compiler._builder.EmitDerefInteger();
             compiler._builder.EmitStoreInteger();
         }
 
@@ -329,7 +364,7 @@ namespace Rebar.RebarTarget
             _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
         }
 
-        private void LoadStringSliceReferenceSize(VariableReference stringSliceReferenceLocal)
+        private void LoadStringSliceReferenceSizeReference(VariableReference stringSliceReferenceLocal)
         {
             var localAllocation = _variableAllocations[stringSliceReferenceLocal] as LocalAllocationValueSource;
             if (localAllocation == null)
@@ -339,7 +374,6 @@ namespace Rebar.RebarTarget
             _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
             _builder.EmitLoadIntegerImmediate(4);
             _builder.EmitAdd();
-            _builder.EmitDerefInteger();
         }
 
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
@@ -548,7 +582,7 @@ namespace Rebar.RebarTarget
                 compiler(this, functionalNode);
                 return true;
             }
-            throw new NotImplementedException();
+            throw new NotImplementedException("Missing compiler for function " + functionName);
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)

@@ -277,9 +277,8 @@ namespace Rebar.RebarTarget.Execution
                             break;
                         case OpCodes.OutputString_TEMP:
                             {
-                                int stringAddress = operandStack.Pop();
-                                int stringBufferAddress = DataHelpers.ReadIntFromByteArray(_memory, stringAddress);
-                                int size = DataHelpers.ReadIntFromByteArray(_memory, stringAddress + TargetConstants.PointerSize);
+                                int size = operandStack.Pop();
+                                int stringBufferAddress = operandStack.Pop();
                                 string str = Encoding.UTF8.GetString(_memory, stringBufferAddress, size);
                                 _runtimeServices.Output(str);
                             }

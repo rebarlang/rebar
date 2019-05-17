@@ -339,7 +339,7 @@ namespace Rebar.Common
 
         internal static bool TypeHasDisplayTrait(this NIType type)
         {
-            if (type.IsString())
+            if (type.IsString() || type == StringSliceType)
             {
                 return RebarFeatureToggles.IsStringDataTypeEnabled;
             }

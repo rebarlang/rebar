@@ -663,6 +663,61 @@ namespace Rebar.SourceModel
 
     #endregion
 
+    #region
+
+    public class StringFromSlice : FunctionalNode
+    {
+        private const string ElementName = "StringFromSlice";
+
+        protected StringFromSlice()
+            : base(Signatures.StringFromSliceType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringFromSlice CreateStringFromSlice(IElementCreateInfo elementCreateInfo)
+        {
+            var stringFromSlice = new StringFromSlice();
+            stringFromSlice.Init(elementCreateInfo);
+            return stringFromSlice;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
+    public class StringToSlice : FunctionalNode
+    {
+        private const string ElementName = "StringToSlice";
+
+        protected StringToSlice()
+            : base(Signatures.StringToSliceType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringToSlice CreateStringToSlice(IElementCreateInfo elementCreateInfo)
+        {
+            var stringToSlice = new StringToSlice();
+            stringToSlice.Init(elementCreateInfo);
+            return stringToSlice;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
+    #endregion
+
     #region Vector
 
     public class VectorCreate : FunctionalNode
