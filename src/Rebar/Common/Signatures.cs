@@ -224,7 +224,7 @@ namespace Rebar.Common
             AddOutputParameter(
                 functionTypeBuilder,
                 PFTypes.Int32.CreateVector(),
-                "valueRef");
+                "vector");
             VectorCreateType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInsert");
@@ -240,7 +240,7 @@ namespace Rebar.Common
             AddInputParameter(
                 functionTypeBuilder,
                 tDataParameter,
-                "element");
+                "elementRef");
             VectorInsertType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateLockingCell");

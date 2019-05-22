@@ -1,0 +1,870 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AccumulateAdd_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateAdd_Name" xml:space="preserve">
+    <value>Accumulate Add</value>
+  </data>
+  <data name="AccumulateAdd_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateAdd_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateAdd_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateAdd_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateAnd_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateAnd_Name" xml:space="preserve">
+    <value>Accumulate And</value>
+  </data>
+  <data name="AccumulateAnd_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateAnd_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateAnd_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateAnd_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateDivide_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateDivide_Name" xml:space="preserve">
+    <value>Accumulate Divide</value>
+  </data>
+  <data name="AccumulateDivide_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateDivide_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateDivide_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateDivide_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateIncrement_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateIncrement_Name" xml:space="preserve">
+    <value>Accumulate Increment</value>
+  </data>
+  <data name="AccumulateIncrement_operandRef_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateIncrement_operandRef_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateMultiply_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateMultiply_Name" xml:space="preserve">
+    <value>Accumulate Multiply</value>
+  </data>
+  <data name="AccumulateMultiply_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateMultiply_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateMultiply_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateMultiply_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateNot_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateNot_Name" xml:space="preserve">
+    <value>Accumulate Not</value>
+  </data>
+  <data name="AccumulateNot_operandRef_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateNot_operandRef_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateOr_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AccumulateOr_Name" xml:space="preserve">
+    <value>Accumulate Or</value>
+  </data>
+  <data name="AccumulateOr_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateOr_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateOr_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateOr_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateOr_result_Name" xml:space="preserve">
+    <value>x | y</value>
+  </data>
+  <data name="AccumulateXor_Name" xml:space="preserve">
+    <value>Accumulate Xor</value>
+  </data>
+  <data name="AccumulateXor_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateXor_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="AccumulateXor_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="AccumulateXor_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Add_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Add_Name" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="Add_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Add_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Add_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Add_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Add_result_Name" xml:space="preserve">
+    <value>x + y</value>
+  </data>
+  <data name="And_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="And_Name" xml:space="preserve">
+    <value>And</value>
+  </data>
+  <data name="And_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="And_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="And_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="And_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="And_result_Name" xml:space="preserve">
+    <value>x &amp; y</value>
+  </data>
+  <data name="AssignNode_assigneeRef_in_Name" xml:space="preserve">
+    <value>assignee reference</value>
+  </data>
+  <data name="AssignNode_assigneeRef_out_Name" xml:space="preserve">
+    <value>assignee reference</value>
+  </data>
+  <data name="AssignNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="AssignNode_Name" xml:space="preserve">
+    <value>Assign</value>
+  </data>
+  <data name="AssignNode_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="BorrowTunnel_Name" xml:space="preserve">
+    <value>Borrow Tunnel</value>
+  </data>
+  <data name="BorrrowTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="CreateCopyNode_copy_Name" xml:space="preserve">
+    <value>copy</value>
+  </data>
+  <data name="CreateCopyNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="CreateCopyNode_Name" xml:space="preserve">
+    <value>Create Copy</value>
+  </data>
+  <data name="CreateCopyNode_valueRef_in_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="CreateCopyNode_valueRef_out_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="Divide_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Divide_Name" xml:space="preserve">
+    <value>Divide</value>
+  </data>
+  <data name="Divide_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Divide_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Divide_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Divide_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Divide_result_Name" xml:space="preserve">
+    <value>x / y</value>
+  </data>
+  <data name="DropNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="DropNode_Name" xml:space="preserve">
+    <value>Drop</value>
+  </data>
+  <data name="DropNode_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="Equal_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Equal_Name" xml:space="preserve">
+    <value>Equal</value>
+  </data>
+  <data name="Equal_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Equal_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Equal_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Equal_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Equal_result_Name" xml:space="preserve">
+    <value>x == y</value>
+  </data>
+  <data name="ExchangeValues_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ExchangeValues_exchangeeRef1_in_Name" xml:space="preserve">
+    <value>exchangee reference 1</value>
+  </data>
+  <data name="ExchangeValues_exchangeeRef1_out_Name" xml:space="preserve">
+    <value>exchangee reference 1</value>
+  </data>
+  <data name="ExchangeValues_exchangeeRef2_in_Name" xml:space="preserve">
+    <value>exchangee reference 2</value>
+  </data>
+  <data name="ExchangeValues_exchangeeRef2_out_Name" xml:space="preserve">
+    <value>exchangee reference 2</value>
+  </data>
+  <data name="ExchangeValues_Name" xml:space="preserve">
+    <value>Exchange Values</value>
+  </data>
+  <data name="FlatSequenceTerminateLifetimeTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="FlatSequenceTerminateLifetimeTunnel_Name" xml:space="preserve">
+    <value>Terminate Lifetime Tunnel</value>
+  </data>
+  <data name="FlatSequence_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="FlatSequence_Name" xml:space="preserve">
+    <value>Flat Sequence</value>
+  </data>
+  <data name="GreaterEqual_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="GreaterEqual_Name" xml:space="preserve">
+    <value>Greater Than Or Equal</value>
+  </data>
+  <data name="GreaterEqual_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="GreaterEqual_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="GreaterEqual_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="GreaterEqual_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="GreaterEqual_result_Name" xml:space="preserve">
+    <value>x &gt;= y</value>
+  </data>
+  <data name="GreaterThan_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="GreaterThan_Name" xml:space="preserve">
+    <value>Greater Than</value>
+  </data>
+  <data name="GreaterThan_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="GreaterThan_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="GreaterThan_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="GreaterThan_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="GreaterThan_result_Name" xml:space="preserve">
+    <value>x &gt; y</value>
+  </data>
+  <data name="ImmutableBorrowNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ImmutableBorrowNode_Name" xml:space="preserve">
+    <value>Immutable Borrow</value>
+  </data>
+  <data name="ImmutableBorrowNode_reference out_Name" xml:space="preserve">
+    <value>reference out</value>
+  </data>
+  <data name="ImmutableBorrowNode_value in_Name" xml:space="preserve">
+    <value>value in</value>
+  </data>
+  <data name="Increment_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Increment_Name" xml:space="preserve">
+    <value>Increment</value>
+  </data>
+  <data name="Increment_operandRef_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Increment_operandRef_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Increment_result_Name" xml:space="preserve">
+    <value>x + 1</value>
+  </data>
+  <data name="LessEqual_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LessEqual_Name" xml:space="preserve">
+    <value>Less Than Or Equal</value>
+  </data>
+  <data name="LessEqual_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="LessEqual_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="LessEqual_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="LessEqual_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="LessEqual_result_Name" xml:space="preserve">
+    <value>x &lt;= y</value>
+  </data>
+  <data name="LessThan_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LessThan_Name" xml:space="preserve">
+    <value>Less Than</value>
+  </data>
+  <data name="LessThan_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="LessThan_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="LessThan_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="LessThan_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="LessThan_result_Name" xml:space="preserve">
+    <value>x &lt; y</value>
+  </data>
+  <data name="Multiply_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Multiply_Name" xml:space="preserve">
+    <value>Multiply</value>
+  </data>
+  <data name="Multiply_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Multiply_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Multiply_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Multiply_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Multiply_result_Name" xml:space="preserve">
+    <value>x * y</value>
+  </data>
+  <data name="Not_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Not_Name" xml:space="preserve">
+    <value>Not</value>
+  </data>
+  <data name="Not_operandRef_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Not_operandRef_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Not_result_Name" xml:space="preserve">
+    <value>NOT x</value>
+  </data>
+  <data name="NotEqual_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="NotEqual_Name" xml:space="preserve">
+    <value>Not Equal</value>
+  </data>
+  <data name="NotEqual_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="NotEqual_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="NotEqual_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="NotEqual_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="NotEqual_result_Name" xml:space="preserve">
+    <value>x != y</value>
+  </data>
+  <data name="Or_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Or_Name" xml:space="preserve">
+    <value>Or</value>
+  </data>
+  <data name="Or_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Or_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Or_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Or_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Or_result_Name" xml:space="preserve">
+    <value>x | y</value>
+  </data>
+  <data name="Output_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Output_Name" xml:space="preserve">
+    <value>Output</value>
+  </data>
+  <data name="Output_valueRef_in_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="Output_valueRef_out_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="SelectReferenceNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SelectReferenceNode_falseValueRef_Name" xml:space="preserve">
+    <value>false value reference</value>
+  </data>
+  <data name="SelectReferenceNode_Name" xml:space="preserve">
+    <value>Select Reference</value>
+  </data>
+  <data name="SelectReferenceNode_selectedValueRef_Name" xml:space="preserve">
+    <value>selected value reference</value>
+  </data>
+  <data name="SelectReferenceNode_selectorRef_in_Name" xml:space="preserve">
+    <value>selector reference</value>
+  </data>
+  <data name="SelectReferenceNode_selectorRef_out_Name" xml:space="preserve">
+    <value>selector reference</value>
+  </data>
+  <data name="SelectReferenceNode_trueValueRef_Name" xml:space="preserve">
+    <value>true value reference</value>
+  </data>
+  <data name="Subtract_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Subtract_Name" xml:space="preserve">
+    <value>Subtract</value>
+  </data>
+  <data name="Subtract_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Subtract_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Subtract_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Subtract_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Subtract_result_Name" xml:space="preserve">
+    <value>x - y</value>
+  </data>
+  <data name="Xor_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Xor_Name" xml:space="preserve">
+    <value>Xor</value>
+  </data>
+  <data name="Xor_operand1Ref_in_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Xor_operand1Ref_out_Name" xml:space="preserve">
+    <value>x reference</value>
+  </data>
+  <data name="Xor_operand2Ref_in_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Xor_operand2Ref_out_Name" xml:space="preserve">
+    <value>y reference</value>
+  </data>
+  <data name="Xor_result_Name" xml:space="preserve">
+    <value>x ^ y</value>
+  </data>
+  <data name="CreateLockingCell_cell_Name" xml:space="preserve">
+    <value>cell</value>
+  </data>
+  <data name="CreateLockingCell_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="CreateLockingCell_Name" xml:space="preserve">
+    <value>Create Locking Cell</value>
+  </data>
+  <data name="CreateLockingCell_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="CreateNonLockingCell_cell_Name" xml:space="preserve">
+    <value>cell</value>
+  </data>
+  <data name="CreateNonLockingCell_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="CreateNonLockingCell_Name" xml:space="preserve">
+    <value>Create Non-Locking Cell</value>
+  </data>
+  <data name="CreateNonLockingCell_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="ImmutablePassthroughNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ImmutablePassthroughNode_Name" xml:space="preserve">
+    <value>Immutable Passthrough</value>
+  </data>
+  <data name="ImmutablePassthroughNode_valueRef_in_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="ImmutablePassthroughNode_valueRef_out_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="MutablePassthroughNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="MutablePassthroughNode_Name" xml:space="preserve">
+    <value>Mutable Passthrough</value>
+  </data>
+  <data name="MutablePassthroughNode_valueRef_in_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="MutablePassthroughNode_valueRef_out_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="NoneConstructorNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="NoneConstructorNode_Name" xml:space="preserve">
+    <value>None Constructor</value>
+  </data>
+  <data name="Range_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Range_highValue_Name" xml:space="preserve">
+    <value>high value (exclusive)</value>
+  </data>
+  <data name="Range_lowValue_Name" xml:space="preserve">
+    <value>low value (inclusive)</value>
+  </data>
+  <data name="Range_Name" xml:space="preserve">
+    <value>Range</value>
+  </data>
+  <data name="Range_range_Name" xml:space="preserve">
+    <value>range</value>
+  </data>
+  <data name="SomeConstructorNode_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SomeConstructorNode_Name" xml:space="preserve">
+    <value>Some Constructor</value>
+  </data>
+  <data name="SomeConstructorNode_option_Name" xml:space="preserve">
+    <value>option</value>
+  </data>
+  <data name="SomeConstructorNode_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="StringFromSlice_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringFromSlice_Name" xml:space="preserve">
+    <value>String From Slice</value>
+  </data>
+  <data name="StringFromSlice_slice_in_Name" xml:space="preserve">
+    <value>slice</value>
+  </data>
+  <data name="StringFromSlice_string_Name" xml:space="preserve">
+    <value>string</value>
+  </data>
+  <data name="StringToSlice_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringToSlice_Name" xml:space="preserve">
+    <value>String To Slice</value>
+  </data>
+  <data name="StringToSlice_slice_Name" xml:space="preserve">
+    <value>slice</value>
+  </data>
+  <data name="StringToSlice_string_Name" xml:space="preserve">
+    <value>string</value>
+  </data>
+  <data name="VectorCreate_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorCreate_Name" xml:space="preserve">
+    <value>Create Vector</value>
+  </data>
+  <data name="VectorCreate_vector_Name" xml:space="preserve">
+    <value>vector</value>
+  </data>
+  <data name="VectorInsert_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorInsert_element_Name" xml:space="preserve">
+    <value>element reference</value>
+  </data>
+  <data name="VectorInsert_indexRef_in_Name" xml:space="preserve">
+    <value>index reference</value>
+  </data>
+  <data name="VectorInsert_indexRef_out_Name" xml:space="preserve">
+    <value>index reference</value>
+  </data>
+  <data name="VectorInsert_Name" xml:space="preserve">
+    <value>Insert Into Vector</value>
+  </data>
+  <data name="VectorInsert_vectorRef_in_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
+  <data name="VectorInsert_vectorRef_out_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
+  <data name="LockTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LockTunnel_Name" xml:space="preserve">
+    <value>Lock Tunnel</value>
+  </data>
+  <data name="LoopBorrowTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LoopBorrowTunnel_Name" xml:space="preserve">
+    <value>Borrow Tunnel</value>
+  </data>
+  <data name="LoopConditionTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LoopConditionTunnel_Name" xml:space="preserve">
+    <value>Loop Condition</value>
+  </data>
+  <data name="LoopIterateTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LoopIterateTunnel_Name" xml:space="preserve">
+    <value>Iterate Tunnel</value>
+  </data>
+  <data name="LoopTerminateLifetimeTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LoopTerminateLifetimeTunnel_Name" xml:space="preserve">
+    <value>Terminate Lifetime Tunnel</value>
+  </data>
+  <data name="LoopTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="LoopTunnel_Name" xml:space="preserve">
+    <value>Tunnel</value>
+  </data>
+  <data name="Loop_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Loop_Name" xml:space="preserve">
+    <value>Loop</value>
+  </data>
+  <data name="TerminateLifetime_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="TerminateLifetime_Name" xml:space="preserve">
+    <value>Terminate Lifetime</value>
+  </data>
+  <data name="UnwrapOptionTunnel_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="UnwrapOptionTunnel_Name" xml:space="preserve">
+    <value>Unwrap Option Tunnel</value>
+  </data>
+  <data name="NoneConstructorNode_option_Name" xml:space="preserve">
+    <value>option</value>
+  </data>
+  <data name="StringFromSlice_slice_out_Name" xml:space="preserve">
+    <value>slice</value>
+  </data>
+</root>

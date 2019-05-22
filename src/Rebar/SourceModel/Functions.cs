@@ -477,7 +477,7 @@ namespace Rebar.SourceModel
         public Equal() : base(Signatures.DefineComparisonFunction(ElementName)) { }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static Equal CreateAccumulateXor(IElementCreateInfo elementCreateInfo)
+        public static Equal CreateEqual(IElementCreateInfo elementCreateInfo)
         {
             var equal = new Equal();
             equal.Init(elementCreateInfo);

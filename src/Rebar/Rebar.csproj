@@ -214,6 +214,11 @@
     <Compile Include="RebarTarget\SystemModel\TargetEnvoyCreationServiceBuilder.cs" />
     <Compile Include="RebarTarget\SystemModel\TargetKind.cs" />
     <Compile Include="RebarFeatureToggles.cs" />
+    <Compile Include="Resources\ContextHelp.resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ContextHelp.resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Resources\LocalizedStrings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -229,6 +234,7 @@
     <Compile Include="Design\FunctionViewModelProvider.cs" />
     <Compile Include="Common\DataTypes.cs" />
     <Compile Include="Common\BorrowMode.cs" />
+    <Compile Include="Resources\RebarModelResources.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\FunctionalNode.cs" />
@@ -265,6 +271,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Resources\ContextHelp.resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ContextHelp.resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\DiagramPalette.xml" />
     <EmbeddedResource Include="Resources\LocalizedStrings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
