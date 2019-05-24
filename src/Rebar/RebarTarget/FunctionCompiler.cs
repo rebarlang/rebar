@@ -402,7 +402,7 @@ namespace Rebar.RebarTarget
                 _builder.EmitDerefInteger();
                 _builder.EmitStoreInteger();
             }
-            else if (valueType.IsRebarReferenceType())
+            else if (valueType.IsRebarReferenceType() && valueType.GetReferentType() != DataTypes.StringSliceType)
             {
                 loadDestinationAddress();
                 loadSourceAddress();
