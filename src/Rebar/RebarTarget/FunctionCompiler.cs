@@ -31,8 +31,6 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["Output"] = CompileOutput;
             _functionalNodeCompilers["Some"] = CompileSomeConstructor;
             _functionalNodeCompilers["None"] = CompileNoneConstructor;
-            _functionalNodeCompilers["VectorCreate"] = CompileNothing;
-            _functionalNodeCompilers["VectorInsert"] = CompileNothing;
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
             _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
 
@@ -63,8 +61,13 @@ namespace Rebar.RebarTarget
             _functionalNodeCompilers["GreaterThan"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThan());
             _functionalNodeCompilers["GreaterEqual"] = (_, __) => CompileComparison(_, __, b => b.EmitGreaterThanOrEqual());
 
+            _functionalNodeCompilers["Range"] = CompileRange;
+
             _functionalNodeCompilers["StringFromSlice"] = CompileStringFromSlice;
             _functionalNodeCompilers["StringToSlice"] = CompileStringToSlice;
+
+            _functionalNodeCompilers["VectorCreate"] = CompileNothing;
+            _functionalNodeCompilers["VectorInsert"] = CompileNothing;
 
             _functionalNodeCompilers["Inspect"] = CompileInspect;
         }
@@ -835,7 +838,7 @@ namespace Rebar.RebarTarget
             VariableReference rangeInput = iterateTunnel.InputTerminals.ElementAt(0).GetTrueVariable();
             VariableReference output = iterateTunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
             LoadValueAsReference(rangeInput);    // &range
-            _builder.EmitDuplicate();
+            LoadValueAsReference(rangeInput);    // &range, &range
             _builder.EmitLoadIntegerImmediate(4);
             _builder.EmitAdd();     // &range, &range.max
             _builder.EmitDerefInteger();    // &range, range.max

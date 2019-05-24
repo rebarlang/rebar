@@ -40,5 +40,24 @@ namespace Tests.Rebar.Unit.Execution
             byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
             AssertByteArrayIsInt32(inspectValue, 2);
         }
+
+        [TestMethod]
+        public void FunctionWithRangeWithInt32Inputs_Execute_CorrectRangeValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode range = new FunctionalNode(function.BlockDiagram, Signatures.RangeType);
+            Constant lowValue = ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, false);
+            lowValue.Value = 0;
+            Constant highValue = ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, false);
+            highValue.Value = 10;
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(range.OutputTerminals[0]);
+
+            ExecutionContext context = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            Assert.AreEqual(8, inspectValue.Length);
+            Assert.AreEqual(-1, DataHelpers.ReadIntFromByteArray(inspectValue, 0));
+            Assert.AreEqual(10, DataHelpers.ReadIntFromByteArray(inspectValue, 4));
+        }
     }
 }
