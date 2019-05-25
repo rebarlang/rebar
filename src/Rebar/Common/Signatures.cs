@@ -349,11 +349,11 @@ namespace Rebar.Common
             var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateMutableReference(),
+                inputType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "operand1Ref");
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "operand2Ref");
             return functionTypeBuilder.CreateType();
         }
@@ -364,11 +364,11 @@ namespace Rebar.Common
             NIType inputType = PFTypes.Int32, outputType = PFTypes.Boolean;
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "operand1Ref");
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "operand2Ref");
             AddOutputParameter(
                 functionTypeBuilder,
