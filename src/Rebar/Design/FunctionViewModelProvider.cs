@@ -58,6 +58,8 @@ namespace Rebar.Design
 
             AddSupportedModel<StringFromSlice>(n => new BasicNodeViewModel(n, "String From Slice"));
             AddSupportedModel<StringToSlice>(n => new BasicNodeViewModel(n, "String To Slice"));
+            AddSupportedModel<StringConcat>(n => new BasicNodeViewModel(n, "Concatenate Strings"));
+            AddSupportedModel<StringAppend>(n => new BasicNodeViewModel(n, "Append To String"));
 
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));

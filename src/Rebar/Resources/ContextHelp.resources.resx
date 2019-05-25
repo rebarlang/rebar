@@ -867,4 +867,43 @@
   <data name="StringFromSlice_slice_out_Name" xml:space="preserve">
     <value>slice</value>
   </data>
+  <data name="StringAppend_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringAppend_Name" xml:space="preserve">
+    <value>Append To String</value>
+  </data>
+  <data name="StringAppend_slice_in_Name" xml:space="preserve">
+    <value>slice</value>
+  </data>
+  <data name="StringAppend_slice_out_Name" xml:space="preserve">
+    <value>slice</value>
+  </data>
+  <data name="StringAppend_string_in_Name" xml:space="preserve">
+    <value>string</value>
+  </data>
+  <data name="StringAppend_string_out_Name" xml:space="preserve">
+    <value>string</value>
+  </data>
+  <data name="StringConcat_combined_Name" xml:space="preserve">
+    <value>combined string</value>
+  </data>
+  <data name="StringConcat_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringConcat_firstSlice_in_Name" xml:space="preserve">
+    <value>first slice</value>
+  </data>
+  <data name="StringConcat_firstSlice_out_Name" xml:space="preserve">
+    <value>first slice</value>
+  </data>
+  <data name="StringConcat_Name" xml:space="preserve">
+    <value>Concatenate Strings</value>
+  </data>
+  <data name="StringConcat_secondSlice_in_Name" xml:space="preserve">
+    <value>second slice</value>
+  </data>
+  <data name="StringConcat_secondSlice_out_Name" xml:space="preserve">
+    <value>second slice</value>
+  </data>
 </root>

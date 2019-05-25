@@ -65,6 +65,8 @@ namespace Rebar.RebarTarget
 
             _functionalNodeCompilers["StringFromSlice"] = CompileStringFromSlice;
             _functionalNodeCompilers["StringToSlice"] = CompileStringToSlice;
+            _functionalNodeCompilers["StringConcat"] = CompileStringConcat;
+            _functionalNodeCompilers["StringAppend"] = CompileStringAppend;
 
             _functionalNodeCompilers["VectorCreate"] = CompileNothing;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
@@ -262,8 +264,10 @@ namespace Rebar.RebarTarget
             VariableReference input = stringFromSliceNode.InputTerminals[0].GetTrueVariable(),
                 output = stringFromSliceNode.OutputTerminals[1].GetTrueVariable();
 
+            Action<FunctionCompiler> loadStringOutputAllocationReference = c => c.LoadLocalAllocationReference(output);
+
             // Get a pointer to a heap allocation big enough for the string
-            compiler.LoadLocalAllocationReference(output);
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, 0);
             compiler.LoadStringSliceReferenceSizeReference(input);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitAlloc_TEMP();
@@ -272,16 +276,14 @@ namespace Rebar.RebarTarget
             // Copy the data from the string slice to the heap allocation
             compiler.LoadStringSliceReferencePointer(input);
             compiler._builder.EmitDerefPointer();
-            compiler.LoadLocalAllocationReference(output);
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, 0);
             compiler._builder.EmitDerefPointer();
             compiler.LoadStringSliceReferenceSizeReference(input);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitCopyBytes_TEMP();
 
             // Copy actual size into string handle
-            compiler.LoadLocalAllocationReference(output);
-            compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
-            compiler._builder.EmitAdd();
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, TargetConstants.PointerSize);
             compiler.LoadStringSliceReferenceSizeReference(input);
             compiler._builder.EmitDerefInteger();
             compiler._builder.EmitStoreInteger();
@@ -292,16 +294,108 @@ namespace Rebar.RebarTarget
             VariableReference input = stringToSliceNode.InputTerminals[0].GetTrueVariable(),
                 output = stringToSliceNode.OutputTerminals[0].GetTrueVariable();
 
+            Action<FunctionCompiler> loadStringInputReference = c => c.LoadValueAsReference(input);
+
             compiler.LoadStringSliceReferencePointer(output);
-            compiler.LoadValueAsReference(input);
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, 0);
             compiler._builder.EmitDerefPointer();
             compiler._builder.EmitStorePointer();
 
             compiler.LoadStringSliceReferenceSizeReference(output);
-            compiler.LoadValueAsReference(input);
-            compiler._builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
-            compiler._builder.EmitAdd();
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, TargetConstants.PointerSize);
             compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitStoreInteger();
+        }
+
+        private static void CompileStringConcat(FunctionCompiler compiler, FunctionalNode stringConcatNode)
+        {
+            VariableReference input1 = stringConcatNode.InputTerminals[0].GetTrueVariable(),
+                input2 = stringConcatNode.InputTerminals[1].GetTrueVariable(),
+                output = stringConcatNode.OutputTerminals[2].GetTrueVariable();
+
+            Action<FunctionCompiler> loadStringOutputAllocationReference = c => c.LoadLocalAllocationReference(output);
+
+            // compute and store the size first to use it later
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, TargetConstants.PointerSize);
+            compiler.LoadStringSliceReferenceSizeReference(input1);
+            compiler._builder.EmitDerefInteger();
+            compiler.LoadStringSliceReferenceSizeReference(input2);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitAdd();
+            compiler._builder.EmitStoreInteger();
+
+            // allocate a new string with stored size
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, 0);
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, TargetConstants.PointerSize);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitAlloc_TEMP();
+            compiler._builder.EmitStorePointer();
+
+            // copy data from both slices
+            compiler.LoadStringSliceReferencePointer(input1);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, 0);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadStringSliceReferenceSizeReference(input1);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitCopyBytes_TEMP();
+
+            compiler.LoadStringSliceReferencePointer(input2);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadConstantOffsetFromPointer(loadStringOutputAllocationReference, 0);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadStringSliceReferenceSizeReference(input1);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitAdd();
+            compiler.LoadStringSliceReferenceSizeReference(input2);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitCopyBytes_TEMP();
+        }
+
+        private static void CompileStringAppend(FunctionCompiler compiler, FunctionalNode stringAppendNode)
+        {
+            VariableReference stringInput = stringAppendNode.InputTerminals[0].GetTrueVariable(),
+                sliceInput = stringAppendNode.InputTerminals[1].GetTrueVariable();
+
+            Action<FunctionCompiler> loadStringInputReference = c => c.LoadValueAsReference(stringInput);
+            // for now, always create a new allocation, rather than trying to use existing one
+            // TODO: free the old allocation
+            // compute and store the size first to use it later
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, TargetConstants.PointerSize);
+            compiler._builder.EmitDerefInteger();
+            compiler.LoadStringSliceReferenceSizeReference(sliceInput);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitAdd();
+            compiler._builder.EmitDuplicate();
+            compiler._builder.EmitAlloc_TEMP();
+            compiler._builder.EmitDuplicate();
+
+            // copy from old allocation to new allocation, then overwrite old allocation pointer
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, 0);
+            compiler._builder.EmitDerefPointer();
+            compiler._builder.EmitSwap();
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, TargetConstants.PointerSize);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitCopyBytes_TEMP();
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, 0);
+            compiler._builder.EmitSwap();
+            compiler._builder.EmitStorePointer();
+
+            // copy from slice to offset in new allocation
+            compiler.LoadStringSliceReferencePointer(sliceInput);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, 0);
+            compiler._builder.EmitDerefPointer();
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, TargetConstants.PointerSize);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitAdd();
+            compiler.LoadStringSliceReferenceSizeReference(sliceInput);
+            compiler._builder.EmitDerefInteger();
+            compiler._builder.EmitCopyBytes_TEMP();
+
+            // copy total size to string
+            compiler.LoadConstantOffsetFromPointer(loadStringInputReference, TargetConstants.PointerSize);
+            compiler._builder.EmitSwap();
             compiler._builder.EmitStoreInteger();
         }
 
@@ -357,6 +451,16 @@ namespace Rebar.RebarTarget
             _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
         }
 
+        private void LoadConstantOffsetFromPointer(Action<FunctionCompiler> loadBaseReference, int offset)
+        {
+            loadBaseReference(this);
+            if (offset != 0)
+            {
+                _builder.EmitLoadIntegerImmediate(offset);
+                _builder.EmitAdd();
+            }
+        }
+
         private void LoadStringSliceReferencePointer(VariableReference stringSliceReferenceLocal)
         {
             var localAllocation = _variableAllocations[stringSliceReferenceLocal] as LocalAllocationValueSource;
@@ -374,9 +478,7 @@ namespace Rebar.RebarTarget
             {
                 throw new ArgumentException("The given variable is not associated with a local allocation.", "local");
             }
-            _builder.EmitLoadLocalAddress((byte)localAllocation.Index);
-            _builder.EmitLoadIntegerImmediate(4);
-            _builder.EmitAdd();
+            LoadConstantOffsetFromPointer(c => c._builder.EmitLoadLocalAddress((byte)localAllocation.Index), TargetConstants.PointerSize);
         }
 
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
@@ -442,12 +544,7 @@ namespace Rebar.RebarTarget
 
             CopyValue(
                 () => LoadLocalAllocationReference(valueVariableReference),
-                () =>
-                {
-                    LoadLocalAllocationReference(someValueVariableReference);
-                    _builder.EmitLoadIntegerImmediate(4);
-                    _builder.EmitAdd();
-                },
+                () => LoadConstantOffsetFromPointer(c => LoadLocalAllocationReference(someValueVariableReference), 4),
                 valueVariableReference.Type);
         }
 
@@ -533,13 +630,11 @@ namespace Rebar.RebarTarget
                     StaticDataBuilder stringStaticData = GetStaticDataForString((string)constant.Value);
                     int stringSize = stringStaticData.Data.Length;
 
-                    LoadLocalAllocationReference(output);
+                    LoadStringSliceReferencePointer(output);
                     _builder.EmitLoadStaticDataAddress(stringStaticData);
                     _builder.EmitStorePointer();
 
-                    LoadLocalAllocationReference(output);
-                    _builder.EmitLoadIntegerImmediate(TargetConstants.PointerSize);
-                    _builder.EmitAdd();
+                    LoadStringSliceReferenceSizeReference(output);
                     _builder.EmitLoadIntegerImmediate(stringSize);
                     _builder.EmitStoreInteger();
                 }

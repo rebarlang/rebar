@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class ContextHelp_resources {
@@ -1974,6 +1974,123 @@ namespace Rebar.Resources {
         internal static string SomeConstructorNode_value_Name {
             get {
                 return ResourceManager.GetString("SomeConstructorNode_value_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string StringAppend_Description {
+            get {
+                return ResourceManager.GetString("StringAppend_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Append To String.
+        /// </summary>
+        internal static string StringAppend_Name {
+            get {
+                return ResourceManager.GetString("StringAppend_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice.
+        /// </summary>
+        internal static string StringAppend_slice_in_Name {
+            get {
+                return ResourceManager.GetString("StringAppend_slice_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice.
+        /// </summary>
+        internal static string StringAppend_slice_out_Name {
+            get {
+                return ResourceManager.GetString("StringAppend_slice_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string.
+        /// </summary>
+        internal static string StringAppend_string_in_Name {
+            get {
+                return ResourceManager.GetString("StringAppend_string_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string.
+        /// </summary>
+        internal static string StringAppend_string_out_Name {
+            get {
+                return ResourceManager.GetString("StringAppend_string_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to combined string.
+        /// </summary>
+        internal static string StringConcat_combined_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_combined_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string StringConcat_Description {
+            get {
+                return ResourceManager.GetString("StringConcat_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to first slice.
+        /// </summary>
+        internal static string StringConcat_firstSlice_in_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_firstSlice_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to first slice.
+        /// </summary>
+        internal static string StringConcat_firstSlice_out_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_firstSlice_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Concatenate Strings.
+        /// </summary>
+        internal static string StringConcat_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to second slice.
+        /// </summary>
+        internal static string StringConcat_secondSlice_in_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_secondSlice_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to second slice.
+        /// </summary>
+        internal static string StringConcat_secondSlice_out_Name {
+            get {
+                return ResourceManager.GetString("StringConcat_secondSlice_out_Name", resourceCulture);
             }
         }
         

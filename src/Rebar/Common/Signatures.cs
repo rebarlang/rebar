@@ -214,6 +214,32 @@ namespace Rebar.Common
                 "slice");
             StringToSliceType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringConcat");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                "firstSlice");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "secondSlice");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String,
+                "combined");
+            StringConcatType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringAppend");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                "string");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "slice");
+            StringAppendType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
             // TODO
 #if FALSE
@@ -291,6 +317,10 @@ namespace Rebar.Common
         public static NIType StringFromSliceType { get; }
 
         public static NIType StringToSliceType { get; }
+
+        public static NIType StringConcatType { get; }
+
+        public static NIType StringAppendType { get; }
 
         public static NIType VectorCreateType { get; }
 

@@ -4,6 +4,10 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
+#if LOG_MEMORY_ACCESS
+using NationalInstruments.Core;
+#endif
+
 namespace Rebar.RebarTarget.Execution
 {
     public class ExecutionContext
@@ -88,8 +92,9 @@ namespace Rebar.RebarTarget.Execution
                     {
                         _staticDataLocations[staticDataInformation.Identifier] = new Tuple<int, int>(currentOffset, staticDataItem.Length);
                     }
-                    Array.Copy(staticDataItem, _memory, staticDataItem.Length);
-                    currentOffset += RoundUpToNearest(staticDataItem.Length, 4);
+                    Array.Copy(staticDataItem, 0, _memory, currentOffset, staticDataItem.Length);
+                    int minimumSize = Math.Max(1, staticDataItem.Length);
+                    currentOffset += RoundUpToNearest(minimumSize, 4);
                 }
                 loadedFunction.PatchStaticDataOffsets(staticOffsets);
             }
@@ -173,6 +178,9 @@ namespace Rebar.RebarTarget.Execution
                             {
                                 int value = operandStack.Pop(),
                                     address = operandStack.Pop();
+#if LOG_MEMORY_ACCESS
+                                Log.WriteLine($"{opcode} {value} at {address}");
+#endif
                                 DataHelpers.WriteIntToByteArray(value, _memory, address);
                                 string message = $"Stored {value} at {address}";
                             }
@@ -182,6 +190,9 @@ namespace Rebar.RebarTarget.Execution
                             {
                                 int address = operandStack.Pop();
                                 int value = DataHelpers.ReadIntFromByteArray(_memory, address);
+#if LOG_MEMORY_ACCESS
+                                Log.WriteLine($"{opcode} {value} from {address}");
+#endif
                                 operandStack.Push(value);
                             }
                             break;
@@ -279,6 +290,9 @@ namespace Rebar.RebarTarget.Execution
                             {
                                 int size = operandStack.Pop();
                                 int stringBufferAddress = operandStack.Pop();
+#if LOG_MEMORY_ACCESS
+                                Log.WriteLine($"OutputString with {size} bytes from {stringBufferAddress}");
+#endif
                                 string str = Encoding.UTF8.GetString(_memory, stringBufferAddress, size);
                                 _runtimeServices.Output(str);
                             }
@@ -294,7 +308,7 @@ namespace Rebar.RebarTarget.Execution
                         case OpCodes.Alloc_TEMP:
                             {
                                 int size = operandStack.Pop();
-                                size = RoundUpToNearest(size, 4);
+                                size = RoundUpToNearest(Math.Max(1, size), 4);
                                 if (_heapOffset + size <= _memory.Length)
                                 {
                                     operandStack.Push(_heapOffset);
@@ -326,6 +340,9 @@ namespace Rebar.RebarTarget.Execution
 
         private void CopyBytes(int fromAddress, int toAddress, int size)
         {
+#if LOG_MEMORY_ACCESS
+            Log.WriteLine($"Copying {size} bytes from {fromAddress} to {toAddress}");
+#endif
             for (int i = 0; i < size; ++i)
             {
                 _memory[toAddress] = _memory[fromAddress];

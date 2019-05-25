@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget.Execution;
 
@@ -62,6 +63,45 @@ namespace Tests.Rebar.Unit.Execution
             ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
 
             Assert.AreEqual("test", runtimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void StringConcat_Execute_CorrectResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+            FunctionalNode stringConcat = new FunctionalNode(function.BlockDiagram, Signatures.StringConcatType);
+            Wire.Create(function.BlockDiagram, stringConcat.OutputTerminals[2], output.InputTerminals[0]);
+            Constant stringAConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            stringAConstant.Value = "stringA";
+            Constant stringBConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            stringBConstant.Value = "stringB";
+
+            var runtimeServices = new TestRuntimeServices();
+            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+
+            Assert.AreEqual("stringAstringB", runtimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void StringAppend_Execute_CorrectResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+            FunctionalNode stringAppend = new FunctionalNode(function.BlockDiagram, Signatures.StringAppendType);
+            Wire.Create(function.BlockDiagram, stringAppend.OutputTerminals[0], output.InputTerminals[0]);
+            FunctionalNode stringFromSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
+            Wire stringWire = Wire.Create(function.BlockDiagram, stringFromSlice.OutputTerminals[1], stringAppend.InputTerminals[0]);
+            stringWire.SetWireBeginsMutableVariable(true);
+            Constant stringAConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            stringAConstant.Value = "longString";
+            Constant stringBConstant = ConnectConstantToInputTerminal(stringAppend.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            stringBConstant.Value = "short";
+
+            var runtimeServices = new TestRuntimeServices();
+            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+
+            Assert.AreEqual("longStringshort", runtimeServices.LastOutputValue);
         }
     }
 }
