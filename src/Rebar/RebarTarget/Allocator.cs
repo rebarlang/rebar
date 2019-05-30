@@ -230,7 +230,14 @@ namespace Rebar.RebarTarget
         {
             VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
                 outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
-            _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+            if (outputVariable.Type == inputVariable.Type.CreateOption())
+            {
+                CreateLocalAllocationForVariable(outputVariable);
+            }
+            else
+            {
+                _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+            }
             return true;
         }
 

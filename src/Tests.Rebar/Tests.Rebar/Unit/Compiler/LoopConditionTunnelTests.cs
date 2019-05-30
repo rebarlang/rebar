@@ -86,14 +86,5 @@ namespace Tests.Rebar.Unit.Compiler
 
             AssertTerminalHasTypeConflictMessage(loopConditionTunnel.InputTerminals[0]);
         }
-
-        private static LoopConditionTunnel CreateLoopConditionTunnel(Loop loop)
-        {
-            var loopConditionTunnel = new LoopConditionTunnel(loop);
-            var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
-            loopConditionTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
-            terminateLifetimeDfir.BeginLifetimeTunnel = loopConditionTunnel;
-            return loopConditionTunnel;
-        }
     }
 }

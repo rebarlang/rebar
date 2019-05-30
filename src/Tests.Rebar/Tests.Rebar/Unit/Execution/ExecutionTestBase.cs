@@ -38,6 +38,20 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual(4, region.Length);
             Assert.AreEqual(value, DataHelpers.ReadIntFromByteArray(region, 0));
         }
+
+        protected void AssertByteArrayIsSomeInteger(byte[] value, int intValue)
+        {
+            Assert.AreEqual(8, value.Length);
+            Assert.AreEqual(1, DataHelpers.ReadIntFromByteArray(value, 0));
+            Assert.AreEqual(intValue, DataHelpers.ReadIntFromByteArray(value, 4));
+        }
+
+        protected void AssertByteArrayIsNoneInteger(byte[] value)
+        {
+            Assert.AreEqual(8, value.Length);
+            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 0));
+            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 4));
+        }
     }
 
     internal class TestRuntimeServices : IRebarTargetRuntimeServices

@@ -94,14 +94,23 @@ namespace Tests.Rebar.Unit.Compiler
             return borrowTunnel;
         }
 
-        protected Tunnel CreateInputTunnel(Frame frame)
+        protected Tunnel CreateInputTunnel(Structure structure)
         {
-            return frame.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            return structure.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
         }
 
-        protected Tunnel CreateOutputTunnel(Frame frame)
+        protected Tunnel CreateOutputTunnel(Structure structure)
         {
-            return frame.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+        }
+
+        internal LoopConditionTunnel CreateLoopConditionTunnel(global::Rebar.Compiler.Nodes.Loop loop)
+        {
+            var loopConditionTunnel = new LoopConditionTunnel(loop);
+            var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
+            loopConditionTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
+            terminateLifetimeDfir.BeginLifetimeTunnel = loopConditionTunnel;
+            return loopConditionTunnel;
         }
 
         protected void AssertTerminalHasTypeConflictMessage(Terminal terminal)

@@ -118,6 +118,25 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void UnwrapOptionTunnelWithSomeInputAndOutputTunnel_Execute_OutputTunnelOutputsSomeValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode some = CreateInt32SomeConstructor(function.BlockDiagram, 5);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
+            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            intConstant.Value = 5;
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
+
+            ExecutionContext context = CompileAndExecuteFunction(function);
+
+            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            AssertByteArrayIsSomeInteger(finalValue, 5);
+        }
+
+        [TestMethod]
         public void UnwrapOptionTunnelWithNoneInput_Execute_FrameDoesNotExecute()
         {
             DfirRoot function = DfirRoot.Create();
@@ -138,6 +157,28 @@ namespace Tests.Rebar.Unit.Execution
             AssertByteArrayIsInt32(finalValue, 0);
         }
 
+        [TestMethod]
+        public void UnwrapOptionTunnelWithNoneInputAndOutputTunnel_Execute_OutputTunnelOutputsNoneValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, none.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+            FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
+            Wire unwrapWire = Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
+            unwrapWire.SetWireBeginsMutableVariable(true);
+            ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Int32, false);
+            Tunnel outputTunnel = CreateOutputTunnel(frame);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
+
+            ExecutionContext context = CompileAndExecuteFunction(function);
+
+            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            AssertByteArrayIsNoneInteger(finalValue);
+        }
+
         private FunctionalNode CreateInt32SomeConstructor(Diagram diagram, int value)
         {
             FunctionalNode initialSome = new FunctionalNode(diagram, Signatures.SomeConstructorType);
@@ -153,20 +194,6 @@ namespace Tests.Rebar.Unit.Execution
             Wire initialAssignWire = Wire.Create(diagram, initialSome.OutputTerminals[0], assign.InputTerminals[0]);
             initialAssignWire.SetWireBeginsMutableVariable(true);
             inspect = ConnectInspectToOutputTerminal(assign.OutputTerminals[0]);
-        }
-
-        private void AssertByteArrayIsSomeInteger(byte[] value, int intValue)
-        {
-            Assert.AreEqual(8, value.Length);
-            Assert.AreEqual(1, DataHelpers.ReadIntFromByteArray(value, 0));
-            Assert.AreEqual(intValue, DataHelpers.ReadIntFromByteArray(value, 4));
-        }
-
-        private void AssertByteArrayIsNoneInteger(byte[] value)
-        {
-            Assert.AreEqual(8, value.Length);
-            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 0));
-            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 4));
         }
     }
 }
