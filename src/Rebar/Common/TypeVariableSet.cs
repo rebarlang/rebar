@@ -638,6 +638,56 @@ namespace Rebar.Common
         }
     }
 
+    internal class IteratorTraitConstraint : Constraint
+    {
+        private readonly TypeVariableReference _itemTypeVariable;
+
+        public IteratorTraitConstraint(TypeVariableReference itemTypeVariable)
+        {
+            _itemTypeVariable = itemTypeVariable;
+        }
+
+        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
+        {
+            NIType implementedIteratorInterface;
+            if (type.RenderNIType().TryGetImplementedIteratorInterface(out implementedIteratorInterface))
+            {
+                NIType itemType;
+                implementedIteratorInterface.TryDestructureIteratorType(out itemType);
+                TypeVariableReference itemTypeReference = type.TypeVariableSet.CreateTypeVariableReferenceFromNIType(
+                    itemType,
+                    // TODO
+                    new Dictionary<NIType, TypeVariableReference>());
+                type.TypeVariableSet.Unify(_itemTypeVariable, itemTypeReference, unificationResult);
+            }
+            else
+            {
+                unificationResult.AddFailedTypeConstraint(this);
+            }
+        }
+    }
+
+    internal class BoundedByLifetimeConstraint : Constraint
+    {
+        private readonly TypeVariableReference _boundingLifetimeVariable;
+
+        public BoundedByLifetimeConstraint(TypeVariableReference boundingLifetimeVariable)
+        {
+            _boundingLifetimeVariable = boundingLifetimeVariable;
+        }
+
+        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
+        {
+            TypeVariableReference underlyingType, l;
+            bool mutable;
+            if (type.TypeVariableSet.TryDecomposeReferenceType(type, out underlyingType, out l, out mutable))
+            {
+                TypeVariableReference referenceBound = type.TypeVariableSet.CreateReferenceToReferenceType(mutable, underlyingType, _boundingLifetimeVariable);
+                type.TypeVariableSet.Unify(type, referenceBound, unificationResult);
+            }
+        }
+    }
+
     internal class OutlastsLifetimeGraphConstraint : Constraint
     {
         private readonly LifetimeGraphIdentifier _lifetimeGraph;
@@ -652,6 +702,86 @@ namespace Rebar.Common
             if (!type.Lifetime.DoesOutlastLifetimeGraph(_lifetimeGraph))
             {
                 unificationResult.AddFailedTypeConstraint(this);
+            }
+        }
+    }
+
+    internal static class TypeVariableSetExtensions
+    {
+        public static Dictionary<NIType, TypeVariableReference> CreateTypeVariablesForGenericParameters(
+            this TypeVariableSet typeVariableSet, 
+            NIType genericType,
+            Func<NIType, TypeVariableReference> createLifetimeTypeReference)
+        {
+            Dictionary<NIType, TypeVariableReference> genericTypeParameters = new Dictionary<NIType, TypeVariableReference>();
+            foreach (NIType genericParameterNIType in genericType.GetGenericParameters())
+            {
+                if (genericParameterNIType.IsGenericParameter())
+                {
+                    if (genericParameterNIType.IsLifetimeType())
+                    {
+                        genericTypeParameters[genericParameterNIType] = createLifetimeTypeReference(genericParameterNIType);
+                    }
+                    else if (genericParameterNIType.IsMutabilityType())
+                    {
+                        genericTypeParameters[genericParameterNIType] = typeVariableSet.CreateReferenceToMutabilityType();
+                    }
+                    else
+                    {
+                        var typeConstraints = genericParameterNIType.GetConstraints().Select(CreateConstraintFromGenericNITypeConstraint).ToList();
+                        genericTypeParameters[genericParameterNIType] = typeVariableSet.CreateReferenceToNewTypeVariable(typeConstraints);
+                    }
+                }
+            }
+            return genericTypeParameters;
+        }
+
+        public static TypeVariableReference CreateTypeVariableReferenceFromNIType(
+            this TypeVariableSet typeVariableSet, 
+            NIType type, 
+            Dictionary<NIType, TypeVariableReference> genericTypeParameters)
+        {
+            if (type.IsGenericParameter())
+            {
+                return genericTypeParameters[type];
+            }
+            else if (!type.IsGenericType())
+            {
+                return typeVariableSet.CreateReferenceToLiteralType(type);
+            }
+            else
+            {
+                if (type.IsRebarReferenceType())
+                {
+                    TypeVariableReference referentType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferentType(), genericTypeParameters);
+                    TypeVariableReference lifetimeType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferenceLifetimeType(), genericTypeParameters);
+                    if (type.IsPolymorphicReferenceType())
+                    {
+                        TypeVariableReference mutabilityType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferenceMutabilityType(), genericTypeParameters);
+                        return typeVariableSet.CreateReferenceToPolymorphicReferenceType(mutabilityType, referentType, lifetimeType);
+                    }
+                    return typeVariableSet.CreateReferenceToReferenceType(type.IsMutableReferenceType(), referentType, lifetimeType);
+                }
+                string constructorTypeName = type.GetName();
+                var constructorParameters = type.GetGenericParameters();
+                if (constructorParameters.Count == 1)
+                {
+                    TypeVariableReference parameterType = typeVariableSet.CreateTypeVariableReferenceFromNIType(constructorParameters.ElementAt(0), genericTypeParameters);
+                    return typeVariableSet.CreateReferenceToConstructorType(constructorTypeName, parameterType);
+                }
+                throw new NotImplementedException();
+            }
+        }
+
+        private static Constraint CreateConstraintFromGenericNITypeConstraint(NIType niTypeConstraint)
+        {
+            if (niTypeConstraint.IsInterface() && niTypeConstraint.GetName() == "Display")
+            {
+                return new DisplayTraitConstraint();
+            }
+            else
+            {
+                throw new NotImplementedException("Don't know how to translate generic type constraint " + niTypeConstraint);
             }
         }
     }

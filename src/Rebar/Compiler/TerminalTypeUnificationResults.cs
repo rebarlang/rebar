@@ -94,8 +94,10 @@ namespace Rebar.Compiler
                 {
                     terminal.SetDfirMessage(Messages.WiredReferenceDoesNotLiveLongEnough);
                 }
-                if (unificationResult.FailedConstraints.OfType<DisplayTraitConstraint>().Any())
+                if (unificationResult.FailedConstraints.OfType<DisplayTraitConstraint>().Any()
+                    || unificationResult.FailedConstraints.OfType<IteratorTraitConstraint>().Any())
                 {
+                    // TODO: customize message with name of missing trait
                     terminal.SetDfirMessage(Messages.TypeDoesNotHaveRequiredTrait);
                 }
             }
