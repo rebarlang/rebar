@@ -96,8 +96,6 @@ namespace Rebar.Common
                 {
                     case "Vector":
                         return argumentNIType.CreateVector();
-                    case "Iterator":
-                        return argumentNIType.CreateIterator();
                     case "LockingCell":
                         return argumentNIType.CreateLockingCell();
                     case "NonLockingCell":

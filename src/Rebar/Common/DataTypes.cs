@@ -20,7 +20,9 @@ namespace Rebar.Common
 
         private static NIType NonLockingCellGenericType { get; }
 
-        private static NIType IteratorGenericType { get; }
+        private static NIType IteratorInterfaceGenericType { get; }
+
+        public static NIType RangeIteratorType { get; }
 
         private static NIType VectorGenericType { get; }
 
@@ -58,10 +60,16 @@ namespace Rebar.Common
             nonLockingCellGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             NonLockingCellGenericType = nonLockingCellGenericTypeBuilder.CreateType();
 
-            var iteratorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Iterator");
-            iteratorGenericTypeBuilder.MakeGenericParameters("T");
+            var iteratorGenericTypeBuilder = PFTypes.Factory.DefineReferenceInterface("Iterator");
+            iteratorGenericTypeBuilder.MakeGenericParameters("TItem");
             iteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
-            IteratorGenericType = iteratorGenericTypeBuilder.CreateType();
+            IteratorInterfaceGenericType = iteratorGenericTypeBuilder.CreateType();
+
+            var rangeIteratorTypeBuilder = PFTypes.Factory.DefineReferenceClass("RangeIterator");
+            var iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(PFTypes.Int32);
+            rangeIteratorTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
+            rangeIteratorTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            RangeIteratorType = rangeIteratorTypeBuilder.CreateType();
 
             var stringSliceTypeBuilder = PFTypes.Factory.DefineValueClass("StringSlice");
             stringSliceTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
@@ -262,14 +270,23 @@ namespace Rebar.Common
             return true;
         }
 
-        public static NIType CreateIterator(this NIType itemType)
+        public static bool TryGetImplementedIteratorInterface(this NIType type, out NIType iteratorInterface)
         {
-            return SpecializeGenericType(IteratorGenericType, itemType);
+            foreach (NIType implementedInterface in type.GetInterfaces())
+            {
+                if (implementedInterface.IsIteratorType())
+                {
+                    iteratorInterface = implementedInterface;
+                    return true;
+                }
+            }
+            iteratorInterface = NIType.Unset;
+            return false;
         }
 
         public static bool IsIteratorType(this NIType type)
         {
-            return type.IsGenericTypeSpecialization(IteratorGenericType);
+            return type.IsGenericTypeSpecialization(RangeIteratorType);
         }
 
         /// <summary>
