@@ -272,12 +272,15 @@ namespace Rebar.Common
 
         public static bool TryGetImplementedIteratorInterface(this NIType type, out NIType iteratorInterface)
         {
-            foreach (NIType implementedInterface in type.GetInterfaces())
+            if (type.IsClassOrInterface())
             {
-                if (implementedInterface.IsIteratorType())
+                foreach (NIType implementedInterface in type.GetInterfaces())
                 {
-                    iteratorInterface = implementedInterface;
-                    return true;
+                    if (implementedInterface.IsIteratorType())
+                    {
+                        iteratorInterface = implementedInterface;
+                        return true;
+                    }
                 }
             }
             iteratorInterface = NIType.Unset;
@@ -286,7 +289,7 @@ namespace Rebar.Common
 
         public static bool IsIteratorType(this NIType type)
         {
-            return type.IsGenericTypeSpecialization(RangeIteratorType);
+            return type.IsGenericTypeSpecialization(IteratorInterfaceGenericType);
         }
 
         /// <summary>
