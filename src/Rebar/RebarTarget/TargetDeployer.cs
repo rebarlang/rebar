@@ -11,7 +11,7 @@ namespace Rebar.RebarTarget
     public class TargetDeployer : NationalInstruments.ExecutionFramework.TargetDeployer
     {
         private readonly ExecutionTarget _executionTarget;
-        private ExecutionContext _context;
+        private Rebar.RebarTarget.Execution.ExecutionContext _bytecodeInterpreterExecutionContext;        
 
         public TargetDeployer(GetBuiltPackage getBuildPackageDelegate, GetTargetDeployer getTargetDeployer, ExecutionTarget executionTarget)
             : base(getBuildPackageDelegate, getTargetDeployer)
@@ -33,19 +33,36 @@ namespace Rebar.RebarTarget
 
         private void HandleDeploymentStarting(IBuiltPackage topLevelPackage)
         {
-            _context = new ExecutionContext(new HostExecutionServices(_executionTarget.Host));
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                _bytecodeInterpreterExecutionContext = new ExecutionContext(new HostExecutionServices(_executionTarget.Host));
+            }
         }
 
         private void HandleDeploymentFinished(IDeployedPackage topLevelDeployedPackage)
         {
-            _context.FinalizeLoad();
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                _bytecodeInterpreterExecutionContext.FinalizeLoad();
+            }
         }
 
         public override Task<IDeployedPackage> DeploySinglePackageAsync(IBuiltPackage package, bool isTopLevel)
         {
-            var deployedPackage = FunctionDeployedPackage.DeployFunction((FunctionBuiltPackage)package, _executionTarget, _context);
-            _executionTarget.OnExecutableCreated(deployedPackage.Executable);
-            return Task.FromResult((IDeployedPackage)deployedPackage);
+            IDeployedPackage deployedPackage = null;
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                var functionDeployedPackage = FunctionDeployedPackage.DeployFunction((FunctionBuiltPackage)package, _executionTarget, _bytecodeInterpreterExecutionContext);
+                _executionTarget.OnExecutableCreated(functionDeployedPackage.Executable);
+                deployedPackage = functionDeployedPackage;
+            }
+            else
+            {
+                var functionDeployedPackage = LLVM.FunctionDeployedPackage.DeployFunction((LLVM.FunctionBuiltPackage)package, _executionTarget);
+                // _executionTarget.OnExecutableCreated(functionDeployedPackage.Executable);
+                deployedPackage = functionDeployedPackage;
+            }
+            return Task.FromResult(deployedPackage);
         }
 
         public override void Store(IBuiltPackage package, Stream stream)

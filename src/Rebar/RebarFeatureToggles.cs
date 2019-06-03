@@ -6,6 +6,7 @@ namespace Rebar
     [ExportFeatureToggles]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), CellDataType, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), RebarTarget, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), LLVMCompiler, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), OutputNode, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), VectorAndSliceTypes, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), VisualizeVariableIdentity, CodeReadiness.Release)]
@@ -17,6 +18,7 @@ namespace Rebar
 
         public const string CellDataType = FeaturePrefix + nameof(CellDataType);
         public const string RebarTarget = FeaturePrefix + nameof(RebarTarget);
+        public const string LLVMCompiler = FeaturePrefix + nameof(LLVMCompiler);
         public const string OutputNode = FeaturePrefix + nameof(OutputNode);
         public const string VectorAndSliceTypes = FeaturePrefix + nameof(VectorAndSliceTypes);
         public const string VisualizeVariableIdentity = FeaturePrefix + nameof(VisualizeVariableIdentity);
@@ -24,6 +26,7 @@ namespace Rebar
 
         public static bool IsCellDataTypeEnabled => _cellDataType.IsEnabled;
         public static bool IsRebarTargetEnabled => _rebarTarget.IsEnabled;
+        public static bool IsLLVMCompilerEnabled => _llvmCompiler.IsEnabled;
         public static bool IsOutputNodeEnabled => _outputNode.IsEnabled;
         public static bool IsVectorAndSliceTypesEnabled => _vectorAndSliceTypes.IsEnabled;
         public static bool IsVisualizeVariableIdentityEnabled => _visualizeVariableIdentity.IsEnabled;
@@ -31,6 +34,7 @@ namespace Rebar
 
         private static readonly FeatureToggleValueCache _cellDataType = CreateFeatureToggleValueCache(CellDataType);
         private static readonly FeatureToggleValueCache _rebarTarget = CreateFeatureToggleValueCache(RebarTarget);
+        private static readonly FeatureToggleValueCache _llvmCompiler = CreateFeatureToggleValueCache(LLVMCompiler);
         private static readonly FeatureToggleValueCache _outputNode = CreateFeatureToggleValueCache(OutputNode);
         private static readonly FeatureToggleValueCache _vectorAndSliceTypes = CreateFeatureToggleValueCache(VectorAndSliceTypes);
         private static readonly FeatureToggleValueCache _visualizeVariableIdentity = CreateFeatureToggleValueCache(VisualizeVariableIdentity);

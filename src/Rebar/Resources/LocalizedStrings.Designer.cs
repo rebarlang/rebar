@@ -99,6 +99,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_LLVMCompiler_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target).
+        /// </summary>
+        internal static string FeatureToggle_LLVMCompiler_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_OutputNode_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_OutputNode_Category", resourceCulture);

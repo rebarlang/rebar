@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments.Composition;
-using NationalInstruments.Core;
 using NationalInstruments.DataValues;
 using NationalInstruments.ExecutionFramework;
 using Rebar.RebarTarget.Execution;
@@ -110,7 +109,10 @@ namespace Rebar.RebarTarget
         public void StartRun()
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
-            _context.ExecuteFunctionTopLevel(CompiledName);
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                _context.ExecuteFunctionTopLevel(CompiledName);
+            }
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;
         }

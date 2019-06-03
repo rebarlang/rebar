@@ -69,8 +69,6 @@ namespace Rebar.RebarTarget
                 CallingConvention.StdCall);
             BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
-            Function compiledFunction = CompileFunction(targetDfir, cancellationToken);
-
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
                 var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.SpecAndQName, cancellationToken, progressToken, compileThreadState);
@@ -82,7 +80,18 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            IBuiltPackage builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
+            IBuiltPackage builtPackage = null;
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                Function compiledFunction = CompileFunction(targetDfir, cancellationToken);
+                builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
+            }
+            else
+            {
+                // TODO: create and pass in Module
+                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName);
+            }
+
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,

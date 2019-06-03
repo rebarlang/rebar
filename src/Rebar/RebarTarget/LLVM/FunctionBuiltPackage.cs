@@ -5,21 +5,18 @@ using System.Runtime.Serialization;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
-namespace Rebar.RebarTarget
+namespace Rebar.RebarTarget.LLVM
 {
     [Serializable]
     public class FunctionBuiltPackage : IBuiltPackage, ISerializable
     {
         public FunctionBuiltPackage(
             SpecAndQName identity,
-            QualifiedName targetIdentity,
-            Function function)
+            QualifiedName targetIdentity)
         {
             RuntimeEntityIdentity = identity;
             TargetIdentity = targetIdentity;
-            Function = function;
         }
 
         protected FunctionBuiltPackage(SerializationInfo info, StreamingContext context)
@@ -27,12 +24,15 @@ namespace Rebar.RebarTarget
             RuntimeEntityIdentity = (SpecAndQName)info.GetValue(nameof(RuntimeEntityIdentity), typeof(SpecAndQName));
             TargetIdentity = (QualifiedName)info.GetValue(nameof(TargetIdentity), typeof(QualifiedName));
             Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
-            Function = (Function)info.GetValue(nameof(Function), typeof(Function));
         }
 
-        public Function Function { get; }
-
-        public bool IsPackageValid => true; // TODO
+        public bool IsPackageValid
+        {
+            get
+            {
+                return RebarFeatureToggles.IsLLVMCompilerEnabled;
+            }
+        }
 
         public IRuntimeEntityIdentity RuntimeEntityIdentity { get; }
 
@@ -56,7 +56,6 @@ namespace Rebar.RebarTarget
             info.AddValue(nameof(RuntimeEntityIdentity), RuntimeEntityIdentity);
             info.AddValue(nameof(TargetIdentity), TargetIdentity);
             info.AddValue(nameof(Token), Token);
-            info.AddValue(nameof(Function), Function);
         }
     }
 }
