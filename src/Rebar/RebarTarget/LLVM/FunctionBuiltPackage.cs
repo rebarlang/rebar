@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using LLVMSharp;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
@@ -13,10 +14,12 @@ namespace Rebar.RebarTarget.LLVM
     {
         public FunctionBuiltPackage(
             SpecAndQName identity,
-            QualifiedName targetIdentity)
+            QualifiedName targetIdentity,
+            Module module)
         {
             RuntimeEntityIdentity = identity;
             TargetIdentity = targetIdentity;
+            Module = module;
         }
 
         protected FunctionBuiltPackage(SerializationInfo info, StreamingContext context)
@@ -25,6 +28,8 @@ namespace Rebar.RebarTarget.LLVM
             TargetIdentity = (QualifiedName)info.GetValue(nameof(TargetIdentity), typeof(QualifiedName));
             Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
         }
+
+        public Module Module { get; }
 
         public bool IsPackageValid
         {

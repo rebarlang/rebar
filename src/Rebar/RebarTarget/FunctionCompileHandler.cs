@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LLVMSharp;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
-using NationalInstruments.SourceModel.Envoys;
 using Rebar.Compiler;
 using Rebar.RebarTarget.Execution;
 using Rebar.Common;
@@ -88,8 +88,10 @@ namespace Rebar.RebarTarget
             }
             else
             {
-                // TODO: create and pass in Module
-                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName);
+                Module module = new Module("module");
+                LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, specAndQName.RuntimeName);
+                functionCompiler.Execute(targetDfir, cancellationToken);
+                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName, module);
             }
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);

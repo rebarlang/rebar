@@ -11,7 +11,8 @@ namespace Rebar.RebarTarget
     public class TargetDeployer : NationalInstruments.ExecutionFramework.TargetDeployer
     {
         private readonly ExecutionTarget _executionTarget;
-        private Rebar.RebarTarget.Execution.ExecutionContext _bytecodeInterpreterExecutionContext;        
+        private Rebar.RebarTarget.Execution.ExecutionContext _bytecodeInterpreterExecutionContext;
+        private Rebar.RebarTarget.LLVM.ExecutionContext _llvmExecutionContext;
 
         public TargetDeployer(GetBuiltPackage getBuildPackageDelegate, GetTargetDeployer getTargetDeployer, ExecutionTarget executionTarget)
             : base(getBuildPackageDelegate, getTargetDeployer)
@@ -37,6 +38,10 @@ namespace Rebar.RebarTarget
             {
                 _bytecodeInterpreterExecutionContext = new ExecutionContext(new HostExecutionServices(_executionTarget.Host));
             }
+            else
+            {
+                _llvmExecutionContext = new LLVM.ExecutionContext(_executionTarget.Host);
+            }
         }
 
         private void HandleDeploymentFinished(IDeployedPackage topLevelDeployedPackage)
@@ -58,8 +63,8 @@ namespace Rebar.RebarTarget
             }
             else
             {
-                var functionDeployedPackage = LLVM.FunctionDeployedPackage.DeployFunction((LLVM.FunctionBuiltPackage)package, _executionTarget);
-                // _executionTarget.OnExecutableCreated(functionDeployedPackage.Executable);
+                var functionDeployedPackage = LLVM.FunctionDeployedPackage.DeployFunction((LLVM.FunctionBuiltPackage)package, _executionTarget, _llvmExecutionContext);
+                _executionTarget.OnExecutableCreated(functionDeployedPackage.Executable);
                 deployedPackage = functionDeployedPackage;
             }
             return Task.FromResult(deployedPackage);
