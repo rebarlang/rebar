@@ -83,15 +83,13 @@ namespace Rebar.RebarTarget
             IBuiltPackage builtPackage = null;
             if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
             {
-                Function compiledFunction = CompileFunction(targetDfir, cancellationToken);
+                Function compiledFunction = CompileFunctionForBytecodeInterpreter(targetDfir, cancellationToken);
                 builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
             }
             else
             {
-                Module module = new Module("module");
-                LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, specAndQName.RuntimeName);
-                functionCompiler.Execute(targetDfir, cancellationToken);
-                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName, module);
+                Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
+                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunctionModule);
             }
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
@@ -108,12 +106,12 @@ namespace Rebar.RebarTarget
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-        internal static Function CompileFunction(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        internal static Function CompileFunctionForBytecodeInterpreter(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
-            var allocator = new Allocator(variableAllocations);
+            var allocator = new BytecodeInterpreterAllocator(variableAllocations);
             allocator.Execute(dfirRoot, cancellationToken);
 
             IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
@@ -134,6 +132,18 @@ namespace Rebar.RebarTarget
             functionBuilder.EmitReturn();
 
             return functionBuilder.CreateFunction();
+        }
+
+        internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        {
+            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
+            LLVM.Allocator allocator = new LLVM.Allocator(valueSources);
+            allocator.Execute(dfirRoot, cancellationToken);
+
+            Module module = new Module("module");
+            LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, dfirRoot.SpecAndQName.RuntimeName);
+            functionCompiler.Execute(dfirRoot, cancellationToken);
+            return module;
         }
 
         #endregion

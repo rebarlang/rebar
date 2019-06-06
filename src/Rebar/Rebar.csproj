@@ -260,6 +260,7 @@
     <Compile Include="RebarTarget\ApplicationCompileHandler.cs" />
     <Compile Include="RebarTarget\ApplicationComponentMocPluginPlugin.cs" />
     <Compile Include="RebarTarget\ApplicationRoot.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\Allocator.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\DataHelpers.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\Function.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\FunctionBuilder.cs" />
@@ -279,6 +280,7 @@
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
     <Compile Include="RebarTarget\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
+    <Compile Include="RebarTarget\LLVM\Allocator.cs" />
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />

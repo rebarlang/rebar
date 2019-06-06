@@ -91,7 +91,7 @@ namespace Rebar.RebarTarget
                 var2 = exchangeValuesNode.InputTerminals.ElementAt(1).GetTrueVariable();
             compiler.LoadValueAsReference(var1);
             compiler.LoadValueAsReference(var2);
-            compiler._builder.EmitLoadIntegerImmediate(Allocator.GetTypeSize(var1.Type.GetReferentType()));
+            compiler._builder.EmitLoadIntegerImmediate(BytecodeInterpreterAllocator.GetTypeSize(var1.Type.GetReferentType()));
             compiler._builder.EmitExchangeBytes_TEMP();
         }
 
@@ -402,7 +402,7 @@ namespace Rebar.RebarTarget
         private static void CompileInspect(FunctionCompiler compiler, FunctionalNode inspectNode)
         {
             VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
-            int typeSize = Allocator.GetTypeSize(input.Type.GetReferentType());
+            int typeSize = BytecodeInterpreterAllocator.GetTypeSize(input.Type.GetReferentType());
             StaticDataBuilder staticData = compiler._builder.DefineStaticData();
             staticData.Data = new byte[typeSize];
             staticData.Identifier = StaticDataIdentifier.CreateFromNode(inspectNode);
@@ -496,7 +496,7 @@ namespace Rebar.RebarTarget
             Action loadDestinationAddress,
             NIType valueType)
         {
-            int typeSize = Allocator.GetTypeSize(valueType);
+            int typeSize = BytecodeInterpreterAllocator.GetTypeSize(valueType);
             if (typeSize == 4)
             {
                 loadDestinationAddress();

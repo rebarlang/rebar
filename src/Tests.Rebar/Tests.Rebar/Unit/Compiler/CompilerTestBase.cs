@@ -50,7 +50,7 @@ namespace Tests.Rebar.Unit.Compiler
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
             
             new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
-            return FunctionCompileHandler.CompileFunction(dfirRoot, cancellationToken);
+            return FunctionCompileHandler.CompileFunctionForBytecodeInterpreter(dfirRoot, cancellationToken);
         }
 
         protected NIType DefineGenericOutputFunctionSignature()
