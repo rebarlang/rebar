@@ -44,7 +44,7 @@ namespace Tests.Rebar.Unit.Compiler
             new ValidateVariableUsagesTransform(unificationResults).Execute(dfirRoot, cancellationToken);
         }
 
-        protected Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
+        internal Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
         {
             var cancellationToken = new CompileCancellationToken();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);

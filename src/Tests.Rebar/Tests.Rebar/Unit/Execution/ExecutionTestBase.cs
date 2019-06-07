@@ -10,15 +10,11 @@ namespace Tests.Rebar.Unit.Execution
 {
     public abstract class ExecutionTestBase : CompilerTestBase
     {
-        protected ExecutionContext CompileAndExecuteFunction(DfirRoot function, IRebarTargetRuntimeServices runtimeServices = null)
+        internal TestExecutionInstance CompileAndExecuteFunction(DfirRoot function)
         {
-            runtimeServices = runtimeServices ?? new TestRuntimeServices();
-            Function compiledFunction = RunSemanticAnalysisUpToCodeGeneration(function);
-            ExecutionContext context = new ExecutionContext(runtimeServices);
-            context.LoadFunction(compiledFunction);
-            context.FinalizeLoad();
-            context.ExecuteFunctionTopLevel(compiledFunction.Name);
-            return context;
+            var testExecutionInstance = new TestExecutionInstance();
+            testExecutionInstance.CompileAndExecuteFunction(this, function);
+            return testExecutionInstance;
         }
 
         internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)
@@ -26,11 +22,6 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = new FunctionalNode(outputTerminal.ParentDiagram, Signatures.InspectType);
             Wire.Create(outputTerminal.ParentDiagram, outputTerminal, inspect.InputTerminals[0]);
             return inspect;
-        }
-
-        internal byte[] GetLastValueFromInspectNode(ExecutionContext context, FunctionalNode inspectNode)
-        {
-            return context.ReadStaticData(StaticDataIdentifier.CreateFromNode(inspectNode));
         }
 
         protected void AssertByteArrayIsInt32(byte[] region, int value)

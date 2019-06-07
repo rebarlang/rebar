@@ -18,9 +18,9 @@ namespace Tests.Rebar.Unit.Execution
             Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, false);
             constant.Value = 1;
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(inspectValue, 1);
         }
 
@@ -35,9 +35,9 @@ namespace Tests.Rebar.Unit.Execution
             finalValue.Value = 2;
             Constant initialValue = ConnectConstantToInputTerminal(assign.InputTerminals[0], PFTypes.Int32, true);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(inspectValue, 2);
         }
 
@@ -52,9 +52,9 @@ namespace Tests.Rebar.Unit.Execution
             highValue.Value = 10;
             FunctionalNode inspect = ConnectInspectToOutputTerminal(range.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             Assert.AreEqual(8, inspectValue.Length);
             Assert.AreEqual(-1, DataHelpers.ReadIntFromByteArray(inspectValue, 0));
             Assert.AreEqual(10, DataHelpers.ReadIntFromByteArray(inspectValue, 4));

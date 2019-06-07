@@ -182,6 +182,7 @@
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
     <Compile Include="Unit\Execution\StringExecutionTests.cs" />
+    <Compile Include="Unit\Execution\TestExecutionInstance.cs" />
     <Compile Include="Unit\LLVMExecution\LLVMTesting.cs" />
     <Compile Include="Unit\TypeInferenceUnitTests.cs" />
   </ItemGroup>

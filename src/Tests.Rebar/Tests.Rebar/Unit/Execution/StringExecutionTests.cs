@@ -22,11 +22,11 @@ namespace Tests.Rebar.Unit.Execution
             ExplicitBorrowNode borrow2 = ConnectExplicitBorrowToInputTerminals(inspect2Node.InputTerminals[0]);
             Wire.Create(function.BlockDiagram, stringSliceConstant.OutputTerminal, borrow1.InputTerminals[0], borrow2.InputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspect1Value = GetLastValueFromInspectNode(context, inspect1Node);
+            byte[] inspect1Value = executionInstance.GetLastValueFromInspectNode(inspect1Node);
             Assert.AreEqual(8, inspect1Value.Length);
-            byte[] inspect2Value = GetLastValueFromInspectNode(context, inspect2Node);
+            byte[] inspect2Value = executionInstance.GetLastValueFromInspectNode(inspect2Node);
             Assert.AreEqual(8, inspect2Value.Length);
             Assert.IsTrue(inspect1Value.Zip(inspect2Value, (a, b) => a == b).All(b => b));
         }
@@ -41,10 +41,9 @@ namespace Tests.Rebar.Unit.Execution
             Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
             stringConstant.Value = "test";
 
-            var runtimeServices = new TestRuntimeServices();
-            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            Assert.AreEqual("test", runtimeServices.LastOutputValue);
+            Assert.AreEqual("test", executionInstance.RuntimeServices.LastOutputValue);
         }
 
         [TestMethod]
@@ -59,10 +58,9 @@ namespace Tests.Rebar.Unit.Execution
             Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
             stringConstant.Value = "test";
 
-            var runtimeServices = new TestRuntimeServices();
-            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            Assert.AreEqual("test", runtimeServices.LastOutputValue);
+            Assert.AreEqual("test", executionInstance.RuntimeServices.LastOutputValue);
         }
 
         [TestMethod]
@@ -77,10 +75,9 @@ namespace Tests.Rebar.Unit.Execution
             Constant stringBConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
             stringBConstant.Value = "stringB";
 
-            var runtimeServices = new TestRuntimeServices();
-            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            Assert.AreEqual("stringAstringB", runtimeServices.LastOutputValue);
+            Assert.AreEqual("stringAstringB", executionInstance.RuntimeServices.LastOutputValue);
         }
 
         [TestMethod]
@@ -98,10 +95,9 @@ namespace Tests.Rebar.Unit.Execution
             Constant stringBConstant = ConnectConstantToInputTerminal(stringAppend.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
             stringBConstant.Value = "short";
 
-            var runtimeServices = new TestRuntimeServices();
-            ExecutionContext context = CompileAndExecuteFunction(function, runtimeServices);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            Assert.AreEqual("longStringshort", runtimeServices.LastOutputValue);
+            Assert.AreEqual("longStringshort", executionInstance.RuntimeServices.LastOutputValue);
         }
     }
 }

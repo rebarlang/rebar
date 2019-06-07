@@ -20,10 +20,10 @@ namespace Tests.Rebar.Unit.Execution
                 inspect2 = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
             Wire.Create(function.BlockDiagram, initialSome.OutputTerminals[0], inspect1.InputTerminals[0], inspect2.InputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspect1Value = GetLastValueFromInspectNode(context, inspect1),
-                inspect2Value = GetLastValueFromInspectNode(context, inspect2);
+            byte[] inspect1Value = executionInstance.GetLastValueFromInspectNode(inspect1),
+                inspect2Value = executionInstance.GetLastValueFromInspectNode(inspect2);
             AssertByteArrayIsSomeInteger(inspect1Value, 5);
             AssertByteArrayIsSomeInteger(inspect2Value, 5);
         }
@@ -38,9 +38,9 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
             Wire.Create(function.BlockDiagram, createCopy.OutputTerminals[1], inspect.InputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsSomeInteger(inspectValue, 5);
         }
 
@@ -53,9 +53,9 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode finalSome = CreateInt32SomeConstructor(function.BlockDiagram, 5);
             Wire.Create(function.BlockDiagram, finalSome.OutputTerminals[0], assign.InputTerminals[1]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsSomeInteger(inspectValue, 5);
         }
 
@@ -68,9 +68,9 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode finalNone = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
             Wire.Create(function.BlockDiagram, finalNone.OutputTerminals[0], assign.InputTerminals[1]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsNoneInteger(inspectValue);
         }
 
@@ -88,11 +88,11 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode noneInspect = ConnectInspectToOutputTerminal(exchangeValues.OutputTerminals[0]);
             FunctionalNode someInspect = ConnectInspectToOutputTerminal(exchangeValues.OutputTerminals[1]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] noneInspectValue = GetLastValueFromInspectNode(context, noneInspect);
+            byte[] noneInspectValue = executionInstance.GetLastValueFromInspectNode(noneInspect);
             AssertByteArrayIsNoneInteger(noneInspectValue);
-            byte[] someInspectValue = GetLastValueFromInspectNode(context, someInspect);
+            byte[] someInspectValue = executionInstance.GetLastValueFromInspectNode(someInspect);
             AssertByteArrayIsSomeInteger(someInspectValue, 5);
         }
 
@@ -111,9 +111,9 @@ namespace Tests.Rebar.Unit.Execution
             Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(borrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] finalValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(finalValue, 5);
         }
 
@@ -130,9 +130,9 @@ namespace Tests.Rebar.Unit.Execution
             intConstant.Value = 5;
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] finalValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsSomeInteger(finalValue, 5);
         }
 
@@ -151,9 +151,9 @@ namespace Tests.Rebar.Unit.Execution
             Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(borrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] finalValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(finalValue, 0);
         }
 
@@ -173,9 +173,9 @@ namespace Tests.Rebar.Unit.Execution
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] finalValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] finalValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsNoneInteger(finalValue);
         }
 

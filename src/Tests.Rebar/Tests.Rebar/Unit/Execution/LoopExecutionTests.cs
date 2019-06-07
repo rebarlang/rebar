@@ -23,9 +23,9 @@ namespace Tests.Rebar.Unit.Execution
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsNoneInteger(inspectValue);
         }
 
@@ -46,9 +46,9 @@ namespace Tests.Rebar.Unit.Execution
             intConstant.Value = 5;
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
-            ExecutionContext context = CompileAndExecuteFunction(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            byte[] inspectValue = GetLastValueFromInspectNode(context, inspect);
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsSomeInteger(inspectValue, 5);
         }
     }
