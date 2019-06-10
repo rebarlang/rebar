@@ -178,9 +178,12 @@
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
     <Compile Include="Unit\Compiler\WireTests.cs" />
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
+    <Compile Include="Unit\Execution\BooleanExecutionTest.cs" />
     <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
+    <Compile Include="Unit\Execution\NumericExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
+    <Compile Include="Unit\Execution\PrimitiveOpExecutionTest.cs" />
     <Compile Include="Unit\Execution\StringExecutionTests.cs" />
     <Compile Include="Unit\Execution\TestExecutionInstance.cs" />
     <Compile Include="Unit\LLVMExecution\LLVMTesting.cs" />

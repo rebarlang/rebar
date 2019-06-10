@@ -24,6 +24,12 @@ namespace Tests.Rebar.Unit.Execution
             return inspect;
         }
 
+        protected void AssertByteArrayIsBoolean(byte[] region, bool value)
+        {
+            Assert.AreEqual(4, region.Length);
+            Assert.AreEqual(value ? 1 : 0, DataHelpers.ReadIntFromByteArray(region, 0));
+        }
+
         protected void AssertByteArrayIsInt32(byte[] region, int value)
         {
             Assert.AreEqual(4, region.Length);
