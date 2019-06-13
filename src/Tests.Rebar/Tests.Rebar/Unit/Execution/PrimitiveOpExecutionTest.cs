@@ -17,13 +17,11 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode functionNode = new FunctionalNode(function.BlockDiagram, operationSignature);
-            Constant leftValueConstant = ConnectConstantToInputTerminal(functionNode.InputTerminals[0], inputType, mutating);
-            leftValueConstant.Value = leftValue;
+            Constant leftValueConstant = ConnectConstantToInputTerminal(functionNode.InputTerminals[0], inputType, leftValue, mutating);
             int lastIndex = 2;
             if (rightValue != null)
             {
-                Constant rightValueConstant = ConnectConstantToInputTerminal(functionNode.InputTerminals[1], inputType, false);
-                rightValueConstant.Value = rightValue;
+                Constant rightValueConstant = ConnectConstantToInputTerminal(functionNode.InputTerminals[1], inputType, rightValue, false);
             }
             else
             {

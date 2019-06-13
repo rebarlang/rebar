@@ -38,8 +38,7 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
             FunctionalNode stringFromSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
             Wire.Create(function.BlockDiagram, stringFromSlice.OutputTerminals[1], output.InputTerminals[0]);
-            Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringConstant.Value = "test";
+            Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "test", false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -55,8 +54,7 @@ namespace Tests.Rebar.Unit.Execution
             Wire.Create(function.BlockDiagram, stringToSlice.OutputTerminals[0], output.InputTerminals[0]);
             FunctionalNode stringFromSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
             Wire.Create(function.BlockDiagram, stringFromSlice.OutputTerminals[1], stringToSlice.InputTerminals[0]);
-            Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringConstant.Value = "test";
+            Constant stringConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "test", false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -70,10 +68,8 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
             FunctionalNode stringConcat = new FunctionalNode(function.BlockDiagram, Signatures.StringConcatType);
             Wire.Create(function.BlockDiagram, stringConcat.OutputTerminals[2], output.InputTerminals[0]);
-            Constant stringAConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringAConstant.Value = "stringA";
-            Constant stringBConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringBConstant.Value = "stringB";
+            Constant stringAConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "stringA", false);
+            Constant stringBConstant = ConnectConstantToInputTerminal(stringConcat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), "stringB", false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -90,10 +86,8 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode stringFromSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
             Wire stringWire = Wire.Create(function.BlockDiagram, stringFromSlice.OutputTerminals[1], stringAppend.InputTerminals[0]);
             stringWire.SetWireBeginsMutableVariable(true);
-            Constant stringAConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringAConstant.Value = "longString";
-            Constant stringBConstant = ConnectConstantToInputTerminal(stringAppend.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
-            stringBConstant.Value = "short";
+            Constant stringAConstant = ConnectConstantToInputTerminal(stringFromSlice.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "longString", false);
+            Constant stringBConstant = ConnectConstantToInputTerminal(stringAppend.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), "short", false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 

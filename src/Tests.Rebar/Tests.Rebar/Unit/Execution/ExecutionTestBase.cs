@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -15,6 +16,13 @@ namespace Tests.Rebar.Unit.Execution
             var testExecutionInstance = new TestExecutionInstance();
             testExecutionInstance.CompileAndExecuteFunction(this, function);
             return testExecutionInstance;
+        }
+
+        protected Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, object value, bool mutable)
+        {
+            Constant constant = ConnectConstantToInputTerminal(inputTerminal, variableType, mutable);
+            constant.Value = value;
+            return constant;
         }
 
         internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)

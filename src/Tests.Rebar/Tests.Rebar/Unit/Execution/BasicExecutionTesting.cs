@@ -15,8 +15,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
-            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, false);
-            constant.Value = 1;
+            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, 1, false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -31,8 +30,7 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
             FunctionalNode assign = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
             Wire.Create(function.BlockDiagram, assign.OutputTerminals[0], inspect.InputTerminals[0]);
-            Constant finalValue = ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Int32, false);
-            finalValue.Value = 2;
+            Constant finalValue = ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Int32, 2, false);
             Constant initialValue = ConnectConstantToInputTerminal(assign.InputTerminals[0], PFTypes.Int32, true);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -46,10 +44,8 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode range = new FunctionalNode(function.BlockDiagram, Signatures.RangeType);
-            Constant lowValue = ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, false);
-            lowValue.Value = 0;
-            Constant highValue = ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, false);
-            highValue.Value = 10;
+            Constant lowValue = ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, 0, false);
+            Constant highValue = ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, 10, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(range.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);

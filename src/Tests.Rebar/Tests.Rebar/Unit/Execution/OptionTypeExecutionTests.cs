@@ -126,8 +126,7 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             Tunnel outputTunnel = CreateOutputTunnel(frame);
-            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
-            intConstant.Value = 5;
+            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -182,8 +181,7 @@ namespace Tests.Rebar.Unit.Execution
         private FunctionalNode CreateInt32SomeConstructor(Diagram diagram, int value)
         {
             FunctionalNode initialSome = new FunctionalNode(diagram, Signatures.SomeConstructorType);
-            Constant constant = ConnectConstantToInputTerminal(initialSome.InputTerminals[0], PFTypes.Int32, false);
-            constant.Value = value;
+            Constant constant = ConnectConstantToInputTerminal(initialSome.InputTerminals[0], PFTypes.Int32, value, false);
             return initialSome;
         }
 
