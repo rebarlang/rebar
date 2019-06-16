@@ -1,6 +1,6 @@
 ﻿using NationalInstruments.Dfir;
 
-namespace Rebar.RebarTarget.Execution
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     public sealed class StaticDataIdentifier
     {

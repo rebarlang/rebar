@@ -35,7 +35,6 @@ namespace Rebar.Design
     [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
     [PartCreationPolicy(CreationPolicy.Shared)]
     [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
-    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.OptionDataType)]
     public class OptionDiagramPaletteLoader : ResourcePaletteLoader
     {
         /// <inheritdoc />

@@ -5,20 +5,22 @@
   xmlns:vi="http://www.ni.com/LabVIEW.VI"
   xmlns:rb="http://www.ni.com/Rebar"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Category Display="Vectors and Slices" UniqueId="Rebar:PaletteCategory.VectorsAndSlices" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
-    <Leaf Display="Create Vector" UniqueId="Rebar:CreateVector" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:VectorCreate />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
-    <Leaf Display="Insert Into Vector" UniqueId="Rebar:InsertIntoVector" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
-      <pf:MergeScript>
-        <pf:MergeItem>
-          <rb:VectorInsert />
-        </pf:MergeItem>
-      </pf:MergeScript>
-    </Leaf>
+  <Category Display="Data Types" UniqueId="Rebar:PaletteCategory.DataTypes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Category Display="Vectors and Slices" UniqueId="Rebar:PaletteCategory.VectorsAndSlices" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+      <Leaf Display="Create Vector" UniqueId="Rebar:CreateVector" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:VectorCreate />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Insert Into Vector" UniqueId="Rebar:InsertIntoVector" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:VectorInsert />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+    </Category>
   </Category>
 </PaletteControls>

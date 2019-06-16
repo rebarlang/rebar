@@ -18,6 +18,11 @@ namespace Rebar.Common
             public abstract NIType RenderNIType();
 
             public abstract Lifetime Lifetime { get; }
+
+            public virtual bool IsOrContainsTypeVariable()
+            {
+                return false;
+            }
         }
 
         private sealed class TypeVariable : TypeBase
@@ -47,6 +52,8 @@ namespace Rebar.Common
             }
 
             public override Lifetime Lifetime => Lifetime.Empty;
+
+            public override bool IsOrContainsTypeVariable() => true;
         }
 
         private sealed class LiteralType : TypeBase
@@ -103,6 +110,11 @@ namespace Rebar.Common
             }
 
             public override Lifetime Lifetime => Argument.Lifetime;
+
+            public override bool IsOrContainsTypeVariable()
+            {
+                return Argument.IsOrContainsTypeVariable;
+            }
         }
 
         private sealed class ReferenceType : TypeBase
@@ -213,6 +225,11 @@ namespace Rebar.Common
             }
 
             public override Lifetime Lifetime => LifetimeType.Lifetime;
+
+            public override bool IsOrContainsTypeVariable()
+            {
+                return UnderlyingType.IsOrContainsTypeVariable;
+            }
         }
 
         private sealed class LifetimeTypeContainer : TypeBase
@@ -561,6 +578,11 @@ namespace Rebar.Common
             }
             return mutabilityType.Mutable;
         }
+
+        public bool GetIsOrContainsTypeVariable(TypeVariableReference type)
+        {
+            return GetTypeForTypeVariableReference(type).IsOrContainsTypeVariable();
+        }
     }
 
     [DebuggerDisplay("{DebuggerDisplay}")]
@@ -586,6 +608,8 @@ namespace Rebar.Common
         public void AndWith(bool value) => TypeVariableSet.AndWith(this, value);
 
         public bool Mutable => TypeVariableSet.GetMutable(this);
+
+        public bool IsOrContainsTypeVariable => TypeVariableSet.GetIsOrContainsTypeVariable(this);
     }
 
     internal abstract class Constraint

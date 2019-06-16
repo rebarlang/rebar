@@ -1,27 +1,47 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿#define LLVM_TEST
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
-using Rebar.RebarTarget.Execution;
 using Tests.Rebar.Unit.Compiler;
 
 namespace Tests.Rebar.Unit.Execution
 {
     public abstract class ExecutionTestBase : CompilerTestBase
     {
-        protected ExecutionContext CompileAndExecuteFunction(DfirRoot function)
+        internal TestExecutionInstance CompileAndExecuteFunction(DfirRoot function)
         {
-            Function compiledFunction = RunSemanticAnalysisUpToCodeGeneration(function);
-            ExecutionContext context = new ExecutionContext(new TestRuntimeServices());
-            context.LoadFunction(compiledFunction);
-            context.FinalizeLoad();
-            context.ExecuteFunctionTopLevel(compiledFunction.Name);
-            return context;
+            var testExecutionInstance = new TestExecutionInstance();
+            testExecutionInstance.CompileAndExecuteFunction(this, function);
+            return testExecutionInstance;
         }
 
-        internal byte[] GetLastValueFromInspectNode(ExecutionContext context, FunctionalNode inspectNode)
+        protected Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, object value, bool mutable)
         {
-            return context.ReadStaticData(StaticDataIdentifier.CreateFromNode(inspectNode));
+            Constant constant = ConnectConstantToInputTerminal(inputTerminal, variableType, mutable);
+            constant.Value = value;
+            return constant;
+        }
+
+        internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)
+        {
+            FunctionalNode inspect = new FunctionalNode(outputTerminal.ParentDiagram, Signatures.InspectType);
+            Wire.Create(outputTerminal.ParentDiagram, outputTerminal, inspect.InputTerminals[0]);
+            return inspect;
+        }
+
+        protected void AssertByteArrayIsBoolean(byte[] region, bool value)
+        {
+#if LLVM_TEST
+            Assert.AreEqual(1, region.Length);
+            Assert.AreEqual(value ? 1 : 0, region[0]);
+#else
+            Assert.AreEqual(4, region.Length);
+            Assert.AreEqual(value ? 1 : 0, DataHelpers.ReadIntFromByteArray(region, 0));
+#endif
         }
 
         protected void AssertByteArrayIsInt32(byte[] region, int value)
@@ -29,12 +49,28 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual(4, region.Length);
             Assert.AreEqual(value, DataHelpers.ReadIntFromByteArray(region, 0));
         }
+
+        protected void AssertByteArrayIsSomeInteger(byte[] value, int intValue)
+        {
+            Assert.AreEqual(8, value.Length);
+            Assert.AreEqual(1, DataHelpers.ReadIntFromByteArray(value, 0));
+            Assert.AreEqual(intValue, DataHelpers.ReadIntFromByteArray(value, 4));
+        }
+
+        protected void AssertByteArrayIsNoneInteger(byte[] value)
+        {
+            Assert.AreEqual(8, value.Length);
+            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 0));
+        }
     }
 
     internal class TestRuntimeServices : IRebarTargetRuntimeServices
     {
         public void Output(string value)
         {
+            LastOutputValue = value;
         }
+
+        public string LastOutputValue { get; private set; }
     }
 }

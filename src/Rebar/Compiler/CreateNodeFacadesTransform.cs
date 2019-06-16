@@ -97,9 +97,21 @@ namespace Rebar.Compiler
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             Terminal valueOutput = constant.OutputTerminals.ElementAt(0);
-            _nodeFacade[valueOutput] = new SimpleTerminalFacade(
-                valueOutput,
-                _typeVariableSet.CreateReferenceToLiteralType(constant.DataType));
+            TypeVariableReference constantTypeReference;
+            if (constant.DataType.IsRebarReferenceType())
+            {
+                constantTypeReference = _typeVariableSet.CreateReferenceToReferenceType(
+                    false,
+                    // TODO: this is not always correct; need a more general way of turning NITypes into TypeVariableReferences
+                    _typeVariableSet.CreateReferenceToLiteralType(constant.DataType.GetReferentType()),
+                    // Assume for now that the reference will be in Lifetime.Static
+                    _typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
+            }
+            else
+            {
+                constantTypeReference = _typeVariableSet.CreateReferenceToLiteralType(constant.DataType);
+            }
+            _nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, constantTypeReference);
             return true;
         }
 
@@ -392,8 +404,7 @@ namespace Rebar.Compiler
 
             TypeVariableReference typeVariable;
 
-            var parentFrame = tunnel.ParentStructure as Frame;
-            bool executesConditionally = parentFrame != null && DoesFrameExecuteConditionally(parentFrame);
+            bool executesConditionally = DoesStructureExecuteConditionally(tunnel.ParentStructure);
             if (executesConditionally && tunnel.Direction == Direction.Output)
             {
                 typeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
@@ -416,10 +427,15 @@ namespace Rebar.Compiler
             return true;
         }
 
-        private bool DoesFrameExecuteConditionally(Frame frame)
+        private bool DoesStructureExecuteConditionally(Structure structure)
         {
-            // TODO: handle multi-frame flat sequence structures
-            return frame.BorderNodes.OfType<UnwrapOptionTunnel>().Any();
+            Frame frame = structure as Frame;
+            if (frame != null)
+            {
+                // TODO: handle multi-frame flat sequence structures
+                return frame.BorderNodes.OfType<UnwrapOptionTunnel>().Any();
+            }
+            return structure is Nodes.Loop;
         }
 
         bool IDfirNodeVisitor<bool>.VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)

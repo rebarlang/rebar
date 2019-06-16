@@ -24,6 +24,8 @@ namespace Rebar.Common
 
         private static NIType VectorGenericType { get; }
 
+        public static NIType StringSliceType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -60,6 +62,10 @@ namespace Rebar.Common
             iteratorGenericTypeBuilder.MakeGenericParameters("T");
             iteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             IteratorGenericType = iteratorGenericTypeBuilder.CreateType();
+
+            var stringSliceTypeBuilder = PFTypes.Factory.DefineValueClass("StringSlice");
+            stringSliceTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            StringSliceType = stringSliceTypeBuilder.CreateType();
 
             var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
             vectorGenericTypeBuilder.MakeGenericParameters("T");
@@ -333,6 +339,10 @@ namespace Rebar.Common
 
         internal static bool TypeHasDisplayTrait(this NIType type)
         {
+            if (type.IsString() || type == StringSliceType)
+            {
+                return RebarFeatureToggles.IsStringDataTypeEnabled;
+            }
             return type.IsInt32();
         }
     }

@@ -24,10 +24,7 @@ namespace Rebar.Design
                     {
                         context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddLockTunnelCommand.SetWeight(0.6));
                     }
-                    if (RebarFeatureToggles.IsOptionDataTypeEnabled)
-                    {
-                        context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
-                    }
+                    context.Add(FlatSequenceTunnelViewModelHelpers.StructureAddUnwrapOptionTunnelCommand.SetWeight(0.6));
                 }
             }
         }

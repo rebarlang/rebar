@@ -74,6 +74,14 @@ namespace Rebar.Compiler
                 SemanticAnalysisMessageCategories.Connection,
                 TypeDoesNotHaveRequiredTraitDescriptor);
 
+        private static readonly MessageDescriptor TypeNotDeterminedDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeNotDetermined");
+
+        public static readonly DfirMessage TypeNotDetermined =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                TypeNotDeterminedDescriptor);
+
         private static readonly MessageDescriptor FeatureNotEnabledDescriptor = new MessageDescriptor(ResourceDictionaryName, "FeatureNotEnabled");
 
         public static readonly DfirMessage FeatureNotEnabled =

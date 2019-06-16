@@ -57,6 +57,11 @@ namespace Rebar.Design
             AddSupportedModel<GreaterThan>(n => new BasicNodeViewModel(n, "Greater Than", @"Resources\Diagram\Nodes\GreaterThan.png"));
             AddSupportedModel<GreaterEqual>(n => new BasicNodeViewModel(n, "Greater Than Or Equal", @"Resources\Diagram\Nodes\GreaterEqual.png"));
 
+            AddSupportedModel<StringFromSlice>(n => new BasicNodeViewModel(n, "String From Slice"));
+            AddSupportedModel<StringToSlice>(n => new BasicNodeViewModel(n, "String To Slice"));
+            AddSupportedModel<StringConcat>(n => new BasicNodeViewModel(n, "Concatenate Strings"));
+            AddSupportedModel<StringAppend>(n => new BasicNodeViewModel(n, "Append To String"));
+
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
 

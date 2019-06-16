@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -16,6 +11,46 @@ namespace Tests.Rebar.Unit.Compiler
     [TestClass]
     public class OptionTypeTests : CompilerTestBase
     {
+        [TestMethod]
+        public void NoneConstructorWithoutUsage_ValidateVariableUsage_ErrorReported()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.IsTrue(none.OutputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeNotDetermined.Descriptor));
+        }
+
+        [TestMethod]
+        public void NoneConstructorWithUsageThatDoesNotDetermineType_ValidateVariableUsage_ErrorReported()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            FunctionalNode immutablePassthrough = new FunctionalNode(function.BlockDiagram, Signatures.ImmutablePassthroughType);
+            Wire.Create(function.BlockDiagram, none.OutputTerminals[0], immutablePassthrough.InputTerminals[0]);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.IsTrue(none.OutputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeNotDetermined.Descriptor));
+        }
+
+        [TestMethod]
+        public void NoneConstructorLinkedToSomeConstructorWithUndeterminedType_ValidateVariableUsage_ErrorReportedOnNoneButNotSome()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            FunctionalNode some = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            FunctionalNode select = new FunctionalNode(function.BlockDiagram, Signatures.SelectReferenceType);
+            Wire.Create(function.BlockDiagram, none.OutputTerminals[0], select.InputTerminals[1]);
+            Wire.Create(function.BlockDiagram, some.OutputTerminals[0], select.InputTerminals[2]);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.IsTrue(none.OutputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeNotDetermined.Descriptor));
+            Assert.IsFalse(some.OutputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeNotDetermined.Descriptor));
+        }
+
         [TestMethod]
         public void UnwrapOptionTunnelWithOptionTypeWired_SetVariableTypes_OutputTerminalIsInnerType()
         {

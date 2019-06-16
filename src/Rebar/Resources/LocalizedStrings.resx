@@ -129,11 +129,11 @@
   <data name="FeatureToggle_CellDataType_Description" xml:space="preserve">
     <value>Enable the Cell data type and related nodes</value>
   </data>
-  <data name="FeatureToggle_OptionDataType_Category" xml:space="preserve">
+  <data name="FeatureToggle_LLVMCompiler_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>
-  <data name="FeatureToggle_OptionDataType_Description" xml:space="preserve">
-    <value>Enable the Option data type and related nodes</value>
+  <data name="FeatureToggle_LLVMCompiler_Description" xml:space="preserve">
+    <value>Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target)</value>
   </data>
   <data name="FeatureToggle_OutputNode_Category" xml:space="preserve">
     <value>Rebar</value>
@@ -194,6 +194,9 @@
   </data>
   <data name="TypeDoesNotHaveRequiredTrait" xml:space="preserve">
     <value>The data type connected to this terminal does not have the required trait: Display</value>
+  </data>
+  <data name="TypeNotDetermined" xml:space="preserve">
+    <value>The type of value created by this terminal has not been fully determined.</value>
   </data>
   <data name="WireCannotFork" xml:space="preserve">
     <value>The data type of this wire does not allow it to branch.</value>

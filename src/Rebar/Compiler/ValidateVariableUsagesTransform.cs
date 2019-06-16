@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using NationalInstruments;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
 using NationalInstruments.FeatureToggles;
@@ -83,7 +84,22 @@ namespace Rebar.Compiler
         public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
             functionalNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
-
+            // TODO: for functions with more than one data type parameter, it would be better
+            // to report TypeNotDetermined on an output only if all inputs that use the same
+            // type parameter(s) are connected.
+            if (functionalNode.InputTerminals.All(terminal => terminal.IsConnected))
+            {
+                Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
+                foreach (var outputTerminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs)
+                    .Where(pair => !pair.Value.IsPassthrough))
+                {
+                    VariableReference outputVariable = outputTerminalPair.Key.GetTrueVariable();
+                    if (outputVariable.TypeVariableReference.IsOrContainsTypeVariable)
+                    {
+                        outputTerminalPair.Key.SetDfirMessage(Messages.TypeNotDetermined);
+                    }
+                }
+            }
             if (functionalNode.RequiredFeatureToggles.Any(feature => !FeatureToggleSupport.IsFeatureEnabled(feature)))
             {
                 functionalNode.SetDfirMessage(Messages.FeatureNotEnabled);

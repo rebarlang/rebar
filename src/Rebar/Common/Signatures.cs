@@ -203,6 +203,55 @@ namespace Rebar.Common
                 "isSome");
             IsSomeType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringFromSlice");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "slice");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String,
+                "string");
+            StringFromSliceType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringToSlice");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInputParameter(
+                functionTypeBuilder,
+                PFTypes.String.CreateImmutableReference(tLifetimeParameter),
+                "string");
+            AddOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(tLifetimeParameter),
+                "slice");
+            StringToSliceType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringConcat");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                "firstSlice");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "secondSlice");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String,
+                "combined");
+            StringConcatType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringAppend");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                "string");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "slice");
+            StringAppendType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
             // TODO
 #if FALSE
@@ -213,7 +262,7 @@ namespace Rebar.Common
             AddOutputParameter(
                 functionTypeBuilder,
                 PFTypes.Int32.CreateVector(),
-                "valueRef");
+                "vector");
             VectorCreateType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInsert");
@@ -229,7 +278,7 @@ namespace Rebar.Common
             AddInputParameter(
                 functionTypeBuilder,
                 tDataParameter,
-                "element");
+                "elementRef");
             VectorInsertType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateLockingCell");
@@ -278,6 +327,14 @@ namespace Rebar.Common
         public static NIType NoneConstructorType { get; }
 
         public static NIType IsSomeType { get; }
+
+        public static NIType StringFromSliceType { get; }
+
+        public static NIType StringToSliceType { get; }
+
+        public static NIType StringConcatType { get; }
+
+        public static NIType StringAppendType { get; }
 
         public static NIType VectorCreateType { get; }
 
@@ -336,11 +393,11 @@ namespace Rebar.Common
             var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateMutableReference(),
+                inputType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "operand1Ref");
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "operand2Ref");
             return functionTypeBuilder.CreateType();
         }
@@ -351,11 +408,11 @@ namespace Rebar.Common
             NIType inputType = PFTypes.Int32, outputType = PFTypes.Boolean;
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "operand1Ref");
             AddInputOutputParameter(
                 functionTypeBuilder,
-                inputType.CreateImmutableReference(),
+                inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "operand2Ref");
             AddOutputParameter(
                 functionTypeBuilder,

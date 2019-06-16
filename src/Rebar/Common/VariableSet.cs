@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using NationalInstruments.DataTypes;
-using NationalInstruments.Dfir;
 
 namespace Rebar.Common
 {
@@ -105,7 +103,7 @@ namespace Rebar.Common
 
         public VariableReference CreateNewVariableForUnwiredTerminal()
         {
-            return CreateNewVariable(TypeVariableSet.CreateReferenceToLiteralType(PFTypes.Void));
+            return CreateNewVariable(TypeVariableSet.CreateReferenceToNewTypeVariable());
         }
 
         public IEnumerable<VariableReference> GetUniqueVariableReferences()

@@ -477,7 +477,7 @@ namespace Rebar.SourceModel
         public Equal() : base(Signatures.DefineComparisonFunction(ElementName)) { }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static Equal CreateAccumulateXor(IElementCreateInfo elementCreateInfo)
+        public static Equal CreateEqual(IElementCreateInfo elementCreateInfo)
         {
             var equal = new Equal();
             equal.Init(elementCreateInfo);
@@ -631,9 +631,6 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
-
-        /// <inheritdoc />
-        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
     }
 
     /// <summary>
@@ -662,9 +659,109 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+    }
+
+    #endregion
+
+    #region String
+
+    public class StringFromSlice : FunctionalNode
+    {
+        private const string ElementName = "StringFromSlice";
+
+        protected StringFromSlice()
+            : base(Signatures.StringFromSliceType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringFromSlice CreateStringFromSlice(IElementCreateInfo elementCreateInfo)
+        {
+            var stringFromSlice = new StringFromSlice();
+            stringFromSlice.Init(elementCreateInfo);
+            return stringFromSlice;
+        }
 
         /// <inheritdoc />
-        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
+    public class StringToSlice : FunctionalNode
+    {
+        private const string ElementName = "StringToSlice";
+
+        protected StringToSlice()
+            : base(Signatures.StringToSliceType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringToSlice CreateStringToSlice(IElementCreateInfo elementCreateInfo)
+        {
+            var stringToSlice = new StringToSlice();
+            stringToSlice.Init(elementCreateInfo);
+            return stringToSlice;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
+    public class StringConcat : FunctionalNode
+    {
+        private const string ElementName = "StringConcat";
+
+        protected StringConcat()
+            : base(Signatures.StringConcatType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringConcat CreateStringConcat(IElementCreateInfo elementCreateInfo)
+        {
+            var stringConcat = new StringConcat();
+            stringConcat.Init(elementCreateInfo);
+            return stringConcat;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
+    public class StringAppend : FunctionalNode
+    {
+        private const string ElementName = "StringAppend";
+
+        protected StringAppend()
+            : base(Signatures.StringAppendType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringAppend CreateStringAppend(IElementCreateInfo elementCreateInfo)
+        {
+            var stringAppend = new StringAppend();
+            stringAppend.Init(elementCreateInfo);
+            return stringAppend;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
     }
 
     public class IsSome : FunctionalNode
@@ -686,9 +783,6 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
-
-        /// <inheritdoc />
-        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.OptionDataType };
     }
 
     #endregion

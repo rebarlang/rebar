@@ -52,7 +52,7 @@ namespace Rebar.Compiler
 
         public void UpdateFromConnectedInput(VariableReference connectedInput)
         {
-            // update the state of the associated TerminateLifetimeNode
+            _inputVariables.Add(connectedInput);
             Lifetime inputLifetime = connectedInput.Lifetime;
             switch (_state)
             {
@@ -67,7 +67,6 @@ namespace Rebar.Compiler
 
                     _state = State.VariablesInLifetimeRemaining;
                     CommonLifetime = inputLifetime;
-                    _inputVariables.Add(connectedInput);
                     break;
                 case State.VariablesInLifetimeRemaining:
                 case State.AllVariablesInLifetimeTerminated:

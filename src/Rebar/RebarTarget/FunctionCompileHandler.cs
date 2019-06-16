@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using LLVMSharp;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
-using NationalInstruments.SourceModel.Envoys;
 using Rebar.Compiler;
-using Rebar.RebarTarget.Execution;
 using Rebar.Common;
+using Rebar.RebarTarget.BytecodeInterpreter;
 
 namespace Rebar.RebarTarget
 {
@@ -69,8 +69,6 @@ namespace Rebar.RebarTarget
                 CallingConvention.StdCall);
             BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
-            Function compiledFunction = CompileFunction(targetDfir, cancellationToken);
-
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
                 var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.SpecAndQName, cancellationToken, progressToken, compileThreadState);
@@ -82,7 +80,18 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            IBuiltPackage builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
+            IBuiltPackage builtPackage = null;
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                Function compiledFunction = CompileFunctionForBytecodeInterpreter(targetDfir, cancellationToken);
+                builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
+            }
+            else
+            {
+                Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
+                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunctionModule);
+            }
+
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,
@@ -97,12 +106,12 @@ namespace Rebar.RebarTarget
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-        internal static Function CompileFunction(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        internal static Function CompileFunctionForBytecodeInterpreter(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
-            var allocator = new Allocator(variableAllocations);
+            var allocator = new BytecodeInterpreterAllocator(variableAllocations);
             allocator.Execute(dfirRoot, cancellationToken);
 
             IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
@@ -119,10 +128,20 @@ namespace Rebar.RebarTarget
             };
             new FunctionCompiler(functionBuilder, variableAllocations).Execute(dfirRoot, cancellationToken);
 
-            // TODO: need to be able to put this in FunctionCompiler:
-            functionBuilder.EmitReturn();
-
             return functionBuilder.CreateFunction();
+        }
+
+        internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
+        {
+            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
+            LLVM.Allocator allocator = new LLVM.Allocator(valueSources);
+            allocator.Execute(dfirRoot, cancellationToken);
+
+            Module module = new Module("module");
+            compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? dfirRoot.SpecAndQName.RuntimeName : compiledFunctionName;
+            LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, compiledFunctionName, valueSources);
+            functionCompiler.Execute(dfirRoot, cancellationToken);
+            return module;
         }
 
         #endregion

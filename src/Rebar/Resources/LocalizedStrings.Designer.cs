@@ -99,18 +99,18 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
-        internal static string FeatureToggle_OptionDataType_Category {
+        internal static string FeatureToggle_LLVMCompiler_Category {
             get {
-                return ResourceManager.GetString("FeatureToggle_OptionDataType_Category", resourceCulture);
+                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Category", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enable the Option data type and related nodes.
+        ///   Looks up a localized string similar to Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target).
         /// </summary>
-        internal static string FeatureToggle_OptionDataType_Description {
+        internal static string FeatureToggle_LLVMCompiler_Description {
             get {
-                return ResourceManager.GetString("FeatureToggle_OptionDataType_Description", resourceCulture);
+                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Description", resourceCulture);
             }
         }
         
@@ -291,6 +291,15 @@ namespace Rebar.Resources {
         internal static string TypeDoesNotHaveRequiredTrait {
             get {
                 return ResourceManager.GetString("TypeDoesNotHaveRequiredTrait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type of value created by this terminal has not been fully determined..
+        /// </summary>
+        internal static string TypeNotDetermined {
+            get {
+                return ResourceManager.GetString("TypeNotDetermined", resourceCulture);
             }
         }
         

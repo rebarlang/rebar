@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
-using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
@@ -20,57 +18,40 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal sealed class Allocator : VisitorTransformBase, IDfirNodeVisitor<bool>
+    internal abstract class Allocator<TValueSource, TAllocation, TReference> : VisitorTransformBase, IDfirNodeVisitor<bool>
+        where TAllocation : TValueSource 
+        where TReference : TValueSource
     {
-        private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
-        private int _currentIndex = 0;
+        private readonly Dictionary<VariableReference, TValueSource> _variableAllocations;
 
-        public Allocator(Dictionary<VariableReference, ValueSource> variableAllocations)
+        public Allocator(Dictionary<VariableReference, TValueSource> variableAllocations)
         {
             _variableAllocations = variableAllocations;
         }
 
-        private LocalAllocationValueSource CreateLocalAllocationForVariable(VariableReference variable)
+        protected TValueSource GetValueSourceForVariable(VariableReference variable)
         {
-            int size = GetTypeSize(variable.Type);
-            var localAllocation = new LocalAllocationValueSource(_currentIndex, size);
+            return _variableAllocations[variable];
+        }
+
+        protected abstract TAllocation CreateLocalAllocation(VariableReference variable);
+
+        private TAllocation CreateLocalAllocationForVariable(VariableReference variable)
+        {
+            var localAllocation = CreateLocalAllocation(variable);
             _variableAllocations[variable] = localAllocation;
-            ++_currentIndex;
             return localAllocation;
         }
 
+        protected abstract TReference CreateConstantLocalReference(VariableReference referencedVariable);
+        
         private void CreateConstantLocalReferenceForVariable(VariableReference referencingVariable, VariableReference referencedVariable)
         {
-            var localAllocation = _variableAllocations[referencedVariable] as LocalAllocationValueSource;
-            if (localAllocation == null)
+            if (!(_variableAllocations[referencedVariable] is TAllocation))
             {
                 throw new ArgumentException("Referenced variable does not have a local allocation.", "referencedVariable");
             }
-            _variableAllocations[referencingVariable] = new ConstantLocalReferenceValueSource(localAllocation.Index);
-        }
-
-        internal static int GetTypeSize(NIType type)
-        {
-            if (type.IsRebarReferenceType())
-            {
-                return TargetConstants.PointerSize;
-            }
-            NIType innerType;
-            if (type.TryDestructureOptionType(out innerType))
-            {
-                return 4 + GetTypeSize(innerType);
-            }
-            if (type.IsInt32() || type.IsBoolean())
-            {
-                return 4;
-            }
-            if (type.IsIteratorType())
-            {
-                // for now, the only possible iterator is RangeIterator<int>
-                // { current : i32, range_max : i32 }
-                return 8;
-            }
-            throw new NotImplementedException("Unknown size for type " + type);
+            _variableAllocations[referencingVariable] = CreateConstantLocalReference(referencedVariable);
         }
 
         private void CreateReferenceValueSource(VariableReference referenceVariable, VariableReference referencedVariable)
@@ -84,6 +65,11 @@ namespace Rebar.RebarTarget
             // If the created reference binding is non-mutable, then we can create a ConstantLocalReferenceValueSource
             CreateConstantLocalReferenceForVariable(referenceVariable, referencedVariable);
             return;
+        }
+
+        private void ReuseValueSource(VariableReference originalVariable, VariableReference newVariable)
+        {
+            _variableAllocations[newVariable] = _variableAllocations[originalVariable];
         }
 
         protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
@@ -103,16 +89,16 @@ namespace Rebar.RebarTarget
                 return;
             }
             VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-            ValueSource sourceValueSource = _variableAllocations[sourceVariable];
+            TValueSource sourceValueSource = _variableAllocations[sourceVariable];
             foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable))
             {
-                if (sourceValueSource is LocalAllocationValueSource)
+                if (sourceValueSource is TAllocation)
                 {
                     CreateLocalAllocationForVariable(sinkVariable);
                 }
-                else if (sourceValueSource is ConstantLocalReferenceValueSource)
+                else if (sourceValueSource is TReference)
                 {
-                    _variableAllocations[sinkVariable] = sourceValueSource;
+                    ReuseValueSource(sourceVariable, sinkVariable);
                 }
             }
         }
@@ -123,10 +109,8 @@ namespace Rebar.RebarTarget
 
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
-            Terminal inputTerminal = borrowTunnel.Terminals.ElementAt(0),
-                outputTerminal = borrowTunnel.Terminals.ElementAt(1);
-            VariableReference inputVariable = inputTerminal.GetTrueVariable(),
-                outputVariable = outputTerminal.GetTrueVariable();
+            VariableReference inputVariable = borrowTunnel.InputTerminals[0].GetTrueVariable(),
+                outputVariable = borrowTunnel.OutputTerminals[0].GetTrueVariable();
             CreateReferenceValueSource(outputVariable, inputVariable);
             return true;
         }
@@ -150,7 +134,7 @@ namespace Rebar.RebarTarget
                     outputVariable = terminalPair.Value.GetTrueVariable();
                 if (inputVariable.Type == outputVariable.Type || inputVariable.Type.IsReferenceToSameTypeAs(outputVariable.Type))
                 {
-                    _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+                    ReuseValueSource(inputVariable, outputVariable);
                 }
                 else
                 {
@@ -166,13 +150,8 @@ namespace Rebar.RebarTarget
         public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
             Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
-            foreach (var terminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs))
+            foreach (var terminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs).Where(pair => !pair.Value.IsPassthrough))
             {
-                SignatureTerminal signatureTerminal = terminalPair.Value;
-                if (signatureTerminal.IsPassthrough)
-                {
-                    continue;
-                }
                 CreateLocalAllocationForVariable(terminalPair.Key.GetTrueVariable());
             }
             return true;
@@ -180,30 +159,26 @@ namespace Rebar.RebarTarget
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            CreateLocalAllocationForVariable(iterateTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            CreateLocalAllocationForVariable(iterateTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
-            CreateLocalAllocationForVariable(lockTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            CreateLocalAllocationForVariable(lockTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
         {
-            Terminal inputTerminal = loopConditionTunnel.Terminals.ElementAt(0),
-                outputTerminal = loopConditionTunnel.Terminals.ElementAt(1);
+            Terminal inputTerminal = loopConditionTunnel.InputTerminals[0],
+                outputTerminal = loopConditionTunnel.OutputTerminals[0];
             VariableReference inputVariable = inputTerminal.GetTrueVariable();
-            LocalAllocationValueSource loopConditionAllocation;
             if (!inputTerminal.IsConnected)
             {
-                loopConditionAllocation = CreateLocalAllocationForVariable(inputVariable);
+                CreateLocalAllocationForVariable(inputVariable);
             }
-            else
-            {
-                loopConditionAllocation = (LocalAllocationValueSource)_variableAllocations[inputVariable];
-            }
+            var loopConditionAllocation = (TAllocation)_variableAllocations[inputVariable];
             CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
             return true;
         }
@@ -222,7 +197,14 @@ namespace Rebar.RebarTarget
         {
             VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
                 outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
-            _variableAllocations[outputVariable] = _variableAllocations[inputVariable];
+            if (outputVariable.Type == inputVariable.Type.CreateOption())
+            {
+                CreateLocalAllocationForVariable(outputVariable);
+            }
+            else
+            {
+                ReuseValueSource(inputVariable, outputVariable);
+            }
             return true;
         }
 
@@ -230,41 +212,10 @@ namespace Rebar.RebarTarget
         {
             // TODO: it would be nice to allow the output value source to reference an offset from the input value source,
             // rather than needing a separate allocation.
-            CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals.ElementAt(0).GetTrueVariable());
+            CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
         }
 
         #endregion
-    }
-
-    internal abstract class ValueSource
-    {
-        public ValueSource()
-        {
-        }
-    }
-
-    internal class LocalAllocationValueSource : ValueSource
-    {
-        public LocalAllocationValueSource(int index, int size)
-        {
-            Index = index;
-            Size = size;
-        }
-
-        public int Index { get; }
-
-        public int Size { get; }
-    }
-
-    internal class ConstantLocalReferenceValueSource : ValueSource
-    {
-        public ConstantLocalReferenceValueSource(int referencedIndex)
-            : base()
-        {
-            ReferencedIndex = referencedIndex;
-        }
-
-        public int ReferencedIndex { get; }
     }
 }
