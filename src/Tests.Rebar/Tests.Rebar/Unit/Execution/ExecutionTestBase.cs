@@ -1,10 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿#define LLVM_TEST
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
-using Rebar.RebarTarget.Execution;
 using Tests.Rebar.Unit.Compiler;
 
 namespace Tests.Rebar.Unit.Execution
@@ -34,8 +35,13 @@ namespace Tests.Rebar.Unit.Execution
 
         protected void AssertByteArrayIsBoolean(byte[] region, bool value)
         {
+#if LLVM_TEST
+            Assert.AreEqual(1, region.Length);
+            Assert.AreEqual(value ? 1 : 0, region[0]);
+#else
             Assert.AreEqual(4, region.Length);
             Assert.AreEqual(value ? 1 : 0, DataHelpers.ReadIntFromByteArray(region, 0));
+#endif
         }
 
         protected void AssertByteArrayIsInt32(byte[] region, int value)
@@ -55,7 +61,6 @@ namespace Tests.Rebar.Unit.Execution
         {
             Assert.AreEqual(8, value.Length);
             Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 0));
-            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 4));
         }
     }
 

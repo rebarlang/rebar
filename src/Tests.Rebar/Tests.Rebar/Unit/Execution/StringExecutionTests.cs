@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿#define LLVM_TEST
+
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.Execution;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -24,10 +25,16 @@ namespace Tests.Rebar.Unit.Execution
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
+#if LLVM_TEST
+            const int stringSliceReferenceSize = 16;
+#else
+            const int stringSliceReferenceSize = 8;
+#endif
+
             byte[] inspect1Value = executionInstance.GetLastValueFromInspectNode(inspect1Node);
-            Assert.AreEqual(8, inspect1Value.Length);
+            Assert.AreEqual(stringSliceReferenceSize, inspect1Value.Length);
             byte[] inspect2Value = executionInstance.GetLastValueFromInspectNode(inspect2Node);
-            Assert.AreEqual(8, inspect2Value.Length);
+            Assert.AreEqual(stringSliceReferenceSize, inspect2Value.Length);
             Assert.IsTrue(inspect1Value.Zip(inspect2Value, (a, b) => a == b).All(b => b));
         }
 

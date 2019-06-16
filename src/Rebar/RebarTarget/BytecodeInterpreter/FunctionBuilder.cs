@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Rebar.RebarTarget.Execution
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     public sealed class FunctionBuilder
     {

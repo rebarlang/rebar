@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using NationalInstruments.Composition;
 using NationalInstruments.DataValues;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
@@ -19,10 +18,10 @@ namespace Rebar.RebarTarget
     internal class ExecutableFunction : ITopLevelPanelExecutable
     {
         private ISimpleExecutionState _currentSimpleExecutionState = DefaultExecutionState.Idle;
-        private readonly ExecutionContext _context;
+        private readonly BytecodeInterpreter.ExecutionContext _context;
         private readonly LLVM.ExecutionContext _llvmContext;
 
-        public ExecutableFunction(ExecutionTarget target, ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
+        public ExecutableFunction(ExecutionTarget target, BytecodeInterpreter.ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
         {
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;

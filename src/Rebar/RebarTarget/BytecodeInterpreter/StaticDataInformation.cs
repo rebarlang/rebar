@@ -1,4 +1,4 @@
-﻿namespace Rebar.RebarTarget.Execution
+﻿namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     public sealed class StaticDataInformation
     {

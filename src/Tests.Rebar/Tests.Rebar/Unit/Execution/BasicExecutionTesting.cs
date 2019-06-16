@@ -3,7 +3,7 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.Execution;
+using Rebar.RebarTarget;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -37,6 +37,56 @@ namespace Tests.Rebar.Unit.Execution
 
             byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(inspectValue, 2);
+        }
+
+        [TestMethod]
+        public void FunctionWithTwoI32sExchanged_Execute_CorrectFinalValues()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode exchangeValues = new FunctionalNode(function.BlockDiagram, Signatures.ExchangeValuesType);
+            FunctionalNode inspect1 = ConnectInspectToOutputTerminal(exchangeValues.OutputTerminals[0]),
+                inspect2 = ConnectInspectToOutputTerminal(exchangeValues.OutputTerminals[1]);
+            Constant value1 = ConnectConstantToInputTerminal(exchangeValues.InputTerminals[0], PFTypes.Int32, 1, true),
+                value2 = ConnectConstantToInputTerminal(exchangeValues.InputTerminals[1], PFTypes.Int32, 2, true);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue1 = executionInstance.GetLastValueFromInspectNode(inspect1),
+                inspectValue2 = executionInstance.GetLastValueFromInspectNode(inspect2);
+            AssertByteArrayIsInt32(inspectValue1, 2);
+            AssertByteArrayIsInt32(inspectValue2, 1);
+        }
+
+        [TestMethod]
+        public void SelectReferenceWithTrueSelector_Execute_CorrectSelectedResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode selectReference = new FunctionalNode(function.BlockDiagram, Signatures.SelectReferenceType);
+            Constant selectorConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[0], PFTypes.Boolean, true, false);
+            Constant trueValueConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[1], PFTypes.Int32, 1, false);
+            Constant falseValueConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[2], PFTypes.Int32, 0, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(selectReference.OutputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 1);
+        }
+
+        [TestMethod]
+        public void SelectReferenceWithFalseSelector_Execute_CorrectSelectedResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode selectReference = new FunctionalNode(function.BlockDiagram, Signatures.SelectReferenceType);
+            Constant selectorConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[0], PFTypes.Boolean, false, false);
+            Constant trueValueConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[1], PFTypes.Int32, 1, false);
+            Constant falseValueConstant = ConnectConstantToInputTerminal(selectReference.InputTerminals[2], PFTypes.Int32, 0, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(selectReference.OutputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 0);
         }
 
         [TestMethod]

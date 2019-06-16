@@ -8,9 +8,8 @@ using NationalInstruments.Dfir;
 using Rebar.Compiler.Nodes;
 using Rebar.Common;
 using Rebar.Compiler;
-using Rebar.RebarTarget.Execution;
 
-namespace Rebar.RebarTarget
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     internal class FunctionCompiler : VisitorTransformBase, IDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
     {
@@ -423,6 +422,15 @@ namespace Rebar.RebarTarget
         {
             _builder = builder;
             _variableAllocations = variableAllocations;
+        }
+
+        protected override void PostVisitDiagram(Diagram diagram)
+        {
+            base.PostVisitDiagram(diagram);
+            if (diagram == diagram.DfirRoot.BlockDiagram)
+            {
+                _builder.EmitReturn();
+            }
         }
 
         private void LoadValueAsReference(VariableReference local)

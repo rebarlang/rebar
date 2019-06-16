@@ -1,7 +1,6 @@
 ﻿using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
-namespace Rebar.RebarTarget
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     /// <summary>
     /// Represents the result of deploying a compiled <see cref="Function"/>.

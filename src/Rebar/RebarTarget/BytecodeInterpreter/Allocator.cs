@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
 
-namespace Rebar.RebarTarget.Execution
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     internal class BytecodeInterpreterAllocator : Allocator<ValueSource, LocalAllocationValueSource, ConstantLocalReferenceValueSource>
     {

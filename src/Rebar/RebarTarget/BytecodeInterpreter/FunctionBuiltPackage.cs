@@ -5,9 +5,8 @@ using System.Runtime.Serialization;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
-namespace Rebar.RebarTarget
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     [Serializable]
     public class FunctionBuiltPackage : IBuiltPackage, ISerializable

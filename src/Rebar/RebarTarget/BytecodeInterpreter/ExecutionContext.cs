@@ -6,7 +6,7 @@ using System.Text;
 using NationalInstruments.Core;
 #endif
 
-namespace Rebar.RebarTarget.Execution
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     public class ExecutionContext
     {
@@ -50,18 +50,12 @@ namespace Rebar.RebarTarget.Execution
             _totalStaticDataSize += ComputeStaticDataSize(function);
         }
 
-        private int RoundUpToNearest(int toRound, int multiplicand)
-        {
-            int remainder = toRound % multiplicand;
-            return remainder == 0 ? toRound : (toRound + multiplicand - remainder);
-        }
-
         private int ComputeStaticDataSize(Function function)
         {
             int size = 0;
             foreach (var staticDataItem in function.StaticData)
             {
-                int dataItemSize = RoundUpToNearest(staticDataItem.Data.Length, 4);
+                int dataItemSize = staticDataItem.Data.Length.RoundUpToNearest(4);
                 size += dataItemSize;
             }
             return size;
@@ -71,7 +65,7 @@ namespace Rebar.RebarTarget.Execution
         {
             _loading = false;
 
-            int dataSectionSize = RoundUpToNearest(_totalStaticDataSize, 1024);
+            int dataSectionSize = _totalStaticDataSize.RoundUpToNearest(1024);
             int stackSize = 1024;
             int heapSize = 2048;
             _memory = new byte[dataSectionSize + stackSize + heapSize];
@@ -92,7 +86,7 @@ namespace Rebar.RebarTarget.Execution
                     }
                     Array.Copy(staticDataItem, 0, _memory, currentOffset, staticDataItem.Length);
                     int minimumSize = Math.Max(1, staticDataItem.Length);
-                    currentOffset += RoundUpToNearest(minimumSize, 4);
+                    currentOffset += minimumSize.RoundUpToNearest(4);
                 }
                 loadedFunction.PatchStaticDataOffsets(staticOffsets);
             }
@@ -306,7 +300,7 @@ namespace Rebar.RebarTarget.Execution
                         case OpCodes.Alloc_TEMP:
                             {
                                 int size = operandStack.Pop();
-                                size = RoundUpToNearest(Math.Max(1, size), 4);
+                                size = Math.Max(1, size).RoundUpToNearest(4);
                                 if (_heapOffset + size <= _memory.Length)
                                 {
                                     operandStack.Push(_heapOffset);

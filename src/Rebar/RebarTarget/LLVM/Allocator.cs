@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using LLVMSharp;
+using NationalInstruments.DataTypes;
 using Rebar.Common;
 
 namespace Rebar.RebarTarget.LLVM
@@ -21,7 +22,7 @@ namespace Rebar.RebarTarget.LLVM
         protected override LocalAllocationValueSource CreateLocalAllocation(VariableReference variable)
         {
             string name = $"v{variable.Id}";
-            return new LocalAllocationValueSource(name);
+            return new LocalAllocationValueSource(name, variable.Type);
         }
     }
 
@@ -38,36 +39,57 @@ namespace Rebar.RebarTarget.LLVM
 
     internal class LocalAllocationValueSource : ValueSource
     {
-        private readonly string _allocationName;
         private int _loadCount;
 
-        public LocalAllocationValueSource(string allocationName)
+        public LocalAllocationValueSource(string allocationName, NIType allocationNIType)
         {
-            _allocationName = allocationName;
+            AllocationName = allocationName;
+            AllocationNIType = allocationNIType;
         }
+
+        public string AllocationName { get; }
+
+        public NIType AllocationNIType { get; }
 
         public LLVMValueRef AllocationPointer { get; set; }
 
         public override LLVMValueRef GetDeferencedValue(IRBuilder builder)
         {
-            throw new NotImplementedException();
+            return builder.CreateLoad(GetValue(builder), $"{AllocationName}_deref");
         }
 
         public override LLVMValueRef GetValue(IRBuilder builder)
         {
-            string name = $"{_allocationName}_load_{_loadCount}";
+            string name = $"{AllocationName}_load_{_loadCount}";
             ++_loadCount;
+            AllocationPointer.ThrowIfNull();
             return builder.CreateLoad(AllocationPointer, name);
         }
 
         public override void UpdateDereferencedValue(IRBuilder builder, LLVMValueRef value)
         {
-            throw new NotImplementedException();
+            LLVMValueRef ptr = GetValue(builder);
+            builder.CreateStore(value, ptr);
         }
 
         public override void UpdateValue(IRBuilder builder, LLVMValueRef value)
         {
+            AllocationPointer.ThrowIfNull();
             builder.CreateStore(value, AllocationPointer);
+        }
+
+        public void UpdateStructValue(IRBuilder builder, LLVMValueRef[] fieldValues)
+        {
+            LLVMTypeRef structType = AllocationPointer.TypeOf().GetElementType();
+            if (structType.TypeKind != LLVMTypeKind.LLVMStructTypeKind)
+            {
+                throw new InvalidOperationException("Cannot UpdateStructValue on a non-struct");
+            }
+            for (int i = 0; i < fieldValues.Length; ++i)
+            {
+                LLVMValueRef fieldPtr = builder.CreateStructGEP(AllocationPointer, (uint)i, "field");
+                builder.CreateStore(fieldValues[i], fieldPtr);
+            }
         }
     }
 

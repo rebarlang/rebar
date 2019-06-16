@@ -4,7 +4,6 @@ using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.Execution;
 
 namespace Tests.Rebar.Unit.Execution
 {

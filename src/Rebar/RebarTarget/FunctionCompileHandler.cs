@@ -10,8 +10,8 @@ using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using Rebar.Compiler;
-using Rebar.RebarTarget.Execution;
 using Rebar.Common;
+using Rebar.RebarTarget.BytecodeInterpreter;
 
 namespace Rebar.RebarTarget
 {
@@ -128,20 +128,18 @@ namespace Rebar.RebarTarget
             };
             new FunctionCompiler(functionBuilder, variableAllocations).Execute(dfirRoot, cancellationToken);
 
-            // TODO: need to be able to put this in FunctionCompiler:
-            functionBuilder.EmitReturn();
-
             return functionBuilder.CreateFunction();
         }
 
-        internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
         {
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
             LLVM.Allocator allocator = new LLVM.Allocator(valueSources);
             allocator.Execute(dfirRoot, cancellationToken);
 
             Module module = new Module("module");
-            LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, dfirRoot.SpecAndQName.RuntimeName);
+            compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? dfirRoot.SpecAndQName.RuntimeName : compiledFunctionName;
+            LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, compiledFunctionName, valueSources);
             functionCompiler.Execute(dfirRoot, cancellationToken);
             return module;
         }

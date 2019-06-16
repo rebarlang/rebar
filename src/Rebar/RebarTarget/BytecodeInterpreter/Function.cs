@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Rebar.RebarTarget.Execution
+namespace Rebar.RebarTarget.BytecodeInterpreter
 {
     [Serializable]
     public class Function : ISerializable

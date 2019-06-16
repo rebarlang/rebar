@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
@@ -261,15 +262,16 @@
     <Compile Include="RebarTarget\ApplicationComponentMocPluginPlugin.cs" />
     <Compile Include="RebarTarget\ApplicationRoot.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\Allocator.cs" />
-    <Compile Include="RebarTarget\BytecodeInterpreter\DataHelpers.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\Function.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\FunctionBuilder.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\FunctionBuiltPackage.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\LabelBuilder.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\OpCodes.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\StaticDataBuilder.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\StaticDataInformation.cs" />
+    <Compile Include="RebarTarget\DataHelpers.cs" />
     <Compile Include="RebarTarget\ExecutableFunction.cs" />
     <Compile Include="RebarTarget\ExecutionTarget.cs" />
     <Compile Include="RebarTarget\BytecodeInterpreter\ExecutionContext.cs" />
@@ -278,13 +280,14 @@
     <Compile Include="RebarTarget\FunctionCompileHandler.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
-    <Compile Include="RebarTarget\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\Allocator.cs" />
+    <Compile Include="RebarTarget\LLVM\CommonModules.cs" />
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
+    <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
     <Compile Include="RebarTarget\TargetCompiler.cs" />
     <Compile Include="RebarTarget\TargetCompilerServices.cs" />

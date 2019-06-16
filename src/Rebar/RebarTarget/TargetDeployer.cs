@@ -4,15 +4,14 @@ using System.Threading.Tasks;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
     public class TargetDeployer : NationalInstruments.ExecutionFramework.TargetDeployer
     {
         private readonly ExecutionTarget _executionTarget;
-        private Rebar.RebarTarget.Execution.ExecutionContext _bytecodeInterpreterExecutionContext;
-        private Rebar.RebarTarget.LLVM.ExecutionContext _llvmExecutionContext;
+        private BytecodeInterpreter.ExecutionContext _bytecodeInterpreterExecutionContext;
+        private LLVM.ExecutionContext _llvmExecutionContext;
 
         public TargetDeployer(GetBuiltPackage getBuildPackageDelegate, GetTargetDeployer getTargetDeployer, ExecutionTarget executionTarget)
             : base(getBuildPackageDelegate, getTargetDeployer)
@@ -34,13 +33,14 @@ namespace Rebar.RebarTarget
 
         private void HandleDeploymentStarting(IBuiltPackage topLevelPackage)
         {
+            var executionServices = new HostExecutionServices(_executionTarget.Host);
             if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
             {
-                _bytecodeInterpreterExecutionContext = new ExecutionContext(new HostExecutionServices(_executionTarget.Host));
+                _bytecodeInterpreterExecutionContext = new BytecodeInterpreter.ExecutionContext(executionServices);
             }
             else
             {
-                _llvmExecutionContext = new LLVM.ExecutionContext(_executionTarget.Host);
+                _llvmExecutionContext = new LLVM.ExecutionContext(executionServices);
             }
         }
 
@@ -57,7 +57,7 @@ namespace Rebar.RebarTarget
             IDeployedPackage deployedPackage = null;
             if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
             {
-                var functionDeployedPackage = FunctionDeployedPackage.DeployFunction((FunctionBuiltPackage)package, _executionTarget, _bytecodeInterpreterExecutionContext);
+                var functionDeployedPackage = BytecodeInterpreter.FunctionDeployedPackage.DeployFunction((BytecodeInterpreter.FunctionBuiltPackage)package, _executionTarget, _bytecodeInterpreterExecutionContext);
                 _executionTarget.OnExecutableCreated(functionDeployedPackage.Executable);
                 deployedPackage = functionDeployedPackage;
             }
