@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -75,6 +75,24 @@ namespace Rebar.Resources {
         internal static string FeatureNotEnabled {
             get {
                 return ResourceManager.GetString("FeatureNotEnabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_AllIntegerTypes_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_AllIntegerTypes_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable support for all integer data types..
+        /// </summary>
+        internal static string FeatureToggle_AllIntegerTypes_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_AllIntegerTypes_Description", resourceCulture);
             }
         }
         

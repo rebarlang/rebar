@@ -325,12 +325,14 @@ namespace Rebar.RebarTarget.LLVM
             CopyMemoryFunction = addTo.AddFunction("CopyMemory", copyMemoryFunctionType);
             CopyMemoryFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
-            LLVMTypeRef outputIntFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[] { LLVMTypeRef.Int32Type() },
-                false);
-            OutputIntFunction = addTo.AddFunction("output_int", outputIntFunctionType);
-            OutputIntFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            OutputInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_int8");
+            OutputUInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_uint8");
+            OutputInt16Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int16Type(), "output_int16");
+            OutputUInt16Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int16Type(), "output_uint16");
+            OutputInt32Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "output_int32");
+            OutputUInt32Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "output_uint32");
+            OutputInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_int64");
+            OutputUInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_uint64");
 
             LLVMTypeRef outputStringFunctionType = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
@@ -340,9 +342,31 @@ namespace Rebar.RebarTarget.LLVM
             OutputStringFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
         }
 
+        private LLVMValueRef CreateSingleParameterVoidFunction(Module module, LLVMTypeRef parameterType, string name)
+        {
+            LLVMTypeRef functionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), new LLVMTypeRef[] { parameterType }, false);
+            LLVMValueRef function = module.AddFunction(name, functionType);
+            function.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+            return function;
+        }
+
         public LLVMValueRef CopyMemoryFunction { get; }
 
-        public LLVMValueRef OutputIntFunction { get; }
+        public LLVMValueRef OutputInt8Function { get; }
+
+        public LLVMValueRef OutputUInt8Function { get; }
+
+        public LLVMValueRef OutputInt16Function { get; }
+
+        public LLVMValueRef OutputUInt16Function { get; }
+
+        public LLVMValueRef OutputInt32Function { get; }
+
+        public LLVMValueRef OutputUInt32Function { get; }
+
+        public LLVMValueRef OutputInt64Function { get; }
+
+        public LLVMValueRef OutputUInt64Function { get; }
 
         public LLVMValueRef OutputStringFunction { get; }
     }

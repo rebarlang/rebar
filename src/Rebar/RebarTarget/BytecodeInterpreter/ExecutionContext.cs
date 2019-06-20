@@ -130,7 +130,7 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
                             break;
                         case OpCodes.Branch:
                             {
-                                nextIP = DataHelpers.ReadIntFromByteArray(code, ip + 1);
+                                nextIP = BitConverter.ToInt32(code, ip + 1);
                             }
                             break;
                         case OpCodes.BranchIfFalse:
@@ -139,13 +139,13 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
                                 int value = operandStack.Pop();
                                 if (value == 0)
                                 {
-                                    nextIP = DataHelpers.ReadIntFromByteArray(code, ip + 1);
+                                    nextIP = BitConverter.ToInt32(code, ip + 1);
                                 }
                             }
                             break;
                         case OpCodes.LoadIntegerImmediate:
                             {
-                                int value = DataHelpers.ReadIntFromByteArray(code, ip + 1);
+                                int value = BitConverter.ToInt32(code, ip + 1);
                                 operandStack.Push(value);
                                 nextIP = ip + 5;
                             }
@@ -160,7 +160,7 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
                             break;
                         case OpCodes.LoadStaticAddress:
                             {
-                                int staticAddress = DataHelpers.ReadIntFromByteArray(code, ip + 1);
+                                int staticAddress = BitConverter.ToInt32(code, ip + 1);
                                 operandStack.Push(staticAddress);
                                 nextIP = ip + 5;
                             }
@@ -181,7 +181,7 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
                         case OpCodes.DerefPointer:
                             {
                                 int address = operandStack.Pop();
-                                int value = DataHelpers.ReadIntFromByteArray(_memory, address);
+                                int value = BitConverter.ToInt32(_memory, address);
 #if LOG_MEMORY_ACCESS
                                 Log.WriteLine($"{opcode} {value} from {address}");
 #endif

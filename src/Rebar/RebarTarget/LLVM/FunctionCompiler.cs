@@ -99,11 +99,40 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource inputValueSource = compiler.GetTerminalValueSource(outputNode.InputTerminals[0]);
             VariableReference input = outputNode.InputTerminals[0].GetTrueVariable();
             NIType referentType = input.Type.GetReferentType();
-            if (referentType.IsInt32())
+            if (referentType.IsInteger())
             {
-                // call output_int with value
+                LLVMValueRef outputFunction;
+                switch (referentType.GetKind())
+                {
+                    case NITypeKind.Int8:
+                        outputFunction = compiler._commonExternalFunctions.OutputInt8Function;
+                        break;
+                    case NITypeKind.UInt8:
+                        outputFunction = compiler._commonExternalFunctions.OutputUInt8Function;
+                        break;
+                    case NITypeKind.Int16:
+                        outputFunction = compiler._commonExternalFunctions.OutputInt16Function;
+                        break;
+                    case NITypeKind.UInt16:
+                        outputFunction = compiler._commonExternalFunctions.OutputUInt16Function;
+                        break;
+                    case NITypeKind.Int32:
+                        outputFunction = compiler._commonExternalFunctions.OutputInt32Function;
+                        break;
+                    case NITypeKind.UInt32:
+                        outputFunction = compiler._commonExternalFunctions.OutputUInt32Function;
+                        break;
+                    case NITypeKind.Int64:
+                        outputFunction = compiler._commonExternalFunctions.OutputInt64Function;
+                        break;
+                    case NITypeKind.UInt64:
+                        outputFunction = compiler._commonExternalFunctions.OutputUInt64Function;
+                        break;
+                    default:
+                        throw new NotImplementedException($"Don't know how to display type {referentType} yet.");
+                }
                 LLVMValueRef value = inputValueSource.GetDeferencedValue(compiler._builder);
-                compiler._builder.CreateCall(compiler._commonExternalFunctions.OutputIntFunction, new LLVMValueRef[] { value }, string.Empty);
+                compiler._builder.CreateCall(outputFunction, new LLVMValueRef[] { value }, string.Empty);
                 return;
             }
             if (referentType.IsString())
@@ -420,10 +449,39 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitConstant(Constant constant)
         {
-            var outputAllocation = GetTerminalValueSource(constant.OutputTerminal);
-            if (constant.Value is int)
+            ValueSource outputAllocation = GetTerminalValueSource(constant.OutputTerminal);
+            if (constant.DataType.IsInteger())
             {
-                LLVMValueRef constantValueRef = ((int)constant.Value).AsLLVMValue();
+                LLVMValueRef constantValueRef;
+                switch (constant.DataType.GetKind())
+                {
+                    case NITypeKind.Int8:
+                        constantValueRef = ((sbyte)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.UInt8:
+                        constantValueRef = ((byte)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.Int16:
+                        constantValueRef = ((short)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.UInt16:
+                        constantValueRef = ((ushort)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.Int32:
+                        constantValueRef = ((int)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.UInt32:
+                        constantValueRef = ((uint)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.Int64:
+                        constantValueRef = ((long)constant.Value).AsLLVMValue();
+                        break;
+                    case NITypeKind.UInt64:
+                        constantValueRef = ((ulong)constant.Value).AsLLVMValue();
+                        break;
+                    default:
+                        throw new NotSupportedException("Unsupported numeric constant type: " + constant.DataType);
+                }
                 outputAllocation.UpdateValue(_builder, constantValueRef);
             }
             else if (constant.Value is bool)

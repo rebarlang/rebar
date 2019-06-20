@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -11,16 +11,161 @@ namespace Tests.Rebar.Unit.Execution
     public class BasicExecutionTesting : ExecutionTestBase
     {
         [TestMethod]
+        public void FunctionWithInt8Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int8, (sbyte)1);
+            AssertByteArrayIsInt8(inspectValue, 1);
+        }
+
+        [TestMethod]
+        public void FunctionWithNegativeInt8Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int8, (sbyte)-1);
+            AssertByteArrayIsInt8(inspectValue, -1);
+        }
+
+        [TestMethod]
+        public void FunctionWithUInt8Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.UInt8, (byte)1);
+            AssertByteArrayIsUInt8(inspectValue, 1);
+        }
+
+        [TestMethod]
+        public void FunctionWithInt16Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int16, (short)1);
+            AssertByteArrayIsInt16(inspectValue, 1);
+        }
+
+        [TestMethod]
+        public void FunctionWithNegativeInt16Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int16, (short)-1);
+            AssertByteArrayIsInt16(inspectValue, -1);
+        }
+
+        [TestMethod]
+        public void FunctionWithUInt16Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.UInt16, (ushort)1);
+            AssertByteArrayIsUInt16(inspectValue, 1);
+        }
+
+        [TestMethod]
         public void FunctionWithInt32Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int32, 1);
+            AssertByteArrayIsInt32(inspectValue, 1);
+        }
+
+        [TestMethod]
+        public void FunctionWithNegativeInt32Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int32, -1);
+            AssertByteArrayIsInt32(inspectValue, -1);
+        }
+
+        [TestMethod]
+        public void FunctionWithUInt32Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.UInt32, 1u);
+            AssertByteArrayIsUInt32(inspectValue, 1u);
+        }
+
+        [TestMethod]
+        public void FunctionWithInt64Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int64, 1L);
+            AssertByteArrayIsInt64(inspectValue, 1L);
+        }
+
+        [TestMethod]
+        public void FunctionWithNegativeInt64Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.Int64, -1L);
+            AssertByteArrayIsInt64(inspectValue, -1L);
+        }
+
+        [TestMethod]
+        public void FunctionWithUInt64Constant_Execute_CorrectValue()
+        {
+            byte[] inspectValue = CreateAndExecuteFunctionWithConstantAndInspect(PFTypes.UInt64, 1ul);
+            AssertByteArrayIsUInt64(inspectValue, 1u);
+        }
+
+        private byte[] CreateAndExecuteFunctionWithConstantAndInspect(NIType constantType, object constantValue)
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
-            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, 1, false);
-
+            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], constantType, constantValue, false);
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+            return executionInstance.GetLastValueFromInspectNode(inspect);
+        }
 
-            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
-            AssertByteArrayIsInt32(inspectValue, 1);
+        [TestMethod]
+        public void OutputInt8Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Int8, (sbyte)1);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputUInt8Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.UInt8, (byte)1);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputInt16Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Int16, (short)1);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputUInt16Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.UInt16, (ushort)1);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputInt32Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Int32, 1);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputUInt32Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.UInt32, 1u);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputInt64Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Int64, 1L);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputUInt64Constant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.UInt64, 1ul);
+            Assert.AreEqual("1", lastOutput);
+        }
+
+        private string CreateAndExecuteFunctionWithConstantAndOutput(NIType constantType, object constantValue)
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+            Constant constant = ConnectConstantToInputTerminal(output.InputTerminals[0], constantType, constantValue, false);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+            return executionInstance.RuntimeServices.LastOutputValue;
         }
 
         [TestMethod]
@@ -102,8 +247,8 @@ namespace Tests.Rebar.Unit.Execution
 
             byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             Assert.AreEqual(8, inspectValue.Length);
-            Assert.AreEqual(-1, DataHelpers.ReadIntFromByteArray(inspectValue, 0));
-            Assert.AreEqual(10, DataHelpers.ReadIntFromByteArray(inspectValue, 4));
+            Assert.AreEqual(-1, BitConverter.ToInt32(inspectValue, 0));
+            Assert.AreEqual(10, BitConverter.ToInt32(inspectValue, 4));
         }
     }
 }

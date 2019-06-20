@@ -123,6 +123,12 @@
   <data name="FeatureNotEnabled" xml:space="preserve">
     <value>Using this node requires a preview feature to be enabled.</value>
   </data>
+  <data name="FeatureToggle_AllIntegerTypes_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_AllIntegerTypes_Description" xml:space="preserve">
+    <value>Enable support for all integer data types.</value>
+  </data>
   <data name="FeatureToggle_CellDataType_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

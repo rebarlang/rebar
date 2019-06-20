@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using NationalInstruments;
 using NationalInstruments.Compiler.SemanticAnalysis;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.FeatureToggles;
 using Rebar.Common;
@@ -62,6 +63,10 @@ namespace Rebar.Compiler
         public bool VisitConstant(Constant constant)
         {
             // This node has no inputs.
+            if (constant.DataType.IsInteger() && !constant.DataType.IsSupportedIntegerType())
+            {
+                constant.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
             return true;
         }
 

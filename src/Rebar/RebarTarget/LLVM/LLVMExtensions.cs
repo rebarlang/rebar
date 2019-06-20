@@ -30,9 +30,44 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int1Type(), (booleanValue ? 1u : 0u), false);
         }
 
+        public static LLVMValueRef AsLLVMValue(this sbyte intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int8Type(), (ulong)intValue, true);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this byte intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int8Type(), intValue, false);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this short intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int16Type(), (ulong)intValue, true);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this ushort intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int16Type(), intValue, false);
+        }
+
         public static LLVMValueRef AsLLVMValue(this int intValue)
         {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int32Type(), (ulong)intValue, false);
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int32Type(), (ulong)intValue, true);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this uint intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int32Type(), intValue, false);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this long intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), (ulong)intValue, true);
+        }
+
+        public static LLVMValueRef AsLLVMValue(this ulong intValue)
+        {
+            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), intValue, false);
         }
 
         public static LLVMTypeRef StringSliceReferenceType { get; } = LLVMTypeRef.StructType(
@@ -61,9 +96,23 @@ namespace Rebar.RebarTarget.LLVM
 
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
-            if (niType.IsInt32())
+            if (niType.IsInteger())
             {
-                return LLVMTypeRef.Int32Type();
+                switch (niType.GetKind())
+                {
+                    case NITypeKind.UInt8:
+                    case NITypeKind.Int8:
+                        return LLVMTypeRef.Int8Type();
+                    case NITypeKind.UInt16:
+                    case NITypeKind.Int16:
+                        return LLVMTypeRef.Int16Type();
+                    case NITypeKind.UInt32:
+                    case NITypeKind.Int32:
+                        return LLVMTypeRef.Int32Type();
+                    case NITypeKind.UInt64:
+                    case NITypeKind.Int64:
+                        return LLVMTypeRef.Int64Type();
+                }
             }
             if (niType.IsBoolean())
             {

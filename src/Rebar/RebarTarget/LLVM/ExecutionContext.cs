@@ -28,8 +28,15 @@ namespace Rebar.RebarTarget.LLVM
             };
             LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_options);
 
-            AddSymbolForDelegate<OutputIntDelegate>("output_int", _outputInt);
-            AddSymbolForDelegate<OutputStringDelegate>("output_string", _outputString);
+            AddSymbolForDelegate("output_int8", _outputInt8);
+            AddSymbolForDelegate("output_uint8", _outputUInt8);
+            AddSymbolForDelegate("output_int16", _outputInt16);
+            AddSymbolForDelegate("output_uint16", _outputUInt16);
+            AddSymbolForDelegate("output_int32", _outputInt32);
+            AddSymbolForDelegate("output_uint32", _outputUInt32);
+            AddSymbolForDelegate("output_int64", _outputInt64);
+            AddSymbolForDelegate("output_uint64", _outputUInt64);
+            AddSymbolForDelegate("output_string", _outputString);
 
             IntPtr kernel32Instance = LoadLibrary("kernel32.dll");
             IntPtr copyMemoryProc = GetProcAddress(kernel32Instance, "RtlCopyMemory");
@@ -49,7 +56,28 @@ namespace Rebar.RebarTarget.LLVM
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void OutputIntDelegate(int v);
+        private delegate void OutputInt8Delegate(sbyte v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputUInt8Delegate(byte v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputInt16Delegate(short v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputUInt16Delegate(ushort v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputInt32Delegate(int v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputUInt32Delegate(uint v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputInt64Delegate(long v);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputUInt64Delegate(ulong v);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void OutputStringDelegate(IntPtr bufferPtr, int size);
@@ -57,12 +85,61 @@ namespace Rebar.RebarTarget.LLVM
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ExecFunc();
 
-        private static void OutputInt(int value)
+        private static void OutputInt8(sbyte value)
         {
             _runtimeServices.Output(value.ToString());
         }
 
-        private static OutputIntDelegate _outputInt = OutputInt;
+        private static OutputInt8Delegate _outputInt8 = OutputInt8;
+
+        private static void OutputUInt8(byte value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputUInt8Delegate _outputUInt8 = OutputUInt8;
+
+        private static void OutputInt16(short value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputInt16Delegate _outputInt16 = OutputInt16;
+
+        private static void OutputUInt16(ushort value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputUInt16Delegate _outputUInt16 = OutputUInt16;
+
+        private static void OutputInt32(int value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputInt32Delegate _outputInt32 = OutputInt32;
+
+        private static void OutputUInt32(uint value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputUInt32Delegate _outputUInt32 = OutputUInt32;
+
+        private static void OutputInt64(long value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputInt64Delegate _outputInt64 = OutputInt64;
+
+        private static void OutputUInt64(ulong value)
+        {
+            _runtimeServices.Output(value.ToString());
+        }
+
+        private static OutputUInt64Delegate _outputUInt64 = OutputUInt64;
 
         private static void OutputString(IntPtr bufferPtr, int size)
         {

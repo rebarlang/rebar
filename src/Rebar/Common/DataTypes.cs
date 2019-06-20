@@ -337,13 +337,18 @@ namespace Rebar.Common
             return false;
         }
 
+        internal static bool IsSupportedIntegerType(this NIType type)
+        {
+            return type.IsInt32() || (type.IsInteger() && RebarFeatureToggles.IsAllIntegerTypesEnabled);
+        }
+
         internal static bool TypeHasDisplayTrait(this NIType type)
         {
             if (type.IsString() || type == StringSliceType)
             {
                 return RebarFeatureToggles.IsStringDataTypeEnabled;
             }
-            return type.IsInt32();
+            return type.IsSupportedIntegerType();
         }
     }
 }
