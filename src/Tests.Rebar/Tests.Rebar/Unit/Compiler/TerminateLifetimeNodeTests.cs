@@ -13,6 +13,19 @@ namespace Tests.Rebar.Unit.Compiler
     public class TerminateLifetimeNodeTests : CompilerTestBase
     {
         [TestMethod]
+        public void TerminateLifetimeWithNoInputLifetimesWired_SetVariableTypes_OutputVariableHasType()
+        {
+            DfirRoot function = DfirRoot.Create();
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+
+            RunSemanticAnalysisUpToSetVariableTypes(function);
+
+            VariableReference outputVariable = terminateLifetime.OutputTerminals[0].GetFacadeVariable();
+            Assert.IsNotNull(outputVariable.TypeVariableReference.TypeVariableSet);
+            Assert.IsTrue(outputVariable.Type.IsVoid());
+        }
+
+        [TestMethod]
         public void TerminateLifetimeWithNoInputLifetimesWired_ValidateVariableUsages_NonUniqueLifetimeErrorMessageReported()
         {
             DfirRoot function = DfirRoot.Create();
