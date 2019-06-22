@@ -159,6 +159,20 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual("1", lastOutput);
         }
 
+        [TestMethod]
+        public void OutputTrueBooleanConstant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Boolean, true);
+            Assert.AreEqual("true", lastOutput);
+        }
+
+        [TestMethod]
+        public void OutputFalseBooleanConstant_Execute_CorrectOutputValue()
+        {
+            string lastOutput = CreateAndExecuteFunctionWithConstantAndOutput(PFTypes.Boolean, false);
+            Assert.AreEqual("false", lastOutput);
+        }
+
         private string CreateAndExecuteFunctionWithConstantAndOutput(NIType constantType, object constantValue)
         {
             DfirRoot function = DfirRoot.Create();

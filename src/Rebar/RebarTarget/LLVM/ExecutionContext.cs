@@ -28,6 +28,7 @@ namespace Rebar.RebarTarget.LLVM
             };
             LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_options);
 
+            AddSymbolForDelegate("output_bool", _outputBool);
             AddSymbolForDelegate("output_int8", _outputInt8);
             AddSymbolForDelegate("output_uint8", _outputUInt8);
             AddSymbolForDelegate("output_int16", _outputInt16);
@@ -54,6 +55,9 @@ namespace Rebar.RebarTarget.LLVM
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputBoolDelegate(bool v);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void OutputInt8Delegate(sbyte v);
@@ -84,6 +88,13 @@ namespace Rebar.RebarTarget.LLVM
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ExecFunc();
+
+        private static void OutputBool(bool value)
+        {
+            _runtimeServices.Output(value ? "true" : "false");
+        }
+
+        private static OutputBoolDelegate _outputBool = OutputBool;
 
         private static void OutputInt8(sbyte value)
         {

@@ -348,7 +348,7 @@ namespace Rebar.Common
             {
                 return RebarFeatureToggles.IsStringDataTypeEnabled;
             }
-            return type.IsSupportedIntegerType();
+            return type.IsSupportedIntegerType() || type.IsBoolean();
         }
     }
 }

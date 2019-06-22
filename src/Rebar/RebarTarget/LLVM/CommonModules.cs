@@ -325,6 +325,7 @@ namespace Rebar.RebarTarget.LLVM
             CopyMemoryFunction = addTo.AddFunction("CopyMemory", copyMemoryFunctionType);
             CopyMemoryFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
+            OutputBoolFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int1Type(), "output_bool");
             OutputInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_int8");
             OutputUInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_uint8");
             OutputInt16Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int16Type(), "output_int16");
@@ -351,6 +352,8 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         public LLVMValueRef CopyMemoryFunction { get; }
+
+        public LLVMValueRef OutputBoolFunction { get; }
 
         public LLVMValueRef OutputInt8Function { get; }
 

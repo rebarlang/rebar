@@ -99,6 +99,12 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource inputValueSource = compiler.GetTerminalValueSource(outputNode.InputTerminals[0]);
             VariableReference input = outputNode.InputTerminals[0].GetTrueVariable();
             NIType referentType = input.Type.GetReferentType();
+            if (referentType.IsBoolean())
+            {
+                LLVMValueRef value = inputValueSource.GetDeferencedValue(compiler._builder);
+                compiler._builder.CreateCall(compiler._commonExternalFunctions.OutputBoolFunction, new LLVMValueRef[] { value }, string.Empty);
+                return;
+            }
             if (referentType.IsInteger())
             {
                 LLVMValueRef outputFunction;
