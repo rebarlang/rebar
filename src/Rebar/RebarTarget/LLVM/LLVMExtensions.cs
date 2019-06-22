@@ -136,7 +136,7 @@ namespace Rebar.RebarTarget.LLVM
             {
                 return CreateLLVMOptionType(innerType.AsLLVMType());
             }
-            if (niType.TryDestructureIteratorType(out innerType) && innerType.IsInt32())
+            if (niType == DataTypes.RangeIteratorType)
             {
                 return RangeIteratorType;
             }
