@@ -36,9 +36,8 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
             {
                 return TargetConstants.PointerSize + 4;
             }
-            if (type.IsIteratorType())
+            if (type == DataTypes.RangeIteratorType)
             {
-                // for now, the only possible iterator is RangeIterator<int>
                 // { current : i32, range_max : i32 }
                 return 8;
             }
