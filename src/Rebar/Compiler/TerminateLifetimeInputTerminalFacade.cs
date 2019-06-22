@@ -147,6 +147,13 @@ namespace Rebar.Compiler
                     }
                 }
             }
+            else
+            {
+                foreach (Terminal outputTerminal in terminateLifetimeNode.OutputTerminals)
+                {
+                    outputTerminal.GetFacadeVariable().MergeInto(outputTerminal.GetVariableSet().CreateNewVariableForUnwiredTerminal());
+                }
+            }
         }
     }
 }

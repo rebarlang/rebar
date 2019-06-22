@@ -8,7 +8,6 @@ using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
-using Rebar.RebarTarget.Execution;
 
 namespace Tests.Rebar.Unit.Compiler
 {
@@ -44,13 +43,22 @@ namespace Tests.Rebar.Unit.Compiler
             new ValidateVariableUsagesTransform(unificationResults).Execute(dfirRoot, cancellationToken);
         }
 
-        protected Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
+        internal global::Rebar.RebarTarget.BytecodeInterpreter.Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
         {
             var cancellationToken = new CompileCancellationToken();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
             
             new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
-            return FunctionCompileHandler.CompileFunction(dfirRoot, cancellationToken);
+            return FunctionCompileHandler.CompileFunctionForBytecodeInterpreter(dfirRoot, cancellationToken);
+        }
+
+        internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
+        {
+            var cancellationToken = new CompileCancellationToken();
+            RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
+
+            new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
+            return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, compiledFunctionName);
         }
 
         protected NIType DefineGenericOutputFunctionSignature()

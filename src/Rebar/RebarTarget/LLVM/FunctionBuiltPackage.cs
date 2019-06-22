@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using LLVMSharp;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
-namespace Rebar.RebarTarget
+namespace Rebar.RebarTarget.LLVM
 {
     [Serializable]
     public class FunctionBuiltPackage : IBuiltPackage, ISerializable
@@ -15,11 +15,11 @@ namespace Rebar.RebarTarget
         public FunctionBuiltPackage(
             SpecAndQName identity,
             QualifiedName targetIdentity,
-            Function function)
+            Module module)
         {
             RuntimeEntityIdentity = identity;
             TargetIdentity = targetIdentity;
-            Function = function;
+            Module = module;
         }
 
         protected FunctionBuiltPackage(SerializationInfo info, StreamingContext context)
@@ -27,12 +27,19 @@ namespace Rebar.RebarTarget
             RuntimeEntityIdentity = (SpecAndQName)info.GetValue(nameof(RuntimeEntityIdentity), typeof(SpecAndQName));
             TargetIdentity = (QualifiedName)info.GetValue(nameof(TargetIdentity), typeof(QualifiedName));
             Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
-            Function = (Function)info.GetValue(nameof(Function), typeof(Function));
+            byte[] moduleBytes = (byte[])info.GetValue(nameof(Module), typeof(byte[]));
+            Module = moduleBytes.DeserializeModuleAsBitcode();
         }
 
-        public Function Function { get; }
+        public Module Module { get; }
 
-        public bool IsPackageValid => true; // TODO
+        public bool IsPackageValid
+        {
+            get
+            {
+                return RebarFeatureToggles.IsLLVMCompilerEnabled;
+            }
+        }
 
         public IRuntimeEntityIdentity RuntimeEntityIdentity { get; }
 
@@ -42,8 +49,8 @@ namespace Rebar.RebarTarget
 
         public byte[] GetBinary()
         {
-            // TODO: figure out how to serialize an LLVM module and return it here
-            return new byte[] { 0xFF };
+            // I can't tell that this will ever actually be used. It's definitely not used for serializing the BuiltPackage.
+            return null;
         }
 
         public IEnumerable<IRuntimeEntityIdentity> GetDependencies()
@@ -56,7 +63,7 @@ namespace Rebar.RebarTarget
             info.AddValue(nameof(RuntimeEntityIdentity), RuntimeEntityIdentity);
             info.AddValue(nameof(TargetIdentity), TargetIdentity);
             info.AddValue(nameof(Token), Token);
-            info.AddValue(nameof(Function), Function);
+            info.AddValue(nameof(Module), Module.SerializeModuleAsBitcode());
         }
     }
 }

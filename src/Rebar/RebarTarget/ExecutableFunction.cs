@@ -4,10 +4,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments.Composition;
-using NationalInstruments.Core;
 using NationalInstruments.DataValues;
 using NationalInstruments.ExecutionFramework;
-using Rebar.RebarTarget.Execution;
 
 namespace Rebar.RebarTarget
 {
@@ -20,15 +18,25 @@ namespace Rebar.RebarTarget
     internal class ExecutableFunction : ITopLevelPanelExecutable
     {
         private ISimpleExecutionState _currentSimpleExecutionState = DefaultExecutionState.Idle;
-        private readonly ExecutionContext _context;
+        private readonly BytecodeInterpreter.ExecutionContext _context;
+        private readonly LLVM.ExecutionContext _llvmContext;
 
-        public ExecutableFunction(ExecutionTarget target, ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
+        public ExecutableFunction(ExecutionTarget target, BytecodeInterpreter.ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
         {
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;
             CompiledName = runtimeIdentity.EditorName;
             RuntimeName = runtimeIdentity.RuntimeName;
             _context = context;
+        }
+
+        public ExecutableFunction(ExecutionTarget target, LLVM.ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
+        {
+            CreatedDate = DateTime.Now;
+            ExecutionTarget = target;
+            CompiledName = runtimeIdentity.EditorName;
+            RuntimeName = runtimeIdentity.RuntimeName;
+            _llvmContext = context;
         }
 
         /// <inheritdoc />
@@ -110,7 +118,14 @@ namespace Rebar.RebarTarget
         public void StartRun()
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
-            _context.ExecuteFunctionTopLevel(CompiledName);
+            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
+            {
+                _context.ExecuteFunctionTopLevel(CompiledName);
+            }
+            else
+            {
+                _llvmContext.ExecuteFunctionTopLevel(RuntimeName);
+            }
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;
         }

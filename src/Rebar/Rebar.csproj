@@ -13,25 +13,37 @@
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>$(InstallLocation)\Addons\rb\Rebar</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
+    <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LLVMSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\LLVMSharp.5.0.0\lib\netstandard1.1\LLVMSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Win32.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Win32.Primitives.4.3.0\lib\net46\Microsoft.Win32.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NationalInstruments.Common, Version=15.1.40.49152, Culture=neutral, PublicKeyToken=dc6ad606294fc298, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
@@ -88,15 +100,104 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.AppContext.4.3.0\lib\net46\System.AppContext.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Console, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Console.4.3.0\lib\net46\System.Console.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="System.Diagnostics.DiagnosticSource, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.DiagnosticSource.4.3.0\lib\net46\System.Diagnostics.DiagnosticSource.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Diagnostics.Tracing, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Diagnostics.Tracing.4.3.0\lib\net462\System.Diagnostics.Tracing.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Globalization.Calendars, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Globalization.Calendars.4.3.0\lib\net46\System.Globalization.Calendars.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.Compression, Version=4.1.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Compression.4.3.0\lib\net46\System.IO.Compression.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression.ZipFile, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.Compression.ZipFile.4.3.0\lib\net46\System.IO.Compression.ZipFile.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.FileSystem, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.FileSystem.4.3.0\lib\net46\System.IO.FileSystem.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.IO.FileSystem.Primitives, Version=4.0.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.FileSystem.Primitives.4.3.0\lib\net46\System.IO.FileSystem.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.0\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Sockets, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Sockets.4.3.0\lib\net46\System.Net.Sockets.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Reflection, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.4.3.0\lib\net462\System.Reflection.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Extensions, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.Extensions.4.3.0\lib\net462\System.Runtime.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.4.3.0\lib\net462\System.Runtime.InteropServices.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.RuntimeInformation, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.InteropServices.RuntimeInformation.4.3.0\lib\net45\System.Runtime.InteropServices.RuntimeInformation.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net461\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.ReaderWriter, Version=4.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Xml.ReaderWriter.4.3.0\lib\net46\System.Xml.ReaderWriter.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -160,18 +261,33 @@
     <Compile Include="RebarTarget\ApplicationCompileHandler.cs" />
     <Compile Include="RebarTarget\ApplicationComponentMocPluginPlugin.cs" />
     <Compile Include="RebarTarget\ApplicationRoot.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\Allocator.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\Function.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\FunctionBuilder.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\FunctionBuiltPackage.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\FunctionCompiler.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\FunctionDeployedPackage.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\LabelBuilder.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\OpCodes.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\StaticDataBuilder.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\StaticDataInformation.cs" />
+    <Compile Include="RebarTarget\DataHelpers.cs" />
     <Compile Include="RebarTarget\ExecutableFunction.cs" />
     <Compile Include="RebarTarget\ExecutionTarget.cs" />
-    <Compile Include="RebarTarget\Execution\ExecutionContext.cs" />
-    <Compile Include="RebarTarget\Execution\StaticDataIdentifier.cs" />
-    <Compile Include="RebarTarget\Execution\TargetConstants.cs" />
-    <Compile Include="RebarTarget\FunctionBuiltPackage.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\ExecutionContext.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\StaticDataIdentifier.cs" />
+    <Compile Include="RebarTarget\BytecodeInterpreter\TargetConstants.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandler.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
-    <Compile Include="RebarTarget\FunctionCompiler.cs" />
-    <Compile Include="RebarTarget\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
+    <Compile Include="RebarTarget\LLVM\Allocator.cs" />
+    <Compile Include="RebarTarget\LLVM\CommonModules.cs" />
+    <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
+    <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
     <Compile Include="RebarTarget\TargetCompiler.cs" />
     <Compile Include="RebarTarget\TargetCompilerServices.cs" />
@@ -351,7 +467,19 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,24 +1,30 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿#define LLVM_TEST
+
+using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
-using Rebar.RebarTarget.Execution;
 using Tests.Rebar.Unit.Compiler;
 
 namespace Tests.Rebar.Unit.Execution
 {
     public abstract class ExecutionTestBase : CompilerTestBase
     {
-        protected ExecutionContext CompileAndExecuteFunction(DfirRoot function, IRebarTargetRuntimeServices runtimeServices = null)
+        internal TestExecutionInstance CompileAndExecuteFunction(DfirRoot function)
         {
-            runtimeServices = runtimeServices ?? new TestRuntimeServices();
-            Function compiledFunction = RunSemanticAnalysisUpToCodeGeneration(function);
-            ExecutionContext context = new ExecutionContext(runtimeServices);
-            context.LoadFunction(compiledFunction);
-            context.FinalizeLoad();
-            context.ExecuteFunctionTopLevel(compiledFunction.Name);
-            return context;
+            var testExecutionInstance = new TestExecutionInstance();
+            testExecutionInstance.CompileAndExecuteFunction(this, function);
+            return testExecutionInstance;
+        }
+
+        protected Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, object value, bool mutable)
+        {
+            Constant constant = ConnectConstantToInputTerminal(inputTerminal, variableType, mutable);
+            constant.Value = value;
+            return constant;
         }
 
         internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)
@@ -28,29 +34,76 @@ namespace Tests.Rebar.Unit.Execution
             return inspect;
         }
 
-        internal byte[] GetLastValueFromInspectNode(ExecutionContext context, FunctionalNode inspectNode)
+        protected void AssertByteArrayIsBoolean(byte[] region, bool value)
         {
-            return context.ReadStaticData(StaticDataIdentifier.CreateFromNode(inspectNode));
+#if LLVM_TEST
+            Assert.AreEqual(1, region.Length);
+            Assert.AreEqual(value ? 1 : 0, region[0]);
+#else
+            Assert.AreEqual(4, region.Length);
+            Assert.AreEqual(value ? 1 : 0, BitConverter.ToInt32(region, 0));
+#endif
+        }
+
+        protected void AssertByteArrayIsInt8(byte[] region, sbyte value)
+        {
+            Assert.AreEqual(1, region.Length);
+            Assert.AreEqual(value, (sbyte)region[0]);
+        }
+
+        protected void AssertByteArrayIsUInt8(byte[] region, byte value)
+        {
+            Assert.AreEqual(1, region.Length);
+            Assert.AreEqual(value, region[0]);
+        }
+
+        protected void AssertByteArrayIsInt16(byte[] region, short value)
+        {
+            Assert.AreEqual(2, region.Length);
+            Assert.AreEqual(value, BitConverter.ToInt16(region, 0));
+        }
+
+        protected void AssertByteArrayIsUInt16(byte[] region, ushort value)
+        {
+            Assert.AreEqual(2, region.Length);
+            Assert.AreEqual(value, BitConverter.ToUInt16(region, 0));
         }
 
         protected void AssertByteArrayIsInt32(byte[] region, int value)
         {
             Assert.AreEqual(4, region.Length);
-            Assert.AreEqual(value, DataHelpers.ReadIntFromByteArray(region, 0));
+            Assert.AreEqual(value, BitConverter.ToInt32(region, 0));
+        }
+
+        protected void AssertByteArrayIsUInt32(byte[] region, uint value)
+        {
+            Assert.AreEqual(4, region.Length);
+            Assert.AreEqual(value, BitConverter.ToUInt32(region, 0));
+        }
+
+        protected void AssertByteArrayIsInt64(byte[] region, long value)
+        {
+            Assert.AreEqual(8, region.Length);
+            Assert.AreEqual(value, BitConverter.ToInt64(region, 0));
+        }
+
+        protected void AssertByteArrayIsUInt64(byte[] region, ulong value)
+        {
+            Assert.AreEqual(8, region.Length);
+            Assert.AreEqual(value, BitConverter.ToUInt64(region, 0));
         }
 
         protected void AssertByteArrayIsSomeInteger(byte[] value, int intValue)
         {
             Assert.AreEqual(8, value.Length);
-            Assert.AreEqual(1, DataHelpers.ReadIntFromByteArray(value, 0));
-            Assert.AreEqual(intValue, DataHelpers.ReadIntFromByteArray(value, 4));
+            Assert.AreEqual(1, BitConverter.ToInt32(value, 0));
+            Assert.AreEqual(intValue, BitConverter.ToInt32(value, 4));
         }
 
         protected void AssertByteArrayIsNoneInteger(byte[] value)
         {
             Assert.AreEqual(8, value.Length);
-            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 0));
-            Assert.AreEqual(0, DataHelpers.ReadIntFromByteArray(value, 4));
+            Assert.AreEqual(0, BitConverter.ToInt32(value, 0));
         }
     }
 
