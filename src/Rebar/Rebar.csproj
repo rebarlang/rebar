@@ -217,6 +217,7 @@
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
+    <Compile Include="Compiler\InsertDropTransform.cs" />
     <Compile Include="Compiler\InsertTerminateLifetimeTransform.cs" />
     <Compile Include="Compiler\MarkConsumedVariablesTransform.cs" />
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />

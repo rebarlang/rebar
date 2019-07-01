@@ -144,6 +144,20 @@ namespace Rebar.Common
             boundedLifetimeLiveVariableSet = null;
             return false;
         }
+
+        public bool TryGetLiveVariableWithUnboundedLifetime(out LiveVariable liveVariable)
+        {
+            foreach (var kvp in _variableStatuses)
+            {
+                if (kvp.Value.Kind == VariableStatusKind.Live && !kvp.Key.Lifetime.IsBounded)
+                {
+                    liveVariable = new LiveVariable(kvp.Key, kvp.Value.Terminal);
+                    return true;
+                }
+            }
+            liveVariable = new LiveVariable();
+            return false;
+        }
     }
 
     internal class BoundedLifetimeLiveVariableSet

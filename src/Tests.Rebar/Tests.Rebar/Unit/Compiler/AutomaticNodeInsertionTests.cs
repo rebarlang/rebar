@@ -114,5 +114,35 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.AreEqual(1, terminateLifetime.InputTerminals.Count);
             Assert.AreEqual(outputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0].GetImmediateSourceTerminal());
         }
+
+        [TestMethod]
+        public void UnconsumedOwnerVariable_AutomaticNodeInsertion_DropNodeInserted()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode outputOwner = new FunctionalNode(function.BlockDiagram, _outputOwnerSignature);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            DropNode drop = function.BlockDiagram.Nodes.OfType<DropNode>().FirstOrDefault();
+            Assert.IsNotNull(drop);
+            Assert.AreEqual(outputOwner.OutputTerminals[0], drop.InputTerminals[0].GetImmediateSourceTerminal());
+        }
+
+        [TestMethod]
+        public void BorrowNodeWithUnwiredOutput_AutomaticNodeInsertion_DropNodeInsertedDownstreamOfTerminateLifetime()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode outputOwner = new FunctionalNode(function.BlockDiagram, _outputOwnerSignature);
+            ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
+            Wire.Create(function.BlockDiagram, outputOwner.OutputTerminals[0], borrow.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            var terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
+            Assert.IsNotNull(terminateLifetime);
+            var drop = function.BlockDiagram.Nodes.OfType<DropNode>().FirstOrDefault();
+            Assert.IsNotNull(drop);
+            Assert.AreEqual(terminateLifetime.OutputTerminals[0], drop.InputTerminals[0].GetImmediateSourceTerminal());
+        }
     }
 }

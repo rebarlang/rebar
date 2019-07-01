@@ -528,7 +528,8 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            throw new NotImplementedException();
+            // TODO: call Drop function for input types that require it
+            return true;
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
