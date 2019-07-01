@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using NationalInstruments.Dfir;
+using Rebar.Compiler;
 
 namespace Rebar.Common
 {
@@ -9,9 +13,49 @@ namespace Rebar.Common
             public List<VariableReference> InterruptedVariables { get; } = new List<VariableReference>();
         }
 
+        private enum VariableStatusKind
+        {
+            Live,
+
+            Interrupted,
+
+            Consumed
+        }
+
+        private struct VariableStatus
+        {
+            private readonly Terminal _terminal;
+
+            private VariableStatus(VariableStatusKind kind, Terminal terminal)
+            {
+                Kind = kind;
+                _terminal = terminal;
+            }
+
+            public static VariableStatus Consumed { get; } = new VariableStatus(VariableStatusKind.Consumed, null);
+
+            public static VariableStatus Interrupted { get; } = new VariableStatus(VariableStatusKind.Interrupted, null);
+
+            public static VariableStatus CreateLiveStatus(Terminal terminal) => new VariableStatus(VariableStatusKind.Live, terminal);
+
+            public VariableStatusKind Kind { get; }
+
+            public Terminal Terminal
+            {
+                get
+                {
+                    if (Kind == VariableStatusKind.Live)
+                    {
+                        return _terminal;
+                    }
+                    throw new InvalidOperationException("Trying to get terminal associated with a non-Live variable");
+                }
+            }
+        }
+
         private readonly Dictionary<Lifetime, LifetimeVariableInfo> _lifetimeVariableInfos = new Dictionary<Lifetime, LifetimeVariableInfo>();
 
-        private readonly HashSet<VariableReference> _consumedVariables = VariableReference.CreateUniqueVariableHashSet();
+        private readonly Dictionary<VariableReference, VariableStatus> _variableStatuses = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableStatus>();
 
         private LifetimeVariableInfo GetLifetimeVariableInfo(Lifetime lifetime)
         {
@@ -36,12 +80,95 @@ namespace Rebar.Common
 
         public void MarkVariableConsumed(VariableReference variableReference)
         {
-            _consumedVariables.Add(variableReference);
+            _variableStatuses[variableReference] = VariableStatus.Consumed;
+        }
+
+        public void MarkVariableInterrupted(VariableReference variableReference)
+        {
+            _variableStatuses[variableReference] = VariableStatus.Interrupted;
+        }
+
+        public void MarkVariableLive(VariableReference variableReference, Terminal outputTerminal)
+        {
+            VariableStatus existingStatus;
+            if (_variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Consumed)
+            {
+                throw new InvalidOperationException("Trying to mark a variable live that was already marked consumed");
+            }
+            _variableStatuses[variableReference] = VariableStatus.CreateLiveStatus(outputTerminal);
         }
 
         public bool IsVariableConsumed(VariableReference variableReference)
         {
-            return _consumedVariables.Contains(variableReference);
+            VariableStatus existingStatus;
+            return _variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Consumed;
         }
+
+        public bool IsVariableInterrupted(VariableReference variableReference)
+        {
+            VariableStatus existingStatus;
+            return _variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Interrupted;
+        }
+
+        public bool IsLive(VariableReference variableReference)
+        {
+            VariableStatus existingStatus;
+            return _variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Live;
+        }
+
+        public bool TryGetBoundedLifetimeWithLiveVariables(out BoundedLifetimeLiveVariableSet boundedLifetimeLiveVariableSet)
+        {
+            foreach (var kvp in _variableStatuses)
+            {
+                if (kvp.Value.Kind != VariableStatusKind.Live)
+                {
+                    continue;
+                }
+                VariableReference liveVariable = kvp.Key;
+                Lifetime variableLifetime = liveVariable.Lifetime;
+                if (!variableLifetime.IsBounded)
+                {
+                    continue;
+                }
+                VariableSet variableSet = kvp.Value.Terminal.GetVariableSet();
+                var variablesInLifetime = variableSet.GetUniqueVariableReferences().Where(v => v.Lifetime == variableLifetime);
+                if (variablesInLifetime.Any(IsVariableInterrupted))
+                {
+                    continue;
+                }
+                var liveVariablesInLifetime = variablesInLifetime.Where(IsLive);
+                LiveVariable[] liveVariables = liveVariablesInLifetime.Select(v => new LiveVariable(v, _variableStatuses[v].Terminal)).ToArray();
+                boundedLifetimeLiveVariableSet = new BoundedLifetimeLiveVariableSet(variableLifetime, liveVariables);
+                return true;
+            }
+            boundedLifetimeLiveVariableSet = null;
+            return false;
+        }
+    }
+
+    internal class BoundedLifetimeLiveVariableSet
+    {
+        public BoundedLifetimeLiveVariableSet(Lifetime lifetime, LiveVariable[] liveVariables)
+        {
+            Lifetime = lifetime;
+            LiveVariables = liveVariables;
+        }
+
+        public Lifetime Lifetime { get; }
+
+        public IEnumerable<LiveVariable> LiveVariables { get; }
+    }
+
+    internal struct LiveVariable
+    {
+        public LiveVariable(VariableReference variable, Terminal terminal)
+        {
+            Variable = variable;
+            Terminal = terminal;
+        }
+
+        public VariableReference Variable { get; }
+
+        public Terminal Terminal { get; }
     }
 }

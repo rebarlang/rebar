@@ -162,6 +162,16 @@ namespace Rebar.Common
                 return false;
             }
         }
+
+        public LifetimeGraphIdentifier GetBoundedLifetimeGraphIdentifier(Lifetime lifetime)
+        {
+            BoundedLifetime boundedLifetime = lifetime as BoundedLifetime;
+            if (boundedLifetime == null)
+            {
+                return default(LifetimeGraphIdentifier);
+            }
+            return _diagramGraphs.First(pair => pair.Value == boundedLifetime.DiagramGraph).Key;
+        }
     }
 
     internal struct LifetimeGraphIdentifier

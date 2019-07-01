@@ -34,6 +34,20 @@ namespace Rebar.Compiler
             token.SetAttribute(diagram, identifier);
         }
 
+        public static Diagram FindDiagramForGraphIdentifier(this LifetimeGraphIdentifier identifier, Diagram startSearch)
+        {
+            Diagram current = startSearch;
+            while (current != null)
+            {
+                if (current.GetLifetimeGraphIdentifier().Equals(identifier))
+                {
+                    return current;
+                }
+                current = current.ParentStructure?.ParentDiagram;
+            }
+            return null;
+        }
+
         public static TypeVariableSet GetTypeVariableSet(this Node node)
         {
             return node.DfirRoot.GetTypeVariableSet();

@@ -108,7 +108,8 @@ namespace Rebar.Compiler
 
             List<IDfirTransformBase> toTargetDfirTransforms = new List<IDfirTransformBase>()
             {
-                new AutoBorrowTransform()
+                new AutoBorrowTransform(),
+                new InsertTerminateLifetimeTransform(lifetimeVariableAssocation)
             };
 
             return new StandardMocTransformManager(

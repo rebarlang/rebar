@@ -163,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unit\Compiler\AutomaticNodeInsertionTests.cs" />
     <Compile Include="Unit\Compiler\BorrowNodeTests.cs" />
     <Compile Include="Unit\Compiler\BorrowTunnelTests.cs" />
     <Compile Include="Unit\Compiler\CompilerTestBase.cs" />
