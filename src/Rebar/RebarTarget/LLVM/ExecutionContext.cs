@@ -40,8 +40,10 @@ namespace Rebar.RebarTarget.LLVM
             AddSymbolForDelegate("output_string", _outputString);
 
             IntPtr kernel32Instance = LoadLibrary("kernel32.dll");
-            IntPtr copyMemoryProc = GetProcAddress(kernel32Instance, "RtlCopyMemory");
-            LLVMSharp.LLVM.AddSymbol("CopyMemory", copyMemoryProc);
+            LLVMSharp.LLVM.AddSymbol("CopyMemory", GetProcAddress(kernel32Instance, "RtlCopyMemory"));
+            LLVMSharp.LLVM.AddSymbol("CloseHandle", GetProcAddress(kernel32Instance, "CloseHandle"));
+            LLVMSharp.LLVM.AddSymbol("CreateFileA", GetProcAddress(kernel32Instance, "CreateFileA"));
+            LLVMSharp.LLVM.AddSymbol("WriteFile", GetProcAddress(kernel32Instance, "WriteFile"));
         }
 
         private static void AddSymbolForDelegate<TDelegate>(string symbolName, TDelegate del)
@@ -172,6 +174,7 @@ namespace Rebar.RebarTarget.LLVM
             _globalModule = new Module("global");
             _globalModule.LinkInModule(CommonModules.StringModule.Clone());
             _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
+            _globalModule.LinkInModule(CommonModules.FileModule.Clone());
 
             string error;
             LLVMBool Success = new LLVMBool(0);

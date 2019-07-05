@@ -879,6 +879,58 @@ namespace Rebar.SourceModel
 
     #endregion
 
+    #region FileHandle
+
+    public class OpenFileHandle : FunctionalNode
+    {
+        private const string ElementName = "OpenFileHandle";
+
+        protected OpenFileHandle()
+            : base(Signatures.OpenFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static OpenFileHandle CreateOpenFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var openFileHandle = new OpenFileHandle();
+            openFileHandle.Init(elementCreateInfo);
+            return openFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
+    public class WriteStringToFileHandle : FunctionalNode
+    {
+        private const string ElementName = "WriteStringToFileHandle";
+
+        protected WriteStringToFileHandle()
+            : base(Signatures.WriteStringToFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static WriteStringToFileHandle CreateWriteToFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var writeStringToFileHandle = new WriteStringToFileHandle();
+            writeStringToFileHandle.Init(elementCreateInfo);
+            return writeStringToFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
+    #endregion
+
     #region Test nodes
 
     public class ImmutablePassthroughNode : FunctionalNode

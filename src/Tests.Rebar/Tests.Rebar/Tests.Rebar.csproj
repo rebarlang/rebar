@@ -181,6 +181,7 @@
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
     <Compile Include="Unit\Execution\BooleanExecutionTest.cs" />
     <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
+    <Compile Include="Unit\Execution\FileExecutionTests.cs" />
     <Compile Include="Unit\Execution\IteratorExecutionTests.cs" />
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
     <Compile Include="Unit\Execution\NumericExecutionTests.cs" />

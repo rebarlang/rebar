@@ -1737,6 +1737,51 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string OpenFileHandle_Description {
+            get {
+                return ResourceManager.GetString("OpenFileHandle_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle.
+        /// </summary>
+        internal static string OpenFileHandle_fileHandle_Name {
+            get {
+                return ResourceManager.GetString("OpenFileHandle_fileHandle_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to path reference.
+        /// </summary>
+        internal static string OpenFileHandle_filePathRef_in_Name {
+            get {
+                return ResourceManager.GetString("OpenFileHandle_filePathRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to path reference.
+        /// </summary>
+        internal static string OpenFileHandle_filePathRef_out_Name {
+            get {
+                return ResourceManager.GetString("OpenFileHandle_filePathRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open File Handle.
+        /// </summary>
+        internal static string OpenFileHandle_Name {
+            get {
+                return ResourceManager.GetString("OpenFileHandle_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string Or_Description {
             get {
                 return ResourceManager.GetString("Or_Description", resourceCulture);
@@ -2361,6 +2406,60 @@ namespace Rebar.Resources {
         internal static string VectorInsert_vectorRef_out_Name {
             get {
                 return ResourceManager.GetString("VectorInsert_vectorRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to data reference.
+        /// </summary>
+        internal static string WriteStringToFileHandle_dataRef_in_Name {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_dataRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to data reference.
+        /// </summary>
+        internal static string WriteStringToFileHandle_dataRef_out_Name {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_dataRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string WriteStringToFileHandle_Description {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle reference.
+        /// </summary>
+        internal static string WriteStringToFileHandle_fileHandleRef_in_Name {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_fileHandleRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle reference.
+        /// </summary>
+        internal static string WriteStringToFileHandle_fileHandleRef_out_Name {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_fileHandleRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Write String To File Handle.
+        /// </summary>
+        internal static string WriteStringToFileHandle_Name {
+            get {
+                return ResourceManager.GetString("WriteStringToFileHandle_Name", resourceCulture);
             }
         }
         

@@ -64,6 +64,9 @@ namespace Rebar.Design
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
 
+            AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
+            AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
+
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));

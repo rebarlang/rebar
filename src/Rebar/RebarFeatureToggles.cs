@@ -12,6 +12,7 @@ namespace Rebar
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), VisualizeVariableIdentity, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), StringDataType, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), AllIntegerTypes, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), FileHandleDataType, CodeReadiness.Release)]
     public sealed class RebarFeatureToggles : FeatureTogglesProvider<RebarFeatureToggles>
     {
         private const string RebarFeatureCategory = "Rebar";
@@ -25,6 +26,7 @@ namespace Rebar
         public const string VisualizeVariableIdentity = FeaturePrefix + nameof(VisualizeVariableIdentity);
         public const string StringDataType = FeaturePrefix + nameof(StringDataType);
         public const string AllIntegerTypes = FeaturePrefix + nameof(AllIntegerTypes);
+        public const string FileHandleDataType = FeaturePrefix + nameof(FileHandleDataType);
 
         public static bool IsCellDataTypeEnabled => _cellDataType.IsEnabled;
         public static bool IsRebarTargetEnabled => _rebarTarget.IsEnabled;
@@ -34,6 +36,7 @@ namespace Rebar
         public static bool IsVisualizeVariableIdentityEnabled => _visualizeVariableIdentity.IsEnabled;
         public static bool IsStringDataTypeEnabled => _stringDataType.IsEnabled;
         public static bool IsAllIntegerTypesEnabled => _allIntegerTypes.IsEnabled;
+        public static bool IsFileHandleDataTypeEnabled => _fileHandleDataType.IsEnabled;
 
         private static readonly FeatureToggleValueCache _cellDataType = CreateFeatureToggleValueCache(CellDataType);
         private static readonly FeatureToggleValueCache _rebarTarget = CreateFeatureToggleValueCache(RebarTarget);
@@ -43,5 +46,6 @@ namespace Rebar
         private static readonly FeatureToggleValueCache _visualizeVariableIdentity = CreateFeatureToggleValueCache(VisualizeVariableIdentity);
         private static readonly FeatureToggleValueCache _stringDataType = CreateFeatureToggleValueCache(StringDataType);
         private static readonly FeatureToggleValueCache _allIntegerTypes = CreateFeatureToggleValueCache(AllIntegerTypes);
+        private static readonly FeatureToggleValueCache _fileHandleDataType = CreateFeatureToggleValueCache(FileHandleDataType);
     }
 }

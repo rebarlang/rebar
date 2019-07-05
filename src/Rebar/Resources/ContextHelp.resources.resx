@@ -906,4 +906,37 @@
   <data name="StringConcat_secondSlice_out_Name" xml:space="preserve">
     <value>second slice</value>
   </data>
+  <data name="OpenFileHandle_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="OpenFileHandle_fileHandle_Name" xml:space="preserve">
+    <value>file handle</value>
+  </data>
+  <data name="OpenFileHandle_filePathRef_in_Name" xml:space="preserve">
+    <value>path reference</value>
+  </data>
+  <data name="OpenFileHandle_filePathRef_out_Name" xml:space="preserve">
+    <value>path reference</value>
+  </data>
+  <data name="OpenFileHandle_Name" xml:space="preserve">
+    <value>Open File Handle</value>
+  </data>
+  <data name="WriteStringToFileHandle_dataRef_in_Name" xml:space="preserve">
+    <value>data reference</value>
+  </data>
+  <data name="WriteStringToFileHandle_dataRef_out_Name" xml:space="preserve">
+    <value>data reference</value>
+  </data>
+  <data name="WriteStringToFileHandle_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="WriteStringToFileHandle_fileHandleRef_in_Name" xml:space="preserve">
+    <value>file handle reference</value>
+  </data>
+  <data name="WriteStringToFileHandle_fileHandleRef_out_Name" xml:space="preserve">
+    <value>file handle reference</value>
+  </data>
+  <data name="WriteStringToFileHandle_Name" xml:space="preserve">
+    <value>Write String To File Handle</value>
+  </data>
 </root>

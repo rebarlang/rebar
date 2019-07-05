@@ -71,6 +71,9 @@ namespace Rebar.RebarTarget.LLVM
 
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
             _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
+
+            _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
+            _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
         }
 
         #region Functional node compilers
@@ -569,6 +572,10 @@ namespace Rebar.RebarTarget.LLVM
             if (droppedValueType == PFTypes.String)
             {
                 dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);                
+            }
+            else if (droppedValueType == DataTypes.FileHandleType)
+            {
+                dropFunction = GetImportedCommonFunction(CommonModules.DropFileHandleName);
             }
             else
             {
