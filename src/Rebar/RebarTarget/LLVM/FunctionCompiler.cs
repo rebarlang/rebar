@@ -528,8 +528,53 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            // TODO: call Drop function for input types that require it
+            VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
+            var inputAllocation = (LocalAllocationValueSource)_variableValues[input];
+            NIType inputType = input.Type;
+            if (inputType.TypeHasDropTrait())
+            {
+                CreateDropCall(inputType, inputAllocation.AllocationPointer);
+                return true;
+            }
+
+            NIType innerType;
+            if (inputType.TryDestructureVectorType(out innerType))
+            {
+                // TODO
+                return true;
+            }
+            if (inputType.TryDestructureOptionType(out innerType) && innerType.TypeHasDropTrait())
+            {
+                // TODO: turn this into a monomorphized generic function call
+                LLVMValueRef isSomePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 0u, "isSomePtr"),
+                    isSome = _builder.CreateLoad(isSomePtr, "isSome");
+                LLVMBasicBlockRef optionDropIsSomeBlock = _topLevelFunction.AppendBasicBlock("optionDropIsSome"),
+                    optionDropEndBlock = _topLevelFunction.AppendBasicBlock("optionDropEnd");
+                _builder.CreateCondBr(isSome, optionDropIsSomeBlock, optionDropEndBlock);
+
+                _builder.PositionBuilderAtEnd(optionDropIsSomeBlock);
+                LLVMValueRef innerValuePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 1u, "innerValuePtr");
+                CreateDropCall(innerType, innerValuePtr);
+                _builder.CreateBr(optionDropEndBlock);
+
+                _builder.PositionBuilderAtEnd(optionDropEndBlock);
+                return true;
+            }
             return true;
+        }
+
+        private void CreateDropCall(NIType droppedValueType, LLVMValueRef droppedValuePtr)
+        {
+            LLVMValueRef dropFunction;
+            if (droppedValueType == PFTypes.String)
+            {
+                dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);                
+            }
+            else
+            {
+                throw new InvalidOperationException("Drop function not found for type: " + droppedValueType);
+            }
+            _builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)

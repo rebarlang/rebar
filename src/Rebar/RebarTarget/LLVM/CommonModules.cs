@@ -14,6 +14,7 @@ namespace Rebar.RebarTarget.LLVM
         private static LLVMValueRef _stringFromSliceRetFunction;
 
         public const string CopySliceToPointerName = "copy_slice_to_pointer";
+        public const string DropStringName = "drop_string";
         public const string OutputStringSliceName = "output_string_slice";
         public const string StringFromSliceName = "string_from_slice";
         public const string StringToSliceRetName = "string_to_slice_ret";
@@ -45,6 +46,12 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0) },
                 false);
             BuildCopySliceToPointerFunction(stringModule, externalFunctions);
+
+            CommonModuleSignatures[DropStringName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) },
+                false);
+            BuildDropStringFunction(stringModule);
 
             CommonModuleSignatures[OutputStringSliceName] = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
@@ -239,6 +246,20 @@ namespace Rebar.RebarTarget.LLVM
                 sizeExtend = builder.CreateSExt(size, LLVMTypeRef.Int64Type(), "sizeExtend"),
                 destinationPtr = _copySliceToPointerFunction.GetParam(1u);
             builder.CreateCall(externalFunctions.CopyMemoryFunction, new LLVMValueRef[] { destinationPtr, sourcePtr, sizeExtend }, string.Empty);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildDropStringFunction(Module stringModule)
+        {
+            LLVMValueRef dropStringFunction = stringModule.AddFunction(DropStringName, CommonModuleSignatures[DropStringName]);
+            LLVMBasicBlockRef entryBlock = dropStringFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef stringPtr = dropStringFunction.GetParam(0u),
+                stringAllocationPtrPtr = builder.CreateStructGEP(stringPtr, 0u, "stringAllocationPtrPtr"),
+                stringAllocationPtr = builder.CreateLoad(stringAllocationPtrPtr, "stringAllocationPtr");
+            builder.CreateFree(stringAllocationPtr);
             builder.CreateRetVoid();
         }
 

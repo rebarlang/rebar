@@ -350,5 +350,10 @@ namespace Rebar.Common
             }
             return type.IsSupportedIntegerType() || type.IsBoolean();
         }
+
+        internal static bool TypeHasDropTrait(this NIType type)
+        {
+            return type == PFTypes.String;
+        }
     }
 }
