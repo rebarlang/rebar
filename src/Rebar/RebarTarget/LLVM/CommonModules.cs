@@ -28,9 +28,10 @@ namespace Rebar.RebarTarget.LLVM
         public const string RangeIteratorNextName = "range_iterator_next";
         public const string CreateRangeIteratorName = "create_range_iterator";
 
-        public const string OpenFileHandleName = "open_file_handle";
-        public const string WriteStringToFileHandleName = "write_string_to_file_handle";
         public const string DropFileHandleName = "drop_file_handle";
+        public const string OpenFileHandleName = "open_file_handle";
+        public const string ReadLineFromFileHandleName = "read_line_from_file_handle";
+        public const string WriteStringToFileHandleName = "write_string_to_file_handle";
 
         static CommonModules()
         {
@@ -522,13 +523,26 @@ namespace Rebar.RebarTarget.LLVM
                 false);
             CreateFileAFunction = addTo.AddFunction("CreateFileA", createFileAFunctionType);
 
+            LLVMTypeRef readFileFunctionType = LLVMSharp.LLVM.FunctionType(
+                LLVMTypeRef.Int32Type(),    // bool
+                new LLVMTypeRef[]
+                {
+                    LLVMExtensions.VoidPointerType,     // hFile
+                    LLVMExtensions.VoidPointerType,     // lpBuffer
+                    LLVMTypeRef.Int32Type(),            // nNumberOfBytesToRead
+                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0),   // lpNumberOfBytesRead
+                    LLVMExtensions.VoidPointerType,     // lpOverlapped
+                },
+                false);
+            ReadFileFunction = addTo.AddFunction("ReadFile", readFileFunctionType);
+
             LLVMTypeRef writeFileFunctionType = LLVMSharp.LLVM.FunctionType(
                 LLVMTypeRef.Int32Type(),    // bool
                 new LLVMTypeRef[]
                 {
                     LLVMExtensions.VoidPointerType,    // hFile
                     LLVMExtensions.VoidPointerType,    // lpBuffer
-                    LLVMTypeRef.Int32Type(),    // nNumberOfBytestoWrite,
+                    LLVMTypeRef.Int32Type(),           // nNumberOfBytesToWrite,
                     LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0),    // lpNumberOfBytesWritten
                     LLVMExtensions.VoidPointerType,    // lpOverlapped
                 },
@@ -569,6 +583,8 @@ namespace Rebar.RebarTarget.LLVM
         public LLVMValueRef CloseHandleFunction { get; }
 
         public LLVMValueRef CreateFileAFunction { get; }
+
+        public LLVMValueRef ReadFileFunction { get; }
 
         public LLVMValueRef WriteFileFunction { get; }
     }
