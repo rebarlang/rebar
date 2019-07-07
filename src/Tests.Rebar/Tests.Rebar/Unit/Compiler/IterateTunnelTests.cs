@@ -71,7 +71,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunSemanticAnalysisUpToValidation(function);
 
-            AssertTerminalHasTypeConflictMessage(iterateTunnel.InputTerminals[0]);
+            AssertTerminalHasMissingTraitMessage(iterateTunnel.InputTerminals[0]);
         }
 
         private static IterateTunnel CreateIterateTunnel(Loop loop)

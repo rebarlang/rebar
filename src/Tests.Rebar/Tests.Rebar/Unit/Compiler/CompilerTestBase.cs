@@ -139,5 +139,10 @@ namespace Tests.Rebar.Unit.Compiler
         {
             Assert.IsFalse(terminal.GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.TypeConflict));
         }
+
+        protected void AssertTerminalHasMissingTraitMessage(Terminal terminal)
+        {
+            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
+        }
     }
 }
