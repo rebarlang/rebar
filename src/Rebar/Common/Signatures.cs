@@ -304,6 +304,17 @@ namespace Rebar.Common
                 "fileHandle");
             OpenFileHandleType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("ReadLineFromFileHandle");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FileHandleType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "fileHandleRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String.CreateOption(),
+                "line");
+            ReadLineFromFileHandleType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("WriteStringToFileHandle");
             AddInputOutputParameter(
                 functionTypeBuilder,
@@ -357,6 +368,8 @@ namespace Rebar.Common
         public static NIType OpenFileHandleType { get; }
 
         public static NIType WriteStringToFileHandleType { get; }
+
+        public static NIType ReadLineFromFileHandleType { get; }
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {

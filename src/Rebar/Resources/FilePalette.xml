@@ -12,6 +12,13 @@
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>
+      <Leaf Display="Read Line From File Handle" UniqueId="Rebar:ReadLineFromFileHandle" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:ReadLineFromFileHandle />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
       <Leaf Display="Write String To File Handle" UniqueId="Rebar:WriteStringToFileHandle" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
         <pf:MergeScript>
           <pf:MergeItem>
