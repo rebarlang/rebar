@@ -114,6 +114,14 @@ namespace Rebar.RebarTarget.LLVM
             },
             false);
 
+        public static LLVMTypeRef FileLineIteratorType { get; } = LLVMTypeRef.StructType(
+            new LLVMTypeRef[]
+            {
+                FileHandleType,
+                LLVMTypeRef.Int1Type(),
+            },
+            false);
+
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
             if (niType.IsInteger())
@@ -139,7 +147,7 @@ namespace Rebar.RebarTarget.LLVM
                 return LLVMTypeRef.Int1Type();
             }
             if (niType.IsString())
-            {
+            { 
                 return StringType;
             }
             if (niType.IsRebarReferenceType())
@@ -154,6 +162,10 @@ namespace Rebar.RebarTarget.LLVM
             if (niType == DataTypes.FileHandleType)
             {
                 return FileHandleType;
+            }
+            if (niType == DataTypes.FileLineIteratorType)
+            {
+                return FileLineIteratorType;
             }
             NIType innerType;
             if (niType.TryDestructureOptionType(out innerType))

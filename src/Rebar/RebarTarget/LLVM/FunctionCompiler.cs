@@ -72,6 +72,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
             _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
 
+            _functionalNodeCompilers["CreateFileLineIterator"] = CreateImportedCommonFunctionCompiler(CommonModules.CreateFileLineIteratorName);
             _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
             _functionalNodeCompilers["ReadLineFromFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.ReadLineFromFileHandleName);
             _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
@@ -578,6 +579,12 @@ namespace Rebar.RebarTarget.LLVM
             {
                 dropFunction = GetImportedCommonFunction(CommonModules.DropFileHandleName);
             }
+            else if (droppedValueType == DataTypes.FileLineIteratorType)
+            {
+                // TODO: eventually this shouldn't be necessary; the compiler should be able to destructure
+                // the fields and call drop on the fields that require it
+                dropFunction = GetImportedCommonFunction(CommonModules.DropFileLineIteratorName);
+            }
             else
             {
                 throw new InvalidOperationException("Drop function not found for type: " + droppedValueType);
@@ -836,18 +843,13 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]),
+            VariableReference iterator = iterateTunnel.InputTerminals[0].GetTrueVariable();
+            ValueSource iteratorSource = _variableValues[iterator],
                 itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
 
             // call the Iterator::next function on the iterator reference
             // TODO: create an alloca'd Option<Item> variable, so that we can pass its address to Iterator::next
-            LLVMValueRef itemOption = _builder.CreateCall(
-                GetImportedCommonFunction(CommonModules.RangeIteratorNextName), // TODO: determine the name of this function from the input type
-                new LLVMValueRef[]
-                {
-                    iteratorSource.GetValue(_builder)
-                },
-                "itemOption");
+            LLVMValueRef itemOption = CreateIteratorNextCall(iteratorSource.GetValue(_builder), iterator.Type.GetReferentType());
             LLVMValueRef isSome = _builder.CreateExtractValue(itemOption, 0u, "isSome"),
                 item = _builder.CreateExtractValue(itemOption, 1u, "item");
 
@@ -861,6 +863,25 @@ namespace Rebar.RebarTarget.LLVM
             // bind the inner value to the output tunnel
             itemSource.UpdateValue(_builder, item);
             return true;
+        }
+
+        private LLVMValueRef CreateIteratorNextCall(LLVMValueRef iteratorPtr, NIType iteratorType)
+        {
+            LLVMValueRef nextFunction;
+            if (iteratorType == DataTypes.RangeIteratorType)
+            {
+                nextFunction = GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            }
+            else if (iteratorType == DataTypes.FileLineIteratorType)
+            {
+                nextFunction = GetImportedCommonFunction(CommonModules.FileLineIteratorNextName);
+            }
+            else
+            {
+                throw new InvalidOperationException("Iterator::next function not found for type: " + iteratorType);
+            }
+            // TODO: create an alloca'd Option<Item> variable, so that we can pass its address to Iterator::next
+            return _builder.CreateCall(nextFunction, new LLVMValueRef[] { iteratorPtr }, "itemOption");
         }
 
         #endregion

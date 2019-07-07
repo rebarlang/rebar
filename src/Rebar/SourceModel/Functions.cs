@@ -953,6 +953,30 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
     }
 
+    public class CreateFileLineIterator : FunctionalNode
+    {
+        private const string ElementName = "CreateFileLineIterator";
+
+        protected CreateFileLineIterator()
+            : base(Signatures.CreateFileLineIteratorType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static CreateFileLineIterator CreateCreateFileLineIterator(IElementCreateInfo elementCreateInfo)
+        {
+            var createFileLineIterator = new CreateFileLineIterator();
+            createFileLineIterator.Init(elementCreateInfo);
+            return createFileLineIterator;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
     #endregion
 
     #region Test nodes

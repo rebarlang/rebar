@@ -67,7 +67,8 @@ namespace Rebar.Design
             AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
             AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
             AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
-
+            AddSupportedModel<CreateFileLineIterator>(n => new BasicNodeViewModel(n, "Create File Line Iterator"));
+            
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));

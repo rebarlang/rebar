@@ -30,6 +30,8 @@ namespace Rebar.Common
 
         public static NIType FileHandleType { get; }
 
+        public static NIType FileLineIteratorType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -85,6 +87,12 @@ namespace Rebar.Common
             var fileHandleTypeBuilder = PFTypes.Factory.DefineValueClass("FileHandle");
             fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             FileHandleType = fileHandleTypeBuilder.CreateType();
+
+            var fileLineIteratorTypeBuilder = PFTypes.Factory.DefineValueClass("FileLineIterator");
+            fileLineIteratorTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(PFTypes.String);
+            fileLineIteratorTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
+            FileLineIteratorType = fileLineIteratorTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -379,7 +387,7 @@ namespace Rebar.Common
 
         internal static bool TypeHasDropTrait(this NIType type)
         {
-            return type == PFTypes.String || type == FileHandleType;
+            return type == PFTypes.String || type == FileHandleType || type == FileLineIteratorType;
         }
     }
 }

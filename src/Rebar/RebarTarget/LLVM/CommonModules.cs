@@ -18,6 +18,9 @@ namespace Rebar.RebarTarget.LLVM
         private static LLVMValueRef _stringAppendFunction;
         private static LLVMValueRef _stringFromSliceRetFunction;
 
+        private static LLVMValueRef _dropFileHandleFunction;
+        private static LLVMValueRef _readLineFromFileHandleFunction;
+
         public const string CopySliceToPointerName = "copy_slice_to_pointer";
         public const string CreateEmptyStringName = "create_empty_string";
         public const string CreateNullTerminatedStringFromSliceName = "create_null_terminated_string_from_slice";
@@ -32,7 +35,10 @@ namespace Rebar.RebarTarget.LLVM
         public const string RangeIteratorNextName = "range_iterator_next";
         public const string CreateRangeIteratorName = "create_range_iterator";
 
+        public const string CreateFileLineIteratorName = "create_file_line_iterator";
         public const string DropFileHandleName = "drop_file_handle";
+        public const string DropFileLineIteratorName = "drop_file_line_iterator";
+        public const string FileLineIteratorNextName = "file_line_iterator_next";
         public const string OpenFileHandleName = "open_file_handle";
         public const string ReadLineFromFileHandleName = "read_line_from_file_handle";
         public const string WriteStringToFileHandleName = "write_string_to_file_handle";
@@ -394,15 +400,33 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonExternalFunctions externalFunctions = new CommonExternalFunctions(fileModule);
 
-            CommonModuleSignatures[OpenFileHandleName] = LLVMSharp.LLVM.FunctionType(
+            CommonModuleSignatures[CreateFileLineIteratorName] = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
-                    LLVMExtensions.StringSliceReferenceType,
-                    LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType.CreateLLVMOptionType(), 0),
+                    LLVMExtensions.FileHandleType,
+                    LLVMTypeRef.PointerType(LLVMExtensions.FileLineIteratorType, 0),
                 },
                 false);
-            BuildOpenFileHandleFunction(fileModule, externalFunctions);
+            BuildCreateFileLineIteratorFunction(fileModule);
+
+            CommonModuleSignatures[DropFileHandleName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType, 0),
+                },
+                false);
+            BuildDropFileHandleFunction(fileModule, externalFunctions);
+
+            CommonModuleSignatures[DropFileLineIteratorName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(LLVMExtensions.FileLineIteratorType, 0),
+                },
+                false);
+            BuildDropFileLineIteratorFunction(fileModule);
 
             CommonModuleSignatures[ReadLineFromFileHandleName] = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
@@ -414,6 +438,25 @@ namespace Rebar.RebarTarget.LLVM
                 false);
             BuildReadLineFromFileHandleFunction(fileModule, externalFunctions);
 
+            CommonModuleSignatures[FileLineIteratorNextName] = LLVMSharp.LLVM.FunctionType(
+                LLVMExtensions.StringType.CreateLLVMOptionType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(LLVMExtensions.FileLineIteratorType, 0),
+                },
+                false);
+            BuildFileLineIteratorNextFunction(fileModule);
+
+            CommonModuleSignatures[OpenFileHandleName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMExtensions.StringSliceReferenceType,
+                    LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType.CreateLLVMOptionType(), 0),
+                },
+                false);
+            BuildOpenFileHandleFunction(fileModule, externalFunctions);
+
             CommonModuleSignatures[WriteStringToFileHandleName] = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
@@ -423,15 +466,6 @@ namespace Rebar.RebarTarget.LLVM
                 },
                 false);
             BuildWriteStringToFileHandleFunction(fileModule, externalFunctions);
-
-            CommonModuleSignatures[DropFileHandleName] = LLVMSharp.LLVM.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType, 0),
-                },
-                false);
-            BuildDropFileHandleFunction(fileModule, externalFunctions);
         }
 
         private static void BuildOpenFileHandleFunction(Module fileModule, CommonExternalFunctions externalFunctions)
@@ -463,23 +497,23 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildReadLineFromFileHandleFunction(Module fileModule, CommonExternalFunctions externalFunctions)
         {
-            LLVMValueRef readLineFromFileHandleFunction = fileModule.AddFunction(ReadLineFromFileHandleName, CommonModuleSignatures[ReadLineFromFileHandleName]);
-            LLVMBasicBlockRef entryBlock = readLineFromFileHandleFunction.AppendBasicBlock("entry");
+            _readLineFromFileHandleFunction = fileModule.AddFunction(ReadLineFromFileHandleName, CommonModuleSignatures[ReadLineFromFileHandleName]);
+            LLVMBasicBlockRef entryBlock = _readLineFromFileHandleFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entryBlock);
 
-            LLVMBasicBlockRef loopStartBlock = readLineFromFileHandleFunction.AppendBasicBlock("loopStart"),
-                handleByteBlock = readLineFromFileHandleFunction.AppendBasicBlock("handleByte"),
-                byteIsCRBlock = readLineFromFileHandleFunction.AppendBasicBlock("byteIsCR"),
-                byteIsNotCRBlock = readLineFromFileHandleFunction.AppendBasicBlock("byteIsNotCR"),
-                notNewLineBlock = readLineFromFileHandleFunction.AppendBasicBlock("notNewLine"),
-                appendCRBlock = readLineFromFileHandleFunction.AppendBasicBlock("appendCR"),
-                appendByteBlock = readLineFromFileHandleFunction.AppendBasicBlock("appendByte"),
-                loopEndBlock = readLineFromFileHandleFunction.AppendBasicBlock("loopEnd"),
-                nonEmptyStringBlock = readLineFromFileHandleFunction.AppendBasicBlock("nonEmptyString"),
-                emptyStringBlock = readLineFromFileHandleFunction.AppendBasicBlock("emptyString");
+            LLVMBasicBlockRef loopStartBlock = _readLineFromFileHandleFunction.AppendBasicBlock("loopStart"),
+                handleByteBlock = _readLineFromFileHandleFunction.AppendBasicBlock("handleByte"),
+                byteIsCRBlock = _readLineFromFileHandleFunction.AppendBasicBlock("byteIsCR"),
+                byteIsNotCRBlock = _readLineFromFileHandleFunction.AppendBasicBlock("byteIsNotCR"),
+                notNewLineBlock = _readLineFromFileHandleFunction.AppendBasicBlock("notNewLine"),
+                appendCRBlock = _readLineFromFileHandleFunction.AppendBasicBlock("appendCR"),
+                appendByteBlock = _readLineFromFileHandleFunction.AppendBasicBlock("appendByte"),
+                loopEndBlock = _readLineFromFileHandleFunction.AppendBasicBlock("loopEnd"),
+                nonEmptyStringBlock = _readLineFromFileHandleFunction.AppendBasicBlock("nonEmptyString"),
+                emptyStringBlock = _readLineFromFileHandleFunction.AppendBasicBlock("emptyString");
                 
-            LLVMValueRef fileHandlePtr = readLineFromFileHandleFunction.GetParam(0u),
+            LLVMValueRef fileHandlePtr = _readLineFromFileHandleFunction.GetParam(0u),
                 stringPtr = builder.CreateAlloca(LLVMExtensions.StringType, "stringPtr"),
                 carriageReturnPtr = builder.CreateAlloca(LLVMTypeRef.Int8Type(), "carriageReturnPtr"),
                 carriageReturn = ((byte)0xD).AsLLVMValue(),
@@ -536,7 +570,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateBr(loopStartBlock);
 
             builder.PositionBuilderAtEnd(loopEndBlock);
-            LLVMValueRef optionStringPtr = readLineFromFileHandleFunction.GetParam(1u),
+            LLVMValueRef optionStringPtr = _readLineFromFileHandleFunction.GetParam(1u),
                 optionStringIsSomePtr = builder.CreateStructGEP(optionStringPtr, 0u, "optionStringIsSomePtr"),
                 nonEmptyString = builder.CreateLoad(nonEmptyStringPtr, "nonEmptyString");
             builder.CreateCondBr(nonEmptyString, nonEmptyStringBlock, emptyStringBlock);
@@ -579,12 +613,12 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildDropFileHandleFunction(Module fileModule, CommonExternalFunctions externalFunctions)
         {
-            LLVMValueRef dropFileHandleFunction = fileModule.AddFunction(DropFileHandleName, CommonModuleSignatures[DropFileHandleName]);
-            LLVMBasicBlockRef entryBlock = dropFileHandleFunction.AppendBasicBlock("entry");
+            _dropFileHandleFunction = fileModule.AddFunction(DropFileHandleName, CommonModuleSignatures[DropFileHandleName]);
+            LLVMBasicBlockRef entryBlock = _dropFileHandleFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entryBlock);
 
-            LLVMValueRef fileHandleStructPtr = dropFileHandleFunction.GetParam(0u),
+            LLVMValueRef fileHandleStructPtr = _dropFileHandleFunction.GetParam(0u),
                 fileHandlePtr = builder.CreateStructGEP(fileHandleStructPtr, 0u, "fileHandlePtr"),
                 fileHandle = builder.CreateLoad(fileHandlePtr, "fileHandle");
             builder.CreateCall(
@@ -592,6 +626,69 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMValueRef[] { fileHandle },
                 "closeHandleResult");
             builder.CreateRetVoid();
+        }
+
+        private static void BuildCreateFileLineIteratorFunction(Module fileModule)
+        {
+            LLVMValueRef createFileLineIteratorFunction = fileModule.AddFunction(CreateFileLineIteratorName, CommonModuleSignatures[CreateFileLineIteratorName]);
+            LLVMBasicBlockRef entryBlock = createFileLineIteratorFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef fileHandle = createFileLineIteratorFunction.GetParam(0u),
+                fileLineIteratorPtr = createFileLineIteratorFunction.GetParam(1u),
+                fileLineIteratorFileHandlePtr = builder.CreateStructGEP(fileLineIteratorPtr, 0u, "fileLineIteratorFileHandlePtr"),
+                fileLineIteratorBeforeEndPtr = builder.CreateStructGEP(fileLineIteratorPtr, 1u, "fileLineIteratorBeforeEndPtr");
+            builder.CreateStore(fileHandle, fileLineIteratorFileHandlePtr);
+            builder.CreateStore(true.AsLLVMValue(), fileLineIteratorBeforeEndPtr);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildDropFileLineIteratorFunction(Module fileModule)
+        {
+            LLVMValueRef dropFileLineIteratorFunction = fileModule.AddFunction(DropFileLineIteratorName, CommonModuleSignatures[DropFileLineIteratorName]);
+            LLVMBasicBlockRef entryBlock = dropFileLineIteratorFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef fileLineIteratorPtr = dropFileLineIteratorFunction.GetParam(0u),
+                fileHandlePtr = builder.CreateStructGEP(fileLineIteratorPtr, 0u, "fileHandlePtr");
+            builder.CreateCall(_dropFileHandleFunction, new LLVMValueRef[] { fileHandlePtr }, string.Empty);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildFileLineIteratorNextFunction(Module fileModule)
+        {
+            LLVMValueRef fileLineIteratorNextFunction = fileModule.AddFunction(FileLineIteratorNextName, CommonModuleSignatures[FileLineIteratorNextName]);
+            LLVMBasicBlockRef entryBlock = fileLineIteratorNextFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMBasicBlockRef beforeEndBlock = fileLineIteratorNextFunction.AppendBasicBlock("beforeEnd"),
+                atEndBlock = fileLineIteratorNextFunction.AppendBasicBlock("atEnd"),
+                returnBlock = fileLineIteratorNextFunction.AppendBasicBlock("return");
+
+            LLVMValueRef optionStringPtr = builder.CreateAlloca(LLVMExtensions.StringType.CreateLLVMOptionType(), "optionStringPtr"),
+                fileLineIteratorPtr = fileLineIteratorNextFunction.GetParam(0u),
+                fileHandlePtr = builder.CreateStructGEP(fileLineIteratorPtr, 0u, "fileHandlePtr"),
+                beforeEndPtr = builder.CreateStructGEP(fileLineIteratorPtr, 1u, "beforeEndPtr"),
+                beforeEnd = builder.CreateLoad(beforeEndPtr, "beforeEnd"),
+                optionStringIsSomePtr = builder.CreateStructGEP(optionStringPtr, 0u, "optionStringIsSomePtr");
+            builder.CreateCondBr(beforeEnd, beforeEndBlock, atEndBlock);
+
+            builder.PositionBuilderAtEnd(beforeEndBlock);
+            builder.CreateCall(_readLineFromFileHandleFunction, new LLVMValueRef[] { fileHandlePtr, optionStringPtr }, string.Empty);
+            LLVMValueRef optionStringIsSome = builder.CreateLoad(optionStringIsSomePtr, "optionStringIsSome");
+            builder.CreateStore(optionStringIsSome, beforeEndPtr);
+            builder.CreateBr(returnBlock);
+
+            builder.PositionBuilderAtEnd(atEndBlock);
+            builder.CreateStore(false.AsLLVMValue(), optionStringIsSomePtr);
+            builder.CreateBr(returnBlock);
+
+            builder.PositionBuilderAtEnd(returnBlock);
+            LLVMValueRef optionString = builder.CreateLoad(optionStringPtr, "optionString");
+            builder.CreateRet(optionString);
         }
 
         #endregion

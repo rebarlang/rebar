@@ -325,6 +325,17 @@ namespace Rebar.Common
                 DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "dataRef");
             WriteStringToFileHandleType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateFileLineIterator");
+            AddInputParameter(
+                functionTypeBuilder,
+                DataTypes.FileHandleType,
+                "fileHandle");
+            AddOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FileLineIteratorType,
+                "fileLineIterator");
+            CreateFileLineIteratorType = functionTypeBuilder.CreateType();
         }
 
         public static NIType ImmutablePassthroughType { get; }
@@ -370,6 +381,8 @@ namespace Rebar.Common
         public static NIType WriteStringToFileHandleType { get; }
 
         public static NIType ReadLineFromFileHandleType { get; }
+
+        public static NIType CreateFileLineIteratorType { get; }
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {
