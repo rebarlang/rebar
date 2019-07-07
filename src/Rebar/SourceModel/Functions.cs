@@ -974,6 +974,9 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
 
         /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
     }
 
