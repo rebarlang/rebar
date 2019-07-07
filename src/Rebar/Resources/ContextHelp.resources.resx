@@ -939,4 +939,16 @@
   <data name="WriteStringToFileHandle_Name" xml:space="preserve">
     <value>Write String To File Handle</value>
   </data>
+  <data name="CreateFileLineIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="CreateFileLineIterator_fileHandle_Name" xml:space="preserve">
+    <value>file handle</value>
+  </data>
+  <data name="CreateFileLineIterator_fileLineIterator_Name" xml:space="preserve">
+    <value>file line iterator</value>
+  </data>
+  <data name="CreateFileLineIterator_Name" xml:space="preserve">
+    <value>Create File Line Iterator</value>
+  </data>
 </root>

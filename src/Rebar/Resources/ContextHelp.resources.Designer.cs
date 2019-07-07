@@ -691,6 +691,42 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string CreateFileLineIterator_Description {
+            get {
+                return ResourceManager.GetString("CreateFileLineIterator_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle.
+        /// </summary>
+        internal static string CreateFileLineIterator_fileHandle_Name {
+            get {
+                return ResourceManager.GetString("CreateFileLineIterator_fileHandle_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file line iterator.
+        /// </summary>
+        internal static string CreateFileLineIterator_fileLineIterator_Name {
+            get {
+                return ResourceManager.GetString("CreateFileLineIterator_fileLineIterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create File Line Iterator.
+        /// </summary>
+        internal static string CreateFileLineIterator_Name {
+            get {
+                return ResourceManager.GetString("CreateFileLineIterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to cell.
         /// </summary>
         internal static string CreateLockingCell_cell_Name {
