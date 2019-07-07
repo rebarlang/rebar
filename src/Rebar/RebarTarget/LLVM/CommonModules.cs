@@ -489,6 +489,7 @@ namespace Rebar.RebarTarget.LLVM
                 seenCRPtr = builder.CreateAlloca(LLVMTypeRef.Int1Type(), "seenCRPtr");
             builder.CreateStore(carriageReturn, carriageReturnPtr);
             builder.CreateStore(false.AsLLVMValue(), seenCRPtr);
+            builder.CreateStore(false.AsLLVMValue(), nonEmptyStringPtr);
             builder.CreateCall(_createEmptyStringFunction, new LLVMValueRef[] { stringPtr }, string.Empty);
             builder.CreateBr(loopStartBlock);
 
@@ -500,7 +501,7 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMValueRef[] { hFile, byteReadPtr, 1.AsLLVMValue(), bytesReadPtr, LLVMExtensions.NullVoidPointer },
                 "readFileResult"),
                 readFileResultBool = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, readFileResult, 0.AsLLVMValue(), "readFileResultBool"),
-                bytesRead = builder.CreateLoad(byteReadPtr, "bytesRead"),
+                bytesRead = builder.CreateLoad(bytesReadPtr, "bytesRead"),
                 zeroBytesRead = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, bytesRead, 0.AsLLVMValue(), "zeroBytesRead"),
                 eof = builder.CreateAnd(readFileResultBool, zeroBytesRead, "eof");
             builder.CreateCondBr(eof, loopEndBlock, handleByteBlock);
