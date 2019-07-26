@@ -33,6 +33,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["Subtract"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSub(left, right, "subtract"));
             _functionalNodeCompilers["Multiply"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateMul(left, right, "multiply"));
             _functionalNodeCompilers["Divide"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSDiv(left, right, "divide"));
+            _functionalNodeCompilers["Modulus"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSRem(left, right, "modulus"));
             _functionalNodeCompilers["Increment"] = CreatePureUnaryOperationCompiler((compiler, value) => compiler._builder.CreateAdd(value, 1.AsLLVMValue(), "increment"));
             _functionalNodeCompilers["And"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateAnd(left, right, "and"));
             _functionalNodeCompilers["Or"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateOr(left, right, "or"));

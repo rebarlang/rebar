@@ -32,6 +32,12 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void ModulusOfTwoI32s_Execute_CorrectResultValue()
+        {
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Modulus", PFTypes.Int32, PFTypes.Int32), 7, 5, 2);
+        }
+
+        [TestMethod]
         public void IncrementI32_Execute_CorrectResultValue()
         {
             TestPureUnaryI32Operation(Signatures.DefinePureUnaryFunction("Increment", PFTypes.Int32, PFTypes.Int32), 6, 7);

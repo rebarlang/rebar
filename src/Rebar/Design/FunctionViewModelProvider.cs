@@ -35,6 +35,7 @@ namespace Rebar.Design
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract", @"Resources\Diagram\Nodes\Subtract.png"));
             AddSupportedModel<SourceModel.Multiply>(n => new BasicNodeViewModel(n, "Multiply", @"Resources\Diagram\Nodes\Multiply.png"));
             AddSupportedModel<SourceModel.Divide>(n => new BasicNodeViewModel(n, "Divide", @"Resources\Diagram\Nodes\Divide.png"));
+            AddSupportedModel<Modulus>(n => new BasicNodeViewModel(n, "Modulus", @"Resources\Diagram\Nodes\Modulus.png"));
             AddSupportedModel<And>(n => new BasicNodeViewModel(n, "And", @"Resources\Diagram\Nodes\And.png"));
             AddSupportedModel<Or>(n => new BasicNodeViewModel(n, "Or", @"Resources\Diagram\Nodes\Or.png"));
             AddSupportedModel<Xor>(n => new BasicNodeViewModel(n, "Xor", @"Resources\Diagram\Nodes\Xor.png"));

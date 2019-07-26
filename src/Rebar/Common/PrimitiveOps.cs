@@ -9,6 +9,7 @@ namespace Rebar.Common
         Subtract,
         Multiply,
         Divide,
+        Modulus,
 
         And,
         Or,
@@ -32,6 +33,7 @@ namespace Rebar.Common
                 case BinaryPrimitiveOps.Subtract:
                 case BinaryPrimitiveOps.Multiply:
                 case BinaryPrimitiveOps.Divide:
+                case BinaryPrimitiveOps.Modulus:
                     return PFTypes.Int32;
                 case BinaryPrimitiveOps.And:
                 case BinaryPrimitiveOps.Or:
