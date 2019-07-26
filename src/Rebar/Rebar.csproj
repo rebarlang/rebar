@@ -253,6 +253,7 @@
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
+    <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
