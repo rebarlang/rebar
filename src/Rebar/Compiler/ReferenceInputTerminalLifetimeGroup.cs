@@ -95,7 +95,7 @@ namespace Rebar.Compiler
             }
         }
 
-        public void CreateBorrowAndTerminateLifetimeNodes()
+        public void CreateBorrowAndTerminateLifetimeNodes(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             if (_borrowRequired)
             {
@@ -136,7 +136,7 @@ namespace Rebar.Compiler
                     index = 0;
                     foreach (var terminate in terminates)
                     {
-                        InsertTerminateLifetimeBehindTerminal(terminate.Terminal, terminateLifetime, index);
+                        InsertTerminateLifetimeBehindTerminal(terminate.Terminal, terminateLifetime, index, lifetimeVariableAssociation);
                         ++index;
                     }
                 }
@@ -167,7 +167,8 @@ namespace Rebar.Compiler
         private static void InsertTerminateLifetimeBehindTerminal(
             Terminal lifetimeSource,
             TerminateLifetimeNode terminateLifetime,
-            int index)
+            int index,
+            LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             Terminal terminateLifetimeInput = terminateLifetime.InputTerminals.ElementAt(index),
                 terminateLifetimeOutput = terminateLifetime.OutputTerminals.ElementAt(index);
@@ -181,7 +182,12 @@ namespace Rebar.Compiler
 
             // variables: output
             terminateLifetimeInput.GetFacadeVariable().MergeInto(lifetimeSource.GetTrueVariable());
-            terminateLifetimeOutput.GetFacadeVariable().MergeInto(lifetimeSource.GetFacadeVariable());
+            VariableReference facadeVariable = lifetimeSource.GetFacadeVariable();
+            terminateLifetimeOutput.GetFacadeVariable().MergeInto(facadeVariable);
+            if (lifetimeVariableAssociation.IsLive(facadeVariable))
+            {
+                lifetimeVariableAssociation.MarkVariableLive(facadeVariable, terminateLifetimeOutput);
+            }
         }
 
         private class ReferenceInputTerminalFacade : TerminalFacade

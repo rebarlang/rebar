@@ -20,6 +20,25 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
+        public void OwnerWireConnectedToReferenceInputTerminal_AutomaticNodeInsertion_BorrowNodeAndTerminateLifetimeNodeInserted()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode outputOwner = new FunctionalNode(function.BlockDiagram, _outputOwnerSignature);
+            FunctionalNode immutablePassthrough = new FunctionalNode(function.BlockDiagram, Signatures.ImmutablePassthroughType);
+            Wire.Create(function.BlockDiagram, outputOwner.OutputTerminals[0], immutablePassthrough.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            var borrowNode = function.BlockDiagram.Nodes.OfType<ExplicitBorrowNode>().FirstOrDefault();
+            Assert.IsNotNull(borrowNode);
+            Assert.AreEqual(1, borrowNode.InputTerminals.Count);
+            Assert.AreEqual(outputOwner.OutputTerminals[0], borrowNode.InputTerminals[0].GetImmediateSourceTerminal());
+            Assert.AreEqual(borrowNode.OutputTerminals[0], immutablePassthrough.InputTerminals[0].GetImmediateSourceTerminal());
+            TerminateLifetimeNode terminateLifetime = AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, immutablePassthrough.OutputTerminals[0]);
+            AssertDiagramContainsDropWithSource(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
+        }
+
+        [TestMethod]
         public void BorrowNodeWithUnwiredOutput_AutomaticNodeInsertion_TerminateLifetimeNodeInserted()
         {
             DfirRoot function = DfirRoot.Create();
@@ -29,10 +48,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            var terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
-            Assert.IsNotNull(terminateLifetime);
-            Assert.AreEqual(1, terminateLifetime.InputTerminals.Count);
-            Assert.AreEqual(borrow.OutputTerminals[0], terminateLifetime.InputTerminals[0].GetImmediateSourceTerminal());
+            AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, borrow.OutputTerminals[0]);
         }
 
         [TestMethod]
@@ -47,10 +63,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            var terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
-            Assert.IsNotNull(terminateLifetime);
-            Assert.AreEqual(1, terminateLifetime.InputTerminals.Count);
-            Assert.AreEqual(immutablePassthrough.OutputTerminals[0], terminateLifetime.InputTerminals[0].GetImmediateSourceTerminal());
+            AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, immutablePassthrough.OutputTerminals[0]);
         }
 
         [TestMethod]
@@ -66,11 +79,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            var terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
-            Assert.IsNotNull(terminateLifetime);
-            Assert.AreEqual(2, terminateLifetime.InputTerminals.Count);
-            Assert.AreEqual(immutablePassthrough1.OutputTerminals[0], terminateLifetime.InputTerminals[0].GetImmediateSourceTerminal());
-            Assert.AreEqual(immutablePassthrough2.OutputTerminals[0], terminateLifetime.InputTerminals[1].GetImmediateSourceTerminal());
+            AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, immutablePassthrough1.OutputTerminals[0], immutablePassthrough2.OutputTerminals[0]);
         }
 
         [TestMethod]
@@ -109,10 +118,7 @@ namespace Tests.Rebar.Unit.Compiler
             Tunnel outputTunnel = frame.BorderNodes.FirstOrDefault(t => t.Direction == Direction.Output) as Tunnel;
             Assert.IsNotNull(outputTunnel);
             Assert.AreEqual(tunnel.OutputTerminals[0], outputTunnel.InputTerminals[0].GetImmediateSourceTerminal());
-            TerminateLifetimeNode terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
-            Assert.IsNotNull(terminateLifetime);
-            Assert.AreEqual(1, terminateLifetime.InputTerminals.Count);
-            Assert.AreEqual(outputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0].GetImmediateSourceTerminal());
+            AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, outputTunnel.OutputTerminals[0]);
         }
 
         [TestMethod]
@@ -123,9 +129,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            DropNode drop = function.BlockDiagram.Nodes.OfType<DropNode>().FirstOrDefault();
-            Assert.IsNotNull(drop);
-            Assert.AreEqual(outputOwner.OutputTerminals[0], drop.InputTerminals[0].GetImmediateSourceTerminal());
+            AssertDiagramContainsDropWithSource(function.BlockDiagram, outputOwner.OutputTerminals[0]);
         }
 
         [TestMethod]
@@ -138,11 +142,28 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            var terminateLifetime = function.BlockDiagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
+            var terminateLifetime = AssertDiagramContainsTerminateLifetimeWithSources(function.BlockDiagram, borrow.OutputTerminals[0]);
+            AssertDiagramContainsDropWithSource(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
+        }
+
+        private TerminateLifetimeNode AssertDiagramContainsTerminateLifetimeWithSources(Diagram diagram, params Terminal[] sources)
+        {
+            TerminateLifetimeNode terminateLifetime = diagram.Nodes.OfType<TerminateLifetimeNode>().FirstOrDefault();
             Assert.IsNotNull(terminateLifetime);
-            var drop = function.BlockDiagram.Nodes.OfType<DropNode>().FirstOrDefault();
+            Assert.AreEqual(sources.Length, terminateLifetime.InputTerminals.Count);
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                Assert.AreEqual(sources[i], terminateLifetime.InputTerminals[i].GetImmediateSourceTerminal());
+            }
+            return terminateLifetime;
+        }
+
+        private DropNode AssertDiagramContainsDropWithSource(Diagram diagram, Terminal source)
+        {
+            var drop = diagram.Nodes.OfType<DropNode>().FirstOrDefault();
             Assert.IsNotNull(drop);
-            Assert.AreEqual(terminateLifetime.OutputTerminals[0], drop.InputTerminals[0].GetImmediateSourceTerminal());
+            Assert.AreEqual(source, drop.InputTerminals[0].GetImmediateSourceTerminal());
+            return drop;
         }
     }
 }

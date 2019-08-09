@@ -1,4 +1,5 @@
 ﻿using NationalInstruments.Dfir;
+using Rebar.Common;
 
 namespace Rebar.Compiler
 {
@@ -9,16 +10,23 @@ namespace Rebar.Compiler
     /// </summary>
     internal class AutoBorrowTransform : VisitorTransformBase
     {
-        protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
+        private readonly LifetimeVariableAssociation _lifetimeVariableAssociation;
+
+        public AutoBorrowTransform(LifetimeVariableAssociation lifetimeVariableAssociation)
+        {
+            _lifetimeVariableAssociation = lifetimeVariableAssociation;
+        }
+
+        protected override void VisitBorderNode(BorderNode borderNode)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(borderNode);
-            nodeFacade.CreateBorrowAndTerminateLifetimeNodes();
+            nodeFacade.CreateBorrowAndTerminateLifetimeNodes(_lifetimeVariableAssociation);
         }
 
         protected override void VisitNode(Node node)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(node);
-            nodeFacade.CreateBorrowAndTerminateLifetimeNodes();
+            nodeFacade.CreateBorrowAndTerminateLifetimeNodes(_lifetimeVariableAssociation);
         }
 
         protected override void VisitWire(Wire wire)
