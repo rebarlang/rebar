@@ -84,6 +84,25 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void StringConcatOwnedStrings_Execute_CorrectResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+            FunctionalNode stringConcat = new FunctionalNode(function.BlockDiagram, Signatures.StringConcatType);
+            Wire.Create(function.BlockDiagram, stringConcat.OutputTerminals[2], output.InputTerminals[0]);
+            FunctionalNode stringFromSliceA = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType),
+                stringFromSliceB = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
+            Wire.Create(function.BlockDiagram, stringFromSliceA.OutputTerminals[1], stringConcat.InputTerminals[0]);
+            Wire.Create(function.BlockDiagram, stringFromSliceB.OutputTerminals[1], stringConcat.InputTerminals[1]);
+            Constant stringAConstant = ConnectConstantToInputTerminal(stringFromSliceA.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "stringA", false);
+            Constant stringBConstant = ConnectConstantToInputTerminal(stringFromSliceB.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "stringB", false);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("stringAstringB", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
         public void StringAppend_Execute_CorrectResult()
         {
             DfirRoot function = DfirRoot.Create();

@@ -528,6 +528,19 @@ namespace Rebar.Common
             return typeBase?.Lifetime ?? Lifetime.Empty;
         }
 
+        public bool TryGetLiteralType(TypeVariableReference type, out NIType literalType)
+        {
+            TypeBase typeBase = GetTypeForTypeVariableReference(type);
+            var literalTypeReference = typeBase as LiteralType;
+            if (literalTypeReference == null)
+            {
+                literalType = NIType.Unset;
+                return false;
+            }
+            literalType = literalTypeReference.Type;
+            return true;
+        }
+
         public bool TryDecomposeReferenceType(TypeVariableReference type, out TypeVariableReference underlyingType, out TypeVariableReference lifetimeType, out bool mutable)
         {
             TypeBase typeBase = GetTypeForTypeVariableReference(type);

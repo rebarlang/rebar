@@ -19,7 +19,7 @@ namespace Rebar.Common
             return typeBuilder.CreateType();
         }
 
-        private static NIType AddGenericLifetimeTypeParameter(NIFunctionBuilder functionBuilder, string name)
+        public static NIType AddGenericLifetimeTypeParameter(NIFunctionBuilder functionBuilder, string name)
         {
             var genericTypeParameters = functionBuilder.MakeGenericParameters(name);
             var parameterBuilder = genericTypeParameters.ElementAt(0);
