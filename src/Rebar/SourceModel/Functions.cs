@@ -247,6 +247,23 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
+    public class Modulus : PureBinaryPrimitive
+    {
+        public Modulus() : base(BinaryPrimitiveOps.Modulus) { }
+
+        private const string ElementName = "Modulus";
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Modulus CreateModulus(IElementCreateInfo elementCreateInfo)
+        {
+            var modulus = new Modulus();
+            modulus.Init(elementCreateInfo);
+            return modulus;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
     public class And : PureBinaryPrimitive
     {
         public And() : base(BinaryPrimitiveOps.And) { }

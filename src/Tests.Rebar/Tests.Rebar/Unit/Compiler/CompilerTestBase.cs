@@ -51,7 +51,7 @@ namespace Tests.Rebar.Unit.Compiler
             cancellationToken = cancellationToken ?? new CompileCancellationToken();
             var lifetimeVariableAssociation = new LifetimeVariableAssociation();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken, lifetimeVariableAssociation);
-            new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
+            new AutoBorrowTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
             new InsertTerminateLifetimeTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
             new InsertDropTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
         }
