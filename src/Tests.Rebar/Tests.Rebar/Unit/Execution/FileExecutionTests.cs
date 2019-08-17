@@ -17,14 +17,14 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             FunctionalNode openFileHandle = new FunctionalNode(function.BlockDiagram, Signatures.OpenFileHandleType);
             string filePath = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
-            Constant pathConstant = ConnectConstantToInputTerminal(openFileHandle.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), filePath, false);
+            Constant pathConstant = ConnectStringConstantToInputTerminal(openFileHandle.InputTerminals[0], filePath);
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, openFileHandle.OutputTerminals[1], unwrapOption.InputTerminals[0]);
             FunctionalNode writeStringToFileHandle = new FunctionalNode(frame.Diagram, Signatures.WriteStringToFileHandleType);
             Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], writeStringToFileHandle.InputTerminals[0]);
             const string data = "data";
-            Constant dataConstant = ConnectConstantToInputTerminal(writeStringToFileHandle.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), data, false);
+            Constant dataConstant = ConnectStringConstantToInputTerminal(writeStringToFileHandle.InputTerminals[1], data);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
