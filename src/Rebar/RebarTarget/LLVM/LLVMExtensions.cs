@@ -72,6 +72,8 @@ namespace Rebar.RebarTarget.LLVM
 
         public static LLVMTypeRef VoidPointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
 
+        public static LLVMValueRef NullVoidPointer { get; } = LLVMSharp.LLVM.ConstPointerNull(VoidPointerType);
+
         public static LLVMTypeRef BytePointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
 
         public static LLVMTypeRef StringSliceReferenceType { get; } = LLVMTypeRef.StructType(
@@ -81,6 +83,13 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMTypeRef.Int32Type()
             },
             false);
+
+        public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
+        {
+            LLVMValueRef slice0 = builder.CreateInsertValue(LLVMSharp.LLVM.GetUndef(StringSliceReferenceType), stringPtr, 0u, "slice0"),
+                slice1 = builder.CreateInsertValue(slice0, length, 1u, "slice1");
+            return slice1;
+        }
 
         public static LLVMTypeRef StringType { get; } = LLVMTypeRef.StructType(
             new LLVMTypeRef[]

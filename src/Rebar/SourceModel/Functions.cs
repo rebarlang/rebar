@@ -922,6 +922,30 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
     }
 
+    public class ReadLineFromFileHandle : FunctionalNode
+    {
+        private const string ElementName = "ReadLineFromFileHandle";
+
+        protected ReadLineFromFileHandle()
+            : base(Signatures.ReadLineFromFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static ReadLineFromFileHandle CreateReadLineFromFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var readLineFromFileHandle = new ReadLineFromFileHandle();
+            readLineFromFileHandle.Init(elementCreateInfo);
+            return readLineFromFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
     public class WriteStringToFileHandle : FunctionalNode
     {
         private const string ElementName = "WriteStringToFileHandle";
@@ -932,7 +956,7 @@ namespace Rebar.SourceModel
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static WriteStringToFileHandle CreateWriteToFileHandle(IElementCreateInfo elementCreateInfo)
+        public static WriteStringToFileHandle CreateWriteStringToFileHandle(IElementCreateInfo elementCreateInfo)
         {
             var writeStringToFileHandle = new WriteStringToFileHandle();
             writeStringToFileHandle.Init(elementCreateInfo);

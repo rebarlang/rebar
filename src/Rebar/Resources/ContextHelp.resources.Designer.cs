@@ -1926,6 +1926,51 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string ReadLineFromFileHandle_Description {
+            get {
+                return ResourceManager.GetString("ReadLineFromFileHandle_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle reference.
+        /// </summary>
+        internal static string ReadLineFromFileHandle_fileHandleRef_in_Name {
+            get {
+                return ResourceManager.GetString("ReadLineFromFileHandle_fileHandleRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to file handle reference.
+        /// </summary>
+        internal static string ReadLineFromFileHandle_fileHandleRef_out_Name {
+            get {
+                return ResourceManager.GetString("ReadLineFromFileHandle_fileHandleRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to line.
+        /// </summary>
+        internal static string ReadLineFromFileHandle_line_Name {
+            get {
+                return ResourceManager.GetString("ReadLineFromFileHandle_line_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Read Line From File Handle.
+        /// </summary>
+        internal static string ReadLineFromFileHandle_Name {
+            get {
+                return ResourceManager.GetString("ReadLineFromFileHandle_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string SelectReferenceNode_Description {
             get {
                 return ResourceManager.GetString("SelectReferenceNode_Description", resourceCulture);

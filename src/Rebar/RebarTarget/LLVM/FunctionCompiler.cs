@@ -74,6 +74,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
 
             _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
+            _functionalNodeCompilers["ReadLineFromFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.ReadLineFromFileHandleName);
             _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
         }
 

@@ -66,6 +66,7 @@ namespace Rebar.Design
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
 
             AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
+            AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
             AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
 
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
