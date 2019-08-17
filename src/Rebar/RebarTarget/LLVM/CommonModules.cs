@@ -512,7 +512,7 @@ namespace Rebar.RebarTarget.LLVM
                 loopEndBlock = _readLineFromFileHandleFunction.AppendBasicBlock("loopEnd"),
                 nonEmptyStringBlock = _readLineFromFileHandleFunction.AppendBasicBlock("nonEmptyString"),
                 emptyStringBlock = _readLineFromFileHandleFunction.AppendBasicBlock("emptyString");
-                
+
             LLVMValueRef fileHandlePtr = _readLineFromFileHandleFunction.GetParam(0u),
                 stringPtr = builder.CreateAlloca(LLVMExtensions.StringType, "stringPtr"),
                 carriageReturnPtr = builder.CreateAlloca(LLVMTypeRef.Int8Type(), "carriageReturnPtr"),

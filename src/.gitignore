@@ -4,3 +4,4 @@ packages/
 .vs/
 InstallLocation.targets
 Rebar.csproj.user
+TestResults/

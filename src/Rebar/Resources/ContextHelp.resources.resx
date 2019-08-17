@@ -939,6 +939,21 @@
   <data name="WriteStringToFileHandle_Name" xml:space="preserve">
     <value>Write String To File Handle</value>
   </data>
+  <data name="ReadLineFromFileHandle_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="ReadLineFromFileHandle_fileHandleRef_in_Name" xml:space="preserve">
+    <value>file handle reference</value>
+  </data>
+  <data name="ReadLineFromFileHandle_fileHandleRef_out_Name" xml:space="preserve">
+    <value>file handle reference</value>
+  </data>
+  <data name="ReadLineFromFileHandle_line_Name" xml:space="preserve">
+    <value>line</value>
+  </data>
+  <data name="ReadLineFromFileHandle_Name" xml:space="preserve">
+    <value>Read Line From File Handle</value>
+  </data>
   <data name="CreateFileLineIterator_Description" xml:space="preserve">
     <value />
   </data>

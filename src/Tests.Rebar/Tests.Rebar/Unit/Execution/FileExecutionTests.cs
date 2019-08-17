@@ -17,14 +17,14 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             FunctionalNode openFileHandle = new FunctionalNode(function.BlockDiagram, Signatures.OpenFileHandleType);
             string filePath = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
-            Constant pathConstant = ConnectConstantToInputTerminal(openFileHandle.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), filePath, false);
+            Constant pathConstant = ConnectStringConstantToInputTerminal(openFileHandle.InputTerminals[0], filePath);
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, openFileHandle.OutputTerminals[1], unwrapOption.InputTerminals[0]);
             FunctionalNode writeStringToFileHandle = new FunctionalNode(frame.Diagram, Signatures.WriteStringToFileHandleType);
             Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], writeStringToFileHandle.InputTerminals[0]);
             const string data = "data";
-            Constant dataConstant = ConnectConstantToInputTerminal(writeStringToFileHandle.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), data, false);
+            Constant dataConstant = ConnectStringConstantToInputTerminal(writeStringToFileHandle.InputTerminals[1], data);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -43,6 +43,42 @@ namespace Tests.Rebar.Unit.Execution
                 }
             }
             Assert.AreEqual(data, fileData);
+        }
+
+        [TestMethod]
+        public void OpenFileHandleAndReadLine_Execute_LineReadFromFile()
+        {
+            string filePath = Path.Combine(TestContext.DeploymentDirectory, Path.GetRandomFileName());
+            const string data = "data";
+            CreateFileAndWriteData(filePath, data + "\r\n");
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode openFileHandle = new FunctionalNode(function.BlockDiagram, Signatures.OpenFileHandleType);
+            Constant pathConstant = ConnectStringConstantToInputTerminal(openFileHandle.InputTerminals[0], filePath);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, openFileHandle.OutputTerminals[1], unwrapOption.InputTerminals[0]);
+            FunctionalNode readLineFromFileHandle = new FunctionalNode(frame.Diagram, Signatures.ReadLineFromFileHandleType);
+            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], readLineFromFileHandle.InputTerminals[0]);
+            Frame innerFrame = Frame.Create(frame.Diagram);
+            UnwrapOptionTunnel innerUnwrapOption = new UnwrapOptionTunnel(innerFrame);
+            Wire.Create(frame.Diagram, readLineFromFileHandle.OutputTerminals[1], innerUnwrapOption.InputTerminals[0]);
+            FunctionalNode output = new FunctionalNode(innerFrame.Diagram, Signatures.OutputType);
+            Wire.Create(innerFrame.Diagram, innerUnwrapOption.OutputTerminals[0], output.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual(data, executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        private void CreateFileAndWriteData(string filePath, string data)
+        {
+            using (FileStream fileStream = File.Open(filePath, FileMode.Create, FileAccess.Write))
+            {
+                using (StreamWriter streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.Write(data);
+                }
+            }
         }
     }
 }
