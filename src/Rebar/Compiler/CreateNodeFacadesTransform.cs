@@ -159,27 +159,13 @@ namespace Rebar.Compiler
 
             if (functionalNode.Signature.IsOpenGeneric())
             {
-                foreach (NIType genericParameterNIType in functionalNode.Signature.GetGenericParameters())
+                Func<NIType, TypeVariableReference> createLifetimeTypeReference = type =>
                 {
-                    if (genericParameterNIType.IsGenericParameter())
-                    {
-                        if (genericParameterNIType.IsLifetimeType())
-                        {
-                            var group = LifetimeTypeVariableGroup.CreateFromNode(functionalNode);
-                            lifetimeVariableGroups[genericParameterNIType] = group;
-                            genericTypeParameters[genericParameterNIType] = group.LifetimeType;
-                        }
-                        else if (genericParameterNIType.IsMutabilityType())
-                        {
-                            genericTypeParameters[genericParameterNIType] = _typeVariableSet.CreateReferenceToMutabilityType();
-                        }
-                        else
-                        {
-                            var typeConstraints = genericParameterNIType.GetConstraints().Select(CreateConstraintFromGenericNITypeConstraint).ToList();
-                            genericTypeParameters[genericParameterNIType] = _typeVariableSet.CreateReferenceToNewTypeVariable(typeConstraints);
-                        }
-                    }
-                }
+                    var group = LifetimeTypeVariableGroup.CreateFromNode(functionalNode);
+                    lifetimeVariableGroups[type] = group;
+                    return group.LifetimeType;
+                };
+                genericTypeParameters = _typeVariableSet.CreateTypeVariablesForGenericParameters(functionalNode.Signature, createLifetimeTypeReference);
             }
 
             foreach (NIType parameter in functionalNode.Signature.GetParameters())
@@ -217,7 +203,7 @@ namespace Rebar.Compiler
                 }
                 else if (isOutput)
                 {
-                    TypeVariableReference typeVariableReference = CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
+                    TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
                     _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, typeVariableReference);
                 }
                 else if (isInput)
@@ -234,7 +220,7 @@ namespace Rebar.Compiler
                     }
                     else
                     {
-                        TypeVariableReference typeVariableReference = CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
+                        TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
                         _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, typeVariableReference);
                     }
                 }
@@ -244,18 +230,6 @@ namespace Rebar.Compiler
                 }
             }
             return true;
-        }
-
-        private Constraint CreateConstraintFromGenericNITypeConstraint(NIType niTypeConstraint)
-        {
-            if (niTypeConstraint.IsInterface() && niTypeConstraint.GetName() == "Display")
-            {
-                return new DisplayTraitConstraint();
-            }
-            else
-            {
-                throw new NotImplementedException("Don't know how to translate generic type constraint " + niTypeConstraint);
-            }
         }
 
         private void CreateFacadesForInoutReferenceParameter(
@@ -277,45 +251,11 @@ namespace Rebar.Compiler
             }
             // TODO: should not add outputTerminal here if borrow cannot be auto-terminated
             // i.e., if there are in-only or out-only parameters that share lifetimeType
-            TypeVariableReference referentTypeVariableReference = CreateTypeVariableReferenceFromNIType(parameterDataType.GetReferentType(), genericTypeParameters);
+            TypeVariableReference referentTypeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType.GetReferentType(), genericTypeParameters);
             TypeVariableReference mutabilityTypeVariableReference = mutability == InputReferenceMutability.Polymorphic
                 ? genericTypeParameters[parameterDataType.GetReferenceMutabilityType()]
                 : default(TypeVariableReference);
             facadeGroup.AddTerminalFacade(inputTerminal, referentTypeVariableReference, mutabilityTypeVariableReference, outputTerminal);
-        }
-
-        private TypeVariableReference CreateTypeVariableReferenceFromNIType(NIType type, Dictionary<NIType, TypeVariableReference> genericTypeParameters)
-        {
-            if (type.IsGenericParameter())
-            {
-                return genericTypeParameters[type];
-            }
-            else if (!type.IsGenericType())
-            {
-                return _typeVariableSet.CreateReferenceToLiteralType(type);
-            }
-            else
-            {
-                if (type.IsRebarReferenceType())
-                {
-                    TypeVariableReference referentType = CreateTypeVariableReferenceFromNIType(type.GetReferentType(), genericTypeParameters);
-                    TypeVariableReference lifetimeType = CreateTypeVariableReferenceFromNIType(type.GetReferenceLifetimeType(), genericTypeParameters);
-                    if (type.IsPolymorphicReferenceType())
-                    {
-                        TypeVariableReference mutabilityType = CreateTypeVariableReferenceFromNIType(type.GetReferenceMutabilityType(), genericTypeParameters);
-                        return _typeVariableSet.CreateReferenceToPolymorphicReferenceType(mutabilityType, referentType, lifetimeType);
-                    }
-                    return _typeVariableSet.CreateReferenceToReferenceType(type.IsMutableReferenceType(), referentType, lifetimeType);
-                }
-                string constructorTypeName = type.GetName();
-                var constructorParameters = type.GetGenericParameters();
-                if (constructorParameters.Count == 1)
-                {
-                    TypeVariableReference parameterType = CreateTypeVariableReferenceFromNIType(constructorParameters.ElementAt(0), genericTypeParameters);
-                    return _typeVariableSet.CreateReferenceToConstructorType(constructorTypeName, parameterType);
-                }
-                throw new NotImplementedException();
-            }
         }
 
         bool IDfirNodeVisitor<bool>.VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
@@ -349,14 +289,16 @@ namespace Rebar.Compiler
             Terminal iteratorInput = iterateTunnel.InputTerminals.ElementAt(0),
                 itemOutput = iterateTunnel.OutputTerminals.ElementAt(0);
             LifetimeTypeVariableGroup lifetimeTypeVariableGroup = LifetimeTypeVariableGroup.CreateFromTerminal(iteratorInput);
-            // TODO: iteratorType should be an Iterator trait constraint, related to itemType
-            TypeVariableReference itemType = _typeVariableSet.CreateReferenceToLiteralType(PFTypes.Int32);
-            TypeVariableReference iteratorType = _typeVariableSet.CreateReferenceToConstructorType("Iterator", itemType);
+
+            TypeVariableReference loopLifetimeReference = _typeVariableSet.CreateReferenceToLifetimeType(itemOutput.GetDiagramLifetime());
+            TypeVariableReference itemTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
+            TypeVariableReference implementsIteratorTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(
+                new Constraint[] { new IteratorTraitConstraint(itemTypeVariable) });
             _nodeFacade
                 .CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType)
-                .AddTerminalFacade(iteratorInput, iteratorType, default(TypeVariableReference));
+                .AddTerminalFacade(iteratorInput, implementsIteratorTypeVariable, default(TypeVariableReference));
 
-            _nodeFacade[itemOutput] = new SimpleTerminalFacade(itemOutput, itemType);
+            _nodeFacade[itemOutput] = new SimpleTerminalFacade(itemOutput, itemTypeVariable);
             return true;
         }
 

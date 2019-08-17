@@ -167,7 +167,7 @@ namespace Rebar.Common
                 "highValue");
             AddOutputParameter(
                 functionTypeBuilder,
-                PFTypes.Int32.CreateIterator(),
+                DataTypes.RangeIteratorType,
                 "range");
             RangeType = functionTypeBuilder.CreateType();
 
