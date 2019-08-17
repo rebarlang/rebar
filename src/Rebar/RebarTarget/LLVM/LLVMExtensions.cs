@@ -70,18 +70,31 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), intValue, false);
         }
 
+        public static LLVMTypeRef VoidPointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
+
+        public static LLVMValueRef NullVoidPointer { get; } = LLVMSharp.LLVM.ConstPointerNull(VoidPointerType);
+
+        public static LLVMTypeRef BytePointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
+
         public static LLVMTypeRef StringSliceReferenceType { get; } = LLVMTypeRef.StructType(
             new LLVMTypeRef[]
             {
-                LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u),
+                BytePointerType,
                 LLVMTypeRef.Int32Type()
             },
             false);
 
+        public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
+        {
+            LLVMValueRef slice0 = builder.CreateInsertValue(LLVMSharp.LLVM.GetUndef(StringSliceReferenceType), stringPtr, 0u, "slice0"),
+                slice1 = builder.CreateInsertValue(slice0, length, 1u, "slice1");
+            return slice1;
+        }
+
         public static LLVMTypeRef StringType { get; } = LLVMTypeRef.StructType(
             new LLVMTypeRef[]
             {
-                LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u),
+                BytePointerType,
                 LLVMTypeRef.Int32Type()
             },
             false);
@@ -91,6 +104,13 @@ namespace Rebar.RebarTarget.LLVM
             {
                 LLVMTypeRef.Int32Type(),
                 LLVMTypeRef.Int32Type()
+            },
+            false);
+
+        public static LLVMTypeRef FileHandleType { get; } = LLVMTypeRef.StructType(
+            new LLVMTypeRef[]
+            {
+                VoidPointerType
             },
             false);
 
@@ -130,6 +150,10 @@ namespace Rebar.RebarTarget.LLVM
                     return StringSliceReferenceType;
                 }
                 return LLVMTypeRef.PointerType(referentType.AsLLVMType(), 0u);
+            }
+            if (niType == DataTypes.FileHandleType)
+            {
+                return FileHandleType;
             }
             NIType innerType;
             if (niType.TryDestructureOptionType(out innerType))

@@ -19,7 +19,7 @@ namespace Rebar.Common
             return typeBuilder.CreateType();
         }
 
-        private static NIType AddGenericLifetimeTypeParameter(NIFunctionBuilder functionBuilder, string name)
+        public static NIType AddGenericLifetimeTypeParameter(NIFunctionBuilder functionBuilder, string name)
         {
             var genericTypeParameters = functionBuilder.MakeGenericParameters(name);
             var parameterBuilder = genericTypeParameters.ElementAt(0);
@@ -292,6 +292,39 @@ namespace Rebar.Common
                 tDataParameter.CreateNonLockingCell(),
                 "cell");
             CreateNonLockingCellType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("OpenFileHandle");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "filePathRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FileHandleType.CreateOption(),
+                "fileHandle");
+            OpenFileHandleType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("ReadLineFromFileHandle");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FileHandleType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "fileHandleRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                PFTypes.String.CreateOption(),
+                "line");
+            ReadLineFromFileHandleType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("WriteStringToFileHandle");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FileHandleType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                "fileHandleRef");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "dataRef");
+            WriteStringToFileHandleType = functionTypeBuilder.CreateType();
         }
 
         public static NIType ImmutablePassthroughType { get; }
@@ -331,6 +364,12 @@ namespace Rebar.Common
         public static NIType CreateNonLockingCellType { get; }
 
         public static NIType InspectType { get; }
+
+        public static NIType OpenFileHandleType { get; }
+
+        public static NIType WriteStringToFileHandleType { get; }
+
+        public static NIType ReadLineFromFileHandleType { get; }
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {

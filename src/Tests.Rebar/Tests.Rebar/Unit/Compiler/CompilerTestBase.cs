@@ -35,29 +35,38 @@ namespace Tests.Rebar.Unit.Compiler
             new MarkConsumedVariablesTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
         }
 
-        protected void RunSemanticAnalysisUpToValidation(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
+        internal void RunSemanticAnalysisUpToValidation(
+            DfirRoot dfirRoot, 
+            CompileCancellationToken cancellationToken = null,
+            LifetimeVariableAssociation lifetimeVariableAssociation = null)
         {
             cancellationToken = cancellationToken ?? new CompileCancellationToken();
             var unificationResults = new TerminalTypeUnificationResults();
-            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot, cancellationToken, unificationResults);
+            RunSemanticAnalysisUpToSetVariableTypes(dfirRoot, cancellationToken, unificationResults, lifetimeVariableAssociation);
             new ValidateVariableUsagesTransform(unificationResults).Execute(dfirRoot, cancellationToken);
+        }
+
+        protected void RunCompilationUpToAutomaticNodeInsertion(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
+        {
+            cancellationToken = cancellationToken ?? new CompileCancellationToken();
+            var lifetimeVariableAssociation = new LifetimeVariableAssociation();
+            RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken, lifetimeVariableAssociation);
+            new AutoBorrowTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
+            new InsertTerminateLifetimeTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
+            new InsertDropTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
         }
 
         internal global::Rebar.RebarTarget.BytecodeInterpreter.Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
         {
             var cancellationToken = new CompileCancellationToken();
-            RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
-            
-            new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
+            RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
             return FunctionCompileHandler.CompileFunctionForBytecodeInterpreter(dfirRoot, cancellationToken);
         }
 
         internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
         {
             var cancellationToken = new CompileCancellationToken();
-            RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken);
-
-            new AutoBorrowTransform().Execute(dfirRoot, cancellationToken);
+            RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
             return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, compiledFunctionName);
         }
 

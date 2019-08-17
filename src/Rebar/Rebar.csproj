@@ -217,6 +217,8 @@
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
+    <Compile Include="Compiler\InsertDropTransform.cs" />
+    <Compile Include="Compiler\InsertTerminateLifetimeTransform.cs" />
     <Compile Include="Compiler\MarkConsumedVariablesTransform.cs" />
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
@@ -249,7 +251,9 @@
     <Compile Include="Compiler\TerminalId.cs" />
     <Compile Include="Compiler\TerminalTypeUnificationResults.cs" />
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
+    <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
+    <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -428,6 +432,7 @@
     <Resource Include="Resources\Diagram\Nodes\LessThan.png" />
     <Resource Include="Resources\Diagram\Nodes\Lock.png" />
     <Resource Include="Resources\Diagram\Nodes\LoopCondition.png" />
+    <Resource Include="Resources\Diagram\Nodes\Modulus.png" />
     <Resource Include="Resources\Diagram\Nodes\Multiply.png" />
     <Resource Include="Resources\Diagram\Nodes\None.png" />
     <Resource Include="Resources\Diagram\Nodes\Not.png" />
@@ -471,7 +476,11 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\FilePalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

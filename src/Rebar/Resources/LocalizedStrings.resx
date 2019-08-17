@@ -135,6 +135,12 @@
   <data name="FeatureToggle_CellDataType_Description" xml:space="preserve">
     <value>Enable the Cell data type and related nodes</value>
   </data>
+  <data name="FeatureToggle_FileHandleDataType_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_FileHandleDataType_Description" xml:space="preserve">
+    <value>Enable File Handle data type and related nodes</value>
+  </data>
   <data name="FeatureToggle_LLVMCompiler_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

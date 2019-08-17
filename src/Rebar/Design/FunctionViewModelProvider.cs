@@ -35,6 +35,7 @@ namespace Rebar.Design
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract", @"Resources\Diagram\Nodes\Subtract.png"));
             AddSupportedModel<SourceModel.Multiply>(n => new BasicNodeViewModel(n, "Multiply", @"Resources\Diagram\Nodes\Multiply.png"));
             AddSupportedModel<SourceModel.Divide>(n => new BasicNodeViewModel(n, "Divide", @"Resources\Diagram\Nodes\Divide.png"));
+            AddSupportedModel<Modulus>(n => new BasicNodeViewModel(n, "Modulus", @"Resources\Diagram\Nodes\Modulus.png"));
             AddSupportedModel<And>(n => new BasicNodeViewModel(n, "And", @"Resources\Diagram\Nodes\And.png"));
             AddSupportedModel<Or>(n => new BasicNodeViewModel(n, "Or", @"Resources\Diagram\Nodes\Or.png"));
             AddSupportedModel<Xor>(n => new BasicNodeViewModel(n, "Xor", @"Resources\Diagram\Nodes\Xor.png"));
@@ -63,6 +64,10 @@ namespace Rebar.Design
 
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
+
+            AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
+            AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
+            AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
 
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));

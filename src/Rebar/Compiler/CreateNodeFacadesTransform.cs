@@ -342,6 +342,14 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitTunnel(Tunnel tunnel)
         {
+            CreateTunnelNodeFacade(tunnel);
+            return true;
+        }
+
+        internal static void CreateTunnelNodeFacade(Tunnel tunnel)
+        {
+            AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(tunnel);
+            TypeVariableSet typeVariableSet = tunnel.DfirRoot.GetTypeVariableSet();
             Terminal valueInput = tunnel.InputTerminals.ElementAt(0),
                 valueOutput = tunnel.OutputTerminals.ElementAt(0);
 
@@ -350,9 +358,9 @@ namespace Rebar.Compiler
             bool executesConditionally = DoesStructureExecuteConditionally(tunnel.ParentStructure);
             if (executesConditionally && tunnel.Direction == Direction.Output)
             {
-                typeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
-                _nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, typeVariable);
-                _nodeFacade[valueInput] = new TunnelTerminalFacade(valueInput, _nodeFacade[valueOutput]);
+                typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
+                nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, typeVariable);
+                nodeFacade[valueInput] = new TunnelTerminalFacade(valueInput, nodeFacade[valueOutput]);
             }
             else
             {
@@ -363,14 +371,13 @@ namespace Rebar.Compiler
                     LifetimeGraphIdentifier parentLifetimeGraph = valueInput.ParentDiagram.GetLifetimeGraphIdentifier();
                     constraints.Add(new OutlastsLifetimeGraphConstraint(parentLifetimeGraph));
                 }
-                typeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(constraints);
-                _nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, typeVariable);
-                _nodeFacade[valueInput] = new SimpleTerminalFacade(valueInput, typeVariable);
+                typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable(constraints);
+                nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, typeVariable);
+                nodeFacade[valueInput] = new SimpleTerminalFacade(valueInput, typeVariable);
             }
-            return true;
         }
 
-        private bool DoesStructureExecuteConditionally(Structure structure)
+        private static bool DoesStructureExecuteConditionally(Structure structure)
         {
             Frame frame = structure as Frame;
             if (frame != null)

@@ -84,13 +84,13 @@ namespace Rebar.Compiler
             CompileCancellationToken cancellationToken)
         {
             TerminalTypeUnificationResults unificationResults = new TerminalTypeUnificationResults();
-            LifetimeVariableAssociation lifetimeVariableAssocation = new LifetimeVariableAssociation();
+            LifetimeVariableAssociation lifetimeVariableAssociation = new LifetimeVariableAssociation();
             List<IDfirTransformBase> semanticAnalysisTransforms = new List<IDfirTransformBase>()
             {
                 new CreateNodeFacadesTransform(),
-                new MergeVariablesAcrossWiresTransform(lifetimeVariableAssocation, unificationResults),
+                new MergeVariablesAcrossWiresTransform(lifetimeVariableAssociation, unificationResults),
                 new FinalizeAutoBorrowsTransform(),
-                new MarkConsumedVariablesTransform(lifetimeVariableAssocation),
+                new MarkConsumedVariablesTransform(lifetimeVariableAssociation),
                 new ValidateVariableUsagesTransform(unificationResults),
                 new ReflectVariablesToTerminalsTransform(),
             };
@@ -108,7 +108,9 @@ namespace Rebar.Compiler
 
             List<IDfirTransformBase> toTargetDfirTransforms = new List<IDfirTransformBase>()
             {
-                new AutoBorrowTransform()
+                new AutoBorrowTransform(lifetimeVariableAssociation),
+                new InsertTerminateLifetimeTransform(lifetimeVariableAssociation),
+                new InsertDropTransform(lifetimeVariableAssociation),
             };
 
             return new StandardMocTransformManager(

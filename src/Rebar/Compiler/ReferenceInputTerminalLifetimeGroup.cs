@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -11,7 +12,7 @@ namespace Rebar.Compiler
     {
         private readonly AutoBorrowNodeFacade _nodeFacade;
         private readonly InputReferenceMutability _mutability;
-        private readonly List<ReferenceInputTerminalFacade> _facades = new List<ReferenceInputTerminalFacade>();
+        private readonly List<TerminalFacade> _facades = new List<TerminalFacade>();
         private bool _borrowRequired, _mutableBorrow;
         private readonly Lazy<Lifetime> _lazyBorrowLifetime;
 
@@ -60,7 +61,18 @@ namespace Rebar.Compiler
                 throw new InvalidOperationException("Cannot add borrowed variables after creating new lifetime.");
             }
 
-            var terminalFacade = new ReferenceInputTerminalFacade(inputTerminal, _mutability, this, referenceType);
+            NIType literalReferentType;
+            bool isStringSliceReference = typeVariableSet.TryGetLiteralType(referentTypeReference, out literalReferentType)
+                && literalReferentType == DataTypes.StringSliceType;
+            TerminalFacade terminalFacade;
+            if (isStringSliceReference)
+            {
+                terminalFacade = new StringSliceReferenceInputTerminalFacade(inputTerminal, this, referenceType);
+            }
+            else
+            {
+                terminalFacade = new ReferenceInputTerminalFacade(inputTerminal, _mutability, this, referenceType);
+            }            
             _nodeFacade[inputTerminal] = terminalFacade;
             _facades.Add(terminalFacade);
             if (terminateLifetimeOutputTerminal != null)
@@ -77,7 +89,7 @@ namespace Rebar.Compiler
             bool borrowRequired = _borrowRequired;
             if (!borrowRequired)
             {
-                foreach (ReferenceInputTerminalFacade referenceInput in _facades)
+                foreach (TerminalFacade referenceInput in _facades)
                 {
                     referenceInput.TrueVariable.MergeInto(referenceInput.FacadeVariable);
                 }
@@ -95,7 +107,7 @@ namespace Rebar.Compiler
             }
         }
 
-        public void CreateBorrowAndTerminateLifetimeNodes()
+        public void CreateBorrowAndTerminateLifetimeNodes(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             if (_borrowRequired)
             {
@@ -114,7 +126,9 @@ namespace Rebar.Compiler
                 foreach (var facade in _facades)
                 {
                     Terminal input = facade.Terminal;
-                    InsertBorrowAheadOfTerminal(input, explicitBorrow, index);
+                    VariableReference ownerVariable = input.GetFacadeVariable(), borrowVariable;
+                    ((AutoborrowingInputTerminalFacade)facade).AddPostBorrowCoercion(ref input, out borrowVariable);
+                    InsertBorrowAheadOfTerminal(input, explicitBorrow, index, ownerVariable, borrowVariable);
                     ++index;
                 }
 
@@ -131,17 +145,12 @@ namespace Rebar.Compiler
                 if (terminates.Count == borrowInputCount)
                 {
                     Diagram outputParentDiagram = terminates.First().Terminal.ParentDiagram;
-                    var terminateLifetime = new TerminateLifetimeNode(outputParentDiagram, borrowInputCount, borrowInputCount);
-                    AutoBorrowNodeFacade terminateLifetimeFacade = AutoBorrowNodeFacade.GetNodeFacade(terminateLifetime);
-                    foreach (var terminal in terminateLifetime.Terminals)
-                    {
-                        terminateLifetimeFacade[terminal] = new SimpleTerminalFacade(terminal, default(TypeVariableReference));
-                    }
+                    var terminateLifetime = TerminateLifetimeNodeHelpers.CreateTerminateLifetimeWithFacades(outputParentDiagram, borrowInputCount, borrowInputCount);
 
                     index = 0;
                     foreach (var terminate in terminates)
                     {
-                        InsertTerminateLifetimeBehindTerminal(terminate.Terminal, terminateLifetime, index);
+                        InsertTerminateLifetimeBehindTerminal(terminate.Terminal, terminateLifetime, index, lifetimeVariableAssociation);
                         ++index;
                     }
                 }
@@ -155,7 +164,9 @@ namespace Rebar.Compiler
         private static void InsertBorrowAheadOfTerminal(
             Terminal borrowReceiver,
             ExplicitBorrowNode explicitBorrow,
-            int index)
+            int index,
+            VariableReference ownerVariable,
+            VariableReference borrowVariable)
         {
             Terminal borrowInput = explicitBorrow.InputTerminals.ElementAt(index),
                 borrowOutput = explicitBorrow.OutputTerminals.ElementAt(index);
@@ -165,14 +176,15 @@ namespace Rebar.Compiler
             borrowOutput.WireTogether(borrowReceiver, SourceModelIdSource.NoSourceModelId);
 
             // variables
-            borrowInput.GetFacadeVariable().MergeInto(borrowReceiver.GetFacadeVariable());
-            borrowOutput.GetFacadeVariable().MergeInto(borrowReceiver.GetTrueVariable());
+            borrowInput.GetFacadeVariable().MergeInto(ownerVariable);
+            borrowOutput.GetFacadeVariable().MergeInto(borrowVariable);
         }
 
         private static void InsertTerminateLifetimeBehindTerminal(
             Terminal lifetimeSource,
             TerminateLifetimeNode terminateLifetime,
-            int index)
+            int index,
+            LifetimeVariableAssociation lifetimeVariableAssociation)
         {
             Terminal terminateLifetimeInput = terminateLifetime.InputTerminals.ElementAt(index),
                 terminateLifetimeOutput = terminateLifetime.OutputTerminals.ElementAt(index);
@@ -186,10 +198,46 @@ namespace Rebar.Compiler
 
             // variables: output
             terminateLifetimeInput.GetFacadeVariable().MergeInto(lifetimeSource.GetTrueVariable());
-            terminateLifetimeOutput.GetFacadeVariable().MergeInto(lifetimeSource.GetFacadeVariable());
+            VariableReference facadeVariable = lifetimeSource.GetFacadeVariable();
+            terminateLifetimeOutput.GetFacadeVariable().MergeInto(facadeVariable);
+            if (lifetimeVariableAssociation.IsLive(facadeVariable))
+            {
+                lifetimeVariableAssociation.MarkVariableLive(facadeVariable, terminateLifetimeOutput);
+            }
         }
 
-        private class ReferenceInputTerminalFacade : TerminalFacade
+        private abstract class AutoborrowingInputTerminalFacade : TerminalFacade
+        {
+            protected AutoborrowingInputTerminalFacade(Terminal terminal)
+                : base(terminal)
+            {
+                TypeVariableSet = terminal.GetTypeVariableSet();
+            }
+
+            protected TypeVariableSet TypeVariableSet { get; }
+
+            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+            {
+                FacadeVariable.MergeInto(wireFacadeVariable);
+                bool setExpectedMutable;
+                TypeVariableReference typeToUnifyWith = ComputeTypeToUnifyWith(wireFacadeVariable, out setExpectedMutable);
+                ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
+                    Terminal,
+                    TrueVariable.TypeVariableReference,
+                    typeToUnifyWith);
+                if (setExpectedMutable)
+                {
+                    unificationResult.SetExpectedMutable();
+                }
+                TypeVariableSet.Unify(TrueVariable.TypeVariableReference, typeToUnifyWith, unificationResult);
+            }
+
+            public abstract void AddPostBorrowCoercion(ref Terminal inputTerminal, out VariableReference borrowVariable);
+
+            protected abstract TypeVariableReference ComputeTypeToUnifyWith(VariableReference inputFacadeVariable, out bool setExpectedMutable);
+        }
+
+        private class ReferenceInputTerminalFacade : AutoborrowingInputTerminalFacade
         {
             private readonly VariableSet _variableSet;
             private readonly InputReferenceMutability _mutability;
@@ -213,16 +261,22 @@ namespace Rebar.Compiler
 
             public override VariableReference TrueVariable { get; }
 
-            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+            public override void AddPostBorrowCoercion(ref Terminal inputTerminal, out VariableReference borrowVariable)
             {
-                FacadeVariable.MergeInto(wireFacadeVariable);
+                borrowVariable = inputTerminal.GetTrueVariable();
+            }
 
-                TypeVariableSet typeVariableSet = _variableSet.TypeVariableSet;
-                TypeVariableReference other = wireFacadeVariable.TypeVariableReference;
-                TypeVariableReference u, l;
+            protected override TypeVariableReference ComputeTypeToUnifyWith(VariableReference inputFacadeVariable, out bool setExpectedMutable)
+            {
+                TypeVariableReference other = inputFacadeVariable.TypeVariableReference;
+                TypeVariableReference u, otherReferenceLifetime;
                 bool otherIsMutableReference;
-                bool otherIsReference = typeVariableSet.TryDecomposeReferenceType(other, out u, out l, out otherIsMutableReference);
+                bool otherIsReference = TypeVariableSet.TryDecomposeReferenceType(other, out u, out otherReferenceLifetime, out otherIsMutableReference);
                 TypeVariableReference underlyingType = otherIsReference ? u : other;
+                bool mutable = otherIsReference ? otherIsMutableReference : inputFacadeVariable.Mutable;
+
+                TypeVariableReference typeToUnifyWith = default(TypeVariableReference);
+                setExpectedMutable = false;
                 switch (_mutability)
                 {
                     case InputReferenceMutability.RequireMutable:
@@ -231,24 +285,14 @@ namespace Rebar.Compiler
                             if (!otherIsReference)
                             {
                                 _group.SetBorrowRequired(true);
-                                lifetimeType = typeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);                                
+                                lifetimeType = TypeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
                             }
                             else
                             {
-                                lifetimeType = l;
+                                lifetimeType = otherReferenceLifetime;
                             }
-                            TypeVariableReference mutableReference = typeVariableSet.CreateReferenceToReferenceType(true, underlyingType, lifetimeType);
-                            ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
-                                Terminal,
-                                TrueVariable.TypeVariableReference,
-                                mutableReference);
-                            bool mutable = otherIsReference ? otherIsMutableReference : wireFacadeVariable.Mutable;
-                            if (!mutable)
-                            {
-                                unificationResult.SetExpectedMutable();
-                            }
-                            typeVariableSet.Unify(TrueVariable.TypeVariableReference, mutableReference, unificationResult);
-                            // TODO: after unifying these two, might be good to remove mutRef--I guess by merging?
+                            typeToUnifyWith = TypeVariableSet.CreateReferenceToReferenceType(true, underlyingType, lifetimeType);
+                            setExpectedMutable = !mutable;
                             break;
                         }
                     case InputReferenceMutability.AllowImmutable:
@@ -257,20 +301,14 @@ namespace Rebar.Compiler
                             TypeVariableReference lifetimeType;
                             if (needsBorrow)
                             {
-                                lifetimeType = typeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
+                                lifetimeType = TypeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
                                 _group.SetBorrowRequired(false);
                             }
                             else
                             {
-                                lifetimeType = l;
+                                lifetimeType = otherReferenceLifetime;
                             }
-                            TypeVariableReference immutableReference = typeVariableSet.CreateReferenceToReferenceType(false, underlyingType, lifetimeType);
-                            ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
-                                Terminal,
-                                TrueVariable.TypeVariableReference,
-                                immutableReference);
-                            typeVariableSet.Unify(TrueVariable.TypeVariableReference, immutableReference, unificationResult);
-                            // TODO: after unifying these two, might be good to remove immRef--I guess by merging?
+                            typeToUnifyWith = TypeVariableSet.CreateReferenceToReferenceType(false, underlyingType, lifetimeType);
                             break;
                         }
                     case InputReferenceMutability.Polymorphic:
@@ -279,27 +317,117 @@ namespace Rebar.Compiler
                             if (!otherIsReference)
                             {
                                 _group.SetBorrowRequired(false /* TODO depends on current state and input mutability */);
-                                lifetimeType = typeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
+                                lifetimeType = TypeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
                             }
                             else
                             {
                                 // TODO: if TrueVariable.TypeVariableReference is already known to be immutable and
                                 // wire reference is mutable, then we need a borrow
-                                lifetimeType = l;
+                                lifetimeType = otherReferenceLifetime;
                             }
-                            bool mutable = otherIsReference ? otherIsMutableReference : wireFacadeVariable.Mutable;
-                            TypeVariableReference reference = typeVariableSet.CreateReferenceToReferenceType(mutable, underlyingType, lifetimeType);
-                            ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
-                                Terminal,
-                                TrueVariable.TypeVariableReference,
-                                reference);
-                            typeVariableSet.Unify(TrueVariable.TypeVariableReference, reference, unificationResult);
+                            typeToUnifyWith = TypeVariableSet.CreateReferenceToReferenceType(mutable, underlyingType, lifetimeType);
                             break;
                         }
                 }
+                return typeToUnifyWith;
             }
         }
         
+        private class StringSliceReferenceInputTerminalFacade : AutoborrowingInputTerminalFacade
+        {
+            private readonly VariableSet _variableSet;
+            private readonly ReferenceInputTerminalLifetimeGroup _group;
+            private bool _stringToSliceNeeded = false;
+
+            public StringSliceReferenceInputTerminalFacade(
+                Terminal terminal,
+                ReferenceInputTerminalLifetimeGroup group,
+                TypeVariableReference referenceTypeReference)
+                : base(terminal)
+            {
+                _group = group;
+                _variableSet = terminal.GetVariableSet();
+                FacadeVariable = _variableSet.CreateNewVariable(default(TypeVariableReference));
+                TrueVariable = _variableSet.CreateNewVariable(referenceTypeReference);
+            }
+
+            public override VariableReference FacadeVariable { get; }
+
+            public override VariableReference TrueVariable { get; }
+
+            public override void AddPostBorrowCoercion(ref Terminal inputTerminal, out VariableReference borrowVariable)
+            {
+                borrowVariable = inputTerminal.GetTrueVariable();
+                if (_stringToSliceNeeded)
+                {
+                    InsertStringToSliceAheadOfTerminal(inputTerminal, out borrowVariable, out inputTerminal);
+                }
+            }
+
+            private void InsertStringToSliceAheadOfTerminal(Terminal sliceReceiver, out VariableReference stringReferenceVariable, out Terminal stringReferenceTerminal)
+            {
+                FunctionalNode stringToSlice = new FunctionalNode(sliceReceiver.ParentDiagram, Signatures.StringToSliceType);
+                Terminal stringToSliceInput = stringToSlice.InputTerminals[0],
+                    stringToSliceOutput = stringToSlice.OutputTerminals[0];
+                VariableReference sliceReceiverTrueVariable = sliceReceiver.GetTrueVariable();
+
+                TypeVariableSet typeVariableSet = stringToSliceInput.GetTypeVariableSet();
+                TypeVariableReference stringSliceReferenceType = sliceReceiverTrueVariable.TypeVariableReference;
+                TypeVariableReference u, lifetime;
+                bool m;
+                typeVariableSet.TryDecomposeReferenceType(stringSliceReferenceType, out u, out lifetime, out m);
+                TypeVariableReference stringReferenceType = typeVariableSet.CreateReferenceToReferenceType(
+                    false,
+                    typeVariableSet.CreateReferenceToLiteralType(PFTypes.String),
+                    lifetime);
+
+                AutoBorrowNodeFacade stringToSliceFacade = AutoBorrowNodeFacade.GetNodeFacade(stringToSlice);
+                stringToSliceFacade[stringToSliceInput] = new SimpleTerminalFacade(stringToSliceInput, stringReferenceType);
+                stringToSliceFacade[stringToSliceOutput] = new SimpleTerminalFacade(stringToSliceOutput, default(TypeVariableReference));
+
+                sliceReceiver.ConnectedTerminal.ConnectTo(stringToSliceInput);
+                stringToSliceOutput.WireTogether(sliceReceiver, SourceModelIdSource.NoSourceModelId);
+
+                stringToSliceOutput.GetFacadeVariable().MergeInto(sliceReceiverTrueVariable);
+                stringReferenceVariable = stringToSliceInput.GetFacadeVariable();
+                stringReferenceTerminal = stringToSliceInput;
+            }
+
+            protected override TypeVariableReference ComputeTypeToUnifyWith(VariableReference inputFacadeVariable, out bool setExpectedMutable)
+            {
+                setExpectedMutable = false;
+                TypeVariableReference other = inputFacadeVariable.TypeVariableReference;
+                TypeVariableReference u, l;
+                bool otherIsMutableReference;
+                bool otherIsReference = TypeVariableSet.TryDecomposeReferenceType(other, out u, out l, out otherIsMutableReference);
+                TypeVariableReference underlyingType = otherIsReference ? u : other;
+
+                NIType literalType;
+                bool underlyingTypeIsLiteral = TypeVariableSet.TryGetLiteralType(underlyingType, out literalType);
+                bool inputCoercesToStringSlice = underlyingTypeIsLiteral
+                    && (literalType == PFTypes.String || literalType == DataTypes.StringSliceType);
+                bool needsBorrow = !otherIsReference || !underlyingTypeIsLiteral || literalType != DataTypes.StringSliceType;
+                TypeVariableReference lifetimeType = otherIsReference
+                    ? l
+                    : TypeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
+
+                if (needsBorrow)
+                {
+                    _stringToSliceNeeded = true;
+                    _group.SetBorrowRequired(false);
+                }
+                // If the input is allowed to coerce to a str, we can unify with str;
+                // otherwise, unify with the underlying type to get a type mismatch.
+                TypeVariableReference toUnifyUnderlyingType = inputCoercesToStringSlice
+                    ? TypeVariableSet.CreateReferenceToLiteralType(DataTypes.StringSliceType)
+                    : underlyingType;
+                return TypeVariableSet.CreateReferenceToReferenceType(
+                    false,
+                    toUnifyUnderlyingType,
+                    lifetimeType);
+            }
+        }
+
         /// <summary>
         /// <see cref="TerminalFacade"/> implementation for output terminals that will terminate the lifetime started by
         /// a related auto-borrowed input terminal. Its variables are identical to the corresponding variables of the related input.

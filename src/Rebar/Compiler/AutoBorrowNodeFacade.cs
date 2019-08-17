@@ -71,9 +71,9 @@ namespace Rebar.Compiler
             DoForEachLifetimeGroup(l => l.FinalizeAutoBorrows());
         }
 
-        public void CreateBorrowAndTerminateLifetimeNodes()
+        public void CreateBorrowAndTerminateLifetimeNodes(LifetimeVariableAssociation lifetimeVariableAssociation)
         {
-            DoForEachLifetimeGroup(l => l.CreateBorrowAndTerminateLifetimeNodes());
+            DoForEachLifetimeGroup(l => l.CreateBorrowAndTerminateLifetimeNodes(lifetimeVariableAssociation));
         }
     }
 }

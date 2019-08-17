@@ -80,4 +80,14 @@ namespace Rebar.Design
         /// <inheritdoc />
         protected override string ResourcePath => "Rebar.Resources.StringPalette.xml";
     }
+
+    [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
+    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.FileHandleDataType)]
+    public class FileDiagramPaletteLoader : ResourcePaletteLoader
+    {
+        /// <inheritdoc />
+        protected override string ResourcePath => "Rebar.Resources.FilePalette.xml";
+    }
 }

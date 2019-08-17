@@ -247,6 +247,23 @@ namespace Rebar.SourceModel
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
     }
 
+    public class Modulus : PureBinaryPrimitive
+    {
+        public Modulus() : base(BinaryPrimitiveOps.Modulus) { }
+
+        private const string ElementName = "Modulus";
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Modulus CreateModulus(IElementCreateInfo elementCreateInfo)
+        {
+            var modulus = new Modulus();
+            modulus.Init(elementCreateInfo);
+            return modulus;
+        }
+
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+    }
+
     public class And : PureBinaryPrimitive
     {
         public And() : base(BinaryPrimitiveOps.And) { }
@@ -875,6 +892,82 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.CellDataType };
+    }
+
+    #endregion
+
+    #region FileHandle
+
+    public class OpenFileHandle : FunctionalNode
+    {
+        private const string ElementName = "OpenFileHandle";
+
+        protected OpenFileHandle()
+            : base(Signatures.OpenFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static OpenFileHandle CreateOpenFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var openFileHandle = new OpenFileHandle();
+            openFileHandle.Init(elementCreateInfo);
+            return openFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
+    public class ReadLineFromFileHandle : FunctionalNode
+    {
+        private const string ElementName = "ReadLineFromFileHandle";
+
+        protected ReadLineFromFileHandle()
+            : base(Signatures.ReadLineFromFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static ReadLineFromFileHandle CreateReadLineFromFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var readLineFromFileHandle = new ReadLineFromFileHandle();
+            readLineFromFileHandle.Init(elementCreateInfo);
+            return readLineFromFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
+    public class WriteStringToFileHandle : FunctionalNode
+    {
+        private const string ElementName = "WriteStringToFileHandle";
+
+        protected WriteStringToFileHandle()
+            : base(Signatures.WriteStringToFileHandleType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static WriteStringToFileHandle CreateWriteStringToFileHandle(IElementCreateInfo elementCreateInfo)
+        {
+            var writeStringToFileHandle = new WriteStringToFileHandle();
+            writeStringToFileHandle.Init(elementCreateInfo);
+            return writeStringToFileHandle;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
     }
 
     #endregion

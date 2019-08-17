@@ -133,6 +133,8 @@ namespace Rebar.RebarTarget
 
         internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
         {
+            ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
+
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
             LLVM.Allocator allocator = new LLVM.Allocator(valueSources);
             allocator.Execute(dfirRoot, cancellationToken);

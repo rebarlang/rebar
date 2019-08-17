@@ -163,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unit\Compiler\AutomaticNodeInsertionTests.cs" />
     <Compile Include="Unit\Compiler\BorrowNodeTests.cs" />
     <Compile Include="Unit\Compiler\BorrowTunnelTests.cs" />
     <Compile Include="Unit\Compiler\CompilerTestBase.cs" />
@@ -180,6 +181,7 @@
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
     <Compile Include="Unit\Execution\BooleanExecutionTest.cs" />
     <Compile Include="Unit\Execution\ExecutionTestBase.cs" />
+    <Compile Include="Unit\Execution\FileExecutionTests.cs" />
     <Compile Include="Unit\Execution\IteratorExecutionTests.cs" />
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
     <Compile Include="Unit\Execution\NumericExecutionTests.cs" />

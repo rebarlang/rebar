@@ -28,6 +28,7 @@ namespace Rebar.RebarTarget.LLVM
             };
             LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_options);
 
+            AddSymbolForDelegate("output_bool", _outputBool);
             AddSymbolForDelegate("output_int8", _outputInt8);
             AddSymbolForDelegate("output_uint8", _outputUInt8);
             AddSymbolForDelegate("output_int16", _outputInt16);
@@ -39,8 +40,11 @@ namespace Rebar.RebarTarget.LLVM
             AddSymbolForDelegate("output_string", _outputString);
 
             IntPtr kernel32Instance = LoadLibrary("kernel32.dll");
-            IntPtr copyMemoryProc = GetProcAddress(kernel32Instance, "RtlCopyMemory");
-            LLVMSharp.LLVM.AddSymbol("CopyMemory", copyMemoryProc);
+            LLVMSharp.LLVM.AddSymbol("CopyMemory", GetProcAddress(kernel32Instance, "RtlCopyMemory"));
+            LLVMSharp.LLVM.AddSymbol("CloseHandle", GetProcAddress(kernel32Instance, "CloseHandle"));
+            LLVMSharp.LLVM.AddSymbol("CreateFileA", GetProcAddress(kernel32Instance, "CreateFileA"));
+            LLVMSharp.LLVM.AddSymbol("ReadFile", GetProcAddress(kernel32Instance, "ReadFile"));
+            LLVMSharp.LLVM.AddSymbol("WriteFile", GetProcAddress(kernel32Instance, "WriteFile"));
         }
 
         private static void AddSymbolForDelegate<TDelegate>(string symbolName, TDelegate del)
@@ -54,6 +58,9 @@ namespace Rebar.RebarTarget.LLVM
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void OutputBoolDelegate(bool v);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void OutputInt8Delegate(sbyte v);
@@ -84,6 +91,13 @@ namespace Rebar.RebarTarget.LLVM
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ExecFunc();
+
+        private static void OutputBool(bool value)
+        {
+            _runtimeServices.Output(value ? "true" : "false");
+        }
+
+        private static OutputBoolDelegate _outputBool = OutputBool;
 
         private static void OutputInt8(sbyte value)
         {
@@ -161,6 +175,7 @@ namespace Rebar.RebarTarget.LLVM
             _globalModule = new Module("global");
             _globalModule.LinkInModule(CommonModules.StringModule.Clone());
             _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
+            _globalModule.LinkInModule(CommonModules.FileModule.Clone());
 
             string error;
             LLVMBool Success = new LLVMBool(0);

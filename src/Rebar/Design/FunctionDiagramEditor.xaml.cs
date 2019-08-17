@@ -8,15 +8,6 @@ using NationalInstruments.SourceModel;
 
 namespace Rebar.Design
 {
-    public class FunctionDiagramEditorInfo : DocumentEditControlInfo<FunctionDiagramEditor>
-    {
-        public FunctionDiagramEditorInfo(string uniqueId, FunctionDocument document)
-            : base(uniqueId, document, document.Function.Diagram, "editor", FunctionDiagramPaletteLoader.DiagramPaletteIdentifier, string.Empty, string.Empty)
-        {
-            // ClipboardDataFormat = SketchUtilities.SketchClipboardDataFormat;
-        }
-    }
-
     /// <summary>
     /// Interaction logic for FunctionDiagramEditor.xaml
     /// </summary>

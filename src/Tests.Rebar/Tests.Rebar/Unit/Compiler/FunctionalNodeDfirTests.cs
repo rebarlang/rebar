@@ -470,14 +470,17 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void FunctionNodeWithConstrainedGenericInputParameterAndDisallowedTypeWired_ValidateVariableUsages_ErrorCreated()
         {
-            NIType signatureType = Signatures.OutputType;
+            NIType disallowedType = PFTypes.Boolean.CreateLockingCell();
+            Assert.IsFalse(disallowedType.TypeHasDisplayTrait());
             DfirRoot dfirRoot = DfirRoot.Create();
-            FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
+            FunctionalNode output = new FunctionalNode(dfirRoot.BlockDiagram, Signatures.OutputType);
+            FunctionalNode createLockingCell = new FunctionalNode(dfirRoot.BlockDiagram, Signatures.CreateLockingCellType);
+            Wire.Create(dfirRoot.BlockDiagram, createLockingCell.OutputTerminals[0], output.InputTerminals[0]);
+            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], PFTypes.Boolean, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
-            Assert.IsTrue(functionalNode.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
+            Assert.IsTrue(output.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
         }
 
         #endregion

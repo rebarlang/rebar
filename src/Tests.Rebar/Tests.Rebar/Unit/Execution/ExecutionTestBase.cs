@@ -27,6 +27,11 @@ namespace Tests.Rebar.Unit.Execution
             return constant;
         }
 
+        protected Constant ConnectStringConstantToInputTerminal(Terminal inputTerminal, string value, bool mutable = false)
+        {
+            return ConnectConstantToInputTerminal(inputTerminal, DataTypes.StringSliceType.CreateImmutableReference(), value, mutable);
+        }
+
         internal FunctionalNode ConnectInspectToOutputTerminal(Terminal outputTerminal)
         {
             FunctionalNode inspect = new FunctionalNode(outputTerminal.ParentDiagram, Signatures.InspectType);

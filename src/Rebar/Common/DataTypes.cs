@@ -28,6 +28,8 @@ namespace Rebar.Common
 
         public static NIType StringSliceType { get; }
 
+        public static NIType FileHandleType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -79,6 +81,10 @@ namespace Rebar.Common
             vectorGenericTypeBuilder.MakeGenericParameters("T");
             vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReferece");
             VectorGenericType = vectorGenericTypeBuilder.CreateType();
+
+            var fileHandleTypeBuilder = PFTypes.Factory.DefineValueClass("FileHandle");
+            fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            FileHandleType = fileHandleTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -368,7 +374,12 @@ namespace Rebar.Common
             {
                 return RebarFeatureToggles.IsStringDataTypeEnabled;
             }
-            return type.IsSupportedIntegerType();
+            return type.IsSupportedIntegerType() || type.IsBoolean();
+        }
+
+        internal static bool TypeHasDropTrait(this NIType type)
+        {
+            return type == PFTypes.String || type == FileHandleType;
         }
     }
 }

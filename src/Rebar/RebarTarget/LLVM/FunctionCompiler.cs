@@ -33,6 +33,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["Subtract"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSub(left, right, "subtract"));
             _functionalNodeCompilers["Multiply"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateMul(left, right, "multiply"));
             _functionalNodeCompilers["Divide"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSDiv(left, right, "divide"));
+            _functionalNodeCompilers["Modulus"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateSRem(left, right, "modulus"));
             _functionalNodeCompilers["Increment"] = CreatePureUnaryOperationCompiler((compiler, value) => compiler._builder.CreateAdd(value, 1.AsLLVMValue(), "increment"));
             _functionalNodeCompilers["And"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateAnd(left, right, "and"));
             _functionalNodeCompilers["Or"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler._builder.CreateOr(left, right, "or"));
@@ -71,6 +72,10 @@ namespace Rebar.RebarTarget.LLVM
 
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
             _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
+
+            _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
+            _functionalNodeCompilers["ReadLineFromFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.ReadLineFromFileHandleName);
+            _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
         }
 
         #region Functional node compilers
@@ -99,6 +104,12 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource inputValueSource = compiler.GetTerminalValueSource(outputNode.InputTerminals[0]);
             VariableReference input = outputNode.InputTerminals[0].GetTrueVariable();
             NIType referentType = input.Type.GetReferentType();
+            if (referentType.IsBoolean())
+            {
+                LLVMValueRef value = inputValueSource.GetDeferencedValue(compiler._builder);
+                compiler._builder.CreateCall(compiler._commonExternalFunctions.OutputBoolFunction, new LLVMValueRef[] { value }, string.Empty);
+                return;
+            }
             if (referentType.IsInteger())
             {
                 LLVMValueRef outputFunction;
@@ -522,7 +533,57 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            throw new NotImplementedException();
+            VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
+            var inputAllocation = (LocalAllocationValueSource)_variableValues[input];
+            NIType inputType = input.Type;
+            if (inputType.TypeHasDropTrait())
+            {
+                CreateDropCall(inputType, inputAllocation.AllocationPointer);
+                return true;
+            }
+
+            NIType innerType;
+            if (inputType.TryDestructureVectorType(out innerType))
+            {
+                // TODO
+                return true;
+            }
+            if (inputType.TryDestructureOptionType(out innerType) && innerType.TypeHasDropTrait())
+            {
+                // TODO: turn this into a monomorphized generic function call
+                LLVMValueRef isSomePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 0u, "isSomePtr"),
+                    isSome = _builder.CreateLoad(isSomePtr, "isSome");
+                LLVMBasicBlockRef optionDropIsSomeBlock = _topLevelFunction.AppendBasicBlock("optionDropIsSome"),
+                    optionDropEndBlock = _topLevelFunction.AppendBasicBlock("optionDropEnd");
+                _builder.CreateCondBr(isSome, optionDropIsSomeBlock, optionDropEndBlock);
+
+                _builder.PositionBuilderAtEnd(optionDropIsSomeBlock);
+                LLVMValueRef innerValuePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 1u, "innerValuePtr");
+                CreateDropCall(innerType, innerValuePtr);
+                _builder.CreateBr(optionDropEndBlock);
+
+                _builder.PositionBuilderAtEnd(optionDropEndBlock);
+                return true;
+            }
+            return true;
+        }
+
+        private void CreateDropCall(NIType droppedValueType, LLVMValueRef droppedValuePtr)
+        {
+            LLVMValueRef dropFunction;
+            if (droppedValueType == PFTypes.String)
+            {
+                dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);                
+            }
+            else if (droppedValueType == DataTypes.FileHandleType)
+            {
+                dropFunction = GetImportedCommonFunction(CommonModules.DropFileHandleName);
+            }
+            else
+            {
+                throw new InvalidOperationException("Drop function not found for type: " + droppedValueType);
+            }
+            _builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
