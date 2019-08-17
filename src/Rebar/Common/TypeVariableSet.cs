@@ -680,27 +680,6 @@ namespace Rebar.Common
         }
     }
 
-    internal class BoundedByLifetimeConstraint : Constraint
-    {
-        private readonly TypeVariableReference _boundingLifetimeVariable;
-
-        public BoundedByLifetimeConstraint(TypeVariableReference boundingLifetimeVariable)
-        {
-            _boundingLifetimeVariable = boundingLifetimeVariable;
-        }
-
-        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
-        {
-            TypeVariableReference underlyingType, l;
-            bool mutable;
-            if (type.TypeVariableSet.TryDecomposeReferenceType(type, out underlyingType, out l, out mutable))
-            {
-                TypeVariableReference referenceBound = type.TypeVariableSet.CreateReferenceToReferenceType(mutable, underlyingType, _boundingLifetimeVariable);
-                type.TypeVariableSet.Unify(type, referenceBound, unificationResult);
-            }
-        }
-    }
-
     internal class OutlastsLifetimeGraphConstraint : Constraint
     {
         private readonly LifetimeGraphIdentifier _lifetimeGraph;
