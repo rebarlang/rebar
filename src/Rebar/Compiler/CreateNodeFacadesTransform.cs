@@ -291,8 +291,7 @@ namespace Rebar.Compiler
             LifetimeTypeVariableGroup lifetimeTypeVariableGroup = LifetimeTypeVariableGroup.CreateFromTerminal(iteratorInput);
 
             TypeVariableReference loopLifetimeReference = _typeVariableSet.CreateReferenceToLifetimeType(itemOutput.GetDiagramLifetime());
-            TypeVariableReference itemTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(
-                new Constraint[] { new BoundedByLifetimeConstraint(loopLifetimeReference) });
+            TypeVariableReference itemTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
             TypeVariableReference implementsIteratorTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(
                 new Constraint[] { new IteratorTraitConstraint(itemTypeVariable) });
             _nodeFacade

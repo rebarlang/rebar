@@ -663,40 +663,26 @@ namespace Rebar.Common
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
             NIType implementedIteratorInterface;
+            // TODO: using NITypes here to destructure the iterator interface and reconstruct a TypeReference for the item type
+            // is an incomplete solution; it will not work for item types that have bounded lifetimes. Also, currently there's
+            // no way to create TypeReferences for non-reference types that have bounded lifetimes, as an iterator implementation
+            // whose items are references will necessarily have.
+            //
+            // What is needed is a way of defining a generic parameterized TypeVariableReference, and then a reference to a specialization of that type.
+            // Then, as long as the parameterized type can include an interface implementation, we should be able to get the specialized
+            // interface implementation from the specialization.
             if (type.RenderNIType().TryGetImplementedIteratorInterface(out implementedIteratorInterface))
             {
                 NIType itemType;
                 implementedIteratorInterface.TryDestructureIteratorType(out itemType);
                 TypeVariableReference itemTypeReference = type.TypeVariableSet.CreateTypeVariableReferenceFromNIType(
                     itemType,
-                    // TODO
                     new Dictionary<NIType, TypeVariableReference>());
                 type.TypeVariableSet.Unify(_itemTypeVariable, itemTypeReference, unificationResult);
             }
             else
             {
                 unificationResult.AddFailedTypeConstraint(this);
-            }
-        }
-    }
-
-    internal class BoundedByLifetimeConstraint : Constraint
-    {
-        private readonly TypeVariableReference _boundingLifetimeVariable;
-
-        public BoundedByLifetimeConstraint(TypeVariableReference boundingLifetimeVariable)
-        {
-            _boundingLifetimeVariable = boundingLifetimeVariable;
-        }
-
-        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
-        {
-            TypeVariableReference underlyingType, l;
-            bool mutable;
-            if (type.TypeVariableSet.TryDecomposeReferenceType(type, out underlyingType, out l, out mutable))
-            {
-                TypeVariableReference referenceBound = type.TypeVariableSet.CreateReferenceToReferenceType(mutable, underlyingType, _boundingLifetimeVariable);
-                type.TypeVariableSet.Unify(type, referenceBound, unificationResult);
             }
         }
     }
