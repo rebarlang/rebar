@@ -172,6 +172,11 @@ namespace Rebar.Common
             }
             return _diagramGraphs.First(pair => pair.Value == boundedLifetime.DiagramGraph).Key;
         }
+
+        public bool IsDiagramLifetimeOfAnyLifetimeGraph(Lifetime lifetime)
+        {
+            return _diagramGraphs.Any(pair => pair.Value.DiagramLifetime == lifetime);
+        }
     }
 
     internal struct LifetimeGraphIdentifier

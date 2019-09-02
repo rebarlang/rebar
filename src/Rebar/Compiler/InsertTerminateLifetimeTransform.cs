@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -23,6 +24,14 @@ namespace Rebar.Compiler
             BoundedLifetimeLiveVariableSet boundedLifetimeLiveVariableSet;
             while (_lifetimeVariableAssociation.TryGetBoundedLifetimeWithLiveVariables(out boundedLifetimeLiveVariableSet))
             {
+                if (lifetimeGraphTree.IsDiagramLifetimeOfAnyLifetimeGraph(boundedLifetimeLiveVariableSet.Lifetime))
+                {
+                    // Since we assume there are no semantic errors at this point, just mark any remaining live variables
+                    // in a diagram lifetime as consumed.
+                    boundedLifetimeLiveVariableSet.LiveVariables.Select(l => l.Variable).ForEach(_lifetimeVariableAssociation.MarkVariableConsumed);
+                    continue;
+                }
+
                 int inputVariableCount = boundedLifetimeLiveVariableSet.LiveVariables.Count();
                 IEnumerable<VariableReference> interruptedVariables = _lifetimeVariableAssociation.GetVariablesInterruptedByLifetime(boundedLifetimeLiveVariableSet.Lifetime);
                 int outputVariableCount = interruptedVariables.Count();

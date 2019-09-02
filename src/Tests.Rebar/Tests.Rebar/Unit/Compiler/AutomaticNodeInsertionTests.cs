@@ -155,6 +155,36 @@ namespace Tests.Rebar.Unit.Compiler
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
         }
 
+        [TestMethod]
+        public void BorrowTunnelWithUnwiredOutput_AutomaticNodeInsertion_NoTerminateLifetimeInserted()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Immutable);
+            FunctionalNode outputStringOwner = new FunctionalNode(function.BlockDiagram, _outputOwnerStringSignature);
+            Wire.Create(function.BlockDiagram, outputStringOwner.OutputTerminals[0], borrowTunnel.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            Assert.IsFalse(frame.Diagram.Nodes.OfType<TerminateLifetimeNode>().Any());
+        }
+
+        [TestMethod]
+        public void BorrowTunnelIntoReferenceTransformer_AutomaticNodeInsertion_NoTerminateLifetimeInserted()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Immutable);
+            FunctionalNode outputStringOwner = new FunctionalNode(function.BlockDiagram, _outputOwnerStringSignature);
+            Wire.Create(function.BlockDiagram, outputStringOwner.OutputTerminals[0], borrowTunnel.InputTerminals[0]);
+            FunctionalNode stringToSlice = new FunctionalNode(frame.Diagram, Signatures.StringToSliceType);
+            Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], stringToSlice.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            Assert.IsFalse(frame.Diagram.Nodes.OfType<TerminateLifetimeNode>().Any());
+        }
+
         #region StringToSlice insertion
 
         [TestMethod]

@@ -146,8 +146,8 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)
         {
-            NationalInstruments.Dfir.BorderNode beginLifetimeTunnel = (NationalInstruments.Dfir.BorderNode)terminateLifetimeTunnel.BeginLifetimeTunnel;
-            MarkTrueVariableOfTerminalConsumed(beginLifetimeTunnel.OutputTerminals[0]);
+            // The variables in the terminated lifetime will be marked consumed in InsertTerminateLifetimeTransform, assuming
+            // there are no semantic errors (like trying to use one of them outside the lifetime structure).
             MarkFacadeVariableOfTerminalLive(terminateLifetimeTunnel.OutputTerminals[0]);
             return true;
         }
