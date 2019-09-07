@@ -39,7 +39,7 @@ namespace Rebar.Compiler
                     // Unify node input terminal with its connected source
                     ? connectedWireTerminal.GetFacadeVariable()
                     // Unify node input with immutable Void type
-                    : nodeTerminal.GetVariableSet().CreateNewVariableForUnwiredTerminal();
+                    : nodeTerminal.CreateNewVariableForUnwiredTerminal();
                 nodeFacade[nodeTerminal].UnifyWithConnectedWireTypeAsNodeInput(unifyWithVariable, _typeUnificationResults);
             }
         }

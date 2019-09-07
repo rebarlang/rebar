@@ -14,9 +14,15 @@ namespace Rebar.Compiler
         private AutoBorrowNodeFacade _nodeFacade;
         private TypeVariableSet _typeVariableSet;
 
+        protected override void VisitDfirRoot(DfirRoot dfirRoot)
+        {
+            base.VisitDfirRoot(dfirRoot);
+            _typeVariableSet = dfirRoot.GetTypeVariableSet();
+            dfirRoot.SetVariableSet(new VariableSet(_typeVariableSet));
+        }
+
         protected override void VisitDiagram(Diagram diagram)
         {
-            _typeVariableSet = _typeVariableSet ?? diagram.DfirRoot.GetTypeVariableSet();
             LifetimeGraphIdentifier diagramGraphIdentifier = new LifetimeGraphIdentifier(diagram.UniqueId);
             diagram.SetLifetimeGraphIdentifier(diagramGraphIdentifier);
             Diagram parentDiagram = diagram.ParentNode?.ParentDiagram;
@@ -24,7 +30,6 @@ namespace Rebar.Compiler
                 ? new LifetimeGraphIdentifier(parentDiagram.UniqueId) 
                 : default(LifetimeGraphIdentifier);
             diagram.DfirRoot.GetLifetimeGraphTree().EstablishLifetimeGraph(diagramGraphIdentifier, parentGraphIdentifier);
-            diagram.SetVariableSet(new VariableSet(_typeVariableSet));
         }
 
         protected override void VisitWire(Wire wire)
@@ -69,10 +74,10 @@ namespace Rebar.Compiler
             private readonly TypeVariableSet _typeVariableSet;
             private readonly List<VariableReference> _interruptedVariables = new List<VariableReference>();
 
-            private LifetimeTypeVariableGroup(Diagram diagram, VariableSet variableSet)
+            private LifetimeTypeVariableGroup(Diagram diagram)
             {                
-                _variableSet = variableSet;
-                _typeVariableSet = variableSet.TypeVariableSet;
+                _variableSet = diagram.GetVariableSet();
+                _typeVariableSet = _variableSet.TypeVariableSet;
                 LifetimeGraphTree lifetimeGraphTree = diagram.DfirRoot.GetLifetimeGraphTree();
                 LifetimeGraphIdentifier diagramGraphIdentifier = diagram.GetLifetimeGraphIdentifier();
                 LazyNewLifetime = new Lazy<Lifetime>(() => lifetimeGraphTree.CreateLifetimeThatIsBoundedByLifetimeGraph(diagramGraphIdentifier));
@@ -81,12 +86,12 @@ namespace Rebar.Compiler
 
             public static LifetimeTypeVariableGroup CreateFromTerminal(Terminal terminal)
             {
-                return new LifetimeTypeVariableGroup(terminal.ParentDiagram, terminal.ParentDiagram.GetVariableSet());
+                return new LifetimeTypeVariableGroup(terminal.ParentDiagram);
             }
 
             public static LifetimeTypeVariableGroup CreateFromNode(Node node)
             {
-                return new LifetimeTypeVariableGroup(node.ParentDiagram, node.ParentDiagram.GetVariableSet());
+                return new LifetimeTypeVariableGroup(node.ParentDiagram);
             }
 
             public Lazy<Lifetime> LazyNewLifetime { get; }
@@ -128,7 +133,6 @@ namespace Rebar.Compiler
             if (explicitBorrowNode.AlwaysCreateReference && explicitBorrowNode.AlwaysBeginLifetime)
             {
                 bool mutable = explicitBorrowNode.BorrowMode == BorrowMode.Mutable;
-                VariableSet variableSet = explicitBorrowNode.ParentDiagram.GetVariableSet();
                 Lifetime borrowLifetime = explicitBorrowNode.OutputTerminals.First().DefineLifetimeThatIsBoundedByDiagram();
                 TypeVariableReference borrowLifetimeType = _typeVariableSet.CreateReferenceToLifetimeType(borrowLifetime);
 

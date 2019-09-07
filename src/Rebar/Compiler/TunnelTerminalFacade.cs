@@ -13,7 +13,7 @@ namespace Rebar.Compiler
             LifetimeGraphIdentifier innerDiagramLifetimeGraph = Terminal.ParentDiagram.GetLifetimeGraphIdentifier();
             var constraint = new OutlastsLifetimeGraphConstraint(innerDiagramLifetimeGraph);
             TypeVariableReference inputTypeReference = terminal.GetTypeVariableSet().CreateReferenceToNewTypeVariable(new List<Constraint>() { constraint });
-            TrueVariable = terminal.GetVariableSet().CreateNewVariable(inputTypeReference);
+            TrueVariable = terminal.CreateNewVariable(inputTypeReference);
             _outputTerminalFacade = outputTerminalFacade;
         }
 

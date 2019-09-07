@@ -50,6 +50,8 @@ namespace Rebar.Common
 
         public int Id => _variableSet?.GetId(this) ?? 0;
 
+        public int DiagramId => _variableSet?.GetDiagramId(this) ?? 0;
+
         public bool Mutable => _variableSet?.GetMutable(this) ?? false;
 
         public NIType Type => TypeVariableReference.RenderNIType();
@@ -58,9 +60,21 @@ namespace Rebar.Common
 
         public void MergeInto(VariableReference intoVariable)
         {
+            if (_variableSet == null)
+            {
+                throw new InvalidOperationException("This variable is invalid.");
+            }
+            if (intoVariable._variableSet == null)
+            {
+                throw new ArgumentException("Attempting to merge into an invalid variable.");
+            }
             if (intoVariable._variableSet != _variableSet)
             {
                 throw new ArgumentException("Attempting to merge into a variable in a different set.");
+            }
+            if (intoVariable.DiagramId != DiagramId)
+            {
+                throw new ArgumentException("Attempting to merge into a variable from a different diagram.");
             }
             _variableSet.MergeVariables(this, intoVariable);
         }

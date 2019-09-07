@@ -30,12 +30,15 @@ namespace Rebar.Common
 
             public TypeVariableReference TypeVariableReference { get; }
 
+            public int DiagramId { get; }
+
             public Lifetime Lifetime { get; set; }
 
-            public Variable(int id, int firstReferenceIndex, TypeVariableReference variableType, bool mutable)
+            public Variable(int id, int firstReferenceIndex, int diagramId, TypeVariableReference variableType, bool mutable)
             {
                 Id = id;
                 FirstReferenceIndex = firstReferenceIndex;
+                DiagramId = diagramId;
                 TypeVariableReference = variableType;
                 Mutable = mutable;
             }
@@ -65,11 +68,11 @@ namespace Rebar.Common
 
         public TypeVariableSet TypeVariableSet { get; }
 
-        private Variable CreateNewVariable(bool mutableVariable, int firstReferenceIndex, TypeVariableReference variableType)
+        private Variable CreateNewVariable(bool mutableVariable, int firstReferenceIndex, int diagramId, TypeVariableReference variableType)
         {
             int variableId = _currentVariableId;
             _currentVariableId++;
-            var variable = new Variable(variableId, firstReferenceIndex, variableType, mutableVariable);
+            var variable = new Variable(variableId, firstReferenceIndex, diagramId, variableType, mutableVariable);
             _variables.Add(variable);
             return variable;
         }
@@ -93,17 +96,12 @@ namespace Rebar.Common
             return new VariableReference(this, variable.FirstReferenceIndex);
         }
 
-        public VariableReference CreateNewVariable(TypeVariableReference variableType, bool mutable = false)
+        public VariableReference CreateNewVariable(int diagramId, TypeVariableReference variableType, bool mutable = false)
         {
-            int id = _currentVariableReferenceId++;
-            Variable variable = CreateNewVariable(mutable, id, variableType);
-            SetVariableAtReferenceIndex(variable, id);
-            return new VariableReference(this, id);
-        }
-
-        public VariableReference CreateNewVariableForUnwiredTerminal()
-        {
-            return CreateNewVariable(TypeVariableSet.CreateReferenceToNewTypeVariable());
+            int variableId = _currentVariableReferenceId++;
+            Variable variable = CreateNewVariable(mutable, variableId, diagramId, variableType);
+            SetVariableAtReferenceIndex(variable, variableId);
+            return new VariableReference(this, variableId);
         }
 
         public IEnumerable<VariableReference> GetUniqueVariableReferences()
@@ -125,6 +123,8 @@ namespace Rebar.Common
             }
             _variables.Remove(toMergeVariable);
         }
+
+        internal int GetDiagramId(VariableReference variableReference) => GetVariableForVariableReference(variableReference).DiagramId;
 
         internal bool GetMutable(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Mutable;
 

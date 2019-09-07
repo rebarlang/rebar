@@ -239,7 +239,6 @@ namespace Rebar.Compiler
 
         private class ReferenceInputTerminalFacade : AutoborrowingInputTerminalFacade
         {
-            private readonly VariableSet _variableSet;
             private readonly InputReferenceMutability _mutability;
             private readonly ReferenceInputTerminalLifetimeGroup _group;
 
@@ -252,9 +251,8 @@ namespace Rebar.Compiler
             {
                 _mutability = mutability;
                 _group = group;
-                _variableSet = terminal.GetVariableSet();
-                FacadeVariable = _variableSet.CreateNewVariable(default(TypeVariableReference));
-                TrueVariable = _variableSet.CreateNewVariable(referenceTypeReference);
+                FacadeVariable = terminal.CreateNewVariable();
+                TrueVariable = terminal.CreateNewVariable(referenceTypeReference);
             }
 
             public override VariableReference FacadeVariable { get; }
@@ -335,7 +333,6 @@ namespace Rebar.Compiler
         
         private class StringSliceReferenceInputTerminalFacade : AutoborrowingInputTerminalFacade
         {
-            private readonly VariableSet _variableSet;
             private readonly ReferenceInputTerminalLifetimeGroup _group;
             private bool _stringToSliceNeeded = false;
 
@@ -346,9 +343,8 @@ namespace Rebar.Compiler
                 : base(terminal)
             {
                 _group = group;
-                _variableSet = terminal.GetVariableSet();
-                FacadeVariable = _variableSet.CreateNewVariable(default(TypeVariableReference));
-                TrueVariable = _variableSet.CreateNewVariable(referenceTypeReference);
+                FacadeVariable = terminal.CreateNewVariable();
+                TrueVariable = terminal.CreateNewVariable(referenceTypeReference);
             }
 
             public override VariableReference FacadeVariable { get; }

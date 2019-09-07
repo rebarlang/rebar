@@ -13,7 +13,7 @@ namespace Rebar.Compiler
 
         public TerminateLifetimeInputTerminalFacade(Terminal terminal, TerminateLifetimeUnificationState unificationState) : base(terminal)
         {
-            TrueVariable = terminal.GetVariableSet().CreateNewVariable(default(TypeVariableReference));
+            TrueVariable = terminal.CreateNewVariable();
             _unificationState = unificationState;
         }
 
@@ -151,7 +151,7 @@ namespace Rebar.Compiler
             {
                 foreach (Terminal outputTerminal in terminateLifetimeNode.OutputTerminals)
                 {
-                    outputTerminal.GetFacadeVariable().MergeInto(outputTerminal.GetVariableSet().CreateNewVariableForUnwiredTerminal());
+                    outputTerminal.GetFacadeVariable().MergeInto(outputTerminal.CreateNewVariableForUnwiredTerminal());
                 }
             }
         }

@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Dfir;
+﻿using System;
+using NationalInstruments.Dfir;
 using Rebar.Common;
 
 namespace Rebar.Compiler
@@ -48,31 +49,30 @@ namespace Rebar.Compiler
             return null;
         }
 
-        public static TypeVariableSet GetTypeVariableSet(this Node node)
+        public static TypeVariableSet GetTypeVariableSet(this DfirElement element)
         {
-            return node.DfirRoot.GetTypeVariableSet();
+            return element.DfirRoot.GetTypeVariableSet();
         }
 
-        public static TypeVariableSet GetTypeVariableSet(this Terminal terminal)
+        public static VariableSet GetVariableSet(this DfirRoot dfirRoot)
         {
-            return terminal.DfirRoot.GetTypeVariableSet();
+            var token = dfirRoot.GetOrCreateNamedSparseAttributeToken<VariableSet>(_variableSetTokenName);
+            return token.GetAttribute(dfirRoot);
         }
 
-        public static void SetVariableSet(this Diagram diagram, VariableSet variableSet)
+        public static void SetVariableSet(this DfirRoot dfirRoot, VariableSet variableSet)
         {
-            var token = diagram.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableSet>(_variableSetTokenName);
-            diagram.SetAttribute(token, variableSet);
+            var token = dfirRoot.GetOrCreateNamedSparseAttributeToken<VariableSet>(_variableSetTokenName);
+            dfirRoot.SetAttribute(token, variableSet);
         }
 
-        public static VariableSet GetVariableSet(this Diagram diagram)
+        public static VariableSet GetVariableSet(this DfirElement dfirElement)
         {
-            var token = diagram.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableSet>(_variableSetTokenName);
-            return token.GetAttribute(diagram);
-        }
-
-        public static VariableSet GetVariableSet(this Terminal terminal)
-        {
-            return terminal.ParentDiagram.GetVariableSet();
+            if (dfirElement is BorderNode)
+            {
+                throw new ArgumentException("Cannot get a VariableSet from a BorderNode; specify a Terminal instead.");
+            }
+            return dfirElement.DfirRoot.GetVariableSet();
         }
 
         /// <summary>
@@ -98,6 +98,17 @@ namespace Rebar.Compiler
         {
             TerminalFacade terminalFacade = AutoBorrowNodeFacade.GetNodeFacade(terminal.ParentNode)[terminal];
             return terminalFacade?.FacadeVariable ?? new VariableReference();
+        }
+
+        public static VariableReference CreateNewVariable(this Terminal terminal, TypeVariableReference typeVariableReference = default(TypeVariableReference), bool mutable = false)
+        {
+            return terminal.GetVariableSet().CreateNewVariable(terminal.ParentDiagram.UniqueId, typeVariableReference, mutable);
+        }
+
+        public static VariableReference CreateNewVariableForUnwiredTerminal(this Terminal terminal)
+        {
+            VariableSet variableSet = terminal.GetVariableSet();
+            return variableSet.CreateNewVariable(terminal.ParentDiagram.UniqueId, variableSet.TypeVariableSet.CreateReferenceToNewTypeVariable());
         }
 
         public static VariableUsageValidator GetValidator(this Terminal terminal)

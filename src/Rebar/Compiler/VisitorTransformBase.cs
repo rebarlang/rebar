@@ -8,9 +8,14 @@ namespace Rebar.Compiler
     {
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
+            VisitDfirRoot(dfirRoot);
             VisitDiagram(dfirRoot.BlockDiagram);
             TraverseDiagram(dfirRoot.BlockDiagram);
             PostVisitDiagram(dfirRoot.BlockDiagram);
+        }
+
+        protected virtual void VisitDfirRoot(DfirRoot dfirRoot)
+        {
         }
 
         protected virtual void VisitDiagram(Diagram diagram)

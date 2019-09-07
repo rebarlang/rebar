@@ -26,7 +26,7 @@ namespace Rebar.Compiler
                 connectedWire.SetIsFirstVariableWire(true);
                 mutableVariable = connectedWire.GetWireBeginsMutableVariable();
             }
-            TrueVariable = terminal.GetVariableSet().CreateNewVariable(terminalTypeReference, mutableVariable);
+            TrueVariable = terminal.CreateNewVariable(terminalTypeReference, mutableVariable);
         }
 
         public override VariableReference FacadeVariable => TrueVariable;
