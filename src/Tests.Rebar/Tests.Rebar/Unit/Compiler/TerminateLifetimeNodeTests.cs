@@ -223,5 +223,36 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         #endregion
+
+        [TestMethod]
+        public void LifetimeWithLiveVariablesOnMainAndNestedDiagrams_ValidateVariableUsages_TerminateLifetimeNodeHasCorrectInputTerminalCount()
+        {
+            var signatureBuilder = PFTypes.Factory.DefineFunction("outputString");
+            Signatures.AddOutputParameter(signatureBuilder, PFTypes.String, "owner");
+            NIType outputOwnerStringSignature = signatureBuilder.CreateType();
+
+            DfirRoot function = DfirRoot.Create();
+            var outputString = new FunctionalNode(function.BlockDiagram, outputOwnerStringSignature);
+            ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
+            Wire.Create(function.BlockDiagram, outputString.OutputTerminals[0], borrow.InputTerminals[0]);
+            Frame outerFrame = Frame.Create(function.BlockDiagram);
+            Tunnel outerFrameInputTunnel = CreateInputTunnel(outerFrame);
+            Wire.Create(function.BlockDiagram, borrow.OutputTerminals[0], outerFrameInputTunnel.InputTerminals[0]);
+            Frame innerFrame = Frame.Create(outerFrame.Diagram);
+            Tunnel innerFrameInputTunnel = CreateInputTunnel(innerFrame), innerFrameOutputTunnel = CreateOutputTunnel(innerFrame);
+            FunctionalNode outerStringToSlice = new FunctionalNode(outerFrame.Diagram, Signatures.StringToSliceType);
+            Wire.Create(outerFrame.Diagram, outerFrameInputTunnel.OutputTerminals[0], innerFrameInputTunnel.InputTerminals[0], outerStringToSlice.InputTerminals[0]);
+            FunctionalNode innerStringToSlice = new FunctionalNode(innerFrame.Diagram, Signatures.StringToSliceType);
+            Wire.Create(innerFrame.Diagram, innerFrameInputTunnel.OutputTerminals[0], innerStringToSlice.InputTerminals[0]);
+            Wire.Create(innerFrame.Diagram, innerStringToSlice.OutputTerminals[0], innerFrameOutputTunnel.InputTerminals[0]);
+            Tunnel outerFrameOutputTunnel = CreateOutputTunnel(outerFrame);
+            Wire.Create(outerFrame.Diagram, outerStringToSlice.OutputTerminals[0], outerFrameOutputTunnel.InputTerminals[0]);
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+            Wire.Create(function.BlockDiagram, outerFrameOutputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.AreEqual(2, terminateLifetime.InputTerminals.Count);
+        }
     }
 }

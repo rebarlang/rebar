@@ -150,7 +150,7 @@ namespace Rebar.Common
             else
             {
                 LifetimeGraphIdentifier currentGraphIdentifier = graphIdentifier, parentGraphIdentifier;
-                while (_graphParents.TryGetValue(graphIdentifier, out parentGraphIdentifier))
+                while (_graphParents.TryGetValue(currentGraphIdentifier, out parentGraphIdentifier))
                 {
                     diagramGraph = _diagramGraphs[currentGraphIdentifier];
                     if (diagramGraph == boundedLifetimeGraph)
