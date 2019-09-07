@@ -358,7 +358,7 @@ namespace Rebar.Compiler
 
             TypeVariableReference typeVariable;
 
-            bool executesConditionally = DoesStructureExecuteConditionally(tunnel.ParentStructure);
+            bool executesConditionally = tunnel.ParentStructure.DoesStructureExecuteConditionally();
             if (executesConditionally && tunnel.Direction == Direction.Output)
             {
                 typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
@@ -378,17 +378,6 @@ namespace Rebar.Compiler
                 nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, typeVariable);
                 nodeFacade[valueInput] = new SimpleTerminalFacade(valueInput, typeVariable);
             }
-        }
-
-        private static bool DoesStructureExecuteConditionally(Structure structure)
-        {
-            Frame frame = structure as Frame;
-            if (frame != null)
-            {
-                // TODO: handle multi-frame flat sequence structures
-                return frame.BorderNodes.OfType<UnwrapOptionTunnel>().Any();
-            }
-            return structure is Nodes.Loop;
         }
 
         bool IDfirNodeVisitor<bool>.VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)

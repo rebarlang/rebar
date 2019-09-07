@@ -688,9 +688,11 @@ namespace Rebar.RebarTarget.LLVM
 
         private void VisitFrameBeforeLeftBorderNodes(Frame frame)
         {
-            LLVMBasicBlockRef interiorBlock = _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_interior"),
-                unwrapFailedBlock = _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_unwrapFailed"),
-                endBlock = _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_end");
+            LLVMBasicBlockRef interiorBlock = _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_interior");
+            LLVMBasicBlockRef unwrapFailedBlock = frame.DoesStructureExecuteConditionally()
+                ? _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_unwrapFailed")
+                : default(LLVMBasicBlockRef);
+            LLVMBasicBlockRef endBlock = _topLevelFunction.AppendBasicBlock($"frame{frame.UniqueId}_end");
             _frameData[frame] = new FrameData(interiorBlock, unwrapFailedBlock, endBlock);
         }
 
@@ -705,18 +707,19 @@ namespace Rebar.RebarTarget.LLVM
         {
             FrameData frameData = _frameData[frame];
             _builder.CreateBr(frameData.EndBlock);
-
-            _builder.PositionBuilderAtEnd(frameData.UnwrapFailedBlock);
-            foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+            if (frame.DoesStructureExecuteConditionally())
             {
-                // Store a None value for the tunnel
-                VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource outputSource = _variableValues[outputVariable];
-                LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
-                outputSource.UpdateValue(_builder, LLVMSharp.LLVM.ConstNull(outputType));
+                _builder.PositionBuilderAtEnd(frameData.UnwrapFailedBlock);
+                foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+                {
+                    // Store a None value for the tunnel
+                    VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
+                    ValueSource outputSource = _variableValues[outputVariable];
+                    LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
+                    outputSource.UpdateValue(_builder, LLVMSharp.LLVM.ConstNull(outputType));
+                }
+                _builder.CreateBr(frameData.EndBlock);
             }
-            _builder.CreateBr(frameData.EndBlock);
-
             _builder.PositionBuilderAtEnd(frameData.EndBlock);
         }
 

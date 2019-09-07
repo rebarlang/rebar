@@ -247,6 +247,7 @@
     <Compile Include="Compiler\FunctionDfirBuilder.cs" />
     <Compile Include="Compiler\FunctionMocPlugin.cs" />
     <Compile Include="Compiler\SimpleTerminalFacade.cs" />
+    <Compile Include="Compiler\StructureExtensions.cs" />
     <Compile Include="Compiler\TerminalFacade.cs" />
     <Compile Include="Compiler\TerminalId.cs" />
     <Compile Include="Compiler\TerminalTypeUnificationResults.cs" />
