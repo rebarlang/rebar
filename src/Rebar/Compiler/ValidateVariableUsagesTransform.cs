@@ -130,6 +130,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
+        {
+            ValidateRequiredInputTerminal(optionPatternStructureSelector.InputTerminals[0]);
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             foreach (var inputTerminal in terminateLifetimeNode.InputTerminals)
@@ -154,7 +160,10 @@ namespace Rebar.Compiler
 
         public bool VisitTunnel(Tunnel tunnel)
         {
-            ValidateRequiredInputTerminal(tunnel.InputTerminals[0]);
+            foreach (Terminal inputTerminal in tunnel.InputTerminals)
+            {
+                ValidateRequiredInputTerminal(inputTerminal);
+            }
             return true;
         }
 

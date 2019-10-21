@@ -183,6 +183,14 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
+        {
+            Terminal someValueTerminal = optionPatternStructureSelector.OutputTerminals[0];
+            VariableReference someValueVariable = someValueTerminal.GetTrueVariable();
+            CreateLocalAllocationForVariable(someValueVariable);
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             return true;
@@ -195,15 +203,32 @@ namespace Rebar.RebarTarget
 
         public bool VisitTunnel(Tunnel tunnel)
         {
-            VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
-                outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
-            if (outputVariable.Type == inputVariable.Type.CreateOption())
+            if (tunnel.Terminals.HasExactly(2))
             {
-                CreateLocalAllocationForVariable(outputVariable);
+                VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
+                    outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
+                if (outputVariable.Type == inputVariable.Type.CreateOption())
+                {
+                    CreateLocalAllocationForVariable(outputVariable);
+                }
+                else
+                {
+                    ReuseValueSource(inputVariable, outputVariable);
+                }
             }
             else
             {
-                ReuseValueSource(inputVariable, outputVariable);
+                // If this is an output tunnel, each input variable already has its own allocation, but
+                // the output needs a distinct one (for now)
+                // (Eventually we should try to share a single allocation for all variables.)
+                if (tunnel.InputTerminals.HasMoreThan(1))
+                {
+                    CreateLocalAllocationForVariable(tunnel.OutputTerminals[0].GetTrueVariable());
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
             return true;
         }

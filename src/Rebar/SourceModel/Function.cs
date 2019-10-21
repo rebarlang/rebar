@@ -74,6 +74,7 @@ namespace Rebar.SourceModel
             rules.Add(new WireCommentBatchRule());
             rules.Add(new SequenceStructureBatchRule());
             rules.Add(new LoopBatchRule());
+            rules.Add(new OptionPatternStructureBatchRule());
             rules.Add(new PairedTunnelBatchRule());
         }
 

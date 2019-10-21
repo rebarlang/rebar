@@ -130,6 +130,13 @@ namespace Tests.Rebar.Unit.Compiler
             return loopConditionTunnel;
         }
 
+        internal OptionPatternStructure CreateOptionPatternStructure(Diagram parentDiagram)
+        {
+            OptionPatternStructure patternStructure = new OptionPatternStructure(parentDiagram);
+            patternStructure.CreateDiagram();
+            return patternStructure;
+        }
+
         protected void AssertTerminalHasTypeConflictMessage(Terminal terminal)
         {
             Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.TypeConflict));

@@ -147,6 +147,12 @@
   <data name="FeatureToggle_LLVMCompiler_Description" xml:space="preserve">
     <value>Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target)</value>
   </data>
+  <data name="FeatureToggle_OptionPatternStructure_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_OptionPatternStructure_Description" xml:space="preserve">
+    <value>Enable the pattern-matching structure for the Option data type</value>
+  </data>
   <data name="FeatureToggle_OutputNode_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

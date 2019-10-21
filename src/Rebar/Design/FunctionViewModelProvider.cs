@@ -82,6 +82,11 @@ namespace Rebar.Design
             AddSupportedModel<LoopConditionTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\LoopCondition.png"));
             AddSupportedModel<LoopIterateTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\Iterate.png"));
             AddSupportedModel<LoopTerminateLifetimeTunnel>(t => new LoopBorderNodeViewModel(t, @"Resources\Diagram\Nodes\TerminateLifetime.png"));
+
+            AddSupportedModel<OptionPatternStructure>(s => new OptionPatternStructureEditor(s));
+            AddSupportedModel<OptionPatternStructureDiagram>(d => new OptionPatternStructureDiagramViewModel(d));
+            AddSupportedModel<OptionPatternStructureSelector>(t => new BorderNodeViewModel(t));
+            AddSupportedModel<OptionPatternStructureTunnel>(t => new BorderNodeViewModel(t));
         }
     }
 }

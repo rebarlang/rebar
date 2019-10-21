@@ -20,7 +20,7 @@ namespace Tests.Rebar.Unit.Execution
             return testExecutionInstance;
         }
 
-        protected Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, object value, bool mutable)
+        internal Constant ConnectConstantToInputTerminal(Terminal inputTerminal, NIType variableType, object value, bool mutable)
         {
             Constant constant = ConnectConstantToInputTerminal(inputTerminal, variableType, mutable);
             constant.Value = value;

@@ -25,7 +25,8 @@ namespace Rebar.Compiler
         {
             foreach (Terminal terminal in node.Terminals)
             {
-                if (terminal.ParentNode is TerminateLifetimeTunnel && terminal.Direction == Direction.Input)
+                if (terminal.ParentNode is TerminateLifetimeTunnel && terminal.Direction == Direction.Input
+                    || terminal.ParentNode is OptionPatternStructureSelector && terminal.Index >= 2)
                 {
                     // HACK
                     continue;

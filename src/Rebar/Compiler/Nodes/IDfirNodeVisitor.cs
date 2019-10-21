@@ -13,6 +13,7 @@ namespace Rebar.Compiler.Nodes
         T VisitIterateTunnel(IterateTunnel iterateTunnel);
         T VisitLockTunnel(LockTunnel lockTunnel);
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
+        T VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);

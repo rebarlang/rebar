@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -147,6 +147,24 @@ namespace Rebar.Resources {
         internal static string FeatureToggle_LLVMCompiler_Description {
             get {
                 return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_OptionPatternStructure_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OptionPatternStructure_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the pattern-matching structure for the Option data type.
+        /// </summary>
+        internal static string FeatureToggle_OptionPatternStructure_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_OptionPatternStructure_Description", resourceCulture);
             }
         }
         

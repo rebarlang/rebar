@@ -173,6 +173,7 @@
     <Compile Include="Unit\Compiler\LockTunnelTests.cs" />
     <Compile Include="Unit\Compiler\LoopConditionTunnelTests.cs" />
     <Compile Include="Unit\Compiler\LoopTests.cs" />
+    <Compile Include="Unit\Compiler\OptionPatternStructureTests.cs" />
     <Compile Include="Unit\Compiler\OptionTypeTests.cs" />
     <Compile Include="Unit\Compiler\StringTypeTests.cs" />
     <Compile Include="Unit\Compiler\TerminateLifetimeNodeTests.cs" />
@@ -186,6 +187,7 @@
     <Compile Include="Unit\Execution\IteratorExecutionTests.cs" />
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
     <Compile Include="Unit\Execution\NumericExecutionTests.cs" />
+    <Compile Include="Unit\Execution\OptionPatternStructureExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
     <Compile Include="Unit\Execution\PrimitiveOpExecutionTest.cs" />
     <Compile Include="Unit\Execution\StringExecutionTests.cs" />

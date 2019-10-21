@@ -759,10 +759,10 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
             }
         }
 
-        protected override void VisitStructure(Structure structure, StructureTraversalPoint traversalPoint)
+        protected override void VisitStructure(Structure structure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
-            base.VisitStructure(structure, traversalPoint);
-            this.VisitRebarStructure(structure, traversalPoint);
+            base.VisitStructure(structure, traversalPoint, nestedDiagram);
+            this.VisitRebarStructure(structure, traversalPoint, nestedDiagram);
         }
 
 #region Frame
@@ -965,6 +965,20 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
             return true;
         }
 
-#endregion
+        #endregion
+
+        #region Option Pattern Structure
+
+        public bool VisitOptionPatternStructure(OptionPatternStructure optionPatternStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            return true;
+        }
+
+        public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
+        {
+            return true;
+        }
+
+        #endregion
     }
 }

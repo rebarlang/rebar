@@ -234,6 +234,8 @@
     <Compile Include="Compiler\Nodes\LoopConditionTunnel.cs" />
     <Compile Include="Compiler\Nodes\BorderNode.cs" />
     <Compile Include="Compiler\Nodes\DfirNode.cs" />
+    <Compile Include="Compiler\Nodes\OptionPatternStructure.cs" />
+    <Compile Include="Compiler\Nodes\OptionPatternStructureSelector.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeTunnel.cs" />
     <Compile Include="Compiler\CreateNodeFacadesTransform.cs" />
@@ -255,6 +257,9 @@
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
     <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
+    <Compile Include="Design\OptionPatternStructureControl.cs" />
+    <Compile Include="Design\OptionPatternStructureDiagramViewModel.cs" />
+    <Compile Include="Design\OptionPatternStructureEditor.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -372,6 +377,11 @@
     <Compile Include="SourceModel\LoopIterateTunnel.cs" />
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
+    <Compile Include="SourceModel\OptionPatternStructure.cs" />
+    <Compile Include="SourceModel\OptionPatternStructureBatchRule.cs" />
+    <Compile Include="SourceModel\OptionPatternStructureDiagram.cs" />
+    <Compile Include="SourceModel\OptionPatternStructureSelector.cs" />
+    <Compile Include="SourceModel\OptionPatternStructureTunnel.cs" />
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Function.cs" />
     <Compile Include="SourceModel\NamespaceSchema.cs" />
@@ -408,6 +418,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Loop_96.xml" />
+    <Resource Include="Resources\OptionPatternStructure_96.xml" />
     <Resource Include="Resources\Diagram\Nodes\AccumulateAdd.png" />
     <Resource Include="Resources\Diagram\Nodes\AccumulateAnd.png" />
     <Resource Include="Resources\Diagram\Nodes\AccumulateDivide.png" />
@@ -481,6 +492,9 @@
     <EmbeddedResource Include="Resources\FilePalette.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\OptionPatternStructurePalette.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />

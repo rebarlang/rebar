@@ -81,6 +81,7 @@ namespace Rebar.Compiler
         {
             var flatSequence = structure as FlatSequence;
             var loop = structure as SourceModel.Loop;
+            var optionPatternStructure = structure as SourceModel.OptionPatternStructure;
             if (flatSequence != null)
             {
                 VisitRebarFlatSequence(flatSequence);
@@ -88,6 +89,10 @@ namespace Rebar.Compiler
             else if (loop != null)
             {
                 VisitLoop(loop);
+            }
+            else if (optionPatternStructure != null)
+            {
+                VisitOptionPatternStructure(optionPatternStructure);
             }
         }
 
@@ -123,10 +128,43 @@ namespace Rebar.Compiler
             firstDiagram.AcceptVisitor(this);
         }
 
+        private void VisitOptionPatternStructure(SourceModel.OptionPatternStructure pattern)
+        {
+            var patternDfir = new Nodes.OptionPatternStructure(_currentDiagram);
+            _map.AddMapping(pattern, patternDfir);
+            int diagramIndex = 0;
+            foreach (NestedDiagram nestedDiagram in pattern.NestedDiagrams)
+            {
+                NationalInstruments.Dfir.Diagram dfirDiagram;
+                if (diagramIndex == 0)
+                {
+                    dfirDiagram = patternDfir.Diagrams[0];
+                }
+                else
+                {
+                    dfirDiagram = patternDfir.CreateDiagram();
+                }
+                _map.AddMapping(nestedDiagram, dfirDiagram);
+                ++diagramIndex;
+            }
+
+            foreach (BorderNode borderNode in pattern.BorderNodes)
+            {
+                NationalInstruments.Dfir.BorderNode dfirBorderNode = TranslateBorderNode(borderNode, patternDfir);
+                MapBorderNode(borderNode, dfirBorderNode);
+            }
+
+            foreach (NestedDiagram nestedDiagram in pattern.NestedDiagrams)
+            {
+                nestedDiagram.AcceptVisitor(this);
+            }
+        }
+
         private NationalInstruments.Dfir.BorderNode TranslateBorderNode(BorderNode sourceModelBorderNode, NationalInstruments.Dfir.Structure dfirParentStructure)
         {
             var flatSequenceSimpleTunnel = sourceModelBorderNode as FlatSequenceSimpleTunnel;
             var loopTunnel = sourceModelBorderNode as LoopTunnel;
+            var optionPatternStructureTunnel = sourceModelBorderNode as OptionPatternStructureTunnel;
             var borrowTunnel = sourceModelBorderNode as SourceModel.BorrowTunnel;
             var loopBorrowTunnel = sourceModelBorderNode as LoopBorrowTunnel;
             var lockTunnel = sourceModelBorderNode as SourceModel.LockTunnel;
@@ -135,6 +173,7 @@ namespace Rebar.Compiler
             var flatSequenceTerminateLifetimeTunnel = sourceModelBorderNode as FlatSequenceTerminateLifetimeTunnel;
             var loopTerminateLifetimeTunnel = sourceModelBorderNode as LoopTerminateLifetimeTunnel;
             var unwrapOptionTunnel = sourceModelBorderNode as SourceModel.UnwrapOptionTunnel;
+            var optionPatternStructureSelector = sourceModelBorderNode as SourceModel.OptionPatternStructureSelector;
             if (borrowTunnel != null)
             {
                 var borrowDfir = new Nodes.BorrowTunnel(dfirParentStructure, borrowTunnel.BorrowMode);
@@ -175,7 +214,7 @@ namespace Rebar.Compiler
                 var beginLifetimeDfir = (Nodes.IBeginLifetimeTunnel)_map.GetDfirForModel((Element)loopTerminateLifetimeTunnel.BeginLifetimeTunnel);
                 return beginLifetimeDfir.TerminateLifetimeTunnel;
             }
-            else if (flatSequenceSimpleTunnel != null || loopTunnel != null)
+            else if (flatSequenceSimpleTunnel != null || loopTunnel != null || optionPatternStructureTunnel != null)
             {
                 return dfirParentStructure.CreateTunnel(
                     VIDfirBuilder.TranslateDirection(sourceModelBorderNode.PrimaryOuterTerminal.Direction),
@@ -186,6 +225,10 @@ namespace Rebar.Compiler
             else if (unwrapOptionTunnel != null)
             {
                 return new Nodes.UnwrapOptionTunnel(dfirParentStructure);
+            }
+            else if (optionPatternStructureSelector != null)
+            {
+                return ((Nodes.OptionPatternStructure)dfirParentStructure).Selector;
             }
             throw new NotImplementedException("Unknown BorderNode type: " + sourceModelBorderNode.GetType().Name);
         }
@@ -211,7 +254,11 @@ namespace Rebar.Compiler
                 i = 0;
                 foreach (var terminal in sourceModelBorderNode.InnerTerminals)
                 {
-                    MapTerminalAndType(terminal, dfirBorderNode.GetInnerTerminal(0, i));
+                    // TODO: won't work for border nodes with multiple inner terminals per diagram
+                    // also assumes that the border node has the same terminals on each diagram, which
+                    // won't be true for the pattern selector
+                    // Fortunately, for now, the only inner terminal on OptionPatternStructureSelector is on the first diagram
+                    MapTerminalAndType(terminal, dfirBorderNode.GetInnerTerminal(i, 0));
                     ++i;
                 }
             }

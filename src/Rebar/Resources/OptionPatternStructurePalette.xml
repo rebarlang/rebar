@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PaletteControls PaletteBaseName="FunctionDiagram"
+  xmlns:pf="http://www.ni.com/PlatformFramework"
+  xmlns:rb="http://www.ni.com/Rebar"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Category Display="Control Flow" UniqueId="Rebar:PaletteCategory.ControlFlow" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Option Pattern Structure" UniqueId="Rebar:OptionPatternStructure" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:OptionPatternStructure Id="1" Bounds="203 133 156 96">
+              <rb:OptionPatternStructure.Diagram Id="2" />
+              <rb:OptionPatternStructure.Diagram Id="3" />
+              <rb:OptionPatternStructureSelector Id="4" Bounds="-5 17 13 10" Terminals="1, 2" />
+            </rb:OptionPatternStructure>
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+  </Category>
+</PaletteControls>

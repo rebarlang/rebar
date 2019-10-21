@@ -49,29 +49,35 @@ namespace Rebar.Compiler
 
         private void TraverseStructure(Structure structure)
         {
-            VisitStructure(structure, Nodes.StructureTraversalPoint.BeforeLeftBorderNodes);
-            Diagram diagram = structure.Diagrams.First();
-            VisitDiagram(diagram);
+            VisitStructure(structure, Nodes.StructureTraversalPoint.BeforeLeftBorderNodes, null);
+            foreach (Diagram diagram in structure.Diagrams)
+            {
+                VisitDiagram(diagram);
+            }
 
             foreach (BorderNode inputBorderNode in structure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
             {
                 VisitBorderNode(inputBorderNode);
             }
-            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram);
-            TraverseDiagram(diagram);
-            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterDiagramAndBeforeRightBorderNodes);
+            foreach (Diagram diagram in structure.Diagrams)
+            {
+                VisitStructure(structure, Nodes.StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram, diagram);
+                TraverseDiagram(diagram);
+                VisitStructure(structure, Nodes.StructureTraversalPoint.AfterDiagram, diagram);
+            }
+            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterAllDiagramsAndBeforeRightBorderNodes, null);
             foreach (BorderNode outputBorderNode in structure.BorderNodes.Where(bn => bn.Direction == Direction.Output))
             {
                 VisitBorderNode(outputBorderNode);
             }
-            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterRightBorderNodes);
+            VisitStructure(structure, Nodes.StructureTraversalPoint.AfterRightBorderNodes, null);
         }
 
         protected abstract void VisitNode(Node node);
         protected abstract void VisitWire(Wire wire);
         protected abstract void VisitBorderNode(BorderNode borderNode);
 
-        protected virtual void VisitStructure(Structure structure, Nodes.StructureTraversalPoint traversalPoint)
+        protected virtual void VisitStructure(Structure structure, Nodes.StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
         }
     }
