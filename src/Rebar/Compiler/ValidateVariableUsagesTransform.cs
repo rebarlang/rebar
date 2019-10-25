@@ -70,6 +70,26 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.DataItem.ConnectorPaneIndex == -1)
+            {
+                // TODO: possibly move this error to a different transform
+                dataAccessor.SetDfirMessage(Messages.ParameterNotOnConnectorPane);
+            }
+            if (dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                ValidateRequiredInputTerminal(dataAccessor.Terminal);
+                // TODO: eventually we want to allow reference types
+                dataAccessor.Terminal.GetValidator().TestVariableIsOwnedType();
+            }
+            if (!RebarFeatureToggles.IsParametersAndCallsEnabled)
+            {
+                dataAccessor.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
+            return true;
+        }
+
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableUsageValidator validator = dropNode.Terminals[0].GetValidator();
@@ -88,23 +108,7 @@ namespace Rebar.Compiler
 
         public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            functionalNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
-            // TODO: for functions with more than one data type parameter, it would be better
-            // to report TypeNotDetermined on an output only if all inputs that use the same
-            // type parameter(s) are connected.
-            if (functionalNode.InputTerminals.All(terminal => terminal.IsConnected))
-            {
-                Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
-                foreach (var outputTerminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs)
-                    .Where(pair => !pair.Value.IsPassthrough))
-                {
-                    VariableReference outputVariable = outputTerminalPair.Key.GetTrueVariable();
-                    if (outputVariable.TypeVariableReference.IsOrContainsTypeVariable)
-                    {
-                        outputTerminalPair.Key.SetDfirMessage(Messages.TypeNotDetermined);
-                    }
-                }
-            }
+            VisitFunctionSignatureNode(functionalNode, functionalNode.Signature);
             if (functionalNode.RequiredFeatureToggles.Any(feature => !FeatureToggleSupport.IsFeatureEnabled(feature)))
             {
                 functionalNode.SetDfirMessage(Messages.FeatureNotEnabled);
@@ -127,6 +131,16 @@ namespace Rebar.Compiler
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
         {
             ValidateOptionalInputTerminal(loopConditionTunnel.InputTerminals[0]);
+            return true;
+        }
+
+        public bool VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            VisitFunctionSignatureNode(methodCallNode, methodCallNode.Signature);
+            if (!RebarFeatureToggles.IsParametersAndCallsEnabled)
+            {
+                methodCallNode.SetDfirMessage(Messages.FeatureNotEnabled);
+            }
             return true;
         }
 
@@ -190,6 +204,27 @@ namespace Rebar.Compiler
         private void ValidateOptionalInputTerminal(Terminal inputTerminal)
         {
             _typeUnificationResults.SetMessagesOnTerminal(inputTerminal);
+        }
+
+        private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
+        {
+            node.InputTerminals.ForEach(ValidateRequiredInputTerminal);
+            // TODO: for functions with more than one data type parameter, it would be better
+            // to report TypeNotDetermined on an output only if all inputs that use the same
+            // type parameter(s) are connected.
+            if (node.InputTerminals.All(terminal => terminal.IsConnected))
+            {
+                Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
+                foreach (var outputTerminalPair in node.OutputTerminals.Zip(signature.Outputs)
+                    .Where(pair => !pair.Value.IsPassthrough))
+                {
+                    VariableReference outputVariable = outputTerminalPair.Key.GetTrueVariable();
+                    if (outputVariable.TypeVariableReference.IsOrContainsTypeVariable)
+                    {
+                        outputTerminalPair.Key.SetDfirMessage(Messages.TypeNotDetermined);
+                    }
+                }
+            }
         }
     }
 }

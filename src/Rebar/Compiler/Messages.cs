@@ -82,6 +82,14 @@ namespace Rebar.Compiler
                 SemanticAnalysisMessageCategories.Connection,
                 TypeNotDeterminedDescriptor);
 
+        private static readonly MessageDescriptor ParameterNotOnConnectorPaneDescriptor = new MessageDescriptor(ResourceDictionaryName, "ParameterNotOnConnectorPane");
+
+        public static readonly DfirMessage ParameterNotOnConnectorPane =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                ParameterNotOnConnectorPaneDescriptor);
+
         private static readonly MessageDescriptor FeatureNotEnabledDescriptor = new MessageDescriptor(ResourceDictionaryName, "FeatureNotEnabled");
 
         public static readonly DfirMessage FeatureNotEnabled =

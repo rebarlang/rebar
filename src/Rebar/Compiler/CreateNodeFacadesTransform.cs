@@ -120,6 +120,17 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.Terminal.Direction == Direction.Output
+                || dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                TypeVariableReference dataTypeVariable = _typeVariableSet.CreateReferenceToLiteralType(dataAccessor.DataItem.DataType);
+                _nodeFacade[dataAccessor.Terminal] = new SimpleTerminalFacade(dataAccessor.Terminal, dataTypeVariable);
+            }
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             Terminal valueInput = dropNode.InputTerminals.ElementAt(0);
@@ -156,83 +167,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            int inputIndex = 0, outputIndex = 0;
-            var genericTypeParameters = new Dictionary<NIType, TypeVariableReference>();
-            var lifetimeFacadeGroups = new Dictionary<NIType, ReferenceInputTerminalLifetimeGroup>();
-            var lifetimeVariableGroups = new Dictionary<NIType, LifetimeTypeVariableGroup>();
-
-            if (functionalNode.Signature.IsOpenGeneric())
-            {
-                Func<NIType, TypeVariableReference> createLifetimeTypeReference = type =>
-                {
-                    var group = LifetimeTypeVariableGroup.CreateFromNode(functionalNode);
-                    lifetimeVariableGroups[type] = group;
-                    return group.LifetimeType;
-                };
-                genericTypeParameters = _typeVariableSet.CreateTypeVariablesForGenericParameters(functionalNode.Signature, createLifetimeTypeReference);
-            }
-
-            foreach (NIType parameter in functionalNode.Signature.GetParameters())
-            {
-                NIType parameterDataType = parameter.GetDataType();
-                bool isInput = parameter.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
-                    isOutput = parameter.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
-                Terminal inputTerminal = null, outputTerminal = null;
-                if (isInput)
-                {
-                    inputTerminal = functionalNode.InputTerminals[inputIndex];
-                    ++inputIndex;
-                }
-                if (isOutput)
-                {
-                    outputTerminal = functionalNode.OutputTerminals[outputIndex];
-                    ++outputIndex;
-                }
-                if (isInput && isOutput)
-                {
-                    if (parameterDataType.IsRebarReferenceType())
-                    {
-                        CreateFacadesForInoutReferenceParameter(
-                            parameterDataType,
-                            inputTerminal,
-                            outputTerminal,
-                            genericTypeParameters,
-                            lifetimeFacadeGroups,
-                            lifetimeVariableGroups);
-                    }
-                    else
-                    {
-                        throw new NotSupportedException("Inout parameters must be reference types.");
-                    }
-                }
-                else if (isOutput)
-                {
-                    TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
-                    _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, typeVariableReference);
-                }
-                else if (isInput)
-                {
-                    if (parameterDataType.IsRebarReferenceType())
-                    {
-                        CreateFacadesForInoutReferenceParameter(
-                            parameterDataType,
-                            inputTerminal,
-                            null,
-                            genericTypeParameters,
-                            lifetimeFacadeGroups,
-                            lifetimeVariableGroups);
-                    }
-                    else
-                    {
-                        TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
-                        _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, typeVariableReference);
-                    }
-                }
-                else
-                {
-                    throw new NotSupportedException("Parameter is neither input nor output");
-                }
-            }
+            VisitFunctionSignatureNode(functionalNode, functionalNode.Signature);
             return true;
         }
 
@@ -343,6 +278,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            VisitFunctionSignatureNode(methodCallNode, methodCallNode.Signature);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
             Terminal selectorInput = optionPatternStructureSelector.InputTerminals[0],
@@ -417,6 +358,87 @@ namespace Rebar.Compiler
                 _typeVariableSet.CreateReferenceToConstructorType("Option", innerTypeVariable));
             _nodeFacade[unwrappedOutput] = new SimpleTerminalFacade(unwrappedOutput, innerTypeVariable);
             return true;
+        }
+
+        private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
+        {
+            int inputIndex = 0, outputIndex = 0;
+            var genericTypeParameters = new Dictionary<NIType, TypeVariableReference>();
+            var lifetimeFacadeGroups = new Dictionary<NIType, ReferenceInputTerminalLifetimeGroup>();
+            var lifetimeVariableGroups = new Dictionary<NIType, LifetimeTypeVariableGroup>();
+
+            if (nodeFunctionSignature.IsOpenGeneric())
+            {
+                Func<NIType, TypeVariableReference> createLifetimeTypeReference = type =>
+                {
+                    var group = LifetimeTypeVariableGroup.CreateFromNode(node);
+                    lifetimeVariableGroups[type] = group;
+                    return group.LifetimeType;
+                };
+                genericTypeParameters = _typeVariableSet.CreateTypeVariablesForGenericParameters(nodeFunctionSignature, createLifetimeTypeReference);
+            }
+
+            foreach (NIType parameter in nodeFunctionSignature.GetParameters())
+            {
+                NIType parameterDataType = parameter.GetDataType();
+                bool isInput = parameter.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
+                    isOutput = parameter.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
+                Terminal inputTerminal = null, outputTerminal = null;
+                if (isInput)
+                {
+                    inputTerminal = node.InputTerminals[inputIndex];
+                    ++inputIndex;
+                }
+                if (isOutput)
+                {
+                    outputTerminal = node.OutputTerminals[outputIndex];
+                    ++outputIndex;
+                }
+                if (isInput && isOutput)
+                {
+                    if (parameterDataType.IsRebarReferenceType())
+                    {
+                        CreateFacadesForInoutReferenceParameter(
+                            parameterDataType,
+                            inputTerminal,
+                            outputTerminal,
+                            genericTypeParameters,
+                            lifetimeFacadeGroups,
+                            lifetimeVariableGroups);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException("Inout parameters must be reference types.");
+                    }
+                }
+                else if (isOutput)
+                {
+                    TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
+                    _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, typeVariableReference);
+                }
+                else if (isInput)
+                {
+                    if (parameterDataType.IsRebarReferenceType())
+                    {
+                        CreateFacadesForInoutReferenceParameter(
+                            parameterDataType,
+                            inputTerminal,
+                            null,
+                            genericTypeParameters,
+                            lifetimeFacadeGroups,
+                            lifetimeVariableGroups);
+                    }
+                    else
+                    {
+                        TypeVariableReference typeVariableReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(parameterDataType, genericTypeParameters);
+                        _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, typeVariableReference);
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException("Parameter is neither input nor output");
+                }
+            }
         }
     }
 }

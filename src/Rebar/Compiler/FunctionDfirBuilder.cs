@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
+using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.Linking;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
-using NationalInstruments.Compiler;
 using NationalInstruments.VI.DfirBuilder;
 using Rebar.SourceModel;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using BorderNode = NationalInstruments.SourceModel.BorderNode;
 using DataAccessor = NationalInstruments.MocCommon.SourceModel.DataAccessor;
@@ -20,7 +23,6 @@ using Structure = NationalInstruments.SourceModel.Structure;
 using Terminal = NationalInstruments.SourceModel.Terminal;
 using Tunnel = NationalInstruments.SourceModel.Tunnel;
 using Wire = NationalInstruments.SourceModel.Wire;
-using Rebar.Common;
 
 namespace Rebar.Compiler
 {
@@ -393,12 +395,32 @@ namespace Rebar.Compiler
 
         public void VisitDataAccessor(DataAccessor dataAccessor)
         {
-            throw new NotImplementedException();
+            var dfirDataItem = (NationalInstruments.Dfir.DataItem)_map.GetDfirForModel(dataAccessor.DataItem);
+            NationalInstruments.Dfir.DataAccessor dfirDataAccessor = NationalInstruments.Dfir.DataAccessor.Create(_currentDiagram, dfirDataItem, dataAccessor.Direction.ToDfirDirection());
+            _map.AddMapping(dataAccessor, dfirDataAccessor);
+            _map.AddMapping(dataAccessor.Terminal, dfirDataAccessor.Terminal);
         }
 
         public void VisitDataItem(DataItem dataItem)
         {
-            throw new NotImplementedException();
+            NIParameterPassingRule inputParameterPassingRule =
+                (dataItem.CallIndex != -1 &&
+                dataItem.CallDirection == ParameterCallDirection.Input || dataItem.CallDirection == ParameterCallDirection.Passthrough)
+                ? NIParameterPassingRule.Required
+                : NIParameterPassingRule.NotAllowed;
+            NIParameterPassingRule outputParameterPassingRule =
+                (dataItem.CallIndex != -1 &&
+                dataItem.CallDirection == ParameterCallDirection.Output || dataItem.CallDirection == ParameterCallDirection.Passthrough)
+                ? NIParameterPassingRule.Optional
+                : NIParameterPassingRule.NotAllowed;
+            NationalInstruments.Dfir.DataItem dfirDataItem = CreatedDfirRoot.CreateDataItem(
+                dataItem.Name,
+                dataItem.DataType,
+                null,
+                inputParameterPassingRule,
+                outputParameterPassingRule,
+                dataItem.CallIndex);
+            _map.AddMapping(dataItem, dfirDataItem);
         }
 
         public void VisitLiteral(ILiteralModel literal)
@@ -440,7 +462,13 @@ namespace Rebar.Compiler
 
         public void VisitMethodCall(MocCommonMethodCall callStatic)
         {
-            throw new NotImplementedException();
+            ExtendedQualifiedName targetName = callStatic.SelectedMethodCallTarget.QualifiedTarget.CreateExtendedQualifiedName();
+            var methodCallDfir = new MethodCallNode(_currentDiagram, targetName, callStatic.Signature);
+            _map.AddMapping(callStatic, methodCallDfir);
+            foreach (var terminalPair in callStatic.Terminals.Zip(methodCallDfir.Terminals))
+            {
+                _map.AddMapping(terminalPair.Key, terminalPair.Value);
+            }
         }
 
         public void VisitPropertyNode(PropertyNode propertyNode)
@@ -491,6 +519,11 @@ namespace Rebar.Compiler
             if (CreatedDfirRoot.Name.IsEmpty)
             {
                 CreatedDfirRoot.Name = function.ReferencingEnvoy.CreateExtendedQualifiedName();
+            }
+
+            foreach (DataItem dataItem in function.DataItems)
+            {
+                dataItem.AcceptVisitor(this);
             }
 
             _map.AddMapping(function.Diagram, CreatedDfirRoot.BlockDiagram);

@@ -22,6 +22,23 @@
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>
+      <Leaf Display="String Parameter" UniqueId="Rebar:StringParameter" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <moc:DataAccessor Bounds="250 160 40 15" DataItem="15" Id="16" Label="18">
+              <pf:Terminal DataType="String" Direction="Output" Hotspot="40 5" Id="Value" />
+            </moc:DataAccessor>
+          </pf:MergeItem>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <pf:NodeLabel AttachedTo="16" Bounds="199 160 46 14" Id="18">
+              <p.Text>String</p.Text>
+            </pf:NodeLabel>
+          </pf:MergeItem>
+          <pf:MergeItem Path="./ancestor::Function" IsPrimary="False">
+            <moc:DataItem AdaptToDiagramType="True" DataType="String" Id="15" Name="String"/>
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
       <Leaf Display="String From Slice" UniqueId="Rebar:StringFromSlice" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
         <pf:MergeScript>
           <pf:MergeItem>

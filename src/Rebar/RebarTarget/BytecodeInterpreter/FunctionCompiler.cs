@@ -666,6 +666,11 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
             return staticData;
         }
 
+        public bool VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            return true;
+        }
+
         public bool VisitDropNode(DropNode dropNode)
         {
             // TODO: call Drop function for input types that require it
@@ -693,6 +698,11 @@ namespace Rebar.RebarTarget.BytecodeInterpreter
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool VisitMethodCallNode(MethodCallNode methodCallNode)
         {
             throw new NotImplementedException();
         }

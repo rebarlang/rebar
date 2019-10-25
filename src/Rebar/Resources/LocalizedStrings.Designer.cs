@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -189,6 +189,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_ParametersAndCalls_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_ParametersAndCalls_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable adding parameters to function diagrams and function calls.
+        /// </summary>
+        internal static string FeatureToggle_ParametersAndCalls_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_ParametersAndCalls_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_RebarTarget_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_RebarTarget_Category", resourceCulture);
@@ -282,6 +300,15 @@ namespace Rebar.Resources {
         internal static string ModuleDisplayInfo_RebarModuleDisplayName {
             get {
                 return ResourceManager.GetString("ModuleDisplayInfo_RebarModuleDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This accessor&apos;s parameter is not on the connector pane..
+        /// </summary>
+        internal static string ParameterNotOnConnectorPane {
+            get {
+                return ResourceManager.GetString("ParameterNotOnConnectorPane", resourceCulture);
             }
         }
         

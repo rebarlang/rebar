@@ -104,6 +104,23 @@
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>
+      <Leaf Display="Boolean Parameter" UniqueId="Rebar:BooleanParameter" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <moc:DataAccessor Bounds="250 160 40 15" DataItem="15" Id="16" Label="18">
+              <pf:Terminal DataType="Boolean" Direction="Output" Hotspot="40 5" Id="Value" />
+            </moc:DataAccessor>
+          </pf:MergeItem>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <pf:NodeLabel AttachedTo="16" Bounds="199 160 46 14" Id="18">
+              <p.Text>Boolean</p.Text>
+            </pf:NodeLabel>
+          </pf:MergeItem>
+          <pf:MergeItem Path="./ancestor::Function" IsPrimary="False">
+            <moc:DataItem AdaptToDiagramType="True" DataType="Boolean" Id="15" Name="Boolean"/>
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
       <Leaf Display="Select Reference" UniqueId="Rebar:SelectReferenceNode" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
         <pf:MergeScript>
           <pf:MergeItem>
@@ -177,6 +194,23 @@
               <moc:NumericBehavior Interpretation="Numeric" ValueFormatter="LV:0" />
               <vi:p.Data>0.0</vi:p.Data>
             </moc:Literal>
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Integer Parameter" UniqueId="Rebar:IntegerParameter" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <moc:DataAccessor Bounds="250 160 40 15" DataItem="15" Id="16" Label="18">
+              <pf:Terminal DataType="Int32" Direction="Output" Hotspot="40 5" Id="Value" />
+            </moc:DataAccessor>
+          </pf:MergeItem>
+          <pf:MergeItem Path="." IsPrimary="True">
+            <pf:NodeLabel AttachedTo="16" Bounds="199 160 46 14" Id="18">
+              <p.Text>Numeric</p.Text>
+            </pf:NodeLabel>
+          </pf:MergeItem>
+          <pf:MergeItem Path="./ancestor::Function" IsPrimary="False">
+            <moc:DataItem AdaptToDiagramType="True" DataType="Int32" Id="15" Name="Numeric"/>
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>

@@ -77,6 +77,15 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                UnifyNodeInputTerminalTypes(dataAccessor);
+            }
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             return true;
@@ -120,6 +129,12 @@ namespace Rebar.Compiler
                 nodeFacade[nodeTerminal].UnifyWithConnectedWireTypeAsNodeInput(connectedWireTerminal.GetFacadeVariable(), _typeUnificationResults);
             }
             OutputLifetimeInterruptsInputVariable(nodeTerminal, loopConditionTunnel.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            AutoBorrowNodeFacade.GetNodeFacade(methodCallNode).SetLifetimeInterruptedVariables(_lifetimeVariableAssociation);
             return true;
         }
 

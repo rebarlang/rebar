@@ -64,7 +64,6 @@ namespace Rebar.Compiler
         {
             var dfirBuilder = new FunctionDfirBuilder();
             var function = (Function)creationArguments.SourceModel;
-            dfirBuilder.VisitFunction(function);
             var dfirRoot = dfirBuilder.CreatedDfirRoot;
             FunctionMocReflector reflector = new FunctionMocReflector(
                 function,
@@ -76,6 +75,7 @@ namespace Rebar.Compiler
                 dfirBuilder.DfirModelMap);
             creationArguments.PrebuildTransform(dfirRoot, reflector, this);
 
+            dfirBuilder.VisitFunction(function);
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
             return GenerateMocTransformManager(creationArguments.SpecAndQName, dfirRoot, new CompileCancellationToken());
         }

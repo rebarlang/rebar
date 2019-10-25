@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
@@ -121,6 +122,17 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.Terminal.Direction == Direction.Output)
+            {
+                VariableReference variable = dataAccessor.Terminal.GetTrueVariable();
+                // For now, create a local allocation and copy the parameter value into it.
+                CreateLocalAllocationForVariable(variable);
+            }
+            return true;
+        }
+
         public bool VisitDropNode(DropNode dropNode)
         {
             return true;
@@ -149,11 +161,7 @@ namespace Rebar.RebarTarget
 
         public bool VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            Signature signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
-            foreach (var terminalPair in functionalNode.OutputTerminals.Zip(signature.Outputs).Where(pair => !pair.Value.IsPassthrough))
-            {
-                CreateLocalAllocationForVariable(terminalPair.Key.GetTrueVariable());
-            }
+            VisitFunctionSignatureNode(functionalNode, functionalNode.Signature);
             return true;
         }
 
@@ -180,6 +188,12 @@ namespace Rebar.RebarTarget
             }
             var loopConditionAllocation = (TAllocation)_variableAllocations[inputVariable];
             CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
+            return true;
+        }
+
+        public bool VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            VisitFunctionSignatureNode(methodCallNode, methodCallNode.Signature);
             return true;
         }
 
@@ -239,6 +253,15 @@ namespace Rebar.RebarTarget
             // rather than needing a separate allocation.
             CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
+        }
+
+        private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
+        {
+            Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
+            foreach (var terminalPair in node.OutputTerminals.Zip(signature.Outputs).Where(pair => !pair.Value.IsPassthrough))
+            {
+                CreateLocalAllocationForVariable(terminalPair.Key.GetTrueVariable());
+            }
         }
 
         #endregion

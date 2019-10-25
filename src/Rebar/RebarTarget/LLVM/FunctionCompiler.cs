@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using LLVMSharp;
 using NationalInstruments;
+using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -163,7 +164,7 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (referentType == DataTypes.StringSliceType)
             {
-                compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(CommonModules.OutputStringSliceName), outputNode);
+                compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(CommonModules.OutputStringSliceName), outputNode, outputNode.Signature);
                 return;
             }
             else
@@ -301,7 +302,7 @@ namespace Rebar.RebarTarget.LLVM
         private static Action<FunctionCompiler, FunctionalNode> CreateImportedCommonFunctionCompiler(string functionName)
         {
             return (compiler, functionalNode) =>
-                compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(functionName), functionalNode);
+                compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(functionName), functionalNode, functionalNode.Signature);
         }
 
         #endregion
@@ -311,13 +312,33 @@ namespace Rebar.RebarTarget.LLVM
         private readonly Dictionary<VariableReference, ValueSource> _variableValues;
         private readonly CommonExternalFunctions _commonExternalFunctions;
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
+        private readonly Dictionary<DataItem, uint> _dataItemParameterIndices = new Dictionary<DataItem, uint>();
 
-        public FunctionCompiler(Module module, string functionName, Dictionary<VariableReference, ValueSource> variableValues)
+        public FunctionCompiler(Module module, string functionName, DataItem[] parameterDataItems, Dictionary<VariableReference, ValueSource> variableValues)
         {
             Module = module;
             _variableValues = variableValues;
 
-            LLVMTypeRef functionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), new LLVMTypeRef[] { }, false);
+            var parameterLLVMTypes = new List<LLVMTypeRef>();
+            foreach (var dataItem in parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
+            {
+                if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.Required
+                    && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.NotAllowed)
+                {
+                    parameterLLVMTypes.Add(dataItem.DataType.AsLLVMType());
+                }
+                else if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.NotAllowed
+                    && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.Optional)
+                {
+                    parameterLLVMTypes.Add(LLVMTypeRef.PointerType(dataItem.DataType.AsLLVMType(), 0u));
+                }
+                else
+                {
+                    throw new NotImplementedException("Can only handle in and out parameters");
+                }
+            }
+
+            LLVMTypeRef functionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterLLVMTypes.ToArray(), false);
             _topLevelFunction = Module.AddFunction(functionName, functionType);
             LLVMBasicBlockRef entryBlock = _topLevelFunction.AppendBasicBlock("entry");
             _builder = new IRBuilder();
@@ -328,6 +349,8 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         public Module Module { get; }
+
+        private DfirRoot TargetDfir { get; set; }
 
         private void InitializeLocalAllocations()
         {
@@ -351,14 +374,14 @@ namespace Rebar.RebarTarget.LLVM
             return function;
         }
 
-        private void CreateCallForFunctionalNode(LLVMValueRef function, FunctionalNode node)
+        private void CreateCallForFunctionalNode(LLVMValueRef function, Node node, NIType nodeFunctionSignature)
         {
             var arguments = new List<LLVMValueRef>();
             foreach (Terminal inputTerminal in node.InputTerminals)
             {
                 arguments.Add(GetTerminalValueSource(inputTerminal).GetValue(_builder));
             }
-            Signature nodeSignature = Signatures.GetSignatureForNIType(node.Signature);
+            Signature nodeSignature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
             foreach (var outputPair in node.OutputTerminals.Zip(nodeSignature.Outputs))
             {
                 if (outputPair.Value.IsPassthrough)
@@ -372,6 +395,19 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         #region VisitorTransformBase overrides
+
+        protected override void VisitDfirRoot(DfirRoot dfirRoot)
+        {
+            TargetDfir = dfirRoot;
+            uint parameterIndex = 0;
+            foreach (DataItem dataItem in dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex))
+            {
+                _dataItemParameterIndices[dataItem] = parameterIndex;
+                ++parameterIndex;
+            }
+
+            base.VisitDfirRoot(dfirRoot);
+        }
 
         protected override void PostVisitDiagram(Diagram diagram)
         {
@@ -540,6 +576,24 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        public bool VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.Terminal.Direction == Direction.Output)
+            {
+                // TODO: distinguish inout from in parameters?
+                LLVMValueRef parameterValue = _topLevelFunction.GetParam(_dataItemParameterIndices[dataAccessor.DataItem]);
+                _variableValues[dataAccessor.Terminal.GetTrueVariable()].UpdateValue(_builder, parameterValue);
+            }
+            else if (dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                // assume that the function parameter is a pointer to where we need to store the value
+                LLVMValueRef value = _variableValues[dataAccessor.Terminal.GetTrueVariable()].GetValue(_builder),
+                    addressParameter = _topLevelFunction.GetParam(_dataItemParameterIndices[dataAccessor.DataItem]);
+                _builder.CreateStore(value, addressParameter);
+            }
+            return true;
+        }
+
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
@@ -618,6 +672,38 @@ namespace Rebar.RebarTarget.LLVM
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
             throw new NotImplementedException();
+        }
+
+        public bool VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            LLVMTypeRef[] parameterTypes = methodCallNode.Signature.GetParameters().Select(TranslateParameterType).ToArray();
+            LLVMTypeRef targetFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
+
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
+            LLVMValueRef targetFunction = Module.AddFunction(targetFunctionName, targetFunctionType);
+            CreateCallForFunctionalNode(targetFunction, methodCallNode, methodCallNode.Signature);
+            return true;
+        }
+
+        private LLVMTypeRef TranslateParameterType(NIType parameterType)
+        {
+            // TODO: this should probably share code with how we compute the top function LLVM type above
+            bool isInput = parameterType.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
+                isOutput = parameterType.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
+            if (isInput)
+            {
+                if (isOutput)
+                {
+                    // Don't handle inouts yet
+                    throw new NotImplementedException();
+                }
+                return parameterType.GetDataType().AsLLVMType();
+            }
+            if (isOutput)
+            {
+                return LLVMTypeRef.PointerType(parameterType.GetDataType().AsLLVMType(), 0u);
+            }
+            throw new NotImplementedException("Parameter direction is wrong");
         }
 
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)

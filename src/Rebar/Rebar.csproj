@@ -234,6 +234,7 @@
     <Compile Include="Compiler\Nodes\LoopConditionTunnel.cs" />
     <Compile Include="Compiler\Nodes\BorderNode.cs" />
     <Compile Include="Compiler\Nodes\DfirNode.cs" />
+    <Compile Include="Compiler\Nodes\MethodCallNode.cs" />
     <Compile Include="Compiler\Nodes\OptionPatternStructure.cs" />
     <Compile Include="Compiler\Nodes\OptionPatternStructureSelector.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
@@ -362,6 +363,7 @@
     <Compile Include="Common\BorrowMode.cs" />
     <Compile Include="Resources\RebarModelResources.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
+    <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\FunctionalNode.cs" />
     <Compile Include="SourceModel\Functions.cs" />
@@ -385,6 +387,7 @@
     <Compile Include="SourceModel\PairedTunnelBatchRule.cs" />
     <Compile Include="SourceModel\Function.cs" />
     <Compile Include="SourceModel\NamespaceSchema.cs" />
+    <Compile Include="SourceModel\FunctionMergeScriptDataServiceFactory.cs" />
     <Compile Include="SourceModel\RootDiagram.cs" />
     <Compile Include="SourceModel\CaseStructure.cs" />
     <Compile Include="SourceModel\FlatSequence.cs" />

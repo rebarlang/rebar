@@ -35,17 +35,20 @@ namespace Rebar.Design
 
         public override bool TryGetDefaultValue(string parameterName, out object defaultValue)
         {
-            throw new NotImplementedException();
+            defaultValue = null;
+            return false;
         }
 
         public override bool TryGetDefaultValueText(string parameterName, out string defaultValueText)
         {
-            throw new NotImplementedException();
+            defaultValueText = "none";
+            return true;
         }
 
         public override bool TryGetCurrentValue(string parameterName, out object currentValue)
         {
-            throw new NotImplementedException();
+            currentValue = null;
+            return false;
         }
     }
 }

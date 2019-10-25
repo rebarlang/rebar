@@ -55,9 +55,22 @@ namespace Rebar.RebarTarget
             ProgressToken progressToken,
             CompileThreadState compileThreadState)
         {
+            var compileSignatureParameters = new List<CompileSignatureParameter>();
+            foreach (DataItem dataItem in targetDfir.DataItems.OrderBy(dataItem => dataItem.ConnectorPaneIndex))
+            {
+                var compileSignatureParameter = new CompileSignatureParameter(
+                    dataItem.Name,
+                    dataItem.Name,
+                    dataItem.DataType,
+                    dataItem.ConnectorPaneInputPassingRule,
+                    dataItem.ConnectorPaneOutputPassingRule,
+                    dataItem.ConnectorPaneIndex);
+                compileSignatureParameters.Add(compileSignatureParameter);
+            }
+
             CompileSignature topSignature = new CompileSignature(
                 targetDfir.Name,
-                Enumerable.Empty<CompileSignatureParameter>(), // GenerateParameters(targetDfir),
+                compileSignatureParameters, // GenerateParameters(targetDfir),
                 targetDfir.GetDeclaringType(),
                 targetDfir.Reentrancy,
                 true,
@@ -67,16 +80,19 @@ namespace Rebar.RebarTarget
                 true,
                 ExecutionPriority.Normal,
                 CallingConvention.StdCall);
-            BuildSpec htmlVIBuildSpec = specAndQName.BuildSpec;
 
+            var compileSignatures = new Dictionary<ExtendedQualifiedName, CompileSignature>();
+            var dependencyIdentities = new HashSet<SpecAndQName>();
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
+                dependencyIdentities.Add(dependency.SpecAndQName);
                 var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.SpecAndQName, cancellationToken, progressToken, compileThreadState);
                 if (compileSignature != null)
                 {
                     targetDfir.AddDependency(
                         targetDfir,
                         new CompileSignatureDependency(dependency.SpecAndQName, compileSignature));
+                    compileSignatures[dependency.SpecAndQName.QualifiedName] = compileSignature;
                 }
             }
 
@@ -89,14 +105,18 @@ namespace Rebar.RebarTarget
             else
             {
                 Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
-                builtPackage = new LLVM.FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunctionModule);
+                builtPackage = new LLVM.FunctionBuiltPackage(
+                    specAndQName,
+                    Compiler.TargetName,
+                    dependencyIdentities.ToArray(),
+                    compiledFunctionModule);
             }
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,
                 targetDfir,
-                new Dictionary<ExtendedQualifiedName, CompileSignature>(),
+                compileSignatures,
                 token,
                 cancellationToken,
                 progressToken,
@@ -136,14 +156,19 @@ namespace Rebar.RebarTarget
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            LLVM.Allocator allocator = new LLVM.Allocator(valueSources);
+            var allocator = new LLVM.Allocator(valueSources);
             allocator.Execute(dfirRoot, cancellationToken);
 
-            Module module = new Module("module");
-            compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? dfirRoot.SpecAndQName.RuntimeName : compiledFunctionName;
-            LLVM.FunctionCompiler functionCompiler = new LLVM.FunctionCompiler(module, compiledFunctionName, valueSources);
+            var module = new Module("module");
+            compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
+            var functionCompiler = new LLVM.FunctionCompiler(module, compiledFunctionName, dfirRoot.DataItems.ToArray(), valueSources);
             functionCompiler.Execute(dfirRoot, cancellationToken);
             return module;
+        }
+
+        internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
+        {
+            return functionSpecAndQName.RuntimeName;
         }
 
         #endregion

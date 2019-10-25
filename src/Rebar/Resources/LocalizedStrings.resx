@@ -159,6 +159,12 @@
   <data name="FeatureToggle_OutputNode_Description" xml:space="preserve">
     <value>Enable the Output node</value>
   </data>
+  <data name="FeatureToggle_ParametersAndCalls_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_ParametersAndCalls_Description" xml:space="preserve">
+    <value>Enable adding parameters to function diagrams and function calls</value>
+  </data>
   <data name="FeatureToggle_RebarTarget_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>
@@ -191,6 +197,9 @@
   </data>
   <data name="ModuleDisplayInfo_RebarModuleDisplayName" xml:space="preserve">
     <value>Rebar Module</value>
+  </data>
+  <data name="ParameterNotOnConnectorPane" xml:space="preserve">
+    <value>This accessor's parameter is not on the connector pane.</value>
   </data>
   <data name="RebarPaletteCategory_RebarPaletteDisplayName" xml:space="preserve">
     <value>Rebar</value>

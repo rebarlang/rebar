@@ -6,6 +6,7 @@ using System.Threading;
 using NationalInstruments.ContextualHelp.View;
 using NationalInstruments.Controls.Shell;
 using NationalInstruments.Core;
+using NationalInstruments.Design;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel.Envoys;
@@ -243,23 +244,26 @@ namespace Rebar.Design
             {
                 if (UseIconTemplateEditor)
                 {
-                    var iconInfo = IconTemplateDocumentEditViewModel.CreateDefaultInfo(this, Function.Icon.Model);
+            var iconInfo = IconTemplateDocumentEditViewModel.CreateDefaultInfo(this, Function.Icon.Model);
                     yield return iconInfo;
-                }
+        }
                 else
                 {
-                    var iconInfo = new IconAndConnectorPaneDocumentEditControlInfo<IconAndConnectorPaneDocumentEditViewModel, IconAndConnectorPaneDocumentEditControl>(
+#endif
+            var iconInfo = new IconAndConnectorPaneDocumentEditControlInfo<IconAndConnectorPaneDocumentEditViewModel, IconAndConnectorPaneDocumentEditControl>(
                         IconAndConnectorPaneDocumentEditControl.IconAndConnectorPaneDocumentEditControlUniqueId,
                         this,
                         Function,
-                        "Icon and Connections",
+                        "Icon",
                         IconDocumentEditControl.PaletteIdentifier, // The palette base name
                         "Designer/CommandBar/images/IconEditor_32x32.png",
-                        "Designer/CommandBar/images/IconEditor_16x16.png");
+                        "Designer/CommandBar/images/IconEditor_16x16.png",
+                        null);
                     iconInfo.ClipboardDataFormat = IconDocumentEditControl.ClipboardDataFormat;
-                    iconInfo.ShowInSelector = false;
+                    iconInfo.ShowInSelector = true;
                     yield return iconInfo;
-                }
+#if FALSE
+        }
                 var panelInfo = new PanelDocumentEditControlInfo<DocumentEditControlViewModel, UIModelSketchEditor>(
                     UIModelSketchEditor.UniqueId,
                     this,

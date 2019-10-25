@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using NationalInstruments;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -66,6 +67,15 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDataAccessor(DataAccessor dataAccessor)
+        {
+            if (dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                MarkTrueVariableOfTerminalConsumed(dataAccessor.Terminal);
+            }
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             MarkTrueVariableOfTerminalConsumed(dropNode.InputTerminals[0]);
@@ -87,29 +97,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitFunctionalNode(FunctionalNode functionalNode)
         {
-            var signature = Signatures.GetSignatureForNIType(functionalNode.Signature);
-            foreach (var inputPair in signature.Inputs.Zip(functionalNode.InputTerminals))
-            {
-                SignatureTerminal signatureTerminal = inputPair.Key;
-                Terminal terminal = inputPair.Value;
-                if (signatureTerminal.IsPassthrough)
-                {
-                    MarkFacadeVariableOfTerminalInterrupted(terminal);
-                }
-                else
-                {
-                    // NOTE: this is only correct if we assume that all FunctionalNodes are in normal form;
-                    // that is, they don't take in bounded-lifetime variables without outputting at least 
-                    // one variable in the same lifetime.
-                    MarkFacadeVariableOfTerminalInterrupted(terminal);
-                    MarkTrueVariableOfTerminalConsumed(terminal);
-                }
-            }
-            foreach (var outputTerminal in functionalNode.OutputTerminals)
-            {
-                MarkFacadeVariableOfTerminalLive(outputTerminal);
-            }
-
+            VisitFunctionSignatureNode(functionalNode, functionalNode.Signature);
             return true;
         }
 
@@ -131,6 +119,12 @@ namespace Rebar.Compiler
         {
             MarkFacadeVariableOfTerminalInterrupted(loopConditionTunnel.InputTerminals[0]);
             MarkFacadeVariableOfTerminalLive(loopConditionTunnel.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitMethodCallNode(MethodCallNode methodCallNode)
+        {
+            VisitFunctionSignatureNode(methodCallNode, methodCallNode.Signature);
             return true;
         }
 
@@ -171,6 +165,32 @@ namespace Rebar.Compiler
             MarkTrueVariableOfTerminalConsumed(unwrapOptionTunnel.InputTerminals[0]);
             MarkFacadeVariableOfTerminalLive(unwrapOptionTunnel.OutputTerminals[0]);
             return true;
+        }
+
+        private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
+        {
+            var signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
+            foreach (var inputPair in signature.Inputs.Zip(node.InputTerminals))
+            {
+                SignatureTerminal signatureTerminal = inputPair.Key;
+                Terminal terminal = inputPair.Value;
+                if (signatureTerminal.IsPassthrough)
+                {
+                    MarkFacadeVariableOfTerminalInterrupted(terminal);
+                }
+                else
+                {
+                    // NOTE: this is only correct if we assume that all FunctionalNodes are in normal form;
+                    // that is, they don't take in bounded-lifetime variables without outputting at least 
+                    // one variable in the same lifetime.
+                    MarkFacadeVariableOfTerminalInterrupted(terminal);
+                    MarkTrueVariableOfTerminalConsumed(terminal);
+                }
+            }
+            foreach (var outputTerminal in node.OutputTerminals)
+            {
+                MarkFacadeVariableOfTerminalLive(outputTerminal);
+            }
         }
     }
 }

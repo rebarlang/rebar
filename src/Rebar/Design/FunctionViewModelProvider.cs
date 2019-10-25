@@ -1,4 +1,6 @@
 ﻿using NationalInstruments.Design;
+using NationalInstruments.MocCommon.Design;
+using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.VI.Design;
@@ -14,6 +16,8 @@ namespace Rebar.Design
         {
             AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
             AddSupportedModel<Wire>(w => new FunctionWireViewModel(w));
+            AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
+            AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
 
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value", @"Resources\Diagram\Nodes\Drop.png"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
