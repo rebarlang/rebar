@@ -374,6 +374,20 @@ namespace Rebar.RebarTarget.LLVM
             return function;
         }
 
+        private LLVMValueRef GetImportedFunction(MethodCallNode methodCallNode)
+        {
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
+            LLVMValueRef function;
+            if (!_importedFunctions.TryGetValue(targetFunctionName, out function))
+            {
+                LLVMTypeRef[] parameterTypes = methodCallNode.Signature.GetParameters().Select(TranslateParameterType).ToArray();
+                LLVMTypeRef targetFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
+                function = Module.AddFunction(targetFunctionName, targetFunctionType);
+                _importedFunctions[targetFunctionName] = function;
+            }
+            return function;
+        }
+
         private void CreateCallForFunctionalNode(LLVMValueRef function, Node node, NIType nodeFunctionSignature)
         {
             var arguments = new List<LLVMValueRef>();
@@ -676,11 +690,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitMethodCallNode(MethodCallNode methodCallNode)
         {
-            LLVMTypeRef[] parameterTypes = methodCallNode.Signature.GetParameters().Select(TranslateParameterType).ToArray();
-            LLVMTypeRef targetFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
-
-            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
-            LLVMValueRef targetFunction = Module.AddFunction(targetFunctionName, targetFunctionType);
+            LLVMValueRef targetFunction = GetImportedFunction(methodCallNode);
             CreateCallForFunctionalNode(targetFunction, methodCallNode, methodCallNode.Signature);
             return true;
         }
