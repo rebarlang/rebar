@@ -11,7 +11,6 @@ using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using Rebar.Compiler;
 using Rebar.Common;
-using Rebar.RebarTarget.BytecodeInterpreter;
 
 namespace Rebar.RebarTarget
 {
@@ -96,21 +95,12 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            IBuiltPackage builtPackage = null;
-            if (!RebarFeatureToggles.IsLLVMCompilerEnabled)
-            {
-                Function compiledFunction = CompileFunctionForBytecodeInterpreter(targetDfir, cancellationToken);
-                builtPackage = new FunctionBuiltPackage(specAndQName, Compiler.TargetName, compiledFunction);
-            }
-            else
-            {
-                Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
-                builtPackage = new LLVM.FunctionBuiltPackage(
-                    specAndQName,
-                    Compiler.TargetName,
-                    dependencyIdentities.ToArray(),
-                    compiledFunctionModule);
-            }
+            Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
+            var builtPackage = new LLVM.FunctionBuiltPackage(
+                specAndQName,
+                Compiler.TargetName,
+                dependencyIdentities.ToArray(),
+                compiledFunctionModule);
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
@@ -124,31 +114,6 @@ namespace Rebar.RebarTarget
                 false);
 
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
-        }
-
-        internal static Function CompileFunctionForBytecodeInterpreter(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
-        {
-            ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
-
-            var variableAllocations = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
-            var allocator = new BytecodeInterpreterAllocator(variableAllocations);
-            allocator.Execute(dfirRoot, cancellationToken);
-
-            IEnumerable<LocalAllocationValueSource> localAllocations = variableAllocations.Values.OfType<LocalAllocationValueSource>();
-            int[] localSizes = new int[localAllocations.Count()];
-            foreach (var allocation in localAllocations)
-            {
-                localSizes[allocation.Index] = allocation.Size;
-            }
-
-            var functionBuilder = new FunctionBuilder()
-            {
-                Name = dfirRoot.SpecAndQName.EditorName,
-                LocalSizes = localSizes
-            };
-            new FunctionCompiler(functionBuilder, variableAllocations).Execute(dfirRoot, cancellationToken);
-
-            return functionBuilder.CreateFunction();
         }
 
         internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")

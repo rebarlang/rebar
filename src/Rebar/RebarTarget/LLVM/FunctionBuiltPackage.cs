@@ -36,13 +36,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public Module Module { get; }
 
-        public bool IsPackageValid
-        {
-            get
-            {
-                return RebarFeatureToggles.IsLLVMCompilerEnabled;
-            }
-        }
+        public bool IsPackageValid => true;
 
         public IRuntimeEntityIdentity RuntimeEntityIdentity { get; }
 

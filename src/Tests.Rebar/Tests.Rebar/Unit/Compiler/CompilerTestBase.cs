@@ -56,13 +56,6 @@ namespace Tests.Rebar.Unit.Compiler
             new InsertDropTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
         }
 
-        internal global::Rebar.RebarTarget.BytecodeInterpreter.Function RunSemanticAnalysisUpToCodeGeneration(DfirRoot dfirRoot)
-        {
-            var cancellationToken = new CompileCancellationToken();
-            RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
-            return FunctionCompileHandler.CompileFunctionForBytecodeInterpreter(dfirRoot, cancellationToken);
-        }
-
         internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
         {
             var cancellationToken = new CompileCancellationToken();
