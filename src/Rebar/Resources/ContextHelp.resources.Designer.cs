@@ -2034,6 +2034,60 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string SliceIndex_Description {
+            get {
+                return ResourceManager.GetString("SliceIndex_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to element reference.
+        /// </summary>
+        internal static string SliceIndex_elementRef_Name {
+            get {
+                return ResourceManager.GetString("SliceIndex_elementRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to index reference.
+        /// </summary>
+        internal static string SliceIndex_indexRef_in_Name {
+            get {
+                return ResourceManager.GetString("SliceIndex_indexRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to index reference.
+        /// </summary>
+        internal static string SliceIndex_indexRef_out_Name {
+            get {
+                return ResourceManager.GetString("SliceIndex_indexRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Slice Index.
+        /// </summary>
+        internal static string SliceIndex_Name {
+            get {
+                return ResourceManager.GetString("SliceIndex_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice reference.
+        /// </summary>
+        internal static string SliceIndex_sliceRef_Name {
+            get {
+                return ResourceManager.GetString("SliceIndex_sliceRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string SomeConstructorNode_Description {
             get {
                 return ResourceManager.GetString("SomeConstructorNode_Description", resourceCulture);
@@ -2394,6 +2448,51 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string VectorInitialize_Description {
+            get {
+                return ResourceManager.GetString("VectorInitialize_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to element.
+        /// </summary>
+        internal static string VectorInitialize_element_Name {
+            get {
+                return ResourceManager.GetString("VectorInitialize_element_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Initialize Vector.
+        /// </summary>
+        internal static string VectorInitialize_Name {
+            get {
+                return ResourceManager.GetString("VectorInitialize_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to size.
+        /// </summary>
+        internal static string VectorInitialize_size_Name {
+            get {
+                return ResourceManager.GetString("VectorInitialize_size_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector.
+        /// </summary>
+        internal static string VectorInitialize_vector_Name {
+            get {
+                return ResourceManager.GetString("VectorInitialize_vector_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string VectorInsert_Description {
             get {
                 return ResourceManager.GetString("VectorInsert_Description", resourceCulture);
@@ -2451,6 +2550,42 @@ namespace Rebar.Resources {
         internal static string VectorInsert_vectorRef_out_Name {
             get {
                 return ResourceManager.GetString("VectorInsert_vectorRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string VectorToSlice_Description {
+            get {
+                return ResourceManager.GetString("VectorToSlice_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Vector To Slice.
+        /// </summary>
+        internal static string VectorToSlice_Name {
+            get {
+                return ResourceManager.GetString("VectorToSlice_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice reference.
+        /// </summary>
+        internal static string VectorToSlice_sliceRef_Name {
+            get {
+                return ResourceManager.GetString("VectorToSlice_sliceRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector reference.
+        /// </summary>
+        internal static string VectorToSlice_vectorRef_Name {
+            get {
+                return ResourceManager.GetString("VectorToSlice_vectorRef_Name", resourceCulture);
             }
         }
         

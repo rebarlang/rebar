@@ -86,9 +86,23 @@ namespace Rebar.RebarTarget.LLVM
 
         public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
         {
-            LLVMValueRef slice0 = builder.CreateInsertValue(LLVMSharp.LLVM.GetUndef(StringSliceReferenceType), stringPtr, 0u, "slice0"),
-                slice1 = builder.CreateInsertValue(slice0, length, 1u, "slice1");
-            return slice1;
+            return builder.BuildSliceReferenceValue(StringSliceReferenceType, stringPtr, length);
+        }
+
+        public static LLVMValueRef BuildSliceReferenceValue(this IRBuilder builder, LLVMTypeRef sliceReferenceType, LLVMValueRef bufferPtr, LLVMValueRef length)
+        {
+            LLVMValueRef slice0 = builder.CreateInsertValue(LLVMSharp.LLVM.GetUndef(sliceReferenceType), bufferPtr, 0u, "slice0"),
+                slice = builder.CreateInsertValue(slice0, length, 1u, "slice");
+            return slice;
+        }
+
+        public static LLVMValueRef BuildOptionValue(this IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
+        {
+            LLVMTypeRef innerType = optionType.GetSubtypes()[1];
+            LLVMValueRef undef = LLVMSharp.LLVM.GetUndef(optionType),
+                option0 = builder.CreateInsertValue(undef, (someValue != null).AsLLVMValue(), 0u, "option0"), 
+                option = builder.CreateInsertValue(option0, someValue ?? LLVMSharp.LLVM.ConstNull(innerType), 1u, "option");
+            return option;
         }
 
         public static LLVMTypeRef StringType { get; } = LLVMTypeRef.StructType(
@@ -116,60 +130,83 @@ namespace Rebar.RebarTarget.LLVM
 
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
-            if (niType.IsInteger())
+            switch (niType.GetKind())
             {
-                switch (niType.GetKind())
+                case NITypeKind.UInt8:
+                case NITypeKind.Int8:
+                    return LLVMTypeRef.Int8Type();
+                case NITypeKind.UInt16:
+                case NITypeKind.Int16:
+                    return LLVMTypeRef.Int16Type();
+                case NITypeKind.UInt32:
+                case NITypeKind.Int32:
+                    return LLVMTypeRef.Int32Type();
+                case NITypeKind.UInt64:
+                case NITypeKind.Int64:
+                    return LLVMTypeRef.Int64Type();
+                case NITypeKind.Boolean:
+                    return LLVMTypeRef.Int1Type();
+                case NITypeKind.String:
+                    return StringType;
+                default:
                 {
-                    case NITypeKind.UInt8:
-                    case NITypeKind.Int8:
-                        return LLVMTypeRef.Int8Type();
-                    case NITypeKind.UInt16:
-                    case NITypeKind.Int16:
-                        return LLVMTypeRef.Int16Type();
-                    case NITypeKind.UInt32:
-                    case NITypeKind.Int32:
-                        return LLVMTypeRef.Int32Type();
-                    case NITypeKind.UInt64:
-                    case NITypeKind.Int64:
-                        return LLVMTypeRef.Int64Type();
+                    if (niType.IsRebarReferenceType())
+                    {
+                        NIType referentType = niType.GetReferentType();
+                        if (referentType == DataTypes.StringSliceType)
+                        {
+                            return StringSliceReferenceType;
+                        }
+                        NIType sliceElementType;
+                        if (referentType.TryDestructureSliceType(out sliceElementType))
+                        {
+                            return CreateLLVMSliceReferenceType(sliceElementType.AsLLVMType());
+                        }
+                        return LLVMTypeRef.PointerType(referentType.AsLLVMType(), 0u);
+                    }
+                    if (niType == DataTypes.FileHandleType)
+                    {
+                        return FileHandleType;
+                    }
+                    NIType innerType;
+                    if (niType.TryDestructureOptionType(out innerType))
+                    {
+                        return CreateLLVMOptionType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureVectorType(out innerType))
+                    {
+                        return CreateLLVMVectorType(innerType.AsLLVMType());
+                    }
+                    if (niType == DataTypes.RangeIteratorType)
+                    {
+                        return RangeIteratorType;
+                    }
+                    throw new NotSupportedException("Unsupported type: " + niType);
                 }
             }
-            if (niType.IsBoolean())
-            {
-                return LLVMTypeRef.Int1Type();
-            }
-            if (niType.IsString())
-            {
-                return StringType;
-            }
-            if (niType.IsRebarReferenceType())
-            {
-                NIType referentType = niType.GetReferentType();
-                if (referentType == DataTypes.StringSliceType)
-                {
-                    return StringSliceReferenceType;
-                }
-                return LLVMTypeRef.PointerType(referentType.AsLLVMType(), 0u);
-            }
-            if (niType == DataTypes.FileHandleType)
-            {
-                return FileHandleType;
-            }
-            NIType innerType;
-            if (niType.TryDestructureOptionType(out innerType))
-            {
-                return CreateLLVMOptionType(innerType.AsLLVMType());
-            }
-            if (niType == DataTypes.RangeIteratorType)
-            {
-                return RangeIteratorType;
-            }
-            throw new NotSupportedException("Unsupported type: " + niType);
         }
 
         internal static LLVMTypeRef CreateLLVMOptionType(this LLVMTypeRef innerType)
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int1Type(), innerType }, false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMVectorType(this LLVMTypeRef elementType)
+        {
+            return LLVMTypeRef.StructType(
+                // { allocationPtr, size, capacity }
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(elementType, 0u),
+                    LLVMTypeRef.Int32Type(),
+                    LLVMTypeRef.Int32Type()
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMSliceReferenceType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.PointerType(innerType, 0u), LLVMTypeRef.Int32Type() }, false);
         }
 
         #region Memory Buffer

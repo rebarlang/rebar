@@ -26,6 +26,8 @@ namespace Rebar.Common
 
         private static NIType VectorGenericType { get; }
 
+        public static NIType SliceGenericType { get; }
+
         public static NIType StringSliceType { get; }
 
         public static NIType FileHandleType { get; }
@@ -79,8 +81,13 @@ namespace Rebar.Common
 
             var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
             vectorGenericTypeBuilder.MakeGenericParameters("T");
-            vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute("RustyWiresReferece");
+            vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             VectorGenericType = vectorGenericTypeBuilder.CreateType();
+
+            var sliceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Slice");
+            sliceGenericTypeBuilder.MakeGenericParameters("TElem");
+            sliceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            SliceGenericType = sliceGenericTypeBuilder.CreateType();
 
             var fileHandleTypeBuilder = PFTypes.Factory.DefineValueClass("FileHandle");
             fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
@@ -339,6 +346,27 @@ namespace Rebar.Common
                 return false;
             }
             itemType = type.GetGenericParameters().ElementAt(0);
+            return true;
+        }
+
+        public static NIType CreateSlice(this NIType elementType)
+        {
+            return SpecializeGenericType(SliceGenericType, elementType);
+        }
+
+        public static bool IsSlice(this NIType type)
+        {
+            return IsGenericTypeSpecialization(type, SliceGenericType);
+        }
+
+        public static bool TryDestructureSliceType(this NIType type, out NIType elementType)
+        {
+            if (!IsSlice(type))
+            {
+                elementType = NIType.Unset;
+                return false;
+            }
+            elementType = type.GetGenericParameters().ElementAt(0);
             return true;
         }
 

@@ -906,6 +906,21 @@
   <data name="StringConcat_secondSlice_out_Name" xml:space="preserve">
     <value>second slice</value>
   </data>
+  <data name="VectorInitialize_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorInitialize_element_Name" xml:space="preserve">
+    <value>element</value>
+  </data>
+  <data name="VectorInitialize_Name" xml:space="preserve">
+    <value>Initialize Vector</value>
+  </data>
+  <data name="VectorInitialize_size_Name" xml:space="preserve">
+    <value>size</value>
+  </data>
+  <data name="VectorInitialize_vector_Name" xml:space="preserve">
+    <value>vector</value>
+  </data>
   <data name="OpenFileHandle_Description" xml:space="preserve">
     <value />
   </data>
@@ -953,5 +968,35 @@
   </data>
   <data name="ReadLineFromFileHandle_Name" xml:space="preserve">
     <value>Read Line From File Handle</value>
+  </data>
+  <data name="SliceIndex_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SliceIndex_elementRef_Name" xml:space="preserve">
+    <value>element reference</value>
+  </data>
+  <data name="SliceIndex_indexRef_in_Name" xml:space="preserve">
+    <value>index reference</value>
+  </data>
+  <data name="SliceIndex_indexRef_out_Name" xml:space="preserve">
+    <value>index reference</value>
+  </data>
+  <data name="SliceIndex_Name" xml:space="preserve">
+    <value>Slice Index</value>
+  </data>
+  <data name="SliceIndex_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
+  <data name="VectorToSlice_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorToSlice_Name" xml:space="preserve">
+    <value>Vector To Slice</value>
+  </data>
+  <data name="VectorToSlice_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
+  <data name="VectorToSlice_vectorRef_Name" xml:space="preserve">
+    <value>vector reference</value>
   </data>
 </root>

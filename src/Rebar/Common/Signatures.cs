@@ -62,6 +62,9 @@ namespace Rebar.Common
 
         static Signatures()
         {
+            NITypeBuilder displayTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Display");
+            NITypeBuilder copyTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Copy");
+
             var functionTypeBuilder = PFTypes.Factory.DefineFunction("ImmutPass");
             var tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -117,7 +120,6 @@ namespace Rebar.Common
             CreateCopyType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("Output");
-            NITypeBuilder displayTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Display");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", displayTraitConstraintBuilder);
             AddInputOutputParameter(
                 functionTypeBuilder,
@@ -253,6 +255,30 @@ namespace Rebar.Common
                 "vector");
             VectorCreateType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInitialize");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", copyTraitConstraintBuilder);
+            AddInputParameter(functionTypeBuilder, tDataParameter, "element");
+            AddInputParameter(functionTypeBuilder, PFTypes.Int32, "size");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateVector(),
+                "vector");
+            VectorInitializeType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorToSlice");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            tMutabilityParameter = AddGenericMutabilityTypeParameter(functionTypeBuilder, "TMut");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateVector().CreatePolymorphicReference(tLifetimeParameter, tMutabilityParameter),
+                "vectorRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreatePolymorphicReference(tLifetimeParameter, tMutabilityParameter),
+                "sliceRef");
+            VectorToSliceType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInsert");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -268,6 +294,24 @@ namespace Rebar.Common
                 tDataParameter,
                 "elementRef");
             VectorInsertType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("SliceIndex");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            tMutabilityParameter = AddGenericMutabilityTypeParameter(functionTypeBuilder, "TMut");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                PFTypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                "indexRef");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreatePolymorphicReference(tLifetimeParameter, tMutabilityParameter),
+                "sliceRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreatePolymorphicReference(tLifetimeParameter, tMutabilityParameter).CreateOption(),
+                "elementRef");
+            SliceIndexType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateLockingCell");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
@@ -357,7 +401,13 @@ namespace Rebar.Common
 
         public static NIType VectorCreateType { get; }
 
+        public static NIType VectorInitializeType { get; }
+
+        public static NIType VectorToSliceType { get; }
+
         public static NIType VectorInsertType { get; }
+
+        public static NIType SliceIndexType { get; }
 
         public static NIType CreateLockingCellType { get; }
 

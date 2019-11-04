@@ -83,7 +83,9 @@ namespace Rebar.Compiler
             CreateNodeFacadesTransform.CreateTunnelNodeFacade(outputTunnel);
 
             Wire.Create(liveVariable.Terminal.ParentDiagram, liveVariable.Terminal, inputTerminal);
-            inputTerminal.GetFacadeVariable().MergeInto(liveVariable.Variable);
+            AutoBorrowNodeFacade.GetNodeFacade(outputTunnel)[inputTerminal].UnifyWithConnectedWireTypeAsNodeInput(
+                liveVariable.Variable,
+                new TerminalTypeUnificationResults());
             _lifetimeVariableAssociation.MarkVariableConsumed(liveVariable.Variable);
 
             return new LiveVariable(outputTerminal.GetFacadeVariable(), outputTerminal);

@@ -67,7 +67,10 @@ namespace Rebar.Design
             AddSupportedModel<StringAppend>(n => new BasicNodeViewModel(n, "Append To String"));
 
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
+            AddSupportedModel<VectorInitialize>(n => new BasicNodeViewModel(n, "Initialize Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
+            AddSupportedModel<VectorToSlice>(n => new BasicNodeViewModel(n, "Vector To Slice"));
+            AddSupportedModel<SliceIndex>(n => new BasicNodeViewModel(n, "Slice Index"));
 
             AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
             AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
