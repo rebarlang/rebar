@@ -14,13 +14,15 @@ namespace Rebar.Common
 
         private static NIType PolymorphicReferenceGenericType { get; }
 
+        public static NIType CloneInterfaceType { get; }
+
         public static NIType DropInterfaceType { get; }
 
         private static NIType OptionGenericType { get; }
 
         private static NIType LockingCellGenericType { get; }
 
-        private static NIType NonLockingCellGenericType { get; }
+        private static NIType SharedGenericType { get; }
 
         private static NIType IteratorInterfaceGenericType { get; }
 
@@ -53,6 +55,10 @@ namespace Rebar.Common
             polymorphicReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             PolymorphicReferenceGenericType = polymorphicReferenceGenericTypeBuilder.CreateType();
 
+            var cloneInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Clone");
+            cloneInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            CloneInterfaceType = cloneInterfaceBuilder.CreateType();
+
             var dropInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Drop");
             dropInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             DropInterfaceType = dropInterfaceBuilder.CreateType();
@@ -67,10 +73,12 @@ namespace Rebar.Common
             lockingCellGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             LockingCellGenericType = lockingCellGenericTypeBuilder.CreateType();
 
-            var nonLockingCellGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("NonLockingCell");
-            nonLockingCellGenericTypeBuilder.MakeGenericParameters("T");
-            nonLockingCellGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
-            NonLockingCellGenericType = nonLockingCellGenericTypeBuilder.CreateType();
+            var sharedGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Shared");
+            sharedGenericTypeBuilder.MakeGenericParameters("T");
+            sharedGenericTypeBuilder.DefineImplementedInterfaceFromExisting(CloneInterfaceType);
+            sharedGenericTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
+            sharedGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            SharedGenericType = sharedGenericTypeBuilder.CreateType();
 
             var iteratorGenericTypeBuilder = PFTypes.Factory.DefineReferenceInterface("Iterator");
             iteratorGenericTypeBuilder.MakeGenericParameters("TItem");
@@ -251,14 +259,14 @@ namespace Rebar.Common
             return type.IsGenericTypeSpecialization(LockingCellGenericType);
         }
 
-        public static NIType CreateNonLockingCell(this NIType dereferenceType)
+        public static NIType CreateShared(this NIType dereferenceType)
         {
-            return SpecializeGenericType(NonLockingCellGenericType, dereferenceType);
+            return SpecializeGenericType(SharedGenericType, dereferenceType);
         }
 
-        public static bool IsNonLockingCellType(this NIType type)
+        public static bool IsSharedType(this NIType type)
         {
-            return type.IsGenericTypeSpecialization(NonLockingCellGenericType);
+            return type.IsGenericTypeSpecialization(SharedGenericType);
         }
 
         public static NIType GetUnderlyingTypeFromRebarType(this NIType rebarType)
@@ -270,15 +278,6 @@ namespace Rebar.Common
             return rebarType;
         }
 
-        public static NIType GetUnderlyingTypeFromLockingCellType(this NIType rebarType)
-        {
-            if (rebarType.IsLockingCellType())
-            {
-                return rebarType.GetGenericParameters().ElementAt(0);
-            }
-            throw new ArgumentException("Expected a LockingCell type.");
-        }
-
         /// <summary>
         /// If the given <see cref="type"/> is a LockingCell type, outputs the inner value type and returns true; otherwise, returns false.
         /// </summary>
@@ -288,6 +287,23 @@ namespace Rebar.Common
         public static bool TryDestructureLockingCellType(this NIType type, out NIType valueType)
         {
             if (!IsLockingCellType(type))
+            {
+                valueType = NIType.Unset;
+                return false;
+            }
+            valueType = type.GetGenericParameters().ElementAt(0);
+            return true;
+        }
+
+        /// <summary>
+        /// If the given <see cref="type"/> is a Shared type, outputs the inner value type and returns true; otherwise, returns false.
+        /// </summary>
+        /// <param name="type">The <see cref="NIType"/> to try to destructure as an Shared type.</param>
+        /// <param name="valueType">The inner value type of the given type if it is an Shared.</param>
+        /// <returns>True if the given type was an Shared type; false otherwise.</returns>
+        public static bool TryDestructureSharedType(this NIType type, out NIType valueType)
+        {
+            if (!IsSharedType(type))
             {
                 valueType = NIType.Unset;
                 return false;
@@ -421,6 +437,11 @@ namespace Rebar.Common
         internal static bool TypeHasDropTrait(this NIType type)
         {
             return type == PFTypes.String || type.IsOrImplements(DropInterfaceType);
+        }
+
+        internal static bool TypeHasCloneTrait(this NIType type)
+        {
+            return type.IsOrImplements(CloneInterfaceType);
         }
     }
 }

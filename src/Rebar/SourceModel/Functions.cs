@@ -939,21 +939,48 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.CellDataType };
     }
 
-    public class CreateNonLockingCell : FunctionalNode
+    public class SharedCreate : FunctionalNode
     {
-        private const string ElementName = "CreateNonLockingCell";
+        private const string ElementName = "SharedCreate";
 
-        protected CreateNonLockingCell()
-            : base(Signatures.CreateNonLockingCellType)
+        protected SharedCreate()
+            : base(Signatures.SharedCreateType)
         {
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
-        public static CreateNonLockingCell CreateCreateNonLockingCell(IElementCreateInfo elementCreateInfo)
+        public static SharedCreate CreateSharedCreate(IElementCreateInfo elementCreateInfo)
         {
-            var createNonLockingCell = new CreateNonLockingCell();
-            createNonLockingCell.Init(elementCreateInfo);
-            return createNonLockingCell;
+            var sharedCreate = new SharedCreate();
+            sharedCreate.Init(elementCreateInfo);
+            return sharedCreate;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.CellDataType };
+    }
+
+    public class SharedGetValue : FunctionalNode
+    {
+        private const string ElementName = "SharedGetValue";
+
+        protected SharedGetValue()
+            : base(Signatures.SharedGetValueType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SharedGetValue CreateSharedGetValue(IElementCreateInfo elementCreateInfo)
+        {
+            var sharedGetValue = new SharedGetValue();
+            sharedGetValue.Init(elementCreateInfo);
+            return sharedGetValue;
         }
 
         /// <inheritdoc />

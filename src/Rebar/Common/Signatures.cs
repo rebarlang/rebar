@@ -64,6 +64,7 @@ namespace Rebar.Common
         {
             NITypeBuilder displayTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Display");
             NITypeBuilder copyTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Copy");
+            NITypeBuilder cloneTraitConstraintBuilder = PFTypes.Factory.DefineReferenceInterface("Clone");
 
             var functionTypeBuilder = PFTypes.Factory.DefineFunction("ImmutPass");
             var tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
@@ -107,8 +108,7 @@ namespace Rebar.Common
             ExchangeValuesType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateCopy");
-            // TODO: constrain TData to be Copy or Clone
-            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", cloneTraitConstraintBuilder);
             AddInputOutputParameter(
                 functionTypeBuilder,
                 tDataParameter.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
@@ -336,7 +336,7 @@ namespace Rebar.Common
                 "cell");
             CreateLockingCellType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateNonLockingCell");
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("SharedCreate");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputParameter(
                 functionTypeBuilder,
@@ -344,9 +344,22 @@ namespace Rebar.Common
                 "value");
             AddOutputParameter(
                 functionTypeBuilder,
-                tDataParameter.CreateNonLockingCell(),
-                "cell");
-            CreateNonLockingCellType = functionTypeBuilder.CreateType();
+                tDataParameter.CreateShared(),
+                "shared");
+            SharedCreateType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("SharedGetValue");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateShared().CreateImmutableReference(tLifetimeParameter),
+                "sharedRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateImmutableReference(tLifetimeParameter),
+                "valueRef");
+            SharedGetValueType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("OpenFileHandle");
             AddInputOutputParameter(
@@ -430,7 +443,9 @@ namespace Rebar.Common
 
         public static NIType CreateLockingCellType { get; }
 
-        public static NIType CreateNonLockingCellType { get; }
+        public static NIType SharedCreateType { get; }
+
+        public static NIType SharedGetValueType { get; }
 
         public static NIType OpenFileHandleType { get; }
 

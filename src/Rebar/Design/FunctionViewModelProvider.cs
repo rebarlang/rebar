@@ -27,8 +27,6 @@ namespace Rebar.Design
             AddSupportedModel<CreateCopyNode>(n => new BasicNodeViewModel(n, "Create Copy", @"Resources\Diagram\Nodes\CreateCopy.png"));
             AddSupportedModel<AssignNode>(n => new BasicNodeViewModel(n, "Assign", @"Resources\Diagram\Nodes\Assign.png"));
             AddSupportedModel<ExchangeValues>(n => new BasicNodeViewModel(n, "Exchange Values", @"Resources\Diagram\Nodes\ExchangeValues.png"));
-            AddSupportedModel<CreateLockingCell>(n => new BasicNodeViewModel(n, "Create Locking Cell"));
-            AddSupportedModel<CreateNonLockingCell>(n => new BasicNodeViewModel(n, "Create Non-Locking Cell"));
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow", @"Resources\Diagram\Nodes\ImmutableBorrowNode.png"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some", @"Resources\Diagram\Nodes\Some.png"));
             AddSupportedModel<NoneConstructorNode>(n => new BasicNodeViewModel(n, "None", @"Resources\Diagram\Nodes\None.png"));
@@ -71,6 +69,10 @@ namespace Rebar.Design
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
             AddSupportedModel<VectorToSlice>(n => new BasicNodeViewModel(n, "Vector To Slice"));
             AddSupportedModel<SliceIndex>(n => new BasicNodeViewModel(n, "Slice Index"));
+
+            AddSupportedModel<CreateLockingCell>(n => new BasicNodeViewModel(n, "Create Locking Cell"));
+            AddSupportedModel<SharedCreate>(n => new BasicNodeViewModel(n, "Create Shared"));
+            AddSupportedModel<SharedGetValue>(n => new BasicNodeViewModel(n, "Get Value From Shared"));
 
             AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
             AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));

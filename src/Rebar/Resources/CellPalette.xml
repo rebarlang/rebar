@@ -19,10 +19,17 @@
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>
-      <Leaf Display="Create Non-Locking Cell" UniqueId="Rebar:CreateNonLockingCell" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <Leaf Display="Create Shared" UniqueId="Rebar:CreateShared" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
         <pf:MergeScript>
           <pf:MergeItem>
-            <rb:CreateNonLockingCell />
+            <rb:SharedCreate />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
+      <Leaf Display="Get Value From Shared" UniqueId="Rebar:SharedGetValue" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:SharedGetValue />
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>

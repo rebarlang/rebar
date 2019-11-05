@@ -100,8 +100,8 @@ namespace Rebar.Common
                         return argumentNIType.CreateVector();
                     case "LockingCell":
                         return argumentNIType.CreateLockingCell();
-                    case "NonLockingCell":
-                        return argumentNIType.CreateNonLockingCell();
+                    case "Shared":
+                        return argumentNIType.CreateShared();
                     case "Option":
                         return argumentNIType.CreateOption();
                     default:
@@ -642,6 +642,19 @@ namespace Rebar.Common
         }
     }
 
+    internal class CloneConstraint : Constraint
+    {
+        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
+        {
+            // TODO: probably not great to render an NIType at this stage
+            NIType niType = type.RenderNIType();
+            if (!niType.WireTypeMayFork() && !niType.TypeHasCloneTrait())
+            {
+                unificationResult.AddFailedTypeConstraint(this);
+            }
+        }
+    }
+
     internal class DisplayTraitConstraint : Constraint
     {
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
@@ -781,6 +794,8 @@ namespace Rebar.Common
                 string interfaceName = niTypeConstraint.GetName();
                 switch (interfaceName)
                 {
+                    case "Clone":
+                        return new CloneConstraint();
                     case "Copy":
                         return new CopyConstraint();
                     case "Display":

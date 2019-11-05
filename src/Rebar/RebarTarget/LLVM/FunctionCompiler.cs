@@ -13,7 +13,7 @@ using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget.LLVM
 {
-    internal class FunctionCompiler : VisitorTransformBase, IDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
+    internal partial class FunctionCompiler : VisitorTransformBase, IDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
     {
         private static readonly Dictionary<string, Action<FunctionCompiler, FunctionalNode>> _functionalNodeCompilers;
 
@@ -76,7 +76,9 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["SliceIndex"] = CompileSliceIndex;
 
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
-            _functionalNodeCompilers["CreateNonLockingCell"] = CompileNothing;
+
+            _functionalNodeCompilers["SharedCreate"] = CompileSharedCreate;
+            _functionalNodeCompilers["SharedGetValue"] = CompileSharedGetValue;
 
             _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
             _functionalNodeCompilers["ReadLineFromFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.ReadLineFromFileHandleName);
@@ -199,10 +201,28 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CompileCreateCopy(FunctionCompiler compiler, FunctionalNode createCopyNode)
         {
-            // TODO: handle deep-copyable types
-            ValueSource copyFromSource = compiler.GetTerminalValueSource(createCopyNode.InputTerminals[0]),
-                copySource = compiler.GetTerminalValueSource(createCopyNode.OutputTerminals[1]);
-            copySource.UpdateValue(compiler._builder, copyFromSource.GetDeferencedValue(compiler._builder));
+            var copyValueSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(createCopyNode.OutputTerminals[1]);
+            NIType valueType = copyValueSource.AllocationNIType;
+            if (valueType.WireTypeMayFork())
+            {
+                ValueSource copyFromSource = compiler.GetTerminalValueSource(createCopyNode.InputTerminals[0]);
+                copyValueSource.UpdateValue(compiler._builder, copyFromSource.GetDeferencedValue(compiler._builder));
+                return;
+            }
+            if (valueType.TypeHasCloneTrait())
+            {
+                NIType innerType;
+                if (valueType.TryDestructureSharedType(out innerType))
+                {
+                    string specializedName = MonomorphizeFunctionName("shared_clone", innerType.ToEnumerable());
+                    LLVMValueRef sharedCloneFunction = compiler.GetSpecializedFunction(
+                        specializedName,
+                        () => CreateSharedCloneFunction(compiler.Module, specializedName, innerType.AsLLVMType()));
+                    compiler.CreateCallForFunctionalNode(sharedCloneFunction, createCopyNode);
+                    return;
+                }
+            }
+            throw new NotSupportedException("Don't know how to compile CreateCopy for type " + valueType);
         }
 
         private static void CompileSelectReference(FunctionCompiler compiler, FunctionalNode selectReferenceNode)
@@ -583,7 +603,7 @@ namespace Rebar.RebarTarget.LLVM
 
     #endregion
 
-    private readonly IRBuilder _builder;
+        private readonly IRBuilder _builder;
         private readonly LLVMValueRef _topLevelFunction;
         private readonly Dictionary<VariableReference, ValueSource> _variableValues;
         private readonly CommonExternalFunctions _commonExternalFunctions;
@@ -938,6 +958,14 @@ namespace Rebar.RebarTarget.LLVM
                 dropFunction = GetSpecializedFunction(
                     specializedFunctionName,
                     () => CreateOptionDropFunction(Module, this, specializedFunctionName, innerType));
+                return true;
+            }
+            if (droppedValueType.TryDestructureSharedType(out innerType))
+            {
+                string specializedName = MonomorphizeFunctionName("shared_drop", innerType.ToEnumerable());
+                dropFunction = GetSpecializedFunction(
+                    specializedName,
+                    () => CreateSharedDropFunction(this, Module, specializedName, innerType));
                 return true;
             }
 

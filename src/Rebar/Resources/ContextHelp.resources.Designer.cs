@@ -727,42 +727,6 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to cell.
-        /// </summary>
-        internal static string CreateNonLockingCell_cell_Name {
-            get {
-                return ResourceManager.GetString("CreateNonLockingCell_cell_Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .
-        /// </summary>
-        internal static string CreateNonLockingCell_Description {
-            get {
-                return ResourceManager.GetString("CreateNonLockingCell_Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Create Non-Locking Cell.
-        /// </summary>
-        internal static string CreateNonLockingCell_Name {
-            get {
-                return ResourceManager.GetString("CreateNonLockingCell_Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to value.
-        /// </summary>
-        internal static string CreateNonLockingCell_value_Name {
-            get {
-                return ResourceManager.GetString("CreateNonLockingCell_value_Name", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
         internal static string Divide_Description {
@@ -2028,6 +1992,78 @@ namespace Rebar.Resources {
         internal static string SelectReferenceNode_trueValueRef_Name {
             get {
                 return ResourceManager.GetString("SelectReferenceNode_trueValueRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to shared.
+        /// </summary>
+        internal static string SharedCreate_cell_Name {
+            get {
+                return ResourceManager.GetString("SharedCreate_cell_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SharedCreate_Description {
+            get {
+                return ResourceManager.GetString("SharedCreate_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create Shared.
+        /// </summary>
+        internal static string SharedCreate_Name {
+            get {
+                return ResourceManager.GetString("SharedCreate_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value.
+        /// </summary>
+        internal static string SharedCreate_value_Name {
+            get {
+                return ResourceManager.GetString("SharedCreate_value_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to shared reference.
+        /// </summary>
+        internal static string SharedGetValue_cellRef_Name {
+            get {
+                return ResourceManager.GetString("SharedGetValue_cellRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SharedGetValue_Description {
+            get {
+                return ResourceManager.GetString("SharedGetValue_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Get Value From Shared.
+        /// </summary>
+        internal static string SharedGetValue_Name {
+            get {
+                return ResourceManager.GetString("SharedGetValue_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value reference.
+        /// </summary>
+        internal static string SharedGetValue_valueRef_Name {
+            get {
+                return ResourceManager.GetString("SharedGetValue_valueRef_Name", resourceCulture);
             }
         }
         

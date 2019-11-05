@@ -684,16 +684,16 @@
   <data name="CreateLockingCell_value_Name" xml:space="preserve">
     <value>value</value>
   </data>
-  <data name="CreateNonLockingCell_cell_Name" xml:space="preserve">
-    <value>cell</value>
+  <data name="SharedCreate_cell_Name" xml:space="preserve">
+    <value>shared</value>
   </data>
-  <data name="CreateNonLockingCell_Description" xml:space="preserve">
+  <data name="SharedCreate_Description" xml:space="preserve">
     <value />
   </data>
-  <data name="CreateNonLockingCell_Name" xml:space="preserve">
-    <value>Create Non-Locking Cell</value>
+  <data name="SharedCreate_Name" xml:space="preserve">
+    <value>Create Shared</value>
   </data>
-  <data name="CreateNonLockingCell_value_Name" xml:space="preserve">
+  <data name="SharedCreate_value_Name" xml:space="preserve">
     <value>value</value>
   </data>
   <data name="ImmutablePassthroughNode_Description" xml:space="preserve">
@@ -998,5 +998,17 @@
   </data>
   <data name="VectorToSlice_vectorRef_Name" xml:space="preserve">
     <value>vector reference</value>
+  </data>
+  <data name="SharedGetValue_cellRef_Name" xml:space="preserve">
+    <value>shared reference</value>
+  </data>
+  <data name="SharedGetValue_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SharedGetValue_Name" xml:space="preserve">
+    <value>Get Value From Shared</value>
+  </data>
+  <data name="SharedGetValue_valueRef_Name" xml:space="preserve">
+    <value>value reference</value>
   </data>
 </root>

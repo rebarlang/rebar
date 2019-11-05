@@ -53,9 +53,9 @@ namespace Rebar.Design
                 {
                     return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Locking Cell") as T);
                 }
-                if (type.IsNonLockingCellType())
+                if (type.IsSharedType())
                 {
-                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Nonlocking Cell") as T);
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Shared") as T);
                 }
                 if (type.IsIteratorType())
                 {
