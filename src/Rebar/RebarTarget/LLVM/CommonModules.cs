@@ -5,6 +5,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal static class CommonModules
     {
+        public static Module FakeDropModule { get; }
         public static Module StringModule { get; }
         public static Module RangeModule { get; }
         public static Module FileModule { get; }
@@ -17,6 +18,9 @@ namespace Rebar.RebarTarget.LLVM
         private static LLVMValueRef _dropStringFunction;
         private static LLVMValueRef _stringAppendFunction;
         private static LLVMValueRef _stringFromSliceRetFunction;
+
+        public const string FakeDropCreateName = "fakedrop_create";
+        public const string FakeDropDropName = "fakedrop_drop";
 
         public const string CopySliceToPointerName = "copy_slice_to_pointer";
         public const string CreateEmptyStringName = "create_empty_string";
@@ -41,6 +45,8 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
 
+            FakeDropModule = new Module("fakedrop");
+            CreateFakeDropModule(FakeDropModule);
             StringModule = new Module("string");
             CreateStringModule(StringModule);
             RangeModule = new Module("range");
@@ -48,6 +54,59 @@ namespace Rebar.RebarTarget.LLVM
             FileModule = new Module("file");
             CreateFileModule(FileModule);
         }
+
+        #region FakeDrop Module
+
+        private static void CreateFakeDropModule(Module fakeDropModule)
+        {
+            var externalFunctions = new CommonExternalFunctions(fakeDropModule);
+
+            CommonModuleSignatures[FakeDropCreateName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] 
+                {
+                    LLVMTypeRef.Int32Type(),
+                    LLVMTypeRef.PointerType(LLVMExtensions.FakeDropType, 0)
+                },
+                false);
+            CreateFakeDropCreateFunction(fakeDropModule, externalFunctions);
+
+            CommonModuleSignatures[FakeDropDropName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.FakeDropType, 0) },
+                false);
+            CreateFakeDropDropFunction(fakeDropModule, externalFunctions);
+        }
+
+        private static void CreateFakeDropCreateFunction(Module fakeDropModule, CommonExternalFunctions externalFunctions)
+        {
+            LLVMValueRef fakeDropCreateFunction = fakeDropModule.AddFunction(FakeDropCreateName, CommonModuleSignatures[FakeDropCreateName]);
+            LLVMBasicBlockRef entryBlock = fakeDropCreateFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef fakeDropPtr = fakeDropCreateFunction.GetParam(1u),
+                fakeDropIdPtr = builder.CreateStructGEP(fakeDropPtr, 0u, "fakeDropIdPtr"),
+                fakeDropId = fakeDropCreateFunction.GetParam(0u);
+            builder.CreateStore(fakeDropId, fakeDropIdPtr);
+            builder.CreateRetVoid();
+        }
+
+        private static void CreateFakeDropDropFunction(Module fakeDropModule, CommonExternalFunctions externalFunctions)
+        {
+            LLVMValueRef fakeDropDropFunction = fakeDropModule.AddFunction(FakeDropDropName, CommonModuleSignatures[FakeDropDropName]);
+            LLVMBasicBlockRef entryBlock = fakeDropDropFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef fakeDropPtr = fakeDropDropFunction.GetParam(0u),
+                fakeDropIdPtr = builder.CreateStructGEP(fakeDropPtr, 0u, "fakeDropIdPtr"),
+                fakeDropId = builder.CreateLoad(fakeDropIdPtr, "fakeDropId");
+            builder.CreateCall(externalFunctions.FakeDropFunction, new LLVMValueRef[] { fakeDropId }, string.Empty);
+            builder.CreateRetVoid();
+        }
+
+        #endregion
 
         #region String Module
 
@@ -622,6 +681,8 @@ namespace Rebar.RebarTarget.LLVM
             OutputInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_int64");
             OutputUInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_uint64");
 
+            FakeDropFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "fake_drop");
+
             LLVMTypeRef outputStringFunctionType = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { bytePointerType, LLVMTypeRef.Int32Type() },
@@ -706,6 +767,8 @@ namespace Rebar.RebarTarget.LLVM
         public LLVMValueRef OutputUInt64Function { get; }
 
         public LLVMValueRef OutputStringFunction { get; }
+
+        public LLVMValueRef FakeDropFunction { get; }
 
         public LLVMValueRef CloseHandleFunction { get; }
 

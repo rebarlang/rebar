@@ -23,6 +23,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["ImmutPass"] = CompileNothing;
             _functionalNodeCompilers["MutPass"] = CompileNothing;
             _functionalNodeCompilers["Inspect"] = CompileInspect;
+            _functionalNodeCompilers["FakeDropCreate"] = CreateImportedCommonFunctionCompiler(CommonModules.FakeDropCreateName);
             _functionalNodeCompilers["Output"] = CompileOutput;
 
             _functionalNodeCompilers["Assign"] = CompileAssign;
@@ -92,7 +93,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
 
-            // define global data in module for inspected value            
+            // define global data in module for inspected value
             LLVMTypeRef globalType = input.Type.GetReferentType().AsLLVMType();
             string globalName = $"inspect_{inspectNode.UniqueId}";
             LLVMValueRef globalAddress = compiler.Module.AddGlobal(globalType, globalName);
@@ -178,8 +179,11 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CompileAssign(FunctionCompiler compiler, FunctionalNode assignNode)
         {
+            VariableReference assigneeVariable = assignNode.InputTerminals[0].GetTrueVariable();
             ValueSource assigneeSource = compiler.GetTerminalValueSource(assignNode.InputTerminals[0]),
                 newValueSource = compiler.GetTerminalValueSource(assignNode.InputTerminals[1]);
+            NIType assigneeType = assigneeVariable.Type.GetReferentType();
+            compiler.CreateDropCallIfDropFunctionExists(compiler._builder, assigneeType, b => assigneeSource.GetValue(b));
             assigneeSource.UpdateDereferencedValue(compiler._builder, newValueSource.GetValue(compiler._builder));
         }
 
@@ -300,6 +304,37 @@ namespace Rebar.RebarTarget.LLVM
                 .OutputTerminals[0].GetTrueVariable()
                 .Type.AsLLVMType();
             outputSource.UpdateValue(compiler._builder, LLVMSharp.LLVM.ConstNull(outputType));
+        }
+
+        private static LLVMValueRef CreateOptionDropFunction(Module module, FunctionCompiler compiler, string functionName, NIType innerType)
+        {
+            LLVMTypeRef optionDropFunctionType = LLVMTypeRef.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.AsLLVMType().CreateLLVMOptionType(), 0u)
+                },
+                false);
+
+            LLVMValueRef optionDropFunction = module.AddFunction(functionName, optionDropFunctionType);
+            LLVMBasicBlockRef entryBlock = optionDropFunction.AppendBasicBlock("entry"),
+                isSomeBlock = optionDropFunction.AppendBasicBlock("isSome"),
+                endBlock = optionDropFunction.AppendBasicBlock("end");
+            var builder = new IRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef optionPtr = optionDropFunction.GetParam(0u),
+                isSomePtr = builder.CreateStructGEP(optionPtr, 0u, "isSomePtr"),
+                isSome = builder.CreateLoad(isSomePtr, "isSome");
+            builder.CreateCondBr(isSome, isSomeBlock, endBlock);
+
+            builder.PositionBuilderAtEnd(isSomeBlock);
+            compiler.CreateDropCallIfDropFunctionExists(builder, innerType, b => b.CreateStructGEP(optionPtr, 1u, "innerValuePtr"));
+            builder.CreateBr(endBlock);
+
+            builder.PositionBuilderAtEnd(endBlock);
+            builder.CreateRetVoid();
+            return optionDropFunction;
         }
 
         private static Action<FunctionCompiler, FunctionalNode> CreateImportedCommonFunctionCompiler(string functionName)
@@ -523,6 +558,10 @@ namespace Rebar.RebarTarget.LLVM
                     if (type == DataTypes.FileHandleType)
                     {
                         return "filehandle";
+                    }
+                    if (type == DataTypes.FakeDropType)
+                    {
+                        return "fakedrop";
                     }
                     NIType innerType;
                     if (type.TryDestructureOptionType(out innerType))
@@ -865,55 +904,58 @@ namespace Rebar.RebarTarget.LLVM
         {
             VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
             var inputAllocation = (LocalAllocationValueSource)_variableValues[input];
-            NIType inputType = input.Type;
-            if (inputType.TypeHasDropTrait())
-            {
-                CreateDropCall(inputType, inputAllocation.AllocationPointer);
-                return true;
-            }
-
-            NIType innerType;
-            if (inputType.TryDestructureVectorType(out innerType))
-            {
-                // TODO
-                return true;
-            }
-            if (inputType.TryDestructureOptionType(out innerType) && innerType.TypeHasDropTrait())
-            {
-                // TODO: turn this into a monomorphized generic function call
-                LLVMValueRef isSomePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 0u, "isSomePtr"),
-                    isSome = _builder.CreateLoad(isSomePtr, "isSome");
-                LLVMBasicBlockRef optionDropIsSomeBlock = _topLevelFunction.AppendBasicBlock("optionDropIsSome"),
-                    optionDropEndBlock = _topLevelFunction.AppendBasicBlock("optionDropEnd");
-                _builder.CreateCondBr(isSome, optionDropIsSomeBlock, optionDropEndBlock);
-
-                _builder.PositionBuilderAtEnd(optionDropIsSomeBlock);
-                LLVMValueRef innerValuePtr = _builder.CreateStructGEP(inputAllocation.AllocationPointer, 1u, "innerValuePtr");
-                CreateDropCall(innerType, innerValuePtr);
-                _builder.CreateBr(optionDropEndBlock);
-
-                _builder.PositionBuilderAtEnd(optionDropEndBlock);
-                return true;
-            }
+            CreateDropCallIfDropFunctionExists(_builder, input.Type, _ => inputAllocation.AllocationPointer);
             return true;
         }
 
-        private void CreateDropCall(NIType droppedValueType, LLVMValueRef droppedValuePtr)
+        private bool TryGetDropFunction(NIType droppedValueType, out LLVMValueRef dropFunction)
         {
-            LLVMValueRef dropFunction;
+            dropFunction = default(LLVMValueRef);
+            NIType innerType;
             if (droppedValueType == PFTypes.String)
             {
-                dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);                
+                dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);
+                return true;
             }
-            else if (droppedValueType == DataTypes.FileHandleType)
+            if (droppedValueType == DataTypes.FileHandleType)
             {
                 dropFunction = GetImportedCommonFunction(CommonModules.DropFileHandleName);
+                return true;
             }
-            else
+            if (droppedValueType == DataTypes.FakeDropType)
             {
-                throw new InvalidOperationException("Drop function not found for type: " + droppedValueType);
+                dropFunction = GetImportedCommonFunction(CommonModules.FakeDropDropName);
+                return true;
             }
-            _builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
+            if (droppedValueType.TryDestructureVectorType(out innerType))
+            {
+                // TODO
+                return false;
+            }
+            if (droppedValueType.TryDestructureOptionType(out innerType) && TryGetDropFunction(innerType, out dropFunction))
+            {
+                string specializedFunctionName = MonomorphizeFunctionName("option_drop", innerType.ToEnumerable());
+                dropFunction = GetSpecializedFunction(
+                    specializedFunctionName,
+                    () => CreateOptionDropFunction(Module, this, specializedFunctionName, innerType));
+                return true;
+            }
+
+            if (droppedValueType.TypeHasDropTrait())
+            {
+                throw new NotSupportedException("Drop function not found for type: " + droppedValueType);
+            }
+            return false;
+        }
+
+        private void CreateDropCallIfDropFunctionExists(IRBuilder builder, NIType droppedValueType, Func<IRBuilder, LLVMValueRef> getDroppedValuePtr)
+        {
+            LLVMValueRef dropFunction;
+            if (TryGetDropFunction(droppedValueType, out dropFunction))
+            {
+                LLVMValueRef droppedValuePtr = getDroppedValuePtr(builder);
+                builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
+            }
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)

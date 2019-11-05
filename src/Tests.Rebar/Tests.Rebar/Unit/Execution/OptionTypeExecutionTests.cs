@@ -44,6 +44,19 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void DropSomeValueWithDroppableInnerValue_Execute_InnerValueIsDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            FunctionalNode fakeDropCreate = CreateFakeDropWithId(function.BlockDiagram, 1);
+            Wire.Create(function.BlockDiagram, fakeDropCreate.OutputTerminals[0], someConstructor.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
+        }
+
+        [TestMethod]
         public void AssignOptionValueToNewSomeValue_Execute_CorrectFinalValue()
         {
             DfirRoot function = DfirRoot.Create();
@@ -71,6 +84,24 @@ namespace Tests.Rebar.Unit.Execution
 
             byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsNoneInteger(inspectValue);
+        }
+
+        [TestMethod]
+        public void AssignOptionValueOfSomeDroppableToNone_Execute_InitialInnerValueDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode initialFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
+            FunctionalNode someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            Wire.Create(function.BlockDiagram, initialFakeDrop.OutputTerminals[0], someConstructor.InputTerminals[0]);
+            FunctionalNode assign = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
+            FunctionalNode finalNone = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            Wire.Create(function.BlockDiagram, finalNone.OutputTerminals[0], assign.InputTerminals[1]);
+            Wire.Create(function.BlockDiagram, someConstructor.OutputTerminals[0], assign.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
         }
 
         [TestMethod]

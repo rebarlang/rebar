@@ -14,6 +14,8 @@ namespace Rebar.Common
 
         private static NIType PolymorphicReferenceGenericType { get; }
 
+        public static NIType DropInterfaceType { get; }
+
         private static NIType OptionGenericType { get; }
 
         private static NIType LockingCellGenericType { get; }
@@ -32,6 +34,8 @@ namespace Rebar.Common
 
         public static NIType FileHandleType { get; }
 
+        public static NIType FakeDropType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -48,6 +52,10 @@ namespace Rebar.Common
             polymorphicReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife", "TMut");
             polymorphicReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             PolymorphicReferenceGenericType = polymorphicReferenceGenericTypeBuilder.CreateType();
+
+            var dropInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Drop");
+            dropInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            DropInterfaceType = dropInterfaceBuilder.CreateType();
 
             var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
             optionGenericTypeBuilder.MakeGenericParameters("T");
@@ -90,8 +98,13 @@ namespace Rebar.Common
             SliceGenericType = sliceGenericTypeBuilder.CreateType();
 
             var fileHandleTypeBuilder = PFTypes.Factory.DefineValueClass("FileHandle");
+            fileHandleTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             FileHandleType = fileHandleTypeBuilder.CreateType();
+
+            var fakeDropTypeBuilder = PFTypes.Factory.DefineValueClass("FakeDrop");
+            fakeDropTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
+            FakeDropType = fakeDropTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -407,7 +420,7 @@ namespace Rebar.Common
 
         internal static bool TypeHasDropTrait(this NIType type)
         {
-            return type == PFTypes.String || type == FileHandleType;
+            return type == PFTypes.String || type.IsOrImplements(DropInterfaceType);
         }
     }
 }

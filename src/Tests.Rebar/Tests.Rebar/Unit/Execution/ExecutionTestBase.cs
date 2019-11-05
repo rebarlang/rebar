@@ -1,6 +1,7 @@
 ﻿#define LLVM_TEST
 
 using System;
+using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -37,6 +38,13 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = new FunctionalNode(outputTerminal.ParentDiagram, Signatures.InspectType);
             Wire.Create(outputTerminal.ParentDiagram, outputTerminal, inspect.InputTerminals[0]);
             return inspect;
+        }
+
+        internal FunctionalNode CreateFakeDropWithId(Diagram parentDiagram, int id)
+        {
+            FunctionalNode fakeDropCreate = new FunctionalNode(parentDiagram, Signatures.FakeDropCreateType);
+            ConnectConstantToInputTerminal(fakeDropCreate.InputTerminals[0], PFTypes.Int32, id, false);
+            return fakeDropCreate;
         }
 
         protected void AssertByteArrayIsBoolean(byte[] region, bool value)
@@ -119,6 +127,13 @@ namespace Tests.Rebar.Unit.Execution
             LastOutputValue = value;
         }
 
+        public void FakeDrop(int id)
+        {
+            DroppedFakeDropIds.Add(id);
+        }
+
         public string LastOutputValue { get; private set; }
+
+        public HashSet<int> DroppedFakeDropIds { get; } = new HashSet<int>();
     }
 }

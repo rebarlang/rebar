@@ -3,5 +3,6 @@
     public interface IRebarTargetRuntimeServices
     {
         void Output(string value);
+        void FakeDrop(int id);
     }
 }

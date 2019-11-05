@@ -83,5 +83,10 @@ namespace Rebar.RebarTarget
             string message = $"Output: {value}";
             _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
         }
+
+        void IRebarTargetRuntimeServices.FakeDrop(int id)
+        {
+            throw new NotImplementedException("FakeDrop not supported");
+        }
     }
 }

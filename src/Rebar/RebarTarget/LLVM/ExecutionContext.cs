@@ -38,6 +38,7 @@ namespace Rebar.RebarTarget.LLVM
             AddSymbolForDelegate("output_int64", _outputInt64);
             AddSymbolForDelegate("output_uint64", _outputUInt64);
             AddSymbolForDelegate("output_string", _outputString);
+            AddSymbolForDelegate("fake_drop", _fakeDrop);
 
             IntPtr kernel32Instance = LoadLibrary("kernel32.dll");
             LLVMSharp.LLVM.AddSymbol("CopyMemory", GetProcAddress(kernel32Instance, "RtlCopyMemory"));
@@ -165,6 +166,13 @@ namespace Rebar.RebarTarget.LLVM
 
         private static OutputStringDelegate _outputString = OutputString;
 
+        private static void FakeDrop(int id)
+        {
+            _runtimeServices.FakeDrop(id);
+        }
+
+        private static OutputInt32Delegate _fakeDrop = FakeDrop;
+
         private readonly LLVMExecutionEngineRef _engine;
         private readonly Module _globalModule;
         private readonly LLVMTargetDataRef _targetData;
@@ -173,6 +181,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             _runtimeServices = runtimeServices;
             _globalModule = new Module("global");
+            _globalModule.LinkInModule(CommonModules.FakeDropModule.Clone());
             _globalModule.LinkInModule(CommonModules.StringModule.Clone());
             _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
             _globalModule.LinkInModule(CommonModules.FileModule.Clone());

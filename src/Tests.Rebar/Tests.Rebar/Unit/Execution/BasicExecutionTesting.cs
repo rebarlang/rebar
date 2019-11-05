@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Execution
@@ -214,6 +215,34 @@ namespace Tests.Rebar.Unit.Execution
                 inspectValue2 = executionInstance.GetLastValueFromInspectNode(inspect2);
             AssertByteArrayIsInt32(inspectValue1, 2);
             AssertByteArrayIsInt32(inspectValue2, 1);
+        }
+
+        [TestMethod]
+        public void CreateDroppableValue_Execute_ValueIsDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode fakeDropCreate = CreateFakeDropWithId(function.BlockDiagram, 1);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
+        }
+
+        [TestMethod]
+        public void CreateDroppableValueAndAssignNewDroppableValue_Execute_BothValuesDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode initialFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1),
+                newFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 2);
+            FunctionalNode assign = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
+            Wire.Create(function.BlockDiagram, initialFakeDrop.OutputTerminals[0], assign.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            Wire.Create(function.BlockDiagram, newFakeDrop.OutputTerminals[0], assign.InputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(2));
         }
 
         [TestMethod]

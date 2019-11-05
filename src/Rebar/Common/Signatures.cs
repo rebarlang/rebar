@@ -135,6 +135,17 @@ namespace Rebar.Common
                 "valueRef");
             InspectType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("FakeDropCreate");
+            AddInputParameter(
+                functionTypeBuilder,
+                PFTypes.Int32,
+                "id");
+            AddOutputParameter(
+                functionTypeBuilder,
+                DataTypes.FakeDropType,
+                "fakeDrop");
+            FakeDropCreateType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("SelectReference");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -371,6 +382,14 @@ namespace Rebar.Common
             WriteStringToFileHandleType = functionTypeBuilder.CreateType();
         }
 
+        #region Testing functions
+
+        public static NIType InspectType { get; }
+
+        public static NIType FakeDropCreateType { get; }
+
+        #endregion
+
         public static NIType ImmutablePassthroughType { get; }
 
         public static NIType MutablePassthroughType { get; }
@@ -412,8 +431,6 @@ namespace Rebar.Common
         public static NIType CreateLockingCellType { get; }
 
         public static NIType CreateNonLockingCellType { get; }
-
-        public static NIType InspectType { get; }
 
         public static NIType OpenFileHandleType { get; }
 

@@ -128,6 +128,13 @@ namespace Rebar.RebarTarget.LLVM
             },
             false);
 
+        public static LLVMTypeRef FakeDropType { get; } = LLVMTypeRef.StructType(
+            new LLVMTypeRef[]
+            {
+                LLVMTypeRef.Int32Type()
+            },
+            false);
+
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
             switch (niType.GetKind())
@@ -167,6 +174,10 @@ namespace Rebar.RebarTarget.LLVM
                     if (niType == DataTypes.FileHandleType)
                     {
                         return FileHandleType;
+                    }
+                    if (niType == DataTypes.FakeDropType)
+                    {
+                        return FakeDropType;
                     }
                     NIType innerType;
                     if (niType.TryDestructureOptionType(out innerType))
