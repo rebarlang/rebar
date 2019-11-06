@@ -200,7 +200,9 @@ namespace Rebar.Compiler
             terminateLifetimeInput.GetFacadeVariable().MergeInto(lifetimeSource.GetTrueVariable());
             VariableReference facadeVariable = lifetimeSource.GetFacadeVariable();
             terminateLifetimeOutput.GetFacadeVariable().MergeInto(facadeVariable);
-            if (lifetimeVariableAssociation.IsLive(facadeVariable))
+            Terminal liveTerminal;
+            if (lifetimeVariableAssociation.TryGetVariableLiveTerminal(facadeVariable, out liveTerminal)
+                && liveTerminal.ParentNode.OrderDownstreamNodes.Contains(terminateLifetimeOutput.ParentNode))
             {
                 lifetimeVariableAssociation.MarkVariableLive(facadeVariable, terminateLifetimeOutput);
             }

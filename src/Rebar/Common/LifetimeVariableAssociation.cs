@@ -116,6 +116,18 @@ namespace Rebar.Common
             return _variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Live;
         }
 
+        public bool TryGetVariableLiveTerminal(VariableReference variableReference, out Terminal liveTerminal)
+        {
+            VariableStatus existingStatus;
+            if (_variableStatuses.TryGetValue(variableReference, out existingStatus) && existingStatus.Kind == VariableStatusKind.Live)
+            {
+                liveTerminal = existingStatus.Terminal;
+                return true;
+            }
+            liveTerminal = null;
+            return false;
+        }
+
         public bool TryGetBoundedLifetimeWithLiveVariables(out BoundedLifetimeLiveVariableSet boundedLifetimeLiveVariableSet)
         {
             foreach (var kvp in _variableStatuses)

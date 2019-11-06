@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Compiler
@@ -183,6 +184,25 @@ namespace Tests.Rebar.Unit.Compiler
             RunCompilationUpToAutomaticNodeInsertion(function);
 
             Assert.IsFalse(frame.Diagram.Nodes.OfType<TerminateLifetimeNode>().Any());
+        }
+
+        [TestMethod]
+        public void PassthroughIntoBorrowAndTerminateLifetime_AutomaticNodeInsertion_DropIsInsertedCorrectly()
+        {
+            // Note: this test for a bug case where auto-inserting a TerminateLifetime in a graph where a variable
+            // was already marked live at a later TL would later wreck the graph by disconnecting everything
+            // downstream of the auto-inserted TL when creating a Drop.
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode mutablePassthrough = new FunctionalNode(function.BlockDiagram, Signatures.MutablePassthroughType);
+            ConnectConstantToInputTerminal(mutablePassthrough.InputTerminals[0], PFTypes.Int32, false);
+            var borrowNode = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
+            Wire.Create(function.BlockDiagram, mutablePassthrough.OutputTerminals[0], borrowNode.InputTerminals[0]);
+            TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
+            Wire.Create(function.BlockDiagram, borrowNode.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
         }
 
         #region StringToSlice insertion
