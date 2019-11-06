@@ -254,15 +254,10 @@ namespace Rebar.Common
             StringAppendType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
-            // TODO
-#if FALSE
-            genericTypeParameters = functionTypeBuilder.MakeGenericParameters(
-                "TData");
-            tDataParameter = genericTypeParameters.ElementAt(0).CreateType();
-#endif
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddOutputParameter(
                 functionTypeBuilder,
-                PFTypes.Int32.CreateVector(),
+                tDataParameter.CreateVector(),
                 "vector");
             VectorCreateType = functionTypeBuilder.CreateType();
 

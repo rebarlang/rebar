@@ -285,6 +285,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.VectorType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />

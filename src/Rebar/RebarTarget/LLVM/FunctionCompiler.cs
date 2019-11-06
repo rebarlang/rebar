@@ -69,7 +69,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["StringAppend"] = CreateImportedCommonFunctionCompiler(CommonModules.StringAppendName);
             _functionalNodeCompilers["StringConcat"] = CreateImportedCommonFunctionCompiler(CommonModules.StringConcatName);
 
-            _functionalNodeCompilers["VectorCreate"] = CompileNothing;
+            _functionalNodeCompilers["VectorCreate"] = CompileVectorCreate;
             _functionalNodeCompilers["VectorInitialize"] = CompileVectorInitialize;
             _functionalNodeCompilers["VectorToSlice"] = CompileVectorToSlice;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
@@ -363,109 +363,6 @@ namespace Rebar.RebarTarget.LLVM
                 compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(functionName), functionalNode, functionalNode.Signature);
         }
 
-        private static void CompileVectorInitialize(FunctionCompiler compiler, FunctionalNode vectorInitializeNode)
-        {
-            var elementSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(vectorInitializeNode.InputTerminals[0]);
-            NIType elementType = elementSource.AllocationNIType;
-            string specializedName = MonomorphizeFunctionName("vector_initialize", elementType.ToEnumerable());
-            LLVMValueRef vectorInitializeFunction = compiler.GetSpecializedFunction(
-                specializedName,
-                () => CreateVectorInitializeFunction(compiler.Module, specializedName, elementType.AsLLVMType()));
-            compiler.CreateCallForFunctionalNode(vectorInitializeFunction, vectorInitializeNode);
-        }
-
-        private static LLVMValueRef CreateVectorInitializeFunction(Module module, string functionName, LLVMTypeRef elementType)
-        {
-            LLVMTypeRef vectorInitializeFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    elementType,
-                    LLVMTypeRef.Int32Type(),
-                    LLVMTypeRef.PointerType(elementType.CreateLLVMVectorType(), 0u)
-                },
-                false);
-
-            LLVMValueRef vectorInitializeFunction = module.AddFunction(functionName, vectorInitializeFunctionType);
-            LLVMBasicBlockRef entryBlock = vectorInitializeFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
-
-            builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef element = vectorInitializeFunction.GetParam(0u),
-                size = vectorInitializeFunction.GetParam(1u),
-                vectorPtr = vectorInitializeFunction.GetParam(2u);
-            LLVMValueRef allocationPtr = builder.CreateArrayMalloc(elementType, size, "allocationPtr");
-            LLVMValueRef vectorAllocationPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorAllocationPtrPtr"),
-                vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
-                vectorCapacityPtr = builder.CreateStructGEP(vectorPtr, 2u, "vectorCapacityPtr");
-            builder.CreateStore(allocationPtr, vectorAllocationPtrPtr);
-            builder.CreateStore(size, vectorSizePtr);
-            builder.CreateStore(size, vectorCapacityPtr);
-            LLVMBasicBlockRef loopStartBlock = vectorInitializeFunction.AppendBasicBlock("loopStart"),
-                loopBodyBlock = vectorInitializeFunction.AppendBasicBlock("loopBody"),
-                loopEndBlock = vectorInitializeFunction.AppendBasicBlock("loopEnd");
-            builder.CreateBr(loopStartBlock);
-
-            builder.PositionBuilderAtEnd(loopStartBlock);
-            LLVMValueRef index = builder.CreatePhi(LLVMTypeRef.Int32Type(), "index");
-            LLVMValueRef indexLessThanSize = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, index, size, "indexLessThanSize");
-            builder.CreateCondBr(indexLessThanSize, loopBodyBlock, loopEndBlock);
-
-            builder.PositionBuilderAtEnd(loopBodyBlock);
-            LLVMValueRef vectorIndexPtr = builder.CreateGEP(allocationPtr, new LLVMValueRef[] { index }, "vectorIndexPtr");
-            builder.CreateStore(element, vectorIndexPtr);
-            LLVMValueRef incrementIndex = builder.CreateAdd(index, 1.AsLLVMValue(), "incrementIndex");
-            builder.CreateBr(loopStartBlock);
-
-            builder.PositionBuilderAtEnd(loopEndBlock);
-            builder.CreateRetVoid();
-
-            LLVMValueRef[] indexIncomingValues = new LLVMValueRef[2] { 0.AsLLVMValue(), incrementIndex };
-            LLVMBasicBlockRef[] indexIncomingBlocks = new LLVMBasicBlockRef[] { entryBlock, loopBodyBlock };
-            index.AddIncoming(indexIncomingValues, indexIncomingBlocks, 2u);
-
-            return vectorInitializeFunction;
-        }
-
-        private static void CompileVectorToSlice(FunctionCompiler compiler, FunctionalNode vectorToSliceNode)
-        {
-            var sliceReferenceSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(vectorToSliceNode.OutputTerminals[0]);
-            NIType elementType;
-            sliceReferenceSource.AllocationNIType.GetReferentType().TryDestructureSliceType(out elementType);
-            string specializedName = MonomorphizeFunctionName("vector_to_slice", elementType.ToEnumerable());
-            LLVMValueRef vectorInitializeFunction = compiler.GetSpecializedFunction(
-                specializedName,
-                () => CreateVectorToSliceFunction(compiler.Module, specializedName, elementType.AsLLVMType()));
-            compiler.CreateCallForFunctionalNode(vectorInitializeFunction, vectorToSliceNode);
-        }
-
-        private static LLVMValueRef CreateVectorToSliceFunction(Module module, string functionName, LLVMTypeRef elementType)
-        {
-            LLVMTypeRef sliceReferenceType = elementType.CreateLLVMSliceReferenceType();
-            LLVMTypeRef vectorToSliceFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(elementType.CreateLLVMVectorType(), 0u),
-                    LLVMTypeRef.PointerType(sliceReferenceType, 0u)
-                },
-                false);
-
-            LLVMValueRef vectorToSliceFunction = module.AddFunction(functionName, vectorToSliceFunctionType);
-            LLVMBasicBlockRef entryBlock = vectorToSliceFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
-            builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef vectorPtr = vectorToSliceFunction.GetParam(0u),
-                vectorBufferPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorBufferPtrPtr"),
-                vectorBufferPtr = builder.CreateLoad(vectorBufferPtrPtr, "vectorBufferPtr"),
-                vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
-                vectorSize = builder.CreateLoad(vectorSizePtr, "vectorSize"),
-                sliceRef = builder.BuildSliceReferenceValue(sliceReferenceType, vectorBufferPtr, vectorSize);
-            builder.CreateStore(sliceRef, vectorToSliceFunction.GetParam(1u));
-            builder.CreateRetVoid();
-            return vectorToSliceFunction;
-        }
-
         private static void CompileSliceIndex(FunctionCompiler compiler, FunctionalNode sliceIndexNode)
         {
             var sliceReferenceSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(sliceIndexNode.InputTerminals[1]);
@@ -591,6 +488,10 @@ namespace Rebar.RebarTarget.LLVM
                     if (type.TryDestructureVectorType(out innerType))
                     {
                         return $"vec[{StringifyType(innerType)}]";
+                    }
+                    if (type.TryDestructureSharedType(out innerType))
+                    {
+                        return $"shared[{StringifyType(innerType)}]";
                     }
                     if (type == DataTypes.RangeIteratorType)
                     {
