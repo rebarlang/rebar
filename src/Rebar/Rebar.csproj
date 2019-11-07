@@ -208,6 +208,7 @@
     <Compile Include="Common\PrimitiveOps.cs" />
     <Compile Include="Common\Signatures.cs" />
     <Compile Include="Common\TypeVariableSet.cs" />
+    <Compile Include="Common\TypeVariableSetExtensions.cs" />
     <Compile Include="Common\VariableReference.cs" />
     <Compile Include="Common\VariableSet.cs" />
     <Compile Include="Compiler\AutoBorrowNodeFacade.cs" />

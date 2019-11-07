@@ -28,16 +28,14 @@ namespace Rebar.Compiler
             typeVariableSet.Unify(TrueVariable.TypeVariableReference, wireFacadeVariable.TypeVariableReference, inputUnificationResult);
             TrueVariable.MergeInto(wireFacadeVariable);
 
-            string constructorName;
-            TypeVariableReference innerType, optionType;
-            if (typeVariableSet.TryDecomposeConstructorType(TrueVariable.TypeVariableReference, out constructorName, out innerType)
-                && constructorName == "Option")
+            TypeVariableReference optionType;
+            if (typeVariableSet.GetTypeName(TrueVariable.TypeVariableReference) == "Option")
             {
                 optionType = TrueVariable.TypeVariableReference;
             }
             else
             {
-                optionType = typeVariableSet.CreateReferenceToConstructorType("Option", TrueVariable.TypeVariableReference);
+                optionType = typeVariableSet.CreateReferenceToOptionType(TrueVariable.TypeVariableReference);
             }
             TypeVariableReference outputTypeReference = _outputTerminalFacade.TrueVariable.TypeVariableReference;
             ITypeUnificationResult outputUnificationResult = unificationResults.GetTypeUnificationResult(_outputTerminalFacade.Terminal, outputTypeReference, optionType);

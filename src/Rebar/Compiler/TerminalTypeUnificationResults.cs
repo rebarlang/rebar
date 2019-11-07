@@ -86,7 +86,7 @@ namespace Rebar.Compiler
             }
             if (unificationResult.FailedConstraints != null)
             {
-                if (unificationResult.FailedConstraints.OfType<CopyConstraint>().Any())
+                if (unificationResult.FailedConstraints.OfType<CopyTraitConstraint>().Any())
                 {
                     terminal.ParentNode.SetDfirMessage(Messages.WireCannotFork);
                 }

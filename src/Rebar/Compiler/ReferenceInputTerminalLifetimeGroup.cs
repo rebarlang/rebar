@@ -61,9 +61,7 @@ namespace Rebar.Compiler
                 throw new InvalidOperationException("Cannot add borrowed variables after creating new lifetime.");
             }
 
-            NIType literalReferentType;
-            bool isStringSliceReference = typeVariableSet.TryGetLiteralType(referentTypeReference, out literalReferentType)
-                && literalReferentType == DataTypes.StringSliceType;
+            bool isStringSliceReference = typeVariableSet.GetTypeName(referentTypeReference) == DataTypes.StringSliceType.GetName();
             TerminalFacade terminalFacade;
             if (isStringSliceReference)
             {
@@ -72,7 +70,7 @@ namespace Rebar.Compiler
             else
             {
                 terminalFacade = new ReferenceInputTerminalFacade(inputTerminal, _mutability, this, referenceType);
-            }            
+            }
             _nodeFacade[inputTerminal] = terminalFacade;
             _facades.Add(terminalFacade);
             if (terminateLifetimeOutputTerminal != null)
@@ -376,7 +374,7 @@ namespace Rebar.Compiler
                 typeVariableSet.TryDecomposeReferenceType(stringSliceReferenceType, out u, out lifetime, out m);
                 TypeVariableReference stringReferenceType = typeVariableSet.CreateReferenceToReferenceType(
                     false,
-                    typeVariableSet.CreateReferenceToLiteralType(PFTypes.String),
+                    typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String),
                     lifetime);
 
                 AutoBorrowNodeFacade stringToSliceFacade = AutoBorrowNodeFacade.GetNodeFacade(stringToSlice);
@@ -400,11 +398,11 @@ namespace Rebar.Compiler
                 bool otherIsReference = TypeVariableSet.TryDecomposeReferenceType(other, out u, out l, out otherIsMutableReference);
                 TypeVariableReference underlyingType = otherIsReference ? u : other;
 
-                NIType literalType;
-                bool underlyingTypeIsLiteral = TypeVariableSet.TryGetLiteralType(underlyingType, out literalType);
-                bool inputCoercesToStringSlice = underlyingTypeIsLiteral
-                    && (literalType == PFTypes.String || literalType == DataTypes.StringSliceType);
-                bool needsBorrow = !otherIsReference || !underlyingTypeIsLiteral || literalType != DataTypes.StringSliceType;
+                string typeName = TypeVariableSet.GetTypeName(underlyingType);
+                bool underlyingTypeIsStringSlice = typeName == DataTypes.StringSliceType.GetName(),
+                    underlyingTypeIsString = typeName == PFTypes.String.GetName();
+                bool inputCoercesToStringSlice = underlyingTypeIsString || underlyingTypeIsStringSlice;
+                bool needsBorrow = !otherIsReference || !underlyingTypeIsStringSlice;
                 TypeVariableReference lifetimeType = otherIsReference
                     ? l
                     : TypeVariableSet.CreateReferenceToLifetimeType(_group.BorrowLifetime);
@@ -417,7 +415,7 @@ namespace Rebar.Compiler
                 // If the input is allowed to coerce to a str, we can unify with str;
                 // otherwise, unify with the underlying type to get a type mismatch.
                 TypeVariableReference toUnifyUnderlyingType = inputCoercesToStringSlice
-                    ? TypeVariableSet.CreateReferenceToLiteralType(DataTypes.StringSliceType)
+                    ? TypeVariableSet.CreateTypeVariableReferenceFromNIType(DataTypes.StringSliceType)
                     : underlyingType;
                 return TypeVariableSet.CreateReferenceToReferenceType(
                     false,

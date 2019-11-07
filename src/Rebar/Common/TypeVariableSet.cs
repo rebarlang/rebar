@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using NationalInstruments;
 using NationalInstruments.DataTypes;
 
 namespace Rebar.Common
@@ -56,64 +58,103 @@ namespace Rebar.Common
             public override bool IsOrContainsTypeVariable() => true;
         }
 
-        private sealed class LiteralType : TypeBase
+        private abstract class ParameterizedType : TypeBase
         {
-            public LiteralType(NIType type)
+            public IReadOnlyList<TypeVariableReference> TypeParameters { get; }
+
+            protected ParameterizedType(TypeVariableReference[] typeParameters)
             {
-                Type = type;
+                TypeParameters = typeParameters;
             }
-
-            public NIType Type { get; }
-
-            public override string DebuggerDisplay => Type.AsFormattedStringSingleLine;
-
-            public override NIType RenderNIType()
-            {
-                return Type;
-            }
-
-            public override Lifetime Lifetime => Lifetime.Unbounded;
         }
 
-        private sealed class ConstructorType : TypeBase
+        private sealed class ConcreteType : ParameterizedType
         {
-            public ConstructorType(string constructorName, TypeVariableReference argument)
+            private readonly NIType _niType;
+
+            public ConcreteType(NIType niType, TypeVariableReference[] typeParameters, TypeVariableReference[] implementedTraits, TraitDeriver traitDeriver = null)
+                : base(typeParameters)
             {
-                ConstructorName = constructorName;
-                Argument = argument;
+                _niType = niType;
+                ImplementedTraits = implementedTraits;
+                TraitDeriver = traitDeriver;
             }
 
-            public string ConstructorName { get; }
+            public string TypeName => _niType.GetName();
 
-            public TypeVariableReference Argument { get; }
+            public IReadOnlyList<TypeVariableReference> ImplementedTraits { get; }
 
-            public override string DebuggerDisplay => $"{ConstructorName} ({Argument.DebuggerDisplay})";
-
-            public override NIType RenderNIType()
-            {
-                NIType argumentNIType = Argument.RenderNIType();
-                switch (ConstructorName)
-                {
-                    case "Slice":
-                        return argumentNIType.CreateSlice();
-                    case "Vector":
-                        return argumentNIType.CreateVector();
-                    case "LockingCell":
-                        return argumentNIType.CreateLockingCell();
-                    case "Shared":
-                        return argumentNIType.CreateShared();
-                    case "Option":
-                        return argumentNIType.CreateOption();
-                    default:
-                        throw new NotSupportedException($"Unsupported constructor name: {ConstructorName}");
-                }
-            }
-
-            public override Lifetime Lifetime => Argument.Lifetime;
+            public TraitDeriver TraitDeriver { get; }
 
             public override bool IsOrContainsTypeVariable()
             {
-                return Argument.IsOrContainsTypeVariable;
+                return TypeParameters.Count > 0;
+            }
+
+            public override string DebuggerDisplay
+            {
+                get
+                {
+                    var stringBuilder = new StringBuilder(_niType.GetName());
+                    if (TypeParameters.Any())
+                    {
+                        stringBuilder.Append("<");
+                        stringBuilder.Append(String.Join(", ", TypeParameters.Select(t => t.DebuggerDisplay)));
+                        stringBuilder.Append(">");
+                    }
+                    if (ImplementedTraits.Any())
+                    {
+                        stringBuilder.Append(" : ");
+                        stringBuilder.Append(String.Join(", ", ImplementedTraits.Select(t => t.DebuggerDisplay)));
+                    }
+                    return stringBuilder.ToString();
+                }
+            }
+
+            public override Lifetime Lifetime
+            {
+                get
+                {
+                    // TODO
+                    if (TypeParameters.Any())
+                    {
+                        return TypeParameters.First().Lifetime;
+                    }
+                    return Lifetime.Unbounded;
+                }
+            }
+
+            public override NIType RenderNIType()
+            {
+                if (_niType.IsGenericType())
+                {
+                    NIType genericTypeDefinition = _niType.IsGenericTypeDefinition() ? _niType : _niType.GetGenericTypeDefinition();
+                    NIClassBuilder specializationTypeBuilder = genericTypeDefinition.DefineClassFromExisting();
+                    NIType[] typeParameters = TypeParameters.Select(t => t.RenderNIType()).ToArray();
+                    specializationTypeBuilder.ReplaceGenericParameters(typeParameters);
+                    return specializationTypeBuilder.CreateType();
+                }
+                return _niType;
+            }
+        }
+
+        private sealed class TraitType : ParameterizedType
+        {
+            public TraitType(string traitName, TypeVariableReference[] typeParameters)
+                : base(typeParameters)
+            {
+                Name = traitName;
+            }
+
+            public string Name { get; }
+
+            public override string DebuggerDisplay => Name;
+
+            public override Lifetime Lifetime => Lifetime.Unbounded;
+
+            public override NIType RenderNIType()
+            {
+                throw new NotImplementedException();
             }
         }
 
@@ -334,15 +375,11 @@ namespace Rebar.Common
 
         #endregion
 
-        private List<TypeBase> _types = new List<TypeBase>();
-        private List<TypeBase> _typeReferences = new List<TypeBase>();
+        private readonly List<TypeBase> _types = new List<TypeBase>();
+        private readonly List<TypeBase> _typeReferences = new List<TypeBase>();
         private int _currentReferenceIndex = 0;
         private int _currentTypeVariable = 0;
-
-        public TypeVariableReference CreateReferenceToLiteralType(NIType type)
-        {
-            return CreateReferenceToNewType(new LiteralType(type));
-        }
+        private readonly Dictionary<string, TypeVariableReference> _parameterlessTraits = new Dictionary<string, TypeVariableReference>();
 
         public TypeVariableReference CreateReferenceToNewTypeVariable()
         {
@@ -355,9 +392,25 @@ namespace Rebar.Common
             return CreateReferenceToNewType(new TypeVariable(id, constraints));
         }
 
-        public TypeVariableReference CreateReferenceToConstructorType(string constructorName, TypeVariableReference argument)
+        public TypeVariableReference CreateReferenceToConcreteType(NIType niType, TypeVariableReference[] typeArguments, TypeVariableReference[] implementedTraits, TraitDeriver traitDeriver = null)
         {
-            return CreateReferenceToNewType(new ConstructorType(constructorName, argument));
+            return CreateReferenceToNewType(new ConcreteType(niType, typeArguments, implementedTraits, traitDeriver));
+        }
+
+        public TypeVariableReference CreateReferenceToTraitType(string typeName, TypeVariableReference[] typeArguments)
+        {
+            return CreateReferenceToNewType(new TraitType(typeName, typeArguments));
+        }
+
+        public TypeVariableReference CreateReferenceToParameterlessTraitType(string typeName)
+        {
+            TypeVariableReference traitType;
+            if (!_parameterlessTraits.TryGetValue(typeName, out traitType))
+            {
+                traitType = CreateReferenceToTraitType(typeName, new TypeVariableReference[0]);
+                _parameterlessTraits[typeName] = traitType;
+            }
+            return traitType;
         }
 
         public TypeVariableReference CreateReferenceToReferenceType(bool mutable, TypeVariableReference underlyingType, TypeVariableReference lifetimeType)
@@ -431,30 +484,26 @@ namespace Rebar.Common
             TypeBase toUnifyTypeBase = GetTypeForTypeVariableReference(toUnify),
                 toUnifyWithTypeBase = GetTypeForTypeVariableReference(toUnifyWith);
 
-            LiteralType toUnifyLiteral = toUnifyTypeBase as LiteralType,
-                toUnifyWithLiteral = toUnifyWithTypeBase as LiteralType;
-            if (toUnifyLiteral != null && toUnifyWithLiteral != null)
+            ConcreteType toUnifyConcrete = toUnifyTypeBase as ConcreteType,
+                toUnifyWithConcrete = toUnifyWithTypeBase as ConcreteType;
+            if (toUnifyConcrete != null && toUnifyWithConcrete != null)
             {
-                if (toUnifyLiteral.Type == toUnifyWithLiteral.Type)
+                if (toUnifyConcrete.TypeName != toUnifyWithConcrete.TypeName)
                 {
-                    MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
+                    unificationResult.SetTypeMismatch();
                     return;
                 }
-                unificationResult.SetTypeMismatch();
-                return;
-            }
+                if (toUnifyConcrete.TypeParameters.Count != toUnifyWithConcrete.TypeParameters.Count)
+                {
+                    unificationResult.SetTypeMismatch();
+                    return;
+                }
 
-            ConstructorType toUnifyConstructor = toUnifyTypeBase as ConstructorType,
-                toUnifyWithConstructor = toUnifyWithTypeBase as ConstructorType;
-            if (toUnifyConstructor != null && toUnifyWithConstructor != null)
-            {
-                if (toUnifyConstructor.ConstructorName == toUnifyWithConstructor.ConstructorName)
+                foreach (var typeParameterPair in toUnifyConcrete.TypeParameters.Zip(toUnifyWithConcrete.TypeParameters))
                 {
-                    Unify(toUnifyConstructor.Argument, toUnifyWithConstructor.Argument, unificationResult);
-                    MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
-                    return;
+                    Unify(typeParameterPair.Key, typeParameterPair.Value, unificationResult);
                 }
-                unificationResult.SetTypeMismatch();
+                MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
                 return;
             }
 
@@ -528,19 +577,6 @@ namespace Rebar.Common
             return typeBase?.Lifetime ?? Lifetime.Empty;
         }
 
-        public bool TryGetLiteralType(TypeVariableReference type, out NIType literalType)
-        {
-            TypeBase typeBase = GetTypeForTypeVariableReference(type);
-            var literalTypeReference = typeBase as LiteralType;
-            if (literalTypeReference == null)
-            {
-                literalType = NIType.Unset;
-                return false;
-            }
-            literalType = literalTypeReference.Type;
-            return true;
-        }
-
         public bool TryDecomposeReferenceType(TypeVariableReference type, out TypeVariableReference underlyingType, out TypeVariableReference lifetimeType, out bool mutable)
         {
             TypeBase typeBase = GetTypeForTypeVariableReference(type);
@@ -557,19 +593,62 @@ namespace Rebar.Common
             return true;
         }
 
-        public bool TryDecomposeConstructorType(TypeVariableReference type, out string constructorName, out TypeVariableReference argument)
+        public bool TryGetImplementedTrait(TypeVariableReference type, string traitName, out TypeVariableReference traitType)
+        {
+            traitType = default(TypeVariableReference);
+            var concreteType = GetTypeForTypeVariableReference(type) as ConcreteType;
+            if (concreteType != null)
+            {
+                foreach (TypeVariableReference implementedTraitType in concreteType.ImplementedTraits)
+                {
+                    var trait = GetTypeForTypeVariableReference(implementedTraitType) as TraitType;
+                    if (trait != null && trait.Name == traitName)
+                    {
+                        traitType = implementedTraitType;
+                        return true;
+                    }
+                }
+                if (concreteType.TraitDeriver?.TryGetDerivedTrait(this, traitName, out traitType) ?? false)
+                {
+                    return true;
+                }
+            }
+            var referenceType = GetTypeForTypeVariableReference(type) as ReferenceType;
+            if (referenceType != null)
+            {
+                if (traitName == "Copy" && !referenceType.Mutable)
+                {
+                    traitType = CreateReferenceToParameterlessTraitType("Copy");
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public string GetTypeName(TypeVariableReference type)
         {
             TypeBase typeBase = GetTypeForTypeVariableReference(type);
-            var constructorType = typeBase as ConstructorType;
-            if (constructorType == null)
+            var concreteType = typeBase as ConcreteType;
+            if (concreteType != null)
             {
-                constructorName = null;
-                argument = default(TypeVariableReference);
-                return false;
+                return concreteType.TypeName;
             }
-            constructorName = constructorType.ConstructorName;
-            argument = constructorType.Argument;
-            return true;
+            var traitType = typeBase as TraitType;
+            if (traitType != null)
+            {
+                return traitType.Name;
+            }
+            return null;
+        }
+
+        public IEnumerable<TypeVariableReference> GetTypeParameters(TypeVariableReference type)
+        {
+            var parameterizedType = GetTypeForTypeVariableReference(type) as ParameterizedType;
+            if (parameterizedType != null)
+            {
+                return parameterizedType.TypeParameters;
+            }
+            return Enumerable.Empty<TypeVariableReference>();
         }
 
         public void AndWith(TypeVariableReference type, bool value)
@@ -630,25 +709,26 @@ namespace Rebar.Common
         public abstract void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult);
     }
 
-    internal class CopyConstraint : Constraint
+    internal class CopyTraitConstraint : Constraint
     {
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
-            // TODO: probably not great to render an NIType at this stage
-            if (!type.RenderNIType().WireTypeMayFork())
+            TypeVariableReference copyTrait;
+            if (!type.TypeVariableSet.TryGetImplementedTrait(type, "Copy", out copyTrait))
             {
                 unificationResult.AddFailedTypeConstraint(this);
             }
         }
     }
 
-    internal class CloneConstraint : Constraint
+    internal class CloneTraitConstraint : Constraint
     {
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
-            // TODO: probably not great to render an NIType at this stage
-            NIType niType = type.RenderNIType();
-            if (!niType.WireTypeMayFork() && !niType.TypeHasCloneTrait())
+            TypeVariableReference unused;
+            TypeVariableSet typeVariableSet = type.TypeVariableSet;
+            if (!typeVariableSet.TryGetImplementedTrait(type, "Clone", out unused)
+                && !typeVariableSet.TryGetImplementedTrait(type, "Copy", out unused))
             {
                 unificationResult.AddFailedTypeConstraint(this);
             }
@@ -659,7 +739,8 @@ namespace Rebar.Common
     {
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
-            if (!type.RenderNIType().TypeHasDisplayTrait())
+            TypeVariableReference displayTrait;
+            if (!type.TypeVariableSet.TryGetImplementedTrait(type, "Display", out displayTrait))
             {
                 unificationResult.AddFailedTypeConstraint(this);
             }
@@ -677,22 +758,11 @@ namespace Rebar.Common
 
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
-            NIType implementedIteratorInterface;
-            // TODO: using NITypes here to destructure the iterator interface and reconstruct a TypeReference for the item type
-            // is an incomplete solution; it will not work for item types that have bounded lifetimes. Also, currently there's
-            // no way to create TypeReferences for non-reference types that have bounded lifetimes, as an iterator implementation
-            // whose items are references will necessarily have.
-            //
-            // What is needed is a way of defining a generic parameterized TypeVariableReference, and then a reference to a specialization of that type.
-            // Then, as long as the parameterized type can include an interface implementation, we should be able to get the specialized
-            // interface implementation from the specialization.
-            if (type.RenderNIType().TryGetImplementedIteratorInterface(out implementedIteratorInterface))
+            TypeVariableSet typeVariableSet = type.TypeVariableSet;
+            TypeVariableReference iteratorTraitReference;
+            if (typeVariableSet.TryGetImplementedTrait(type, "Iterator", out iteratorTraitReference))
             {
-                NIType itemType;
-                implementedIteratorInterface.TryDestructureIteratorType(out itemType);
-                TypeVariableReference itemTypeReference = type.TypeVariableSet.CreateTypeVariableReferenceFromNIType(
-                    itemType,
-                    new Dictionary<NIType, TypeVariableReference>());
+                TypeVariableReference itemTypeReference = typeVariableSet.GetTypeParameters(iteratorTraitReference).First();
                 type.TypeVariableSet.Unify(_itemTypeVariable, itemTypeReference, unificationResult);
             }
             else
@@ -720,89 +790,25 @@ namespace Rebar.Common
         }
     }
 
-    internal static class TypeVariableSetExtensions
+    internal sealed class TraitDeriver
     {
-        public static Dictionary<NIType, TypeVariableReference> CreateTypeVariablesForGenericParameters(
-            this TypeVariableSet typeVariableSet, 
-            NIType genericType,
-            Func<NIType, TypeVariableReference> createLifetimeTypeReference)
+        private readonly TypeVariableReference _deriveFrom;
+        private readonly string[] _derivedTraitNames;
+
+        public TraitDeriver(TypeVariableReference deriveFrom, params string[] derivedTraitNames)
         {
-            Dictionary<NIType, TypeVariableReference> genericTypeParameters = new Dictionary<NIType, TypeVariableReference>();
-            foreach (NIType genericParameterNIType in genericType.GetGenericParameters())
-            {
-                if (genericParameterNIType.IsGenericParameter())
-                {
-                    if (genericParameterNIType.IsLifetimeType())
-                    {
-                        genericTypeParameters[genericParameterNIType] = createLifetimeTypeReference(genericParameterNIType);
-                    }
-                    else if (genericParameterNIType.IsMutabilityType())
-                    {
-                        genericTypeParameters[genericParameterNIType] = typeVariableSet.CreateReferenceToMutabilityType();
-                    }
-                    else
-                    {
-                        var typeConstraints = genericParameterNIType.GetConstraints().Select(CreateConstraintFromGenericNITypeConstraint).ToList();
-                        genericTypeParameters[genericParameterNIType] = typeVariableSet.CreateReferenceToNewTypeVariable(typeConstraints);
-                    }
-                }
-            }
-            return genericTypeParameters;
+            _deriveFrom = deriveFrom;
+            _derivedTraitNames = derivedTraitNames;
         }
 
-        public static TypeVariableReference CreateTypeVariableReferenceFromNIType(
-            this TypeVariableSet typeVariableSet, 
-            NIType type, 
-            Dictionary<NIType, TypeVariableReference> genericTypeParameters)
+        public bool TryGetDerivedTrait(TypeVariableSet typeVariableSet, string traitName, out TypeVariableReference derivedTrait)
         {
-            if (type.IsGenericParameter())
+            if (!_derivedTraitNames.Contains(traitName))
             {
-                return genericTypeParameters[type];
+                derivedTrait = default(TypeVariableReference);
+                return false;
             }
-            else if (!type.IsGenericType())
-            {
-                return typeVariableSet.CreateReferenceToLiteralType(type);
-            }
-            else
-            {
-                if (type.IsRebarReferenceType())
-                {
-                    TypeVariableReference referentType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferentType(), genericTypeParameters);
-                    TypeVariableReference lifetimeType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferenceLifetimeType(), genericTypeParameters);
-                    if (type.IsPolymorphicReferenceType())
-                    {
-                        TypeVariableReference mutabilityType = typeVariableSet.CreateTypeVariableReferenceFromNIType(type.GetReferenceMutabilityType(), genericTypeParameters);
-                        return typeVariableSet.CreateReferenceToPolymorphicReferenceType(mutabilityType, referentType, lifetimeType);
-                    }
-                    return typeVariableSet.CreateReferenceToReferenceType(type.IsMutableReferenceType(), referentType, lifetimeType);
-                }
-                string constructorTypeName = type.GetName();
-                var constructorParameters = type.GetGenericParameters();
-                if (constructorParameters.Count == 1)
-                {
-                    TypeVariableReference parameterType = typeVariableSet.CreateTypeVariableReferenceFromNIType(constructorParameters.ElementAt(0), genericTypeParameters);
-                    return typeVariableSet.CreateReferenceToConstructorType(constructorTypeName, parameterType);
-                }
-                throw new NotImplementedException();
-            }
-        }
-
-        private static Constraint CreateConstraintFromGenericNITypeConstraint(NIType niTypeConstraint)
-        {
-            if (niTypeConstraint.IsInterface())
-            {
-                string interfaceName = niTypeConstraint.GetName();
-                switch (interfaceName)
-                {
-                    case "Clone":
-                        return new CloneConstraint();
-                    case "Copy":
-                        return new CopyConstraint();
-                    case "Display":
-                        return new DisplayTraitConstraint();
-                }
-            }
-            throw new NotImplementedException("Don't know how to translate generic type constraint " + niTypeConstraint);
+            return typeVariableSet.TryGetImplementedTrait(_deriveFrom, traitName, out derivedTrait);
         }
     }
 }

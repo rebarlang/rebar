@@ -18,9 +18,11 @@ namespace Rebar.Common
 
         public static NIType DropInterfaceType { get; }
 
-        private static NIType OptionGenericType { get; }
+        public static NIType DisplayInterfaceType { get; }
 
-        private static NIType LockingCellGenericType { get; }
+        internal static NIType OptionGenericType { get; }
+
+        internal static NIType LockingCellGenericType { get; }
 
         private static NIType SharedGenericType { get; }
 
@@ -63,6 +65,10 @@ namespace Rebar.Common
             dropInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             DropInterfaceType = dropInterfaceBuilder.CreateType();
 
+            var displayInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Display");
+            displayInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            DisplayInterfaceType = displayInterfaceBuilder.CreateType();
+
             var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
             optionGenericTypeBuilder.MakeGenericParameters("T");
             optionGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
@@ -92,6 +98,7 @@ namespace Rebar.Common
             RangeIteratorType = rangeIteratorTypeBuilder.CreateType();
 
             var stringSliceTypeBuilder = PFTypes.Factory.DefineValueClass("StringSlice");
+            stringSliceTypeBuilder.DefineImplementedInterfaceFromExisting(DisplayInterfaceType);
             stringSliceTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             StringSliceType = stringSliceTypeBuilder.CreateType();
 

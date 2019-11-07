@@ -38,7 +38,7 @@ namespace Rebar.Compiler
             var constraints = new List<Constraint>();
             if (wire.SinkTerminals.HasMoreThan(1))
             {
-                constraints.Add(new CopyConstraint());
+                constraints.Add(new CopyTraitConstraint());
             }
             wireTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(constraints);
 
@@ -108,13 +108,13 @@ namespace Rebar.Compiler
                 constantTypeReference = _typeVariableSet.CreateReferenceToReferenceType(
                     false,
                     // TODO: this is not always correct; need a more general way of turning NITypes into TypeVariableReferences
-                    _typeVariableSet.CreateReferenceToLiteralType(constant.DataType.GetReferentType()),
+                    _typeVariableSet.CreateTypeVariableReferenceFromNIType(constant.DataType.GetReferentType()),
                     // Assume for now that the reference will be in Lifetime.Static
                     _typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
             }
             else
             {
-                constantTypeReference = _typeVariableSet.CreateReferenceToLiteralType(constant.DataType);
+                constantTypeReference = _typeVariableSet.CreateTypeVariableReferenceFromNIType(constant.DataType);
             }
             _nodeFacade[valueOutput] = new SimpleTerminalFacade(valueOutput, constantTypeReference);
             return true;
@@ -125,7 +125,7 @@ namespace Rebar.Compiler
             if (dataAccessor.Terminal.Direction == Direction.Output
                 || dataAccessor.Terminal.Direction == Direction.Input)
             {
-                TypeVariableReference dataTypeVariable = _typeVariableSet.CreateReferenceToLiteralType(dataAccessor.DataItem.DataType);
+                TypeVariableReference dataTypeVariable = _typeVariableSet.CreateTypeVariableReferenceFromNIType(dataAccessor.DataItem.DataType);
                 _nodeFacade[dataAccessor.Terminal] = new SimpleTerminalFacade(dataAccessor.Terminal, dataTypeVariable);
             }
             return true;
@@ -247,7 +247,7 @@ namespace Rebar.Compiler
                 referenceOutput = lockTunnel.OutputTerminals.ElementAt(0);
             LifetimeTypeVariableGroup lifetimeTypeVariableGroup = LifetimeTypeVariableGroup.CreateFromTerminal(lockInput);
             TypeVariableReference dataVariableType = _typeVariableSet.CreateReferenceToNewTypeVariable();
-            TypeVariableReference lockType = _typeVariableSet.CreateReferenceToConstructorType("LockingCell", dataVariableType);
+            TypeVariableReference lockType = _typeVariableSet.CreateReferenceToLockingCellType(dataVariableType);
             _nodeFacade
                 .CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType)
                 .AddTerminalFacade(lockInput, lockType, default(TypeVariableReference));
@@ -267,7 +267,7 @@ namespace Rebar.Compiler
             Terminal loopConditionInput = loopConditionTunnel.InputTerminals.ElementAt(0),
                 loopConditionOutput = loopConditionTunnel.OutputTerminals.ElementAt(0);
 
-            TypeVariableReference boolType = _typeVariableSet.CreateReferenceToLiteralType(PFTypes.Boolean);
+            TypeVariableReference boolType = _typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Boolean);
             _nodeFacade[loopConditionInput] = new SimpleTerminalFacade(loopConditionInput, boolType);
             Lifetime innerLifetime = loopConditionOutput.GetDiagramLifetime();
             TypeVariableReference boolReferenceType = _typeVariableSet.CreateReferenceToReferenceType(
@@ -290,7 +290,7 @@ namespace Rebar.Compiler
                 selectorSomeOutput = optionPatternStructureSelector.OutputTerminals[0];
 
             TypeVariableReference innerTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(),
-                outerTypeReference = _typeVariableSet.CreateReferenceToConstructorType("Option", innerTypeVariable);
+                outerTypeReference = _typeVariableSet.CreateReferenceToOptionType(innerTypeVariable);
             _nodeFacade[selectorInput] = new SimpleTerminalFacade(selectorInput, outerTypeReference);
             _nodeFacade[selectorSomeOutput] = new SimpleTerminalFacade(selectorSomeOutput, innerTypeVariable);
             return true;
@@ -355,7 +355,7 @@ namespace Rebar.Compiler
             TypeVariableReference innerTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
             _nodeFacade[optionInput] = new SimpleTerminalFacade(
                 optionInput, 
-                _typeVariableSet.CreateReferenceToConstructorType("Option", innerTypeVariable));
+                _typeVariableSet.CreateReferenceToOptionType(innerTypeVariable));
             _nodeFacade[unwrappedOutput] = new SimpleTerminalFacade(unwrappedOutput, innerTypeVariable);
             return true;
         }
