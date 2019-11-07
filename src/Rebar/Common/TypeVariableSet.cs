@@ -88,7 +88,7 @@ namespace Rebar.Common
 
             public override bool IsOrContainsTypeVariable()
             {
-                return TypeParameters.Count > 0;
+                return TypeParameters.Any(t => t.IsOrContainsTypeVariable);
             }
 
             public override string DebuggerDisplay
