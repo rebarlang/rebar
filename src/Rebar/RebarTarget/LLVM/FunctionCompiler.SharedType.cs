@@ -38,10 +38,11 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMTypeRef refCountType = valueType.CreateLLVMRefCountType();
             LLVMValueRef refCountAllocationPtr = builder.CreateMalloc(refCountType, "refCountAllocationPtr"),
-                refCount0 = LLVMSharp.LLVM.GetUndef(refCountType),
-                refCount1 = builder.CreateInsertValue(refCount0, 1.AsLLVMValue(), 0u, "refCount1"),
-                refCount2 = builder.CreateInsertValue(refCount1, sharedCreateFunction.GetParam(0u), 1u, "refCount2");
-            builder.CreateStore(refCount2, refCountAllocationPtr);
+                refCount = builder.BuildStructValue(
+                    refCountType,
+                    new LLVMValueRef[] { 1.AsLLVMValue(), sharedCreateFunction.GetParam(0u) },
+                    "refCount");
+            builder.CreateStore(refCount, refCountAllocationPtr);
             LLVMValueRef sharedPtr = sharedCreateFunction.GetParam(1u);
             builder.CreateStore(refCountAllocationPtr, sharedPtr);
             builder.CreateRetVoid();

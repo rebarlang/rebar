@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Execution
@@ -48,6 +45,26 @@ namespace Tests.Rebar.Unit.Execution
 
             byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(tuple.Item2);
             AssertByteArrayIsInt32(inspectValue, 0);
+        }
+
+        [TestMethod]
+        public void CreateVectorAndAppendTwoDroppableValues_Execute_BothDroppableValuesDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode vectorCreate = new FunctionalNode(function.BlockDiagram, Signatures.VectorCreateType);
+            FunctionalNode vectorAppend0 = new FunctionalNode(function.BlockDiagram, Signatures.VectorAppendType),
+                vectorAppend1 = new FunctionalNode(function.BlockDiagram, Signatures.VectorAppendType);
+            Wire.Create(function.BlockDiagram, vectorCreate.OutputTerminals[0], vectorAppend0.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            Wire.Create(function.BlockDiagram, vectorAppend0.OutputTerminals[0], vectorAppend1.InputTerminals[0]);
+            FunctionalNode fakeDrop0 = CreateFakeDropWithId(function.BlockDiagram, 1), fakeDrop1 = CreateFakeDropWithId(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, fakeDrop0.OutputTerminals[0], vectorAppend0.InputTerminals[1]);
+            Wire.Create(function.BlockDiagram, fakeDrop1.OutputTerminals[0], vectorAppend1.InputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(2));
         }
 
         private Tuple<DfirRoot, FunctionalNode> CreateInitializeVectorAndSliceIndexFunction(int elementValue, int index)

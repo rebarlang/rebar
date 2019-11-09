@@ -812,6 +812,30 @@ namespace Rebar.SourceModel
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
     }
 
+    public class VectorAppend : FunctionalNode
+    {
+        private const string ElementName = "VectorAppend";
+
+        protected VectorAppend()
+            : base(Signatures.VectorAppendType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static VectorAppend CreateVectorAppend(IElementCreateInfo elementCreateInfo)
+        {
+            var vectorAppend = new VectorAppend();
+            vectorAppend.Init(elementCreateInfo);
+            return vectorAppend;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
     public class VectorInsert : FunctionalNode
     {
         private const string ElementName = "VectorInsert";
@@ -851,6 +875,30 @@ namespace Rebar.SourceModel
             var vectorInitialize = new VectorInitialize();
             vectorInitialize.Init(elementCreateInfo);
             return vectorInitialize;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
+    public class VectorRemoveLast : FunctionalNode
+    {
+        private const string ElementName = "VectorRemoveLast";
+
+        protected VectorRemoveLast()
+            : base(Signatures.VectorRemoveLastType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static VectorRemoveLast CreateVectorRemoveLast(IElementCreateInfo elementCreateInfo)
+        {
+            var vectorRemoveLast = new VectorRemoveLast();
+            vectorRemoveLast.Init(elementCreateInfo);
+            return vectorRemoveLast;
         }
 
         /// <inheritdoc />

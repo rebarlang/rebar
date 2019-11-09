@@ -137,6 +137,11 @@ namespace Rebar.Common
             {
                 traitDeriver = new TraitDeriver(parameterTypeVariables[0], "Copy");
             }
+            if (type.GetName() == "Vector")
+            {
+                // Vector<T> is Clone only for T : Clone
+                traitDeriver = new TraitDeriver(parameterTypeVariables[0], "Clone");
+            }
 
             return typeVariableSet.CreateReferenceToConcreteType(type, parameterTypeVariables, traits, traitDeriver);
         }

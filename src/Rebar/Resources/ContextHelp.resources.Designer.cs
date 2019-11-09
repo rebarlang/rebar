@@ -2457,6 +2457,51 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string VectorAppend_Description {
+            get {
+                return ResourceManager.GetString("VectorAppend_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to element.
+        /// </summary>
+        internal static string VectorAppend_element_Name {
+            get {
+                return ResourceManager.GetString("VectorAppend_element_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Append To Vector.
+        /// </summary>
+        internal static string VectorAppend_Name {
+            get {
+                return ResourceManager.GetString("VectorAppend_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector reference.
+        /// </summary>
+        internal static string VectorAppend_vectorRef_in_Name {
+            get {
+                return ResourceManager.GetString("VectorAppend_vectorRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector reference.
+        /// </summary>
+        internal static string VectorAppend_vectorRef_out_Name {
+            get {
+                return ResourceManager.GetString("VectorAppend_vectorRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string VectorCreate_Description {
             get {
                 return ResourceManager.GetString("VectorCreate_Description", resourceCulture);
@@ -2586,6 +2631,51 @@ namespace Rebar.Resources {
         internal static string VectorInsert_vectorRef_out_Name {
             get {
                 return ResourceManager.GetString("VectorInsert_vectorRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string VectorRemoveLast_Description {
+            get {
+                return ResourceManager.GetString("VectorRemoveLast_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to element.
+        /// </summary>
+        internal static string VectorRemoveLast_element_Name {
+            get {
+                return ResourceManager.GetString("VectorRemoveLast_element_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove Last From Vector.
+        /// </summary>
+        internal static string VectorRemoveLast_Name_Description {
+            get {
+                return ResourceManager.GetString("VectorRemoveLast_Name_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector reference.
+        /// </summary>
+        internal static string VectorRemoveLast_vectorRef_in_Name {
+            get {
+                return ResourceManager.GetString("VectorRemoveLast_vectorRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to vector reference.
+        /// </summary>
+        internal static string VectorRemoveLast_vectorRef_out_Name {
+            get {
+                return ResourceManager.GetString("VectorRemoveLast_vectorRef_out_Name", resourceCulture);
             }
         }
         

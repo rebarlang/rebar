@@ -622,6 +622,13 @@ namespace Rebar.Common
                     return true;
                 }
             }
+
+            // Somewhat of a hack: we want the Clone trait to be found for anything that has the Copy trait.
+            if (traitName == "Clone")
+            {
+                return TryGetImplementedTrait(type, "Copy", out traitType);
+            }
+
             return false;
         }
 
@@ -727,8 +734,7 @@ namespace Rebar.Common
         {
             TypeVariableReference unused;
             TypeVariableSet typeVariableSet = type.TypeVariableSet;
-            if (!typeVariableSet.TryGetImplementedTrait(type, "Clone", out unused)
-                && !typeVariableSet.TryGetImplementedTrait(type, "Copy", out unused))
+            if (!typeVariableSet.TryGetImplementedTrait(type, "Clone", out unused))
             {
                 unificationResult.AddFailedTypeConstraint(this);
             }

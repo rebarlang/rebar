@@ -119,7 +119,7 @@ namespace Tests.Rebar.Unit
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
             TypeVariableReference literalReference = typeVariableSet.CreateReferenceToReferenceType(
-                true, 
+                true,
                 typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32),
                 typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
             var constraint = new CopyTraitConstraint();
@@ -211,6 +211,33 @@ namespace Tests.Rebar.Unit
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, sharedType, "Clone");
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, sharedType, "Drop");
+        }
+
+        [TestMethod]
+        public void CreateTypeVariableReferenceFromVectorOfCloneType_TypeVariableHasCloneTrait()
+        {
+            var typeVariableSet = new TypeVariableSet();
+            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String.CreateVector());
+
+            AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, vectorType, "Clone");
+        }
+
+        [TestMethod]
+        public void CreateTypeVariableReferenceFromVectorOfCopyType_TypeVariableHasCloneTrait()
+        {
+            var typeVariableSet = new TypeVariableSet();
+            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32.CreateVector());
+
+            AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, vectorType, "Clone");
+        }
+
+        [TestMethod]
+        public void CreateTypeVariableReferenceFromVectorOfNonCopyNonCloneType_TypeVariableDoesNotHaveCloneTrait()
+        {
+            var typeVariableSet = new TypeVariableSet();
+            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(DataTypes.FileHandleType.CreateVector());
+
+            AssertTypeVariableReferenceDoesNotHaveParameterlessTrait(typeVariableSet, vectorType, "Clone");
         }
 
         private void AssertTypeVariableReferenceHasParameterlessTrait(TypeVariableSet typeVariableSet, TypeVariableReference typeVariableReference, string traitName)

@@ -104,6 +104,7 @@ namespace Rebar.Common
 
             var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
             vectorGenericTypeBuilder.MakeGenericParameters("T");
+            vectorGenericTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             VectorGenericType = vectorGenericTypeBuilder.CreateType();
 

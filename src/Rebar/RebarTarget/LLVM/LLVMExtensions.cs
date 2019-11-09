@@ -91,18 +91,34 @@ namespace Rebar.RebarTarget.LLVM
 
         public static LLVMValueRef BuildSliceReferenceValue(this IRBuilder builder, LLVMTypeRef sliceReferenceType, LLVMValueRef bufferPtr, LLVMValueRef length)
         {
-            LLVMValueRef slice0 = builder.CreateInsertValue(LLVMSharp.LLVM.GetUndef(sliceReferenceType), bufferPtr, 0u, "slice0"),
-                slice = builder.CreateInsertValue(slice0, length, 1u, "slice");
-            return slice;
+            return builder.BuildStructValue(
+                sliceReferenceType,
+                new LLVMValueRef[] { bufferPtr, length },
+                "slice");
         }
 
         public static LLVMValueRef BuildOptionValue(this IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
         {
             LLVMTypeRef innerType = optionType.GetSubtypes()[1];
-            LLVMValueRef undef = LLVMSharp.LLVM.GetUndef(optionType),
-                option0 = builder.CreateInsertValue(undef, (someValue != null).AsLLVMValue(), 0u, "option0"), 
-                option = builder.CreateInsertValue(option0, someValue ?? LLVMSharp.LLVM.ConstNull(innerType), 1u, "option");
-            return option;
+            return builder.BuildStructValue(
+                optionType,
+                new LLVMValueRef[] { (someValue != null).AsLLVMValue(), someValue ?? LLVMSharp.LLVM.ConstNull(innerType) },
+                "option");
+        }
+
+        public static LLVMValueRef BuildStructValue(this IRBuilder builder, LLVMTypeRef structType, LLVMValueRef[] fieldValues, string valueName = null)
+        {
+            LLVMValueRef currentValue = LLVMSharp.LLVM.GetUndef(structType);
+            valueName = valueName ?? "agg";
+            for (uint i = 0; i < fieldValues.Length; ++i)
+            {
+                currentValue = builder.CreateInsertValue(
+                    currentValue,
+                    fieldValues[i],
+                    i,
+                    (i == fieldValues.Length - 1) ? valueName : "agg");
+            }
+            return currentValue;
         }
 
         public static LLVMTypeRef StringType { get; } = LLVMTypeRef.StructType(

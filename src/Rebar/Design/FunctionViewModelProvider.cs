@@ -66,7 +66,9 @@ namespace Rebar.Design
 
             AddSupportedModel<VectorCreate>(n => new BasicNodeViewModel(n, "Create Vector"));
             AddSupportedModel<VectorInitialize>(n => new BasicNodeViewModel(n, "Initialize Vector"));
+            AddSupportedModel<VectorAppend>(n => new BasicNodeViewModel(n, "Append To Vector"));
             AddSupportedModel<VectorInsert>(n => new BasicNodeViewModel(n, "Insert Into Vector"));
+            AddSupportedModel<VectorRemoveLast>(n => new BasicNodeViewModel(n, "Remove Last From Vector"));
             AddSupportedModel<VectorToSlice>(n => new BasicNodeViewModel(n, "Vector To Slice"));
             AddSupportedModel<SliceIndex>(n => new BasicNodeViewModel(n, "Slice Index"));
 

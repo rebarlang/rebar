@@ -1011,4 +1011,34 @@
   <data name="SharedGetValue_valueRef_Name" xml:space="preserve">
     <value>value reference</value>
   </data>
+  <data name="VectorAppend_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorAppend_element_Name" xml:space="preserve">
+    <value>element</value>
+  </data>
+  <data name="VectorAppend_Name" xml:space="preserve">
+    <value>Append To Vector</value>
+  </data>
+  <data name="VectorAppend_vectorRef_in_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
+  <data name="VectorAppend_vectorRef_out_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
+  <data name="VectorRemoveLast_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VectorRemoveLast_element_Name" xml:space="preserve">
+    <value>element</value>
+  </data>
+  <data name="VectorRemoveLast_Name_Description" xml:space="preserve">
+    <value>Remove Last From Vector</value>
+  </data>
+  <data name="VectorRemoveLast_vectorRef_in_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
+  <data name="VectorRemoveLast_vectorRef_out_Name" xml:space="preserve">
+    <value>vector reference</value>
+  </data>
 </root>

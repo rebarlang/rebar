@@ -72,7 +72,9 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["VectorCreate"] = CompileVectorCreate;
             _functionalNodeCompilers["VectorInitialize"] = CompileVectorInitialize;
             _functionalNodeCompilers["VectorToSlice"] = CompileVectorToSlice;
+            _functionalNodeCompilers["VectorAppend"] = CompileVectorAppend;
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
+            _functionalNodeCompilers["VectorRemoveLast"] = CompileVectorRemoveLast;
             _functionalNodeCompilers["SliceIndex"] = CompileSliceIndex;
 
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
@@ -209,20 +211,43 @@ namespace Rebar.RebarTarget.LLVM
                 copyValueSource.UpdateValue(compiler._builder, copyFromSource.GetDeferencedValue(compiler._builder));
                 return;
             }
+
+            LLVMValueRef cloneFunction;
+            if (compiler.TryGetCloneFunction(valueType, out cloneFunction))
+            {
+                compiler.CreateCallForFunctionalNode(cloneFunction, createCopyNode);
+                return;
+            }
+
+            throw new NotSupportedException("Don't know how to compile CreateCopy for type " + valueType);
+        }
+
+        private bool TryGetCloneFunction(NIType valueType, out LLVMValueRef cloneFunction)
+        {
+            cloneFunction = default(LLVMValueRef);
+            NIType innerType;
+            if (valueType.TryDestructureSharedType(out innerType))
+            {
+                string specializedName = MonomorphizeFunctionName("shared_clone", innerType.ToEnumerable());
+                cloneFunction = GetSpecializedFunction(
+                    specializedName,
+                    () => CreateSharedCloneFunction(Module, specializedName, innerType.AsLLVMType()));
+                return true;
+            }
+            if (valueType.TryDestructureVectorType(out innerType))
+            {
+                string specializedName = MonomorphizeFunctionName("vector_clone", innerType.ToEnumerable());
+                cloneFunction = GetSpecializedFunction(
+                    specializedName,
+                    () => CreateVectorCloneFunction(this, specializedName, innerType));
+                return true;
+            }
+
             if (valueType.TypeHasCloneTrait())
             {
-                NIType innerType;
-                if (valueType.TryDestructureSharedType(out innerType))
-                {
-                    string specializedName = MonomorphizeFunctionName("shared_clone", innerType.ToEnumerable());
-                    LLVMValueRef sharedCloneFunction = compiler.GetSpecializedFunction(
-                        specializedName,
-                        () => CreateSharedCloneFunction(compiler.Module, specializedName, innerType.AsLLVMType()));
-                    compiler.CreateCallForFunctionalNode(sharedCloneFunction, createCopyNode);
-                    return;
-                }
+                throw new NotSupportedException("Clone function not found for type: " + valueType);
             }
-            throw new NotSupportedException("Don't know how to compile CreateCopy for type " + valueType);
+            return false;
         }
 
         private static void CompileSelectReference(FunctionCompiler compiler, FunctionalNode selectReferenceNode)
@@ -850,8 +875,11 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (droppedValueType.TryDestructureVectorType(out innerType))
             {
-                // TODO
-                return false;
+                string specializedFunctionName = MonomorphizeFunctionName("vector_drop", innerType.ToEnumerable());
+                dropFunction = GetSpecializedFunction(
+                    specializedFunctionName,
+                    () => CreateVectorDropFunction(this, specializedFunctionName, innerType));
+                return true;
             }
             if (droppedValueType.TryDestructureOptionType(out innerType) && TryGetDropFunction(innerType, out dropFunction))
             {

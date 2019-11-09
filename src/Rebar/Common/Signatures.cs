@@ -285,6 +285,15 @@ namespace Rebar.Common
                 "sliceRef");
             VectorToSliceType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorAppend");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateVector().CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "vectorRef");
+            AddInputParameter(functionTypeBuilder, tDataParameter, "element");
+            VectorAppendType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInsert");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -300,6 +309,15 @@ namespace Rebar.Common
                 tDataParameter,
                 "elementRef");
             VectorInsertType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorRemoveLast");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateVector().CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "vectorRef");
+            AddOutputParameter(functionTypeBuilder, tDataParameter.CreateOption(), "element");
+            VectorRemoveLastType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = PFTypes.Factory.DefineFunction("SliceIndex");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
@@ -432,7 +450,11 @@ namespace Rebar.Common
 
         public static NIType VectorToSliceType { get; }
 
+        public static NIType VectorAppendType { get; }
+
         public static NIType VectorInsertType { get; }
+
+        public static NIType VectorRemoveLastType { get; }
 
         public static NIType SliceIndexType { get; }
 
