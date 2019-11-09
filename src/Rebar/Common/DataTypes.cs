@@ -449,7 +449,7 @@ namespace Rebar.Common
 
         internal static bool TypeHasCloneTrait(this NIType type)
         {
-            return type.IsOrImplements(CloneInterfaceType);
+            return type == PFTypes.String || type.IsOrImplements(CloneInterfaceType);
         }
     }
 }

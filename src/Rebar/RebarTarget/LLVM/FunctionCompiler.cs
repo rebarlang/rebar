@@ -226,6 +226,11 @@ namespace Rebar.RebarTarget.LLVM
         {
             cloneFunction = default(LLVMValueRef);
             NIType innerType;
+            if (valueType == PFTypes.String)
+            {
+                cloneFunction = GetImportedCommonFunction(CommonModules.StringCloneName);
+                return true;
+            }
             if (valueType.TryDestructureSharedType(out innerType))
             {
                 string specializedName = MonomorphizeFunctionName("shared_clone", innerType.ToEnumerable());

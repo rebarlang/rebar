@@ -17,7 +17,8 @@ namespace Rebar.RebarTarget.LLVM
         private static LLVMValueRef _createNullTerminatedStringFromSliceFunction;
         private static LLVMValueRef _dropStringFunction;
         private static LLVMValueRef _stringAppendFunction;
-        private static LLVMValueRef _stringFromSliceRetFunction;
+        private static LLVMValueRef _stringFromSliceFunction;
+        private static LLVMValueRef _stringToSliceRetFunction;
 
         public const string FakeDropCreateName = "fakedrop_create";
         public const string FakeDropDropName = "fakedrop_drop";
@@ -26,6 +27,7 @@ namespace Rebar.RebarTarget.LLVM
         public const string CreateEmptyStringName = "create_empty_string";
         public const string CreateNullTerminatedStringFromSliceName = "create_null_terminated_string_from_slice";
         public const string DropStringName = "drop_string";
+        public const string StringCloneName = "string_clone";
         public const string OutputStringSliceName = "output_string_slice";
         public const string StringFromSliceName = "string_from_slice";
         public const string StringToSliceRetName = "string_to_slice_ret";
@@ -138,6 +140,15 @@ namespace Rebar.RebarTarget.LLVM
                 false);
             BuildDropStringFunction(stringModule);
 
+            CommonModuleSignatures[StringCloneName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0),
+                    LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0)
+                },
+                false);
+
             CommonModuleSignatures[OutputStringSliceName] = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType },
@@ -174,6 +185,9 @@ namespace Rebar.RebarTarget.LLVM
                 false);
             BuildStringConcatFunction(stringModule, externalFunctions);
 
+            // depends on StringToSliceRet and StringFromSlice
+            BuildStringCloneFunction(stringModule);
+
             stringModule.VerifyAndThrowIfInvalid();
         }
 
@@ -198,13 +212,13 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildStringFromSliceFunction(Module stringModule, CommonExternalFunctions externalFunctions)
         {
-            LLVMValueRef stringFromSliceFunction = stringModule.AddFunction(StringFromSliceName, CommonModuleSignatures[StringFromSliceName]);
-            LLVMBasicBlockRef entryBlock = stringFromSliceFunction.AppendBasicBlock("entry");
+            _stringFromSliceFunction = stringModule.AddFunction(StringFromSliceName, CommonModuleSignatures[StringFromSliceName]);
+            LLVMBasicBlockRef entryBlock = _stringFromSliceFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entryBlock);
 
-            LLVMValueRef stringSliceReference = stringFromSliceFunction.GetParam(0u),
-                stringPtr = stringFromSliceFunction.GetParam(1u),
+            LLVMValueRef stringSliceReference = _stringFromSliceFunction.GetParam(0u),
+                stringPtr = _stringFromSliceFunction.GetParam(1u),
                 stringAllocationPtrPtr = builder.CreateStructGEP(stringPtr, 0u, "stringAllocationPtrPtr"),
                 stringSizePtr = builder.CreateStructGEP(stringPtr, 1u, "stringSizePtr");
 
@@ -227,12 +241,12 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildStringToSliceRetFunction(Module stringModule)
         {
-            _stringFromSliceRetFunction = stringModule.AddFunction(StringToSliceRetName, CommonModuleSignatures[StringToSliceRetName]);
-            LLVMBasicBlockRef entryBlock = _stringFromSliceRetFunction.AppendBasicBlock("entry");
+            _stringToSliceRetFunction = stringModule.AddFunction(StringToSliceRetName, CommonModuleSignatures[StringToSliceRetName]);
+            LLVMBasicBlockRef entryBlock = _stringToSliceRetFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
             builder.PositionBuilderAtEnd(entryBlock);
 
-            LLVMValueRef stringPtr = _stringFromSliceRetFunction.GetParam(0u),
+            LLVMValueRef stringPtr = _stringToSliceRetFunction.GetParam(0u),
                 stringAllocationPtrPtr = builder.CreateStructGEP(stringPtr, 0u, "stringAllocationPtrPtr"),
                 stringSizePtr = builder.CreateStructGEP(stringPtr, 1u, "stringSizePtr"),
                 stringAllocationPtr = builder.CreateLoad(stringAllocationPtrPtr, "stringAllocationPtr"),
@@ -250,7 +264,7 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMValueRef stringPtr = stringToSliceFunction.GetParam(0u),
                 stringSliceReferencePtr = stringToSliceFunction.GetParam(1u);
-            LLVMValueRef sliceReference = builder.CreateCall(_stringFromSliceRetFunction, new LLVMValueRef[] { stringPtr }, "sliceReference");
+            LLVMValueRef sliceReference = builder.CreateCall(_stringToSliceRetFunction, new LLVMValueRef[] { stringPtr }, "sliceReference");
             builder.CreateStore(sliceReference, stringSliceReferencePtr);
             builder.CreateRetVoid();
         }
@@ -276,7 +290,7 @@ namespace Rebar.RebarTarget.LLVM
                 newAllocationPtr = builder.CreateArrayMalloc(LLVMTypeRef.Int8Type(), appendedSize, "newAllocationPtr");
 
             // copy from old allocation to new allocation
-            LLVMValueRef stringSlice = builder.CreateCall(_stringFromSliceRetFunction, new LLVMValueRef[] { stringPtr }, "stringSlice");
+            LLVMValueRef stringSlice = builder.CreateCall(_stringToSliceRetFunction, new LLVMValueRef[] { stringPtr }, "stringSlice");
             builder.CreateCall(_copySliceToPointerFunction, new LLVMValueRef[] { stringSlice, newAllocationPtr }, string.Empty);
 
             // copy from slice to offset in new allocation
@@ -342,6 +356,20 @@ namespace Rebar.RebarTarget.LLVM
                 stringAllocationPtrPtr = builder.CreateStructGEP(stringPtr, 0u, "stringAllocationPtrPtr"),
                 stringAllocationPtr = builder.CreateLoad(stringAllocationPtrPtr, "stringAllocationPtr");
             builder.CreateFree(stringAllocationPtr);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildStringCloneFunction(Module stringModule)
+        {
+            LLVMValueRef cloneStringFunction = stringModule.AddFunction(StringCloneName, CommonModuleSignatures[StringCloneName]);
+            LLVMBasicBlockRef entryBlock = cloneStringFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef stringPtr = cloneStringFunction.GetParam(0u),
+                stringClonePtr = cloneStringFunction.GetParam(1u),
+                stringSliceRef = builder.CreateCall(_stringToSliceRetFunction, new LLVMValueRef[] { stringPtr }, "stringSliceRef");
+            builder.CreateCall(_stringFromSliceFunction, new LLVMValueRef[] { stringSliceRef, stringClonePtr }, string.Empty);
             builder.CreateRetVoid();
         }
 
