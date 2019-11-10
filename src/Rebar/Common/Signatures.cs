@@ -119,6 +119,14 @@ namespace Rebar.Common
                 "copy");
             CreateCopyType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("Drop");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "valueRef");
+            DropType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("Output");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", displayTraitConstraintBuilder);
             AddInputOutputParameter(
@@ -425,6 +433,9 @@ namespace Rebar.Common
         public static NIType ExchangeValuesType { get; }
 
         public static NIType CreateCopyType { get; }
+
+        // NOTE: this is the type associated with the trait method, not the diagram node.
+        public static NIType DropType { get; }
 
         public static NIType OutputType { get; }
 

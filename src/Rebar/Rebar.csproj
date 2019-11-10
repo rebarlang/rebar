@@ -201,6 +201,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\FunctionType.cs" />
     <Compile Include="Common\LifetimeGraphTree.cs" />
     <Compile Include="Common\InputReferenceMutability.cs" />
     <Compile Include="Common\ITypeUnificationResult.cs" />
@@ -285,7 +286,9 @@
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.OptionType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.SliceType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.VectorType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />

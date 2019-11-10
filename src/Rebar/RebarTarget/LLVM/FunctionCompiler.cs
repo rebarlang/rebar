@@ -69,18 +69,18 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["StringAppend"] = CreateImportedCommonFunctionCompiler(CommonModules.StringAppendName);
             _functionalNodeCompilers["StringConcat"] = CreateImportedCommonFunctionCompiler(CommonModules.StringConcatName);
 
-            _functionalNodeCompilers["VectorCreate"] = CompileVectorCreate;
-            _functionalNodeCompilers["VectorInitialize"] = CompileVectorInitialize;
-            _functionalNodeCompilers["VectorToSlice"] = CompileVectorToSlice;
-            _functionalNodeCompilers["VectorAppend"] = CompileVectorAppend;
+            _functionalNodeCompilers["VectorCreate"] = CreateSpecializedFunctionCallCompiler(BuildVectorCreateFunction);
+            _functionalNodeCompilers["VectorInitialize"] = CreateSpecializedFunctionCallCompiler(BuildVectorInitializeFunction);
+            _functionalNodeCompilers["VectorToSlice"] = CreateSpecializedFunctionCallCompiler(BuildVectorToSliceFunction);
+            _functionalNodeCompilers["VectorAppend"] = CreateSpecializedFunctionCallCompiler(BuildVectorAppendFunction);
             _functionalNodeCompilers["VectorInsert"] = CompileNothing;
-            _functionalNodeCompilers["VectorRemoveLast"] = CompileVectorRemoveLast;
-            _functionalNodeCompilers["SliceIndex"] = CompileSliceIndex;
+            _functionalNodeCompilers["VectorRemoveLast"] = CreateSpecializedFunctionCallCompiler(BuildVectorRemoveLastFunction);
+            _functionalNodeCompilers["SliceIndex"] = CreateSpecializedFunctionCallCompiler(CreateSliceIndexFunction);
 
             _functionalNodeCompilers["CreateLockingCell"] = CompileNothing;
 
-            _functionalNodeCompilers["SharedCreate"] = CompileSharedCreate;
-            _functionalNodeCompilers["SharedGetValue"] = CompileSharedGetValue;
+            _functionalNodeCompilers["SharedCreate"] = CreateSpecializedFunctionCallCompiler(BuildSharedCreateFunction);
+            _functionalNodeCompilers["SharedGetValue"] = CreateSpecializedFunctionCallCompiler(BuildSharedGetValueFunction);
 
             _functionalNodeCompilers["OpenFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.OpenFileHandleName);
             _functionalNodeCompilers["ReadLineFromFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.ReadLineFromFileHandleName);
@@ -225,6 +225,10 @@ namespace Rebar.RebarTarget.LLVM
         private bool TryGetCloneFunction(NIType valueType, out LLVMValueRef cloneFunction)
         {
             cloneFunction = default(LLVMValueRef);
+            var functionBuilder = Signatures.CreateCopyType.DefineFunctionFromExisting();
+            functionBuilder.Name = "Clone";
+            functionBuilder.ReplaceGenericParameters(valueType, NIType.Unset);
+            NIType signature = functionBuilder.CreateType();
             NIType innerType;
             if (valueType == PFTypes.String)
             {
@@ -233,18 +237,12 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (valueType.TryDestructureSharedType(out innerType))
             {
-                string specializedName = MonomorphizeFunctionName("shared_clone", innerType.ToEnumerable());
-                cloneFunction = GetSpecializedFunction(
-                    specializedName,
-                    () => CreateSharedCloneFunction(Module, specializedName, innerType.AsLLVMType()));
+                cloneFunction = GetSpecializedFunctionWithSignature(signature, BuildSharedCloneFunction);
                 return true;
             }
             if (valueType.TryDestructureVectorType(out innerType))
             {
-                string specializedName = MonomorphizeFunctionName("vector_clone", innerType.ToEnumerable());
-                cloneFunction = GetSpecializedFunction(
-                    specializedName,
-                    () => CreateVectorCloneFunction(this, specializedName, innerType));
+                cloneFunction = GetSpecializedFunctionWithSignature(signature, BuildVectorCloneFunction);
                 return true;
             }
 
@@ -332,123 +330,10 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
-        private static void CompileSomeConstructor(FunctionCompiler compiler, FunctionalNode someConstructorNode)
-        {
-            ValueSource inputSource = compiler.GetTerminalValueSource(someConstructorNode.InputTerminals[0]),
-                outputSource = compiler.GetTerminalValueSource(someConstructorNode.OutputTerminals[0]);
-            // CreateSomeValueStruct creates a const struct, which isn't allowed since
-            // inputSource.GetValue isn't always a constant.
-
-            LLVMValueRef[] someFieldValues = new[]
-            {
-                true.AsLLVMValue(),
-                inputSource.GetValue(compiler._builder)
-            };
-            ((LocalAllocationValueSource)outputSource).UpdateStructValue(compiler._builder, someFieldValues);
-        }
-
-        private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
-        {
-            ValueSource outputSource = compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
-            LLVMTypeRef outputType = noneConstructorNode
-                .OutputTerminals[0].GetTrueVariable()
-                .Type.AsLLVMType();
-            outputSource.UpdateValue(compiler._builder, LLVMSharp.LLVM.ConstNull(outputType));
-        }
-
-        private static LLVMValueRef CreateOptionDropFunction(Module module, FunctionCompiler compiler, string functionName, NIType innerType)
-        {
-            LLVMTypeRef optionDropFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(innerType.AsLLVMType().CreateLLVMOptionType(), 0u)
-                },
-                false);
-
-            LLVMValueRef optionDropFunction = module.AddFunction(functionName, optionDropFunctionType);
-            LLVMBasicBlockRef entryBlock = optionDropFunction.AppendBasicBlock("entry"),
-                isSomeBlock = optionDropFunction.AppendBasicBlock("isSome"),
-                endBlock = optionDropFunction.AppendBasicBlock("end");
-            var builder = new IRBuilder();
-
-            builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef optionPtr = optionDropFunction.GetParam(0u),
-                isSomePtr = builder.CreateStructGEP(optionPtr, 0u, "isSomePtr"),
-                isSome = builder.CreateLoad(isSomePtr, "isSome");
-            builder.CreateCondBr(isSome, isSomeBlock, endBlock);
-
-            builder.PositionBuilderAtEnd(isSomeBlock);
-            compiler.CreateDropCallIfDropFunctionExists(builder, innerType, b => b.CreateStructGEP(optionPtr, 1u, "innerValuePtr"));
-            builder.CreateBr(endBlock);
-
-            builder.PositionBuilderAtEnd(endBlock);
-            builder.CreateRetVoid();
-            return optionDropFunction;
-        }
-
         private static Action<FunctionCompiler, FunctionalNode> CreateImportedCommonFunctionCompiler(string functionName)
         {
             return (compiler, functionalNode) =>
                 compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(functionName), functionalNode, functionalNode.Signature);
-        }
-
-        private static void CompileSliceIndex(FunctionCompiler compiler, FunctionalNode sliceIndexNode)
-        {
-            var sliceReferenceSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(sliceIndexNode.InputTerminals[1]);
-            NIType elementType;
-            sliceReferenceSource.AllocationNIType.GetReferentType().TryDestructureSliceType(out elementType);
-            string specializedName = MonomorphizeFunctionName("slice_index", elementType.ToEnumerable());
-            LLVMValueRef sliceIndexFunction = compiler.GetSpecializedFunction(
-                specializedName,
-                () => CreateSliceIndexFunction(compiler.Module, specializedName, elementType.AsLLVMType()));
-            compiler.CreateCallForFunctionalNode(sliceIndexFunction, sliceIndexNode);
-        }
-
-        private static LLVMValueRef CreateSliceIndexFunction(Module module, string functionName, LLVMTypeRef elementType)
-        {
-            LLVMTypeRef sliceReferenceType = elementType.CreateLLVMSliceReferenceType(),
-                elementPtrOptionType = LLVMTypeRef.PointerType(elementType, 0u).CreateLLVMOptionType();
-            LLVMTypeRef sliceIndexFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0u),
-                    sliceReferenceType,
-                    LLVMTypeRef.PointerType(elementPtrOptionType, 0u)
-                },
-                false);
-
-            LLVMValueRef sliceIndexFunction = module.AddFunction(functionName, sliceIndexFunctionType);
-            LLVMBasicBlockRef entryBlock = sliceIndexFunction.AppendBasicBlock("entry"),
-                validIndexBlock = sliceIndexFunction.AppendBasicBlock("validIndex"),
-                invalidIndexBlock = sliceIndexFunction.AppendBasicBlock("invalidIndex");
-            var builder = new IRBuilder();
-
-            builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef indexPtr = sliceIndexFunction.GetParam(0u),
-                index = builder.CreateLoad(indexPtr, "index"),
-                sliceRef = sliceIndexFunction.GetParam(1u),
-                sliceLength = builder.CreateExtractValue(sliceRef, 1u, "sliceLength"),
-                indexLessThanSliceLength = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, index, sliceLength, "indexLTSliceLength"),
-                indexNonNegative = builder.CreateICmp(LLVMIntPredicate.LLVMIntSGE, index, 0.AsLLVMValue(), "indexNonNegative"),
-                indexInBounds = builder.CreateAnd(indexLessThanSliceLength, indexNonNegative, "indexInBounds"),
-                elementPtrOptionPtr = sliceIndexFunction.GetParam(2u);
-            builder.CreateCondBr(indexInBounds, validIndexBlock, invalidIndexBlock);
-
-            builder.PositionBuilderAtEnd(validIndexBlock);
-            LLVMValueRef sliceBufferPtr = builder.CreateExtractValue(sliceRef, 0u, "sliceBufferPtr"),
-                elementPtr = builder.CreateGEP(sliceBufferPtr, new LLVMValueRef[] { index }, "elementPtr"),
-                someElementPtr = builder.BuildOptionValue(elementPtrOptionType, elementPtr);
-            builder.CreateStore(someElementPtr, elementPtrOptionPtr);
-            builder.CreateRetVoid();
-
-            builder.PositionBuilderAtEnd(invalidIndexBlock);
-            LLVMValueRef noneElementPtr = builder.BuildOptionValue(elementPtrOptionType, null);
-            builder.CreateStore(noneElementPtr, elementPtrOptionPtr);
-            builder.CreateRetVoid();
-
-            return sliceIndexFunction;
         }
 
         private static string MonomorphizeFunctionName(string functionName, IEnumerable<NIType> typeArguments)
@@ -460,6 +345,11 @@ namespace Rebar.RebarTarget.LLVM
                 nameBuilder.Append(StringifyType(typeArgument));
             }
             return nameBuilder.ToString();
+        }
+
+        private static string MonomorphizeFunctionName(NIType signatureType)
+        {
+            return MonomorphizeFunctionName(signatureType.GetName(), signatureType.GetGenericParameters());
         }
 
         private static string StringifyType(NIType type)
@@ -607,8 +497,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef function;
             if (!_importedFunctions.TryGetValue(targetFunctionName, out function))
             {
-                LLVMTypeRef[] parameterTypes = methodCallNode.Signature.GetParameters().Select(TranslateParameterType).ToArray();
-                LLVMTypeRef targetFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
+                LLVMTypeRef targetFunctionType = TranslateFunctionType(methodCallNode.Signature);
                 function = Module.AddFunction(targetFunctionName, targetFunctionType);
                 _importedFunctions[targetFunctionName] = function;
             }
@@ -624,6 +513,34 @@ namespace Rebar.RebarTarget.LLVM
                 _importedFunctions[specializedFunctionName] = function;
             }
             return function;
+        }
+
+        private LLVMValueRef GetSpecializedFunctionWithSignature(FunctionalNode functionalNode, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
+        {
+            return GetSpecializedFunctionWithSignature(functionalNode.FunctionType.FunctionNIType, createFunction);
+        }
+
+        private LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
+        {
+            string specializedFunctionName = MonomorphizeFunctionName(specializedSignature);
+            LLVMValueRef function;
+            if (!_importedFunctions.TryGetValue(specializedFunctionName, out function))
+            {
+                function = Module.AddFunction(specializedFunctionName, TranslateFunctionType(specializedSignature));
+                createFunction(this, specializedSignature, function);
+                _importedFunctions[specializedFunctionName] = function;
+            }
+            return function;
+        }
+
+        private static Action<FunctionCompiler, FunctionalNode> CreateSpecializedFunctionCallCompiler(Action<FunctionCompiler, NIType, LLVMValueRef> functionCreator)
+        {
+            return (compiler, functionalNode) =>
+            {
+                compiler.CreateCallForFunctionalNode(
+                    compiler.GetSpecializedFunctionWithSignature(functionalNode, functionCreator),
+                    functionalNode);
+            };
         }
 
         private void CreateCallForFunctionalNode(LLVMValueRef function, FunctionalNode functionalNode)
@@ -862,6 +779,10 @@ namespace Rebar.RebarTarget.LLVM
         private bool TryGetDropFunction(NIType droppedValueType, out LLVMValueRef dropFunction)
         {
             dropFunction = default(LLVMValueRef);
+            var functionBuilder = Signatures.DropType.DefineFunctionFromExisting();
+            functionBuilder.ReplaceGenericParameters(droppedValueType, NIType.Unset);
+            NIType signature = functionBuilder.CreateType();
+
             NIType innerType;
             if (droppedValueType == PFTypes.String)
             {
@@ -878,28 +799,19 @@ namespace Rebar.RebarTarget.LLVM
                 dropFunction = GetImportedCommonFunction(CommonModules.FakeDropDropName);
                 return true;
             }
-            if (droppedValueType.TryDestructureVectorType(out innerType))
+            if (droppedValueType.IsVectorType())
             {
-                string specializedFunctionName = MonomorphizeFunctionName("vector_drop", innerType.ToEnumerable());
-                dropFunction = GetSpecializedFunction(
-                    specializedFunctionName,
-                    () => CreateVectorDropFunction(this, specializedFunctionName, innerType));
+                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildVectorDropFunction);
                 return true;
             }
             if (droppedValueType.TryDestructureOptionType(out innerType) && TryGetDropFunction(innerType, out dropFunction))
             {
-                string specializedFunctionName = MonomorphizeFunctionName("option_drop", innerType.ToEnumerable());
-                dropFunction = GetSpecializedFunction(
-                    specializedFunctionName,
-                    () => CreateOptionDropFunction(Module, this, specializedFunctionName, innerType));
+                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildOptionDropFunction);
                 return true;
             }
-            if (droppedValueType.TryDestructureSharedType(out innerType))
+            if (droppedValueType.IsSharedType())
             {
-                string specializedName = MonomorphizeFunctionName("shared_drop", innerType.ToEnumerable());
-                dropFunction = GetSpecializedFunction(
-                    specializedName,
-                    () => CreateSharedDropFunction(this, Module, specializedName, innerType));
+                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildSharedDropFunction);
                 return true;
             }
 
@@ -952,23 +864,29 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        private LLVMTypeRef TranslateFunctionType(NIType functionType)
+        {
+            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
+            return LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
+        }
+
         private LLVMTypeRef TranslateParameterType(NIType parameterType)
         {
             // TODO: this should probably share code with how we compute the top function LLVM type above
             bool isInput = parameterType.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
                 isOutput = parameterType.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
-            if (isInput)
+            LLVMTypeRef parameterLLVMType = parameterType.GetDataType().AsLLVMType();
+            if (isInput)   // includes inout parameters
             {
-                if (isOutput)
+                if (isOutput && !parameterType.GetDataType().IsRebarReferenceType())
                 {
-                    // Don't handle inouts yet
-                    throw new NotImplementedException();
+                    throw new InvalidOperationException("Inout parameter with non-reference type");
                 }
-                return parameterType.GetDataType().AsLLVMType();
+                return parameterLLVMType;
             }
             if (isOutput)
             {
-                return LLVMTypeRef.PointerType(parameterType.GetDataType().AsLLVMType(), 0u);
+                return LLVMTypeRef.PointerType(parameterLLVMType, 0u);
             }
             throw new NotImplementedException("Parameter direction is wrong");
         }

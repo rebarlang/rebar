@@ -23,10 +23,13 @@ namespace Rebar.Compiler.Nodes
             : base(parentNode, nodeToCopy, nodeCopyInfo)
         {
             Signature = nodeToCopy.Signature;
+            FunctionType = nodeToCopy.FunctionType;
             RequiredFeatureToggles = nodeToCopy.RequiredFeatureToggles;
         }
 
         public NIType Signature { get; }
+
+        internal FunctionType FunctionType { get; set; }
 
         public IEnumerable<string> RequiredFeatureToggles { get; }
 

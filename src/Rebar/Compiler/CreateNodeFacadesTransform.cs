@@ -367,6 +367,7 @@ namespace Rebar.Compiler
             var lifetimeFacadeGroups = new Dictionary<NIType, ReferenceInputTerminalLifetimeGroup>();
             var lifetimeVariableGroups = new Dictionary<NIType, LifetimeTypeVariableGroup>();
 
+            TypeVariableReference[] signatureTypeParameters;
             if (nodeFunctionSignature.IsOpenGeneric())
             {
                 Func<NIType, TypeVariableReference> createLifetimeTypeReference = type =>
@@ -376,6 +377,17 @@ namespace Rebar.Compiler
                     return group.LifetimeType;
                 };
                 genericTypeParameters = _typeVariableSet.CreateTypeVariablesForGenericParameters(nodeFunctionSignature, createLifetimeTypeReference);
+
+                signatureTypeParameters = nodeFunctionSignature.GetGenericParameters().Select(p => genericTypeParameters[p]).ToArray();
+            }
+            else
+            {
+                signatureTypeParameters = new TypeVariableReference[0];
+            }
+            var functionalNode = node as FunctionalNode;
+            if (functionalNode != null)
+            {
+                functionalNode.FunctionType = new FunctionType(nodeFunctionSignature, signatureTypeParameters);
             }
 
             foreach (NIType parameter in nodeFunctionSignature.GetParameters())

@@ -1,4 +1,5 @@
-﻿using LLVMSharp;
+﻿using System.Linq;
+using LLVMSharp;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
@@ -8,30 +9,10 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void CompileSharedCreate(FunctionCompiler compiler, FunctionalNode sharedCreateNode)
+        private static void BuildSharedCreateFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedCreateFunction)
         {
-            var valueSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(sharedCreateNode.InputTerminals[0]);
-            NIType elementType = valueSource.AllocationNIType;
-            string specializedName = MonomorphizeFunctionName("shared_create", elementType.ToEnumerable());
-            LLVMValueRef sharedCreateFunction = compiler.GetSpecializedFunction(
-                specializedName,
-                () => CreateSharedCreateFunction(compiler.Module, specializedName, elementType.AsLLVMType()));
-            compiler.CreateCallForFunctionalNode(sharedCreateFunction, sharedCreateNode);
-        }
+            LLVMTypeRef valueType = signature.GetGenericParameters().First().AsLLVMType();
 
-        private static LLVMValueRef CreateSharedCreateFunction(Module module, string functionName, LLVMTypeRef valueType)
-        {
-            LLVMTypeRef sharedType = valueType.CreateLLVMSharedType();
-            LLVMTypeRef sharedCreateFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    valueType,
-                    LLVMTypeRef.PointerType(sharedType, 0u)
-                },
-                false);
-
-            LLVMValueRef sharedCreateFunction = module.AddFunction(functionName, sharedCreateFunctionType);
             LLVMBasicBlockRef entryBlock = sharedCreateFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
 
@@ -46,34 +27,10 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef sharedPtr = sharedCreateFunction.GetParam(1u);
             builder.CreateStore(refCountAllocationPtr, sharedPtr);
             builder.CreateRetVoid();
-
-            return sharedCreateFunction;
         }
 
-        private static void CompileSharedGetValue(FunctionCompiler compiler, FunctionalNode sharedGetValueNode)
+        private static void BuildSharedGetValueFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
         {
-            var valueSource = (LocalAllocationValueSource)compiler.GetTerminalValueSource(sharedGetValueNode.OutputTerminals[0]);
-            NIType elementType = valueSource.AllocationNIType.GetReferentType();
-            string specializedName = MonomorphizeFunctionName("shared_getvalue", elementType.ToEnumerable());
-            LLVMValueRef sharedGetValueFunction = compiler.GetSpecializedFunction(
-                specializedName,
-                () => CreateSharedGetValueFunction(compiler.Module, specializedName, elementType.AsLLVMType()));
-            compiler.CreateCallForFunctionalNode(sharedGetValueFunction, sharedGetValueNode);
-        }
-
-        private static LLVMValueRef CreateSharedGetValueFunction(Module module, string functionName, LLVMTypeRef valueType)
-        {
-            LLVMTypeRef sharedType = valueType.CreateLLVMSharedType();
-            LLVMTypeRef sharedGetValueFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(sharedType, 0u),
-                    LLVMTypeRef.PointerType(LLVMTypeRef.PointerType(valueType, 0u), 0u)
-                },
-                false);
-
-            LLVMValueRef sharedGetValueFunction = module.AddFunction(functionName, sharedGetValueFunctionType);
             LLVMBasicBlockRef entryBlock = sharedGetValueFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
 
@@ -83,22 +40,10 @@ namespace Rebar.RebarTarget.LLVM
                 valuePtrPtr = sharedGetValueFunction.GetParam(1u);
             builder.CreateStore(valuePtr, valuePtrPtr);
             builder.CreateRetVoid();
-            return sharedGetValueFunction;
         }
 
-        private static LLVMValueRef CreateSharedCloneFunction(Module module, string functionName, LLVMTypeRef valueType)
+        private static void BuildSharedCloneFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedCloneFunction)
         {
-            LLVMTypeRef sharedType = valueType.CreateLLVMSharedType();
-            LLVMTypeRef sharedCloneFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(sharedType, 0u),
-                    LLVMTypeRef.PointerType(sharedType, 0u),
-                },
-                false);
-
-            LLVMValueRef sharedCloneFunction = module.AddFunction(functionName, sharedCloneFunctionType);
             LLVMBasicBlockRef entryBlock = sharedCloneFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
 
@@ -118,29 +63,20 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef sharedClonePtr = sharedCloneFunction.GetParam(1u);
             builder.CreateStore(shared, sharedClonePtr);
             builder.CreateRetVoid();
-            return sharedCloneFunction;
         }
 
-        private static LLVMValueRef CreateSharedDropFunction(FunctionCompiler compiler, Module module, string functionName, NIType valueType)
+        private static void BuildSharedDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef sharedDropFunction)
         {
-            LLVMTypeRef valueLLVMType = valueType.AsLLVMType();
-            LLVMTypeRef sharedType = valueLLVMType.CreateLLVMSharedType();
-            LLVMTypeRef sharedCloneFunctionType = LLVMTypeRef.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(sharedType, 0u),
-                },
-                false);
+            NIType valueType;
+            signature.GetGenericParameters().First().TryDestructureSharedType(out valueType);
 
-            LLVMValueRef sharedCloneFunction = module.AddFunction(functionName, sharedCloneFunctionType);
-            LLVMBasicBlockRef entryBlock = sharedCloneFunction.AppendBasicBlock("entry"),
-                noRefsRemainingBlock = sharedCloneFunction.AppendBasicBlock("noRefsRemaining"),
-                endBlock = sharedCloneFunction.AppendBasicBlock("end");
+            LLVMBasicBlockRef entryBlock = sharedDropFunction.AppendBasicBlock("entry"),
+                noRefsRemainingBlock = sharedDropFunction.AppendBasicBlock("noRefsRemaining"),
+                endBlock = sharedDropFunction.AppendBasicBlock("end");
             var builder = new IRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef shared = builder.CreateLoad(sharedCloneFunction.GetParam(0u), "shared"),
+            LLVMValueRef shared = builder.CreateLoad(sharedDropFunction.GetParam(0u), "shared"),
                 referenceCountPtr = builder.CreateStructGEP(shared, 0u, "referenceCountPtr"),
                 one = 1.AsLLVMValue(),
                 previousReferenceCount = builder.CreateAtomicRMW(
@@ -162,7 +98,6 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(endBlock);
             builder.CreateRetVoid();
-            return sharedCloneFunction;
         }
     }
 }

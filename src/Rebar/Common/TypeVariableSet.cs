@@ -316,7 +316,7 @@ namespace Rebar.Common
 
             public override NIType RenderNIType()
             {
-                throw new NotImplementedException();
+                return NIType.Unset;
             }
         }
 
@@ -369,7 +369,7 @@ namespace Rebar.Common
 
             public override NIType RenderNIType()
             {
-                throw new NotImplementedException();
+                return NIType.Unset;
             }
         }
 
