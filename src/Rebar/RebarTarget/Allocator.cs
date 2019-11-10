@@ -24,10 +24,14 @@ namespace Rebar.RebarTarget
         where TReference : TValueSource
     {
         private readonly Dictionary<VariableReference, TValueSource> _variableAllocations;
+        private readonly Dictionary<object, TValueSource> _additionalAllocations;
 
-        public Allocator(Dictionary<VariableReference, TValueSource> variableAllocations)
+        public Allocator(
+            Dictionary<VariableReference, TValueSource> variableAllocations,
+            Dictionary<object, TValueSource> additionalAllocations)
         {
             _variableAllocations = variableAllocations;
+            _additionalAllocations = additionalAllocations;
         }
 
         protected TValueSource GetValueSourceForVariable(VariableReference variable)
@@ -36,6 +40,8 @@ namespace Rebar.RebarTarget
         }
 
         protected abstract TAllocation CreateLocalAllocation(VariableReference variable);
+
+        protected abstract TAllocation CreateLocalAllocation(string name, NIType type);
 
         private TAllocation CreateLocalAllocationForVariable(VariableReference variable)
         {
@@ -167,7 +173,11 @@ namespace Rebar.RebarTarget
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            CreateLocalAllocationForVariable(iterateTunnel.OutputTerminals[0].GetTrueVariable());
+            VariableReference outputVariable = iterateTunnel.OutputTerminals[0].GetTrueVariable();
+            CreateLocalAllocationForVariable(outputVariable);
+            _additionalAllocations[iterateTunnel] = CreateLocalAllocation(
+                "iterateTunnel" + iterateTunnel.UniqueId,
+                outputVariable.Type.CreateOption());
             return true;
         }
 

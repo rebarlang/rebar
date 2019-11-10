@@ -414,10 +414,11 @@ namespace Rebar.RebarTarget.LLVM
         private static void CreateRangeModule(Module rangeModule)
         {
             CommonModuleSignatures[RangeIteratorNextName] = LLVMSharp.LLVM.FunctionType(
-                LLVMTypeRef.Int32Type().CreateLLVMOptionType(),
-                new LLVMTypeRef[] 
+                LLVMTypeRef.VoidType(),
+                new LLVMTypeRef[]
                 {
-                    LLVMTypeRef.PointerType(LLVMExtensions.RangeIteratorType, 0)
+                    LLVMTypeRef.PointerType(LLVMExtensions.RangeIteratorType, 0),
+                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type().CreateLLVMOptionType(), 0)
                 },
                 false);
             BuildRangeIteratorNextFunction(rangeModule);
@@ -442,6 +443,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
 
             LLVMValueRef rangeIteratorPtr = rangeIteratorNextFunction.GetParam(0u),
+                optionItemPtr = rangeIteratorNextFunction.GetParam(1u),
                 rangeCurrentPtr = builder.CreateStructGEP(rangeIteratorPtr, 0u, "rangeCurrentPtr"),
                 rangeHighPtr = builder.CreateStructGEP(rangeIteratorPtr, 1u, "rangeHighPtr"),
                 rangeCurrent = builder.CreateLoad(rangeCurrentPtr, "rangeCurrent"),
@@ -451,7 +453,8 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef inRange = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, rangeCurrentInc, rangeHigh, "inRange");
             LLVMTypeRef optionType = LLVMTypeRef.Int32Type().CreateLLVMOptionType();
             LLVMValueRef option = builder.BuildStructValue(optionType, new LLVMValueRef[] { inRange, rangeCurrentInc }, "option");
-            builder.CreateRet(option);
+            builder.CreateStore(option, optionItemPtr);
+            builder.CreateRetVoid();
         }
 
         private static void BuildCreateRangeIteratorFunction(Module rangeModule)

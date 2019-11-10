@@ -8,8 +8,10 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal class Allocator : Allocator<ValueSource, LocalAllocationValueSource, ConstantLocalReferenceValueSource>
     {
-        public Allocator(Dictionary<VariableReference, ValueSource> valueSources)
-            : base(valueSources)
+        public Allocator(
+            Dictionary<VariableReference, ValueSource> valueSources,
+            Dictionary<object, ValueSource> additionalSources)
+            : base(valueSources, additionalSources)
         {
         }
 
@@ -23,6 +25,11 @@ namespace Rebar.RebarTarget.LLVM
         {
             string name = $"v{variable.Id}";
             return new LocalAllocationValueSource(name, variable.Type);
+        }
+
+        protected override LocalAllocationValueSource CreateLocalAllocation(string name, NIType type)
+        {
+            return new LocalAllocationValueSource(name, type);
         }
     }
 

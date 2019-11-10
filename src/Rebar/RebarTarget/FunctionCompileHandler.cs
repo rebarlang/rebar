@@ -121,12 +121,18 @@ namespace Rebar.RebarTarget
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            var allocator = new LLVM.Allocator(valueSources);
+            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
+            var allocator = new LLVM.Allocator(valueSources, additionalSources);
             allocator.Execute(dfirRoot, cancellationToken);
 
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
-            var functionCompiler = new LLVM.FunctionCompiler(module, compiledFunctionName, dfirRoot.DataItems.ToArray(), valueSources);
+            var functionCompiler = new LLVM.FunctionCompiler(
+                module,
+                compiledFunctionName,
+                dfirRoot.DataItems.ToArray(),
+                valueSources,
+                additionalSources);
             functionCompiler.Execute(dfirRoot, cancellationToken);
             return module;
         }

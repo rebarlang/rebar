@@ -427,14 +427,21 @@ namespace Rebar.RebarTarget.LLVM
         private readonly IRBuilder _builder;
         private readonly LLVMValueRef _topLevelFunction;
         private readonly Dictionary<VariableReference, ValueSource> _variableValues;
+        private readonly Dictionary<object, ValueSource> _additionalValues;
         private readonly CommonExternalFunctions _commonExternalFunctions;
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
         private readonly Dictionary<DataItem, uint> _dataItemParameterIndices = new Dictionary<DataItem, uint>();
 
-        public FunctionCompiler(Module module, string functionName, DataItem[] parameterDataItems, Dictionary<VariableReference, ValueSource> variableValues)
+        public FunctionCompiler(
+            Module module,
+            string functionName,
+            DataItem[] parameterDataItems,
+            Dictionary<VariableReference, ValueSource> variableValues,
+            Dictionary<object, ValueSource> additionalValues)
         {
             Module = module;
             _variableValues = variableValues;
+            _additionalValues = additionalValues;
 
             var parameterLLVMTypes = new List<LLVMTypeRef>();
             foreach (var dataItem in parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
@@ -471,7 +478,9 @@ namespace Rebar.RebarTarget.LLVM
 
         private void InitializeLocalAllocations()
         {
-            foreach (var localAllocation in _variableValues.Values.OfType<LocalAllocationValueSource>())
+            IEnumerable<LocalAllocationValueSource> localAllocations =
+                _variableValues.Values.Concat(_additionalValues.Values).OfType<LocalAllocationValueSource>();
+            foreach (var localAllocation in localAllocations)
             {
                 LLVMTypeRef allocationType = localAllocation.AllocationNIType.AsLLVMType();
                 LLVMValueRef allocationPointer = _builder.CreateAlloca(allocationType, localAllocation.AllocationName);
@@ -1170,17 +1179,20 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]),
                 itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
+            var intermediateOptionSource = (LocalAllocationValueSource)_additionalValues[iterateTunnel];
 
-            // call the Iterator::next function on the iterator reference
-            // TODO: create an alloca'd Option<Item> variable, so that we can pass its address to Iterator::next
-            LLVMValueRef itemOption = _builder.CreateCall(
-                GetImportedCommonFunction(CommonModules.RangeIteratorNextName), // TODO: determine the name of this function from the input type
+            // TODO: determine the name of this function from the input type
+            LLVMValueRef iteratorNextFunction = GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            _builder.CreateCall(
+                iteratorNextFunction, 
                 new LLVMValueRef[]
                 {
-                    iteratorSource.GetValue(_builder)
+                    iteratorSource.GetValue(_builder),
+                    intermediateOptionSource.AllocationPointer
                 },
-                "itemOption");
-            LLVMValueRef isSome = _builder.CreateExtractValue(itemOption, 0u, "isSome"),
+                string.Empty);
+            LLVMValueRef itemOption = intermediateOptionSource.GetValue(_builder),
+                isSome = _builder.CreateExtractValue(itemOption, 0u, "isSome"),
                 item = _builder.CreateExtractValue(itemOption, 1u, "item");
 
             // &&= the loop condition with the isSome value
