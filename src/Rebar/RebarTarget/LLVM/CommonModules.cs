@@ -34,6 +34,8 @@ namespace Rebar.RebarTarget.LLVM
         public const string StringToSliceName = "string_to_slice";
         public const string StringAppendName = "string_append";
         public const string StringConcatName = "string_concat";
+        public const string StringSliceToStringSplitIteratorName = "string_slice_to_string_split_iterator";
+        public const string StringSplitIteratorNextName = "string_split_iterator_next";
 
         public const string RangeIteratorNextName = "range_iterator_next";
         public const string CreateRangeIteratorName = "create_range_iterator";
@@ -184,6 +186,22 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) },
                 false);
             BuildStringConcatFunction(stringModule, externalFunctions);
+
+            CommonModuleSignatures[StringSliceToStringSplitIteratorName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMExtensions.StringSplitIteratorType, 0) },
+                false);
+            BuildStringSliceToStringSplitIteratorFunction(stringModule);
+
+            CommonModuleSignatures[StringSplitIteratorNextName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] 
+                {
+                    LLVMTypeRef.PointerType(LLVMExtensions.StringSplitIteratorType, 0),
+                    LLVMTypeRef.PointerType(LLVMExtensions.StringSliceReferenceType.CreateLLVMOptionType(), 0)
+                },
+                false);
+            BuildStringSplitIteratorNextFunction(stringModule);
 
             // depends on StringToSliceRet and StringFromSlice
             BuildStringCloneFunction(stringModule);
@@ -404,6 +422,109 @@ namespace Rebar.RebarTarget.LLVM
                 allocationPtr = builder.CreateArrayMalloc(LLVMTypeRef.Int8Type(), 4.AsLLVMValue(), "allocationPtr");
             builder.CreateStore(allocationPtr, stringAllocationPtrPtr);
             builder.CreateStore(0.AsLLVMValue(), stringLengthPtr);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildStringSliceToStringSplitIteratorFunction(Module stringModule)
+        {
+            var stringSliceToStringSplitIteratorFunction = stringModule.AddFunction(StringSliceToStringSplitIteratorName, CommonModuleSignatures[StringSliceToStringSplitIteratorName]);
+            LLVMBasicBlockRef entryBlock = stringSliceToStringSplitIteratorFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+            builder.PositionBuilderAtEnd(entryBlock);
+
+            LLVMValueRef stringSliceRef = stringSliceToStringSplitIteratorFunction.GetParam(0u),
+                stringSplitIteratorPtr = stringSliceToStringSplitIteratorFunction.GetParam(1u),
+                initialStringPtr = builder.CreateExtractValue(stringSliceRef, 0u, "initialStringPtr"),
+                stringSplitIterator = builder.BuildStructValue(
+                    LLVMExtensions.StringSplitIteratorType,
+                    new LLVMValueRef[] { stringSliceRef, initialStringPtr },
+                    "stringSplitIterator");
+            builder.CreateStore(stringSplitIterator, stringSplitIteratorPtr);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildStringSplitIteratorNextFunction(Module stringModule)
+        {
+            var stringSplitIteratorNextFunction = stringModule.AddFunction(StringSplitIteratorNextName, CommonModuleSignatures[StringSplitIteratorNextName]);
+            LLVMBasicBlockRef entryBlock = stringSplitIteratorNextFunction.AppendBasicBlock("entry"),
+                findSplitBeginLoopBeginBlock = stringSplitIteratorNextFunction.AppendBasicBlock("findSplitBeginLoopBegin"),
+                checkSplitBeginForSpaceBlock = stringSplitIteratorNextFunction.AppendBasicBlock("checkSplitBeginForSpace"),
+                advanceSplitBeginBlock = stringSplitIteratorNextFunction.AppendBasicBlock("advanceSplitBegin"),
+                findSplitEndLoopBeginBlock = stringSplitIteratorNextFunction.AppendBasicBlock("findSplitEndLoopBeginBlock"),
+                checkSplitEndForSpaceBlock = stringSplitIteratorNextFunction.AppendBasicBlock("checkSplitEndForSpace"),
+                advanceSplitEndBlock = stringSplitIteratorNextFunction.AppendBasicBlock("advanceSplitEnd"),
+                returnSomeBlock = stringSplitIteratorNextFunction.AppendBasicBlock("returnSome"),
+                returnNoneBlock = stringSplitIteratorNextFunction.AppendBasicBlock("returnNone"),
+                endBlock = stringSplitIteratorNextFunction.AppendBasicBlock("end");
+            var builder = new IRBuilder();
+
+            LLVMTypeRef stringRefOptionType = LLVMExtensions.StringSliceReferenceType.CreateLLVMOptionType();
+            LLVMValueRef spaceCharValue = ((byte)' ').AsLLVMValue();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef stringSplitIteratorPtr = stringSplitIteratorNextFunction.GetParam(0u),
+                stringSplitIterator = builder.CreateLoad(stringSplitIteratorPtr, "stringSplitIterator"),
+                stringSliceRef = builder.CreateExtractValue(stringSplitIterator, 0u, "stringSliceRef"),
+                stringSliceBeginPtr = builder.CreateExtractValue(stringSliceRef, 0u, "stringSliceBeginPtr"),
+                stringSliceLength = builder.CreateExtractValue(stringSliceRef, 1u, "stringSliceLength"),
+                stringLimitPtr = builder.CreateGEP(stringSliceBeginPtr, new LLVMValueRef[] { stringSliceLength }, "stringLimitPtr"),
+                initialPtr = builder.CreateExtractValue(stringSplitIterator, 1u, "initialPtr");
+            builder.CreateBr(findSplitBeginLoopBeginBlock);
+
+            builder.PositionBuilderAtEnd(findSplitBeginLoopBeginBlock);
+            LLVMValueRef splitBeginPtr = builder.CreatePhi(LLVMExtensions.BytePointerType, "splitBeginPtr");
+            LLVMValueRef splitBeginPtrDiff = builder.CreatePtrDiff(splitBeginPtr, stringLimitPtr, "splitBeginPtrDiff"),
+                isSplitBeginPtrPastEnd = builder.CreateICmp(LLVMIntPredicate.LLVMIntSGE, splitBeginPtrDiff, 0L.AsLLVMValue(), "isSplitBeginPtrPastEnd");
+            builder.CreateCondBr(isSplitBeginPtrPastEnd, returnNoneBlock, checkSplitBeginForSpaceBlock);
+
+            builder.PositionBuilderAtEnd(checkSplitBeginForSpaceBlock);
+            LLVMValueRef splitBeginChar = builder.CreateLoad(splitBeginPtr, "splitBeginChar"),
+                isSplitBeginSpace = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, splitBeginChar, spaceCharValue, "isSplitBeginSpace");
+            builder.CreateCondBr(isSplitBeginSpace, advanceSplitBeginBlock, findSplitEndLoopBeginBlock);
+
+            builder.PositionBuilderAtEnd(advanceSplitBeginBlock);
+            LLVMValueRef splitBeginIncrementPtr = builder.CreateGEP(splitBeginPtr, new LLVMValueRef[] { 1.AsLLVMValue() }, "splitBeginIncrementPtr");
+            splitBeginPtr.AddIncoming(initialPtr, entryBlock);
+            splitBeginPtr.AddIncoming(splitBeginIncrementPtr, advanceSplitBeginBlock);
+            builder.CreateBr(findSplitBeginLoopBeginBlock);
+
+            builder.PositionBuilderAtEnd(findSplitEndLoopBeginBlock);
+            LLVMValueRef splitLength = builder.CreatePhi(LLVMTypeRef.Int32Type(), "splitLength");
+            LLVMValueRef splitEndPtr = builder.CreateGEP(splitBeginPtr, new LLVMValueRef[] { splitLength }, "splitEndPtr"),
+                splitEndPtrDiff = builder.CreatePtrDiff(splitEndPtr, stringLimitPtr, "splitEndPtrDiff"),
+                isSplitEndPtrPastEnd = builder.CreateICmp(LLVMIntPredicate.LLVMIntSGE, splitEndPtrDiff, 0L.AsLLVMValue(), "isSplitEndPtrPastEnd");
+            builder.CreateCondBr(isSplitEndPtrPastEnd, returnSomeBlock, checkSplitEndForSpaceBlock);
+
+            builder.PositionBuilderAtEnd(checkSplitEndForSpaceBlock);
+            LLVMValueRef splitEndChar = builder.CreateLoad(splitEndPtr, "splitEndChar"),
+                isSplitEndSpace = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, splitEndChar, spaceCharValue, "isSplitEndSpace");
+            builder.CreateCondBr(isSplitEndSpace, returnSomeBlock, advanceSplitEndBlock);
+
+            builder.PositionBuilderAtEnd(advanceSplitEndBlock);
+            LLVMValueRef splitLengthIncrement = builder.CreateAdd(splitLength, 1.AsLLVMValue(), "splitLengthIncrement");
+            splitLength.AddIncoming(1.AsLLVMValue(), checkSplitBeginForSpaceBlock);
+            splitLength.AddIncoming(splitLengthIncrement, advanceSplitEndBlock);
+            builder.CreateBr(findSplitEndLoopBeginBlock);
+
+            builder.PositionBuilderAtEnd(returnSomeBlock);
+            LLVMValueRef someSplitSliceRef = builder.BuildOptionValue(stringRefOptionType, builder.BuildStringSliceReferenceValue(splitBeginPtr, splitLength));
+            builder.CreateBr(endBlock);
+
+            builder.PositionBuilderAtEnd(returnNoneBlock);
+            LLVMValueRef noneSplitSliceRef = builder.BuildOptionValue(stringRefOptionType, null);
+            builder.CreateBr(endBlock);
+
+            builder.PositionBuilderAtEnd(endBlock);
+            LLVMValueRef option = builder.CreatePhi(stringRefOptionType, "option");
+            option.AddIncoming(someSplitSliceRef, returnSomeBlock);
+            option.AddIncoming(noneSplitSliceRef, returnNoneBlock);
+            LLVMValueRef finalPtr = builder.CreatePhi(LLVMExtensions.BytePointerType, "finalPtr");
+            finalPtr.AddIncoming(splitEndPtr, returnSomeBlock);
+            finalPtr.AddIncoming(splitBeginPtr, returnNoneBlock);
+            LLVMValueRef optionPtr = stringSplitIteratorNextFunction.GetParam(1u);
+            builder.CreateStore(option, optionPtr);
+            LLVMValueRef stringSplitIteratorCurrentPtr = builder.CreateStructGEP(stringSplitIteratorPtr, 1u, "stringSplitIteratorCurrentPtr");
+            builder.CreateStore(finalPtr, stringSplitIteratorCurrentPtr);
             builder.CreateRetVoid();
         }
 

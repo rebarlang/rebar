@@ -68,6 +68,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["StringToSlice"] = CreateImportedCommonFunctionCompiler(CommonModules.StringToSliceName);
             _functionalNodeCompilers["StringAppend"] = CreateImportedCommonFunctionCompiler(CommonModules.StringAppendName);
             _functionalNodeCompilers["StringConcat"] = CreateImportedCommonFunctionCompiler(CommonModules.StringConcatName);
+            _functionalNodeCompilers["StringSliceToStringSplitIterator"] = CreateImportedCommonFunctionCompiler(CommonModules.StringSliceToStringSplitIteratorName);
 
             _functionalNodeCompilers["VectorCreate"] = CreateSpecializedFunctionCallCompiler(BuildVectorCreateFunction);
             _functionalNodeCompilers["VectorInitialize"] = CreateSpecializedFunctionCallCompiler(BuildVectorInitializeFunction);
@@ -1213,6 +1214,10 @@ namespace Rebar.RebarTarget.LLVM
             if (iteratorType == DataTypes.RangeIteratorType)
             {
                 return GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            }
+            if (iteratorType.IsStringSplitIteratorType())
+            {
+                return GetImportedCommonFunction(CommonModules.StringSplitIteratorNextName);
             }
 
             throw new NotSupportedException("Missing Iterator::Next method for type " + iteratorType);

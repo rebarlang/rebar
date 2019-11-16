@@ -781,6 +781,33 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
     }
 
+    public class StringSliceToStringSplitIterator : FunctionalNode
+    {
+        private const string ElementName = "StringSliceToStringSplitIterator";
+
+        protected StringSliceToStringSplitIterator()
+            : base(Signatures.StringSliceToStringSplitIteratorType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringSliceToStringSplitIterator CreateStringSliceToStringSplitIterator(IElementCreateInfo elementCreateInfo)
+        {
+            var stringSliceToStringSplitIterator = new StringSliceToStringSplitIterator();
+            stringSliceToStringSplitIterator.Init(elementCreateInfo);
+            return stringSliceToStringSplitIterator;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
+    }
+
     #endregion
 
     #region Vector

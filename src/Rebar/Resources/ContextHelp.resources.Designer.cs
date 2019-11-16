@@ -2322,6 +2322,42 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string StringSliceToStringSplitIterator_Description {
+            get {
+                return ResourceManager.GetString("StringSliceToStringSplitIterator_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to iterator.
+        /// </summary>
+        internal static string StringSliceToStringSplitIterator_iterator_Name {
+            get {
+                return ResourceManager.GetString("StringSliceToStringSplitIterator_iterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to String Slice To String Split Iterator.
+        /// </summary>
+        internal static string StringSliceToStringSplitIterator_Name {
+            get {
+                return ResourceManager.GetString("StringSliceToStringSplitIterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice reference.
+        /// </summary>
+        internal static string StringSliceToStringSplitIterator_slice_Name {
+            get {
+                return ResourceManager.GetString("StringSliceToStringSplitIterator_slice_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string StringToSlice_Description {
             get {
                 return ResourceManager.GetString("StringToSlice_Description", resourceCulture);

@@ -6,6 +6,7 @@ using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Loop = Rebar.Compiler.Nodes.Loop;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -118,6 +119,25 @@ namespace Tests.Rebar.Unit.Execution
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
             Assert.AreEqual("longStringshort", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void StringSplitIteratorIntoOutput_Execute_CorrectResult()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode stringSliceToStringSplitIterator = new FunctionalNode(function.BlockDiagram, Signatures.StringSliceToStringSplitIteratorType);
+            ConnectConstantToInputTerminal(stringSliceToStringSplitIterator.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "one two three", false);
+            var loop = new Loop(function.BlockDiagram);
+            LoopConditionTunnel loopCondition = CreateLoopConditionTunnel(loop);
+            IterateTunnel iterateTunnel = CreateIterateTunnel(loop);
+            Wire.Create(function.BlockDiagram, stringSliceToStringSplitIterator.OutputTerminals[0], iterateTunnel.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            FunctionalNode output = new FunctionalNode(loop.Diagram, Signatures.OutputType);
+            Wire.Create(loop.Diagram, iterateTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("three", executionInstance.RuntimeServices.LastOutputValue);
         }
     }
 }

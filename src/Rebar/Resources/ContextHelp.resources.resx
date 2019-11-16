@@ -1041,4 +1041,16 @@
   <data name="VectorRemoveLast_vectorRef_out_Name" xml:space="preserve">
     <value>vector reference</value>
   </data>
+  <data name="StringSliceToStringSplitIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringSliceToStringSplitIterator_iterator_Name" xml:space="preserve">
+    <value>iterator</value>
+  </data>
+  <data name="StringSliceToStringSplitIterator_Name" xml:space="preserve">
+    <value>String Slice To String Split Iterator</value>
+  </data>
+  <data name="StringSliceToStringSplitIterator_slice_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
 </root>

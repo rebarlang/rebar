@@ -129,6 +129,14 @@ namespace Rebar.RebarTarget.LLVM
             },
             false);
 
+        public static LLVMTypeRef StringSplitIteratorType { get; } = LLVMTypeRef.StructType(
+            new LLVMTypeRef[]
+            {
+                StringSliceReferenceType,
+                BytePointerType
+            },
+            false);
+
         public static LLVMTypeRef RangeIteratorType { get; } = LLVMTypeRef.StructType(
             new LLVMTypeRef[]
             {
@@ -199,6 +207,10 @@ namespace Rebar.RebarTarget.LLVM
                     if (niType.TryDestructureOptionType(out innerType))
                     {
                         return CreateLLVMOptionType(innerType.AsLLVMType());
+                    }
+                    if (niType.IsStringSplitIteratorType())
+                    {
+                        return StringSplitIteratorType;
                     }
                     if (niType.TryDestructureVectorType(out innerType))
                     {
@@ -341,6 +353,11 @@ namespace Rebar.RebarTarget.LLVM
                 "instance",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             return (LLVMBuilderRef)field.GetValue(builder);
+        }
+
+        internal static void AddIncoming(this LLVMValueRef phiValue, LLVMValueRef incomingValue, LLVMBasicBlockRef incomingBlock)
+        {
+            phiValue.AddIncoming(new LLVMValueRef[] { incomingValue }, new LLVMBasicBlockRef[] { incomingBlock }, 1u);
         }
     }
 }

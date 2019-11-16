@@ -69,9 +69,8 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateStore(vector, vectorPtr);
             builder.CreateRetVoid();
 
-            LLVMValueRef[] indexIncomingValues = new LLVMValueRef[2] { 0.AsLLVMValue(), incrementIndex };
-            LLVMBasicBlockRef[] indexIncomingBlocks = new LLVMBasicBlockRef[] { entryBlock, loopBodyBlock };
-            index.AddIncoming(indexIncomingValues, indexIncomingBlocks, 2u);
+            index.AddIncoming(0.AsLLVMValue(), entryBlock);
+            index.AddIncoming(incrementIndex, loopBodyBlock);
         }
 
         private static void BuildVectorCloneFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorCloneFunction)
@@ -111,9 +110,8 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef incrementIndex = builder.CreateAdd(index, 1.AsLLVMValue(), "incrementIndex");
                 builder.CreateBr(loopStartBlock);
 
-                LLVMValueRef[] indexIncomingValues = new LLVMValueRef[2] { 0.AsLLVMValue(), incrementIndex };
-                LLVMBasicBlockRef[] indexIncomingBlocks = new LLVMBasicBlockRef[] { entryBlock, loopBodyBlock };
-                index.AddIncoming(indexIncomingValues, indexIncomingBlocks, 2u);
+                index.AddIncoming(0.AsLLVMValue(), entryBlock);
+                index.AddIncoming(incrementIndex, loopBodyBlock);
 
                 builder.PositionBuilderAtEnd(loopEndBlock);
             }
@@ -166,9 +164,8 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef incrementIndex = builder.CreateAdd(index, 1.AsLLVMValue(), "incrementIndex");
                 builder.CreateBr(loopStartBlock);
 
-                LLVMValueRef[] indexIncomingValues = new LLVMValueRef[2] { 0.AsLLVMValue(), incrementIndex };
-                LLVMBasicBlockRef[] indexIncomingBlocks = new LLVMBasicBlockRef[] { entryBlock, loopBodyBlock };
-                index.AddIncoming(indexIncomingValues, indexIncomingBlocks, 2u);
+                index.AddIncoming(0.AsLLVMValue(), entryBlock);
+                index.AddIncoming(incrementIndex, loopBodyBlock);
 
                 builder.PositionBuilderAtEnd(loopEndBlock);
             }
@@ -307,9 +304,8 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(endBlock);
             LLVMValueRef optionElement = builder.CreatePhi(elementOptionLLVMType, "optionElement");
-            LLVMValueRef[] incomingValues = new[] { someElement, noneElement };
-            LLVMBasicBlockRef[] incomingBlocks = new[] { hasElementsBlock, noElementsBlock };
-            optionElement.AddIncoming(incomingValues, incomingBlocks, 2u);
+            optionElement.AddIncoming(someElement, hasElementsBlock);
+            optionElement.AddIncoming(noneElement, noElementsBlock);
             builder.CreateStore(optionElement, optionElementPtr);
             builder.CreateRetVoid();
         }

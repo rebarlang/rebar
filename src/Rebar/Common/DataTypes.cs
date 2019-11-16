@@ -36,6 +36,8 @@ namespace Rebar.Common
 
         public static NIType StringSliceType { get; }
 
+        private static NIType StringSplitIteratorGenericType { get; }
+
         public static NIType FileHandleType { get; }
 
         public static NIType FakeDropType { get; }
@@ -102,6 +104,14 @@ namespace Rebar.Common
             stringSliceTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             StringSliceType = stringSliceTypeBuilder.CreateType();
 
+            var stringSplitIteratorTypeBuilder = PFTypes.Factory.DefineValueClass("StringSplitIterator");
+            NIType sliceReferenceLifetimeParameter = AddGenericLifetimeTypeParameter(stringSplitIteratorTypeBuilder, "TLife");
+            iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(
+                StringSliceType.CreateImmutableReference(sliceReferenceLifetimeParameter));
+            stringSplitIteratorTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
+            stringSplitIteratorTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            StringSplitIteratorGenericType = stringSplitIteratorTypeBuilder.CreateType();
+
             var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
             vectorGenericTypeBuilder.MakeGenericParameters("T");
             vectorGenericTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
@@ -132,7 +142,36 @@ namespace Rebar.Common
 
         private static bool IsGenericTypeSpecialization(this NIType type, NIType genericTypeDefinition)
         {
-            return type.IsGenericType() && type.GetGenericTypeDefinition() == genericTypeDefinition;
+            NIType typeGenericTypeDefinition;
+            return TryGetGenericTypeDefinition(type, out typeGenericTypeDefinition)
+                && typeGenericTypeDefinition == genericTypeDefinition;
+        }
+
+        private static bool TryGetGenericTypeDefinition(this NIType type, out NIType genericTypeDefinition)
+        {
+            genericTypeDefinition = NIType.Unset;
+            try
+            {
+                genericTypeDefinition = type.GetGenericTypeDefinition();
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        public static void SetLifetimeTypeAttribute(NIAttributedBaseBuilder builder)
+        {
+            builder.AddAttribute("Lifetime", true, true);
+        }
+
+        private static NIType AddGenericLifetimeTypeParameter(NIClassBuilder classBuilder, string name)
+        {
+            var genericTypeParameters = classBuilder.MakeGenericParameters(name);
+            var parameterBuilder = genericTypeParameters.ElementAt(0);
+            SetLifetimeTypeAttribute((NIAttributedBaseBuilder)parameterBuilder);
+            return parameterBuilder.CreateType();
         }
 
         public static NIType CreateMutableReference(this NIType dereferenceType, NIType lifetimeType = default(NIType))
@@ -357,6 +396,16 @@ namespace Rebar.Common
             }
             valueType = type.GetGenericParameters().ElementAt(0);
             return true;
+        }
+
+        public static NIType CreateStringSplitIterator(this NIType lifetimeType)
+        {
+            return SpecializeGenericType(StringSplitIteratorGenericType, lifetimeType);
+        }
+
+        public static bool IsStringSplitIteratorType(this NIType type)
+        {
+            return IsGenericTypeSpecialization(type, StringSplitIteratorGenericType);
         }
 
         public static NIType CreateVector(this NIType itemType)
