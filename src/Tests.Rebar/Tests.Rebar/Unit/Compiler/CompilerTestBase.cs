@@ -8,6 +8,7 @@ using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
+using Loop = Rebar.Compiler.Nodes.Loop;
 
 namespace Tests.Rebar.Unit.Compiler
 {
@@ -114,13 +115,22 @@ namespace Tests.Rebar.Unit.Compiler
             return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
         }
 
-        internal LoopConditionTunnel CreateLoopConditionTunnel(global::Rebar.Compiler.Nodes.Loop loop)
+        internal LoopConditionTunnel CreateLoopConditionTunnel(Loop loop)
         {
             var loopConditionTunnel = new LoopConditionTunnel(loop);
             var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
             loopConditionTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
             terminateLifetimeDfir.BeginLifetimeTunnel = loopConditionTunnel;
             return loopConditionTunnel;
+        }
+
+        internal IterateTunnel CreateIterateTunnel(Loop loop)
+        {
+            var iterateTunnel = new IterateTunnel(loop);
+            var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
+            iterateTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
+            terminateLifetimeDfir.BeginLifetimeTunnel = iterateTunnel;
+            return iterateTunnel;
         }
 
         internal OptionPatternStructure CreateOptionPatternStructure(Diagram parentDiagram)

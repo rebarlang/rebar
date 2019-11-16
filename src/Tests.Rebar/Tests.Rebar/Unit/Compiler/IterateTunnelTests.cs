@@ -74,15 +74,6 @@ namespace Tests.Rebar.Unit.Compiler
             AssertTerminalHasMissingTraitMessage(iterateTunnel.InputTerminals[0]);
         }
 
-        private static IterateTunnel CreateIterateTunnel(Loop loop)
-        {
-            var iterateTunnel = new IterateTunnel(loop);
-            var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
-            iterateTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
-            terminateLifetimeDfir.BeginLifetimeTunnel = iterateTunnel;
-            return iterateTunnel;
-        }
-
         private FunctionalNode ConnectRangeWithIntegerInputsToInputTerminal(Terminal inputTerminal, bool mutable = true)
         {
             FunctionalNode range = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.RangeType);

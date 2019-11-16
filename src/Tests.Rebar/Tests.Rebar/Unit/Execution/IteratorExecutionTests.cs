@@ -25,24 +25,15 @@ namespace Tests.Rebar.Unit.Execution
             Constant highConstant = ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, 10, false);
             BorrowTunnel borrow = CreateBorrowTunnel(loop, BorrowMode.Mutable);
             Constant accumulateConstant = ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, 0, true);
-            FunctionalNode accumulateAdd = new FunctionalNode(loop.Diagrams[0], Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32));
-            Wire.Create(loop.Diagrams[0], borrow.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
-            Wire.Create(loop.Diagrams[0], iterateTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
+            FunctionalNode accumulateAdd = new FunctionalNode(loop.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32));
+            Wire.Create(loop.Diagram, borrow.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
+            Wire.Create(loop.Diagram, iterateTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(borrow.TerminateLifetimeTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
             byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(inspectValue, 45);
-        }
-
-        private IterateTunnel CreateIterateTunnel(Loop loop)
-        {
-            var iterateTunnel = new IterateTunnel(loop);
-            var terminateLifetimeDfir = new TerminateLifetimeTunnel(loop);
-            iterateTunnel.TerminateLifetimeTunnel = terminateLifetimeDfir;
-            terminateLifetimeDfir.BeginLifetimeTunnel = iterateTunnel;
-            return iterateTunnel;
         }
     }
 }

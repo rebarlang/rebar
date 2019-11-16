@@ -119,7 +119,7 @@ namespace Rebar.Compiler
             var firstDiagram = loop.NestedDiagrams.First();
             var loopDfir = new Nodes.Loop(_currentDiagram);
             _map.AddMapping(loop, loopDfir);
-            _map.AddMapping(firstDiagram, loopDfir.Diagrams[0]);
+            _map.AddMapping(firstDiagram, loopDfir.Diagram);
 
             foreach (BorderNode borderNode in loop.BorderNodes)
             {

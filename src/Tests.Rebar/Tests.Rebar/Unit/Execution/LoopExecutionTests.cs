@@ -34,8 +34,8 @@ namespace Tests.Rebar.Unit.Execution
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel conditionTunnel = CreateLoopConditionTunnel(loop);
             Constant trueConstant = ConnectConstantToInputTerminal(conditionTunnel.InputTerminals[0], PFTypes.Boolean, true, false);
-            FunctionalNode assign = new FunctionalNode(loop.Diagrams[0], Signatures.AssignType);
-            Wire.Create(loop.Diagrams[0], conditionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
+            FunctionalNode assign = new FunctionalNode(loop.Diagram, Signatures.AssignType);
+            Wire.Create(loop.Diagram, conditionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
             Constant falseConstant = ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Boolean, false, false);
             Tunnel outputTunnel = CreateOutputTunnel(loop);
             Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, 5, false);

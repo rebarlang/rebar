@@ -39,7 +39,7 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(loopConditionOutputVariable.Type.IsMutableReferenceType());
             Lifetime lifetime = loopConditionOutputVariable.Lifetime;
             Assert.IsTrue(lifetime.IsBounded);
-            Assert.IsFalse(lifetime.DoesOutlastDiagram(loop.Diagrams[0]));
+            Assert.IsFalse(lifetime.DoesOutlastDiagram(loop.Diagram));
         }
 
         [TestMethod]

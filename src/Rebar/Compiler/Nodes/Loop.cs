@@ -28,5 +28,7 @@ namespace Rebar.Compiler.Nodes
 
         /// <inheritdoc />
         public override bool IsYielding => true;
+
+        public Diagram Diagram => Diagrams[0];
     }
 }
