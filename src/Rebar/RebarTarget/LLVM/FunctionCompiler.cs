@@ -1177,12 +1177,13 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]),
+            Terminal inputTerminal = iterateTunnel.InputTerminals[0];
+            ValueSource iteratorSource = GetTerminalValueSource(inputTerminal),
                 itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
             var intermediateOptionSource = (LocalAllocationValueSource)_additionalValues[iterateTunnel];
 
-            // TODO: determine the name of this function from the input type
-            LLVMValueRef iteratorNextFunction = GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            NIType iteratorType = inputTerminal.GetTrueVariable().Type.GetReferentType();
+            LLVMValueRef iteratorNextFunction = GetIteratorNextFunction(iteratorType, iterateTunnel.IteratorNextFunctionType.FunctionNIType);
             _builder.CreateCall(
                 iteratorNextFunction, 
                 new LLVMValueRef[]
@@ -1205,6 +1206,16 @@ namespace Rebar.RebarTarget.LLVM
             // bind the inner value to the output tunnel
             itemSource.UpdateValue(_builder, item);
             return true;
+        }
+
+        private LLVMValueRef GetIteratorNextFunction(NIType iteratorType, NIType iteratorNextSignature)
+        {
+            if (iteratorType == DataTypes.RangeIteratorType)
+            {
+                return GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            }
+
+            throw new NotSupportedException("Missing Iterator::Next method for type " + iteratorType);
         }
 
         #endregion

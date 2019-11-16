@@ -233,11 +233,20 @@ namespace Rebar.Compiler
             TypeVariableReference itemTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
             TypeVariableReference implementsIteratorTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(
                 new Constraint[] { new IteratorTraitConstraint(itemTypeVariable) });
-            _nodeFacade
-                .CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType)
-                .AddTerminalFacade(iteratorInput, implementsIteratorTypeVariable, default(TypeVariableReference));
+            ReferenceInputTerminalLifetimeGroup group = _nodeFacade
+                .CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType);
+            group.AddTerminalFacade(iteratorInput, implementsIteratorTypeVariable, default(TypeVariableReference));
 
             _nodeFacade[itemOutput] = new SimpleTerminalFacade(itemOutput, itemTypeVariable);
+
+            iterateTunnel.IteratorNextFunctionType = new FunctionType(
+                Signatures.IteratorNextType,
+                new TypeVariableReference[]
+                {
+                    implementsIteratorTypeVariable,
+                    itemTypeVariable,
+                    group.LifetimeType
+                });
             return true;
         }
 

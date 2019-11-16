@@ -135,6 +135,25 @@ namespace Rebar.Common
                 "valueRef");
             OutputType = functionTypeBuilder.CreateType();
 
+            {
+                functionTypeBuilder = PFTypes.Factory.DefineFunction("IteratorNext");
+                // Technically, the TIterator type should have an Iterator interface constraint related to TItem.
+                // This signature is only being used by IterateTunnel currently, which does not need the constraint for type inference;
+                // once this becomes a standalone diagram node, the constraint will be necessary for type inference.
+                NIType iteratorType = AddGenericDataTypeParameter(functionTypeBuilder, "TIterator");
+                NIType itemType = AddGenericDataTypeParameter(functionTypeBuilder, "TItem");
+                tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+                AddInputOutputParameter(
+                    functionTypeBuilder,
+                    iteratorType.CreateMutableReference(tLifetimeParameter),
+                    "iteratorRef");
+                AddOutputParameter(
+                    functionTypeBuilder,
+                    itemType.CreateOption(),
+                    "item");
+                IteratorNextType = functionTypeBuilder.CreateType();
+            }
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("Inspect");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutputParameter(
@@ -436,6 +455,8 @@ namespace Rebar.Common
 
         // NOTE: this is the type associated with the trait method, not the diagram node.
         public static NIType DropType { get; }
+
+        public static NIType IteratorNextType { get; }
 
         public static NIType OutputType { get; }
 

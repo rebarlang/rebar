@@ -30,7 +30,7 @@ namespace Rebar.Compiler
 
         private Lifetime BorrowLifetime => _lazyBorrowLifetime.Value;
 
-        private TypeVariableReference LifetimeType;
+        public TypeVariableReference LifetimeType { get; }
 
         private void SetBorrowRequired(bool mutableBorrow)
         {
