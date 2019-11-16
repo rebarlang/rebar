@@ -178,6 +178,7 @@
     <Compile Include="Unit\Compiler\StringTypeTests.cs" />
     <Compile Include="Unit\Compiler\TerminateLifetimeNodeTests.cs" />
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
+    <Compile Include="Unit\Compiler\TupleTests.cs" />
     <Compile Include="Unit\Compiler\WireTests.cs" />
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />
     <Compile Include="Unit\Execution\BooleanExecutionTest.cs" />

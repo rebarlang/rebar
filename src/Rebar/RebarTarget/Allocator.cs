@@ -122,6 +122,11 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            return true;
+        }
+
         public bool VisitConstant(Constant constant)
         {
             CreateLocalAllocationForVariable(constant.OutputTerminal.GetTrueVariable());

@@ -687,6 +687,11 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            return true;
+        }
+
         public bool VisitConstant(Constant constant)
         {
             ValueSource outputAllocation = GetTerminalValueSource(constant.OutputTerminal);

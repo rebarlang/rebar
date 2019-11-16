@@ -60,6 +60,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            return true;
+        }
+
         public bool VisitConstant(Constant constant)
         {
             // This node has no inputs.

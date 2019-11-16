@@ -72,6 +72,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            UnifyNodeInputTerminalTypes(buildTupleNode);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             return true;

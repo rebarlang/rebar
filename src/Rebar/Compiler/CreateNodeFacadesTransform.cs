@@ -99,6 +99,23 @@ namespace Rebar.Compiler
             public TypeVariableReference LifetimeType { get; }
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            TypeVariableReference[] elementTypes = new TypeVariableReference[buildTupleNode.InputTerminals.Count];
+            for (int i = 0; i < buildTupleNode.InputTerminals.Count; ++i)
+            {
+                Terminal inputTerminal = buildTupleNode.InputTerminals[i];
+                // TODO: constrain these to be unbounded lifetime
+                TypeVariableReference elementType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, elementType);
+                elementTypes[i] = elementType;
+            }
+            TypeVariableReference tupleType = _typeVariableSet.CreateReferenceToTupleType(elementTypes);
+            Terminal outputTerminal = buildTupleNode.OutputTerminals[0];
+            _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, tupleType);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             Terminal valueOutput = constant.OutputTerminals.ElementAt(0);

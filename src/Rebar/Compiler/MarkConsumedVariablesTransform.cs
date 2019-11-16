@@ -61,6 +61,16 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            foreach (Terminal inputTerminal in buildTupleNode.InputTerminals)
+            {
+                MarkTrueVariableOfTerminalConsumed(inputTerminal);
+            }
+            MarkFacadeVariableOfTerminalLive(buildTupleNode.OutputTerminals[0]);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             MarkFacadeVariableOfTerminalLive(constant.OutputTerminal);

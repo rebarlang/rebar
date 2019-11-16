@@ -158,6 +158,45 @@ namespace Rebar.Common
             }
         }
 
+        private sealed class TupleType : ParameterizedType
+        {
+            public TupleType(TypeVariableReference[] elementTypes)
+                : base(elementTypes)
+            {
+            }
+
+            public override string DebuggerDisplay
+            {
+                get
+                {
+                    var stringBuilder = new StringBuilder();
+                    stringBuilder.Append("<");
+                    stringBuilder.Append(string.Join(", ", TypeParameters.Select(t => t.DebuggerDisplay)));
+                    stringBuilder.Append(">");
+                    return stringBuilder.ToString();
+                }
+            }
+
+            public override Lifetime Lifetime
+            {
+                get
+                {
+                    // TODO
+                    return Lifetime.Unbounded;
+                }
+            }
+
+            public override NIType RenderNIType()
+            {
+                NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+                for (int i = 0; i < TypeParameters.Count; ++i)
+                {
+                    clusterBuilder.DefineField(TypeParameters[i].RenderNIType(), $"_{i}");
+                }
+                return clusterBuilder.CreateType();
+            }
+        }
+
         private sealed class ReferenceType : TypeBase
         {
             private abstract class Mutability
@@ -411,6 +450,11 @@ namespace Rebar.Common
                 _parameterlessTraits[typeName] = traitType;
             }
             return traitType;
+        }
+
+        public TypeVariableReference CreateReferenceToTupleType(TypeVariableReference[] elementTypes)
+        {
+            return CreateReferenceToNewType(new TupleType(elementTypes));
         }
 
         public TypeVariableReference CreateReferenceToReferenceType(bool mutable, TypeVariableReference underlyingType, TypeVariableReference lifetimeType)
