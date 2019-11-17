@@ -100,4 +100,14 @@ namespace Rebar.Design
         /// <inheritdoc />
         protected override string ResourcePath => "Rebar.Resources.OptionPatternStructurePalette.xml";
     }
+
+    [ExportPaletteLoader(FunctionDiagramPaletteLoader.DiagramPaletteIdentifier)]
+    [PartCreationPolicy(CreationPolicy.Shared)]
+    [PartMetadata(ExportIdentifier.ExportIdentifierKey, ProductLevel.Elemental)]
+    [PartMetadata(FeatureToggleSupport.RequiredFeatureToggleKey, RebarFeatureToggles.TupleTypes)]
+    public class TupleDiagramPaletteLoader : ResourcePaletteLoader
+    {
+        /// <inheritdoc />
+        protected override string ResourcePath => "Rebar.Resources.TuplePalette.xml";
+    }
 }
