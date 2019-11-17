@@ -62,6 +62,7 @@ namespace Rebar.Compiler
 
         public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
         {
+            buildTupleNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
             return true;
         }
 
@@ -97,6 +98,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
         {
+            ValidateRequiredInputTerminal(decomposeTupleNode.InputTerminals[0]);
             return true;
         }
 

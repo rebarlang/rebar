@@ -140,6 +140,11 @@ namespace Tests.Rebar.Unit.Compiler
             return patternStructure;
         }
 
+        protected void AssertTerminalHasRequiredTerminalUnconnectedMessage(Terminal terminal)
+        {
+            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.RequiredTerminalUnconnected));
+        }
+
         protected void AssertTerminalHasTypeConflictMessage(Terminal terminal)
         {
             Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.TypeConflict));

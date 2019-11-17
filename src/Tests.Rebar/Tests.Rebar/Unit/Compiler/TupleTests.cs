@@ -29,6 +29,18 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
+        public void BuildTupleNodeWithUnwiredInputs_ValidateVariableUsages_ErrorOnUnwiredInputs()
+        {
+            DfirRoot function = DfirRoot.Create();
+            BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(buildTuple.InputTerminals[1]);
+        }
+
+        [TestMethod]
         public void DecomposeTupleElementRefsNode_SetVariableTypes_OutputsAreElementRefTypes()
         {
             DfirRoot function = DfirRoot.Create();
@@ -44,6 +56,17 @@ namespace Tests.Rebar.Unit.Compiler
                 decomposeOutputVariable1 = decomposeTuple.OutputTerminals[1].GetTrueVariable();
             Assert.IsTrue(decomposeOutputVariable0.Type.GetReferentType().IsInt32());
             Assert.IsTrue(decomposeOutputVariable1.Type.GetReferentType().IsBoolean());
+        }
+
+        [TestMethod]
+        public void DecomposeTupleNodeWithUnwiredInput_ValidateVariableUsages_ErrorOnUnwiredInput()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var decomposeTuple = new DecomposeTupleNode(function.BlockDiagram, 2, DecomposeMode.Borrow);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(decomposeTuple.InputTerminals[0]);
         }
     }
 }

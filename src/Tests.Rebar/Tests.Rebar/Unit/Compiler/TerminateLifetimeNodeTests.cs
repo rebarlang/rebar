@@ -33,8 +33,8 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunSemanticAnalysisUpToValidation(function);
 
-            Assert.IsTrue(terminateLifetime.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.RequiredTerminalUnconnected));
-            Assert.IsTrue(terminateLifetime.InputTerminals[1].GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.RequiredTerminalUnconnected));
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(terminateLifetime.InputTerminals[0]);
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(terminateLifetime.InputTerminals[1]);
         }
 
         [TestMethod]
