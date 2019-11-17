@@ -689,6 +689,16 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
         {
+            LLVMValueRef[] fieldValues = buildTupleNode
+                .InputTerminals
+                .Select(input => GetTerminalValueSource(input).GetValue(_builder))
+                .ToArray();
+            var outputAllocationSource = ((LocalAllocationValueSource)GetTerminalValueSource(buildTupleNode.OutputTerminals[0]));
+            LLVMValueRef tuple = _builder.BuildStructValue(
+                outputAllocationSource.AllocationNIType.AsLLVMType(),
+                fieldValues,
+                "tuple");
+            outputAllocationSource.UpdateValue(_builder, tuple);
             return true;
         }
 
@@ -779,6 +789,35 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef value = _variableValues[dataAccessor.Terminal.GetTrueVariable()].GetValue(_builder),
                     addressParameter = _topLevelFunction.GetParam(_dataItemParameterIndices[dataAccessor.DataItem]);
                 _builder.CreateStore(value, addressParameter);
+            }
+            return true;
+        }
+
+        public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            {
+                ValueSource tupleRefSource = GetTerminalValueSource(decomposeTupleNode.InputTerminals[0]);
+                LLVMValueRef tuplePtr = tupleRefSource.GetValue(_builder);
+                uint fieldIndex = 0;
+                foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
+                {
+                    LLVMValueRef tupleElementPtr = _builder.CreateStructGEP(tuplePtr, fieldIndex, "tupleElement");
+                    GetTerminalValueSource(outputTerminal).UpdateValue(_builder, tupleElementPtr);
+                    ++fieldIndex;
+                }
+            }
+            else
+            {
+                ValueSource tupleSource = GetTerminalValueSource(decomposeTupleNode.InputTerminals[0]);
+                LLVMValueRef tuple = tupleSource.GetValue(_builder);
+                uint fieldIndex = 0;
+                foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
+                {
+                    LLVMValueRef tupleElement = _builder.CreateExtractValue(tuple, fieldIndex, "tupleElement");
+                    GetTerminalValueSource(outputTerminal).UpdateValue(_builder, tupleElement);
+                    ++fieldIndex;
+                }
             }
             return true;
         }
