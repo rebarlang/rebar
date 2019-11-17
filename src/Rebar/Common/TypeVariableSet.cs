@@ -551,6 +551,24 @@ namespace Rebar.Common
                 return;
             }
 
+            TupleType toUnifyTuple = toUnifyTypeBase as TupleType,
+                toUnifyWithTuple = toUnifyWithTypeBase as TupleType;
+            if (toUnifyTuple != null && toUnifyWithTuple != null)
+            {
+                if (toUnifyTuple.TypeParameters.Count != toUnifyWithTuple.TypeParameters.Count)
+                {
+                    unificationResult.SetTypeMismatch();
+                    return;
+                }
+
+                foreach (var typeParameterPair in toUnifyTuple.TypeParameters.Zip(toUnifyWithTuple.TypeParameters))
+                {
+                    Unify(typeParameterPair.Key, typeParameterPair.Value, unificationResult);
+                }
+                MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
+                return;
+            }
+
             ReferenceType toUnifyReference = toUnifyTypeBase as ReferenceType,
                 toUnifyWithReference = toUnifyWithTypeBase as ReferenceType;
             if (toUnifyReference != null && toUnifyWithReference != null)

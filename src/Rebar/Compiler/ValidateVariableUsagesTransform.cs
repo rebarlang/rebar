@@ -95,6 +95,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            return true;
+        }
+
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableUsageValidator validator = dropNode.Terminals[0].GetValidator();

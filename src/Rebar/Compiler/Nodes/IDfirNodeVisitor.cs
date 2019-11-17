@@ -9,6 +9,7 @@ namespace Rebar.Compiler.Nodes
         T VisitBuildTupleNode(BuildTupleNode buildTupleNode);
         T VisitConstant(Constant constant);
         T VisitDataAccessor(DataAccessor dataAccessor);
+        T VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode);
         T VisitDropNode(DropNode dropNode);
         T VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode);
         T VisitFunctionalNode(FunctionalNode functionalNode);

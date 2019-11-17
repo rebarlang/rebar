@@ -86,6 +86,21 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            Terminal inputTerminal = decomposeTupleNode.InputTerminals[0];
+            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            {
+                MarkFacadeVariableOfTerminalInterrupted(inputTerminal);
+            }
+            MarkTrueVariableOfTerminalConsumed(inputTerminal);
+            foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
+            {
+                MarkFacadeVariableOfTerminalLive(outputTerminal);
+            }
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             MarkTrueVariableOfTerminalConsumed(dropNode.InputTerminals[0]);

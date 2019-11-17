@@ -92,6 +92,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            UnifyNodeInputTerminalTypes(decomposeTupleNode);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitDropNode(DropNode dropNode)
         {
             return true;
