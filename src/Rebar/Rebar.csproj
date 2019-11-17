@@ -207,6 +207,7 @@
     <Compile Include="Common\ITypeUnificationResult.cs" />
     <Compile Include="Common\LifetimeVariableAssociation.cs" />
     <Compile Include="Common\PrimitiveOps.cs" />
+    <Compile Include="Common\RequireSuccessTypeUnificationResult.cs" />
     <Compile Include="Common\Signatures.cs" />
     <Compile Include="Common\TypeVariableSet.cs" />
     <Compile Include="Common\TypeVariableSetExtensions.cs" />
@@ -261,6 +262,7 @@
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
+    <Compile Include="Compiler\TupleNodeHelpers.cs" />
     <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
     <Compile Include="Design\OptionPatternStructureControl.cs" />
     <Compile Include="Design\OptionPatternStructureDiagramViewModel.cs" />
