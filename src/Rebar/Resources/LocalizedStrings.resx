@@ -177,6 +177,12 @@
   <data name="FeatureToggle_StringDataType_Description" xml:space="preserve">
     <value>Enable string and string slice data types and related nodes</value>
   </data>
+  <data name="FeatureToggle_TupleTypes_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_TupleTypes_Description" xml:space="preserve">
+    <value>Enable tuple types</value>
+  </data>
   <data name="FeatureToggle_VectorAndSliceTypes_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

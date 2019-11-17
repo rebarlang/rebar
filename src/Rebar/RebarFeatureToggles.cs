@@ -14,6 +14,7 @@ namespace Rebar
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), FileHandleDataType, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), OptionPatternStructure, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), ParametersAndCalls, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), TupleTypes, CodeReadiness.Release)]
     public sealed class RebarFeatureToggles : FeatureTogglesProvider<RebarFeatureToggles>
     {
         private const string RebarFeatureCategory = "Rebar";
@@ -29,6 +30,7 @@ namespace Rebar
         public const string FileHandleDataType = FeaturePrefix + nameof(FileHandleDataType);
         public const string OptionPatternStructure = FeaturePrefix + nameof(OptionPatternStructure);
         public const string ParametersAndCalls = FeaturePrefix + nameof(ParametersAndCalls);
+        public const string TupleTypes = FeaturePrefix + nameof(TupleTypes);
 
         public static bool IsCellDataTypeEnabled => _cellDataType.IsEnabled;
         public static bool IsRebarTargetEnabled => _rebarTarget.IsEnabled;
@@ -40,6 +42,7 @@ namespace Rebar
         public static bool IsFileHandleDataTypeEnabled => _fileHandleDataType.IsEnabled;
         public static bool IsOptionPatternStructureEnabled => _optionPatternStructure.IsEnabled;
         public static bool IsParametersAndCallsEnabled => _parametersAndCalls.IsEnabled;
+        public static bool IsTupleTypesEnabled => _isTupleTypesEnabled.IsEnabled;
 
         private static readonly FeatureToggleValueCache _cellDataType = CreateFeatureToggleValueCache(CellDataType);
         private static readonly FeatureToggleValueCache _rebarTarget = CreateFeatureToggleValueCache(RebarTarget);
@@ -51,5 +54,6 @@ namespace Rebar
         private static readonly FeatureToggleValueCache _fileHandleDataType = CreateFeatureToggleValueCache(FileHandleDataType);
         private static readonly FeatureToggleValueCache _optionPatternStructure = CreateFeatureToggleValueCache(OptionPatternStructure);
         private static readonly FeatureToggleValueCache _parametersAndCalls = CreateFeatureToggleValueCache(ParametersAndCalls);
+        private static readonly FeatureToggleValueCache _isTupleTypesEnabled = CreateFeatureToggleValueCache(TupleTypes);
     }
 }

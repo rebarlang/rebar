@@ -243,6 +243,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_TupleTypes_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_TupleTypes_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable tuple types.
+        /// </summary>
+        internal static string FeatureToggle_TupleTypes_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_TupleTypes_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_VectorAndSliceTypes_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_VectorAndSliceTypes_Category", resourceCulture);
