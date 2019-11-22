@@ -264,6 +264,7 @@
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
     <Compile Include="Compiler\TupleNodeHelpers.cs" />
+    <Compile Include="Design\BuildTupleViewModel.cs" />
     <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
     <Compile Include="Design\OptionPatternStructureControl.cs" />
     <Compile Include="Design\OptionPatternStructureDiagramViewModel.cs" />
@@ -361,6 +362,7 @@
     <Compile Include="Common\BorrowMode.cs" />
     <Compile Include="Resources\RebarModelResources.cs" />
     <Compile Include="SourceModel\BorrowTunnel.cs" />
+    <Compile Include="SourceModel\BuildTuple.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
     <Compile Include="SourceModel\FunctionalNode.cs" />

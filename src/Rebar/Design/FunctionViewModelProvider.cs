@@ -19,6 +19,8 @@ namespace Rebar.Design
             AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
             AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
 
+            AddSupportedModel<BuildTuple>(n => new BuildTupleViewModel(n));
+
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value", @"Resources\Diagram\Nodes\Drop.png"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
             AddSupportedModel<MutablePassthroughNode>(n => new BasicNodeViewModel(n, "Mutable Passthrough"));

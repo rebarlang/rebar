@@ -1053,4 +1053,16 @@
   <data name="StringSliceToStringSplitIterator_slice_Name" xml:space="preserve">
     <value>slice reference</value>
   </data>
+  <data name="BuildTuple_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="BuildTuple_element_Name" xml:space="preserve">
+    <value>element</value>
+  </data>
+  <data name="BuildTuple_Name" xml:space="preserve">
+    <value>Build Tuple</value>
+  </data>
+  <data name="BuildTuple_tuple_Name" xml:space="preserve">
+    <value>tuple</value>
+  </data>
 </root>

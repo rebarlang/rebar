@@ -646,6 +646,42 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string BuildTuple_Description {
+            get {
+                return ResourceManager.GetString("BuildTuple_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to element.
+        /// </summary>
+        internal static string BuildTuple_element_Name {
+            get {
+                return ResourceManager.GetString("BuildTuple_element_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Build Tuple.
+        /// </summary>
+        internal static string BuildTuple_Name {
+            get {
+                return ResourceManager.GetString("BuildTuple_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to tuple.
+        /// </summary>
+        internal static string BuildTuple_tuple_Name {
+            get {
+                return ResourceManager.GetString("BuildTuple_tuple_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to copy.
         /// </summary>
         internal static string CreateCopyNode_copy_Name {

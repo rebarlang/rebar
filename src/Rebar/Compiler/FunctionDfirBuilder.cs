@@ -514,6 +514,13 @@ namespace Rebar.Compiler
             MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
         }
 
+        public void VisitBuildTuple(BuildTuple buildTuple)
+        {
+            BuildTupleNode buildTupleDfir = new BuildTupleNode(_currentDiagram, buildTuple.VerticalChunkCount);
+            _map.AddMapping(buildTuple, buildTupleDfir);
+            MapTerminalsInOrder(buildTuple, buildTupleDfir);
+        }
+
         public void VisitFunction(Function function)
         {
             if (CreatedDfirRoot.Name.IsEmpty)
