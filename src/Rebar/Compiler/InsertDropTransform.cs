@@ -8,10 +8,12 @@ namespace Rebar.Compiler
     internal class InsertDropTransform : IDfirTransform
     {
         private readonly LifetimeVariableAssociation _lifetimeVariableAssociation;
+        private readonly ITypeUnificationResultFactory _unificationResultFactory;
 
-        public InsertDropTransform(LifetimeVariableAssociation lifetimeVariableAssociation)
+        public InsertDropTransform(LifetimeVariableAssociation lifetimeVariableAssociation, ITypeUnificationResultFactory unificationResultFactory)
         {
             _lifetimeVariableAssociation = lifetimeVariableAssociation;
+            _unificationResultFactory = unificationResultFactory;
         }
 
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
@@ -20,15 +22,21 @@ namespace Rebar.Compiler
             while (_lifetimeVariableAssociation.TryGetLiveVariableWithUnboundedLifetime(out liveUnboundedLifetimeVariable))
             {
                 Diagram parentDiagram = liveUnboundedLifetimeVariable.Terminal.ParentDiagram;
-                var drop = new DropNode(parentDiagram);
-                Terminal inputTerminal = drop.InputTerminals[0];
-                AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(drop);
-                nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, default(TypeVariableReference));
-
-                Wire.Create(parentDiagram, liveUnboundedLifetimeVariable.Terminal, inputTerminal);
-                inputTerminal.GetFacadeVariable().MergeInto(liveUnboundedLifetimeVariable.Variable);
-                _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
+                InsertDropForVariable(parentDiagram, liveUnboundedLifetimeVariable);
             }
+        }
+
+        private void InsertDropForVariable(Diagram parentDiagram, LiveVariable liveUnboundedLifetimeVariable)
+        {
+            var drop = new DropNode(parentDiagram);
+            Terminal inputTerminal = drop.InputTerminals[0];
+            AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(drop);
+            nodeFacade[inputTerminal] = new SimpleTerminalFacade(
+                inputTerminal,
+                parentDiagram.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
+
+            liveUnboundedLifetimeVariable.ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, _unificationResultFactory);
+            _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
         }
     }
 }

@@ -135,5 +135,19 @@ namespace Rebar.Compiler
         {
             return lifetime.DoesOutlastLifetimeGraph(diagram.GetLifetimeGraphIdentifier());
         }
+
+        public static ITypeUnificationResult UnifyTerminalTypeWith(
+            this Terminal terminal,
+            TypeVariableReference terminalType,
+            TypeVariableReference unifyWithType,
+            ITypeUnificationResultFactory unificationResultFactory)
+        {
+            ITypeUnificationResult unificationResult = unificationResultFactory.GetTypeUnificationResult(
+                terminal,
+                terminalType,
+                unifyWithType);
+            terminalType.TypeVariableSet.Unify(terminalType, unifyWithType, unificationResult);
+            return unificationResult;
+        }
     }
 }

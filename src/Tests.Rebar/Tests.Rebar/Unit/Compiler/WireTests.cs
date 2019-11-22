@@ -24,7 +24,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             VariableReference wireSourceVariable = wire.SourceTerminal.GetTrueVariable(),
                 wireSinkVariable = wire.SinkTerminals[0].GetTrueVariable();
-            Assert.IsTrue(wireSourceVariable.ReferencesSame(wireSinkVariable));
+            AssertVariablesReferenceSame(wireSinkVariable, wireSourceVariable);
         }
 
         [TestMethod]

@@ -21,7 +21,7 @@ namespace Rebar.Compiler
 
         public override VariableReference TrueVariable { get; }
 
-        public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+        public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, ITypeUnificationResultFactory unificationResultFactory)
         {
             TrueVariable.MergeInto(wireFacadeVariable);
             _unificationState.UpdateFromConnectedInput(wireFacadeVariable);

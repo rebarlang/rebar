@@ -21,11 +21,10 @@ namespace Rebar.Compiler
 
         public override VariableReference TrueVariable { get; }
 
-        public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+        public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, ITypeUnificationResultFactory unificationResultFactory)
         {
             TypeVariableSet typeVariableSet = Terminal.GetTypeVariableSet();
-            ITypeUnificationResult inputUnificationResult = unificationResults.GetTypeUnificationResult(Terminal, TrueVariable.TypeVariableReference, wireFacadeVariable.TypeVariableReference);
-            typeVariableSet.Unify(TrueVariable.TypeVariableReference, wireFacadeVariable.TypeVariableReference, inputUnificationResult);
+            Terminal.UnifyTerminalTypeWith(TrueVariable.TypeVariableReference, wireFacadeVariable.TypeVariableReference, unificationResultFactory);
             TrueVariable.MergeInto(wireFacadeVariable);
 
             TypeVariableReference optionType;
@@ -38,8 +37,7 @@ namespace Rebar.Compiler
                 optionType = typeVariableSet.CreateReferenceToOptionType(TrueVariable.TypeVariableReference);
             }
             TypeVariableReference outputTypeReference = _outputTerminalFacade.TrueVariable.TypeVariableReference;
-            ITypeUnificationResult outputUnificationResult = unificationResults.GetTypeUnificationResult(_outputTerminalFacade.Terminal, outputTypeReference, optionType);
-            typeVariableSet.Unify(outputTypeReference, optionType, outputUnificationResult);
+            _outputTerminalFacade.Terminal.UnifyTerminalTypeWith(outputTypeReference, optionType, unificationResultFactory);
         }
     }
 }

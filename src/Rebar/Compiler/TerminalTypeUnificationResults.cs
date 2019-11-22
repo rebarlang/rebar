@@ -7,7 +7,7 @@ using Rebar.Common;
 
 namespace Rebar.Compiler
 {
-    public sealed class TerminalTypeUnificationResults
+    internal sealed class TerminalTypeUnificationResults : ITypeUnificationResultFactory
     {
         private class TerminalUnificationResult
         {
@@ -56,7 +56,7 @@ namespace Rebar.Compiler
 
         private Dictionary<Terminal, TerminalUnificationResult> _unificationResults = new Dictionary<Terminal, TerminalUnificationResult>();
 
-        internal ITypeUnificationResult GetTypeUnificationResult(Terminal terminal, TypeVariableReference terminalTypeVariable, TypeVariableReference unifyWith)
+        public ITypeUnificationResult GetTypeUnificationResult(Terminal terminal, TypeVariableReference terminalTypeVariable, TypeVariableReference unifyWith)
         {
             TerminalUnificationResult unificationResult;
             if (!_unificationResults.TryGetValue(terminal, out unificationResult))

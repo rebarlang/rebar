@@ -324,7 +324,7 @@ namespace Tests.Rebar.Unit.Compiler
 
         private void AssertTerminalTrueAndFacadeVariablesReferenceSame(Terminal terminal)
         {
-            Assert.IsTrue(terminal.GetFacadeVariable().ReferencesSame(terminal.GetTrueVariable()));
+            AssertVariablesReferenceSame(terminal.GetTrueVariable(), terminal.GetFacadeVariable());
         }
 
         #endregion

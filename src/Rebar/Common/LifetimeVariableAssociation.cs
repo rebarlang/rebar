@@ -196,5 +196,12 @@ namespace Rebar.Common
         public VariableReference Variable { get; }
 
         public Terminal Terminal { get; }
+
+        public void ConnectToTerminalAsInputAndUnifyVariables(Terminal connectTo, ITypeUnificationResultFactory unificationResultFactory)
+        {
+            Wire.Create(Terminal.ParentDiagram, Terminal, connectTo);
+            AutoBorrowNodeFacade.GetNodeFacade(connectTo.ParentNode)[connectTo]
+                .UnifyWithConnectedWireTypeAsNodeInput(Variable, unificationResultFactory);
+        }
     }
 }

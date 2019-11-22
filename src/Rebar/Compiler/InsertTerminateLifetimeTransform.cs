@@ -12,10 +12,12 @@ namespace Rebar.Compiler
     internal class InsertTerminateLifetimeTransform : IDfirTransform
     {
         private readonly LifetimeVariableAssociation _lifetimeVariableAssociation;
+        private readonly ITypeUnificationResultFactory _unificationResultFactory;
 
-        public InsertTerminateLifetimeTransform(LifetimeVariableAssociation lifetimeVariableAssociation)
+        public InsertTerminateLifetimeTransform(LifetimeVariableAssociation lifetimeVariableAssociation, ITypeUnificationResultFactory unificationResultFactory)
         {
             _lifetimeVariableAssociation = lifetimeVariableAssociation;
+            _unificationResultFactory = unificationResultFactory;
         }
 
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
@@ -52,25 +54,20 @@ namespace Rebar.Compiler
                 }
 
                 TerminateLifetimeNode terminateLifetime = TerminateLifetimeNodeHelpers.CreateTerminateLifetimeWithFacades(originDiagram, inputVariableCount, outputVariableCount);
-                int inputIndex = 0;
-                foreach (LiveVariable liveVariable in liveVariables)
+                foreach (var pair in liveVariables.Zip(terminateLifetime.InputTerminals))
                 {
                     // TODO: maybe assert that liveVariable.Terminal is unwired here?
-                    Terminal terminateLifetimeInputTerminal = terminateLifetime.InputTerminals[inputIndex];
-                    Wire.Create(originDiagram, liveVariable.Terminal, terminateLifetimeInputTerminal);
-                    terminateLifetimeInputTerminal.GetFacadeVariable().MergeInto(liveVariable.Variable);
+                    LiveVariable liveVariable = pair.Key;
+                    Terminal terminateLifetimeInputTerminal = pair.Value;
+                    liveVariable.ConnectToTerminalAsInputAndUnifyVariables(terminateLifetimeInputTerminal, _unificationResultFactory);
                     _lifetimeVariableAssociation.MarkVariableConsumed(liveVariable.Variable);
-
-                    ++inputIndex;
                 }
-                int outputIndex = 0;
-                foreach (VariableReference interruptedVariable in interruptedVariables)
+                foreach (var pair in interruptedVariables.Zip(terminateLifetime.OutputTerminals))
                 {
-                    Terminal terminateLifetimeOutputTerminal = terminateLifetime.OutputTerminals[outputIndex];
+                    VariableReference interruptedVariable = pair.Key;
+                    Terminal terminateLifetimeOutputTerminal = pair.Value;
                     terminateLifetimeOutputTerminal.GetFacadeVariable().MergeInto(interruptedVariable);
                     _lifetimeVariableAssociation.MarkVariableLive(interruptedVariable, terminateLifetimeOutputTerminal);
-
-                    ++outputIndex;
                 }
             }
         }

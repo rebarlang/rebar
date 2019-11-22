@@ -86,11 +86,6 @@ namespace Rebar.Common
 
         internal TypeVariableReference TypeVariableReference => _variableSet.GetTypeVariableReference(this);
 
-        internal void UnifyTypeVariableInto(VariableReference intoVariable, ITypeUnificationResult unificationResult)
-        {
-            _variableSet.TypeVariableSet.Unify(TypeVariableReference, intoVariable.TypeVariableReference, unificationResult);
-        }
-
         private string DebuggerDisplay => _variableSet?.GetDebuggerDisplay(this);
     }
 }

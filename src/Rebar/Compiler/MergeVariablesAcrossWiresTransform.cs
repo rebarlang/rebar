@@ -54,11 +54,10 @@ namespace Rebar.Compiler
                 {
                     VariableReference wireVariable = wireTerminal.GetFacadeVariable(),
                         nodeVariable = connectedNodeTerminal.GetFacadeVariable();
-                    ITypeUnificationResult unificationResult = _typeUnificationResults.GetTypeUnificationResult(
-                        wireTerminal,
+                    wireTerminal.UnifyTerminalTypeWith(
                         wireVariable.TypeVariableReference,
-                        nodeVariable.TypeVariableReference);
-                    wireVariable.UnifyTypeVariableInto(nodeVariable, unificationResult);
+                        nodeVariable.TypeVariableReference,
+                        _typeUnificationResults);
                     wireVariable.MergeInto(nodeVariable);
                 }
             }
