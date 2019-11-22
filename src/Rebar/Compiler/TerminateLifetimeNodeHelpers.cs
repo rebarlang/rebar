@@ -10,9 +10,10 @@ namespace Rebar.Compiler
         {
             var terminateLifetime = new TerminateLifetimeNode(parentDiagram, inputs, outputs);
             AutoBorrowNodeFacade terminateLifetimeFacade = AutoBorrowNodeFacade.GetNodeFacade(terminateLifetime);
+            TypeVariableSet typeVariableSet = parentDiagram.GetTypeVariableSet();
             foreach (var terminal in terminateLifetime.Terminals)
             {
-                terminateLifetimeFacade[terminal] = new SimpleTerminalFacade(terminal, default(TypeVariableReference));
+                terminateLifetimeFacade[terminal] = new SimpleTerminalFacade(terminal, typeVariableSet.CreateReferenceToNewTypeVariable());
             }
             return terminateLifetime;
         }

@@ -222,8 +222,10 @@
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
     <Compile Include="Compiler\InsertDropTransform.cs" />
     <Compile Include="Compiler\InsertTerminateLifetimeTransform.cs" />
+    <Compile Include="Compiler\ITypeUnificationResultFactory.cs" />
     <Compile Include="Compiler\MarkConsumedVariablesTransform.cs" />
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />
+    <Compile Include="Compiler\NodeInsertionTypeUnificationResultFactory.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\BuildTupleNode.cs" />
     <Compile Include="Compiler\Nodes\DecomposeTupleNode.cs" />

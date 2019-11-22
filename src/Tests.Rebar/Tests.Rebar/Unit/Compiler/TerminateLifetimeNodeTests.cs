@@ -122,8 +122,8 @@ namespace Tests.Rebar.Unit.Compiler
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
             Assert.AreEqual(2, terminateLifetime.OutputTerminals.Count);
-            Assert.IsTrue(borrow.InputTerminals[0].GetTrueVariable().ReferencesSame(terminateLifetime.OutputTerminals[0].GetTrueVariable()));
-            Assert.IsTrue(borrow.InputTerminals[1].GetTrueVariable().ReferencesSame(terminateLifetime.OutputTerminals[1].GetTrueVariable()));
+            AssertVariablesReferenceSame(terminateLifetime.OutputTerminals[0].GetTrueVariable(), borrow.InputTerminals[0].GetTrueVariable());
+            AssertVariablesReferenceSame(terminateLifetime.OutputTerminals[1].GetTrueVariable(), borrow.InputTerminals[1].GetTrueVariable());
         }
 
         [TestMethod]

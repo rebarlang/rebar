@@ -106,11 +106,12 @@ namespace Rebar.Compiler
                 semanticAnalysisTransforms.Add(new EmptyTargetDfirTransform());
             }
 
+            var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
             List<IDfirTransformBase> toTargetDfirTransforms = new List<IDfirTransformBase>()
             {
                 new AutoBorrowTransform(lifetimeVariableAssociation),
-                new InsertTerminateLifetimeTransform(lifetimeVariableAssociation),
-                new InsertDropTransform(lifetimeVariableAssociation),
+                new InsertTerminateLifetimeTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory),
+                new InsertDropTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory),
             };
 
             return new StandardMocTransformManager(

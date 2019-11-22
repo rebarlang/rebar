@@ -216,20 +216,18 @@ namespace Rebar.Compiler
 
             protected TypeVariableSet TypeVariableSet { get; }
 
-            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, ITypeUnificationResultFactory unificationResultFactory)
             {
                 FacadeVariable.MergeInto(wireFacadeVariable);
                 bool setExpectedMutable;
-                TypeVariableReference typeToUnifyWith = ComputeTypeToUnifyWith(wireFacadeVariable, out setExpectedMutable);
-                ITypeUnificationResult unificationResult = unificationResults.GetTypeUnificationResult(
-                    Terminal,
+                ITypeUnificationResult unificationResult = Terminal.UnifyTerminalTypeWith(
                     TrueVariable.TypeVariableReference,
-                    typeToUnifyWith);
+                    ComputeTypeToUnifyWith(wireFacadeVariable, out setExpectedMutable),
+                    unificationResultFactory);
                 if (setExpectedMutable)
                 {
                     unificationResult.SetExpectedMutable();
                 }
-                TypeVariableSet.Unify(TrueVariable.TypeVariableReference, typeToUnifyWith, unificationResult);
             }
 
             public abstract void AddPostBorrowCoercion(ref Terminal inputTerminal, out VariableReference borrowVariable);
@@ -442,7 +440,7 @@ namespace Rebar.Compiler
 
             public TerminalFacade InputFacade { get; }
 
-            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, TerminalTypeUnificationResults unificationResults)
+            public override void UnifyWithConnectedWireTypeAsNodeInput(VariableReference wireFacadeVariable, ITypeUnificationResultFactory unificationResultFactory)
             {
                 // we're a node output facade; this should never be called.
                 throw new NotImplementedException();

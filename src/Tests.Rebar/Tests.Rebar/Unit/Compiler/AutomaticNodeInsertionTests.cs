@@ -218,6 +218,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             DecomposeTupleNode decomposeTuple = AssertDiagramContainsNodeWithSources<DecomposeTupleNode>(function.BlockDiagram, buildTuple.OutputTerminals[0]);
             Assert.AreEqual(DecomposeMode.Move, decomposeTuple.DecomposeMode);
+            AssertVariablesReferenceSame(buildTuple.OutputTerminals[0].GetTrueVariable(), decomposeTuple.InputTerminals[0].GetTrueVariable());
             Assert.AreEqual(2, decomposeTuple.OutputTerminals.Count);
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[0]);
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[1]);

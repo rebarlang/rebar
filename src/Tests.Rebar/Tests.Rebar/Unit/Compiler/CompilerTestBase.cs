@@ -53,8 +53,11 @@ namespace Tests.Rebar.Unit.Compiler
             var lifetimeVariableAssociation = new LifetimeVariableAssociation();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken, lifetimeVariableAssociation);
             new AutoBorrowTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
-            new InsertTerminateLifetimeTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
-            new InsertDropTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
+            var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
+            new InsertTerminateLifetimeTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory)
+                .Execute(dfirRoot, cancellationToken);
+            new InsertDropTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory)
+                .Execute(dfirRoot, cancellationToken);
         }
 
         internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
@@ -138,6 +141,11 @@ namespace Tests.Rebar.Unit.Compiler
             OptionPatternStructure patternStructure = new OptionPatternStructure(parentDiagram);
             patternStructure.CreateDiagram();
             return patternStructure;
+        }
+
+        protected void AssertVariablesReferenceSame(VariableReference expected, VariableReference actual)
+        {
+            Assert.IsTrue(actual.ReferencesSame(expected));
         }
 
         protected void AssertTerminalHasRequiredTerminalUnconnectedMessage(Terminal terminal)

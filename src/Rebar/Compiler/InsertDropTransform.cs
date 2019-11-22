@@ -10,10 +10,12 @@ namespace Rebar.Compiler
     internal class InsertDropTransform : IDfirTransform
     {
         private readonly LifetimeVariableAssociation _lifetimeVariableAssociation;
+        private readonly ITypeUnificationResultFactory _unificationResultFactory;
 
-        public InsertDropTransform(LifetimeVariableAssociation lifetimeVariableAssociation)
+        public InsertDropTransform(LifetimeVariableAssociation lifetimeVariableAssociation, ITypeUnificationResultFactory unificationResultFactory)
         {
             _lifetimeVariableAssociation = lifetimeVariableAssociation;
+            _unificationResultFactory = unificationResultFactory;
         }
 
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
@@ -36,10 +38,11 @@ namespace Rebar.Compiler
             var drop = new DropNode(parentDiagram);
             Terminal inputTerminal = drop.InputTerminals[0];
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(drop);
-            nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, default(TypeVariableReference));
+            nodeFacade[inputTerminal] = new SimpleTerminalFacade(
+                inputTerminal,
+                parentDiagram.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
 
-            Wire.Create(parentDiagram, liveUnboundedLifetimeVariable.Terminal, inputTerminal);
-            inputTerminal.GetFacadeVariable().MergeInto(liveUnboundedLifetimeVariable.Variable);
+            liveUnboundedLifetimeVariable.ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, _unificationResultFactory);
             _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
         }
 
@@ -52,10 +55,9 @@ namespace Rebar.Compiler
                 DecomposeMode.Move);
 
             Terminal tupleInputTerminal = decomposeTuple.InputTerminals[0];
-            Wire.Create(parentDiagram, liveTupleVariable.Terminal, tupleInputTerminal);
-            tupleInputTerminal.GetFacadeVariable().UnifyTypeVariableInto(
-                liveTupleVariable.Variable,
-                new RequireSuccessTypeUnificationResult());
+            liveTupleVariable.ConnectToTerminalAsInputAndUnifyVariables(
+                tupleInputTerminal,
+                _unificationResultFactory);
             _lifetimeVariableAssociation.MarkVariableConsumed(liveTupleVariable.Variable);
             foreach (Terminal outputTerminal in decomposeTuple.OutputTerminals)
             {
