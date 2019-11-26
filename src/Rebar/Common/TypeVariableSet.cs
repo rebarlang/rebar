@@ -158,6 +158,45 @@ namespace Rebar.Common
             }
         }
 
+        private sealed class TupleType : ParameterizedType
+        {
+            public TupleType(TypeVariableReference[] elementTypes)
+                : base(elementTypes)
+            {
+            }
+
+            public override string DebuggerDisplay
+            {
+                get
+                {
+                    var stringBuilder = new StringBuilder();
+                    stringBuilder.Append("<");
+                    stringBuilder.Append(string.Join(", ", TypeParameters.Select(t => t.DebuggerDisplay)));
+                    stringBuilder.Append(">");
+                    return stringBuilder.ToString();
+                }
+            }
+
+            public override Lifetime Lifetime
+            {
+                get
+                {
+                    // TODO
+                    return Lifetime.Unbounded;
+                }
+            }
+
+            public override NIType RenderNIType()
+            {
+                NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+                for (int i = 0; i < TypeParameters.Count; ++i)
+                {
+                    clusterBuilder.DefineField(TypeParameters[i].RenderNIType(), $"_{i}");
+                }
+                return clusterBuilder.CreateType();
+            }
+        }
+
         private sealed class ReferenceType : TypeBase
         {
             private abstract class Mutability
@@ -413,6 +452,11 @@ namespace Rebar.Common
             return traitType;
         }
 
+        public TypeVariableReference CreateReferenceToTupleType(TypeVariableReference[] elementTypes)
+        {
+            return CreateReferenceToNewType(new TupleType(elementTypes));
+        }
+
         public TypeVariableReference CreateReferenceToReferenceType(bool mutable, TypeVariableReference underlyingType, TypeVariableReference lifetimeType)
         {
             return CreateReferenceToNewType(new ReferenceType(mutable, underlyingType, lifetimeType));
@@ -500,6 +544,24 @@ namespace Rebar.Common
                 }
 
                 foreach (var typeParameterPair in toUnifyConcrete.TypeParameters.Zip(toUnifyWithConcrete.TypeParameters))
+                {
+                    Unify(typeParameterPair.Key, typeParameterPair.Value, unificationResult);
+                }
+                MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
+                return;
+            }
+
+            TupleType toUnifyTuple = toUnifyTypeBase as TupleType,
+                toUnifyWithTuple = toUnifyWithTypeBase as TupleType;
+            if (toUnifyTuple != null && toUnifyWithTuple != null)
+            {
+                if (toUnifyTuple.TypeParameters.Count != toUnifyWithTuple.TypeParameters.Count)
+                {
+                    unificationResult.SetTypeMismatch();
+                    return;
+                }
+
+                foreach (var typeParameterPair in toUnifyTuple.TypeParameters.Zip(toUnifyWithTuple.TypeParameters))
                 {
                     Unify(typeParameterPair.Key, typeParameterPair.Value, unificationResult);
                 }
