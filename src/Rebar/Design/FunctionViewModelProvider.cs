@@ -32,6 +32,7 @@ namespace Rebar.Design
             AddSupportedModel<NoneConstructorNode>(n => new BasicNodeViewModel(n, "None", @"Resources\Diagram\Nodes\None.png"));
             AddSupportedModel<Range>(n => new BasicNodeViewModel(n, "Range", @"Resources\Diagram\Nodes\Range.png"));
             AddSupportedModel<Output>(n => new BasicNodeViewModel(n, "Output", @"Resources\Diagram\Nodes\Output.png"));
+            AddSupportedModel<TypePassthrough>(n => new BasicNodeViewModel(n, "Type Passthrough"));
 
             AddSupportedModel<SourceModel.Add>(n => new BasicNodeViewModel(n, "Add", @"Resources\Diagram\Nodes\Add.png"));
             AddSupportedModel<SourceModel.Subtract>(n => new BasicNodeViewModel(n, "Subtract", @"Resources\Diagram\Nodes\Subtract.png"));

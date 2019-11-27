@@ -219,6 +219,12 @@
   <data name="TerminateLifetimeNotAllVariablesInLifetimeConnected" xml:space="preserve">
     <value>The scope that this node terminates contains at least one variable that is not wired.</value>
   </data>
+  <data name="TypeDiagramDocumentType_DefaultDocumentName" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="TypeDiagramDocumentType_DisplayName" xml:space="preserve">
+    <value>Type Diagram</value>
+  </data>
   <data name="TypeDoesNotHaveRequiredTrait" xml:space="preserve">
     <value>The data type connected to this terminal does not have the required trait: Display</value>
   </data>

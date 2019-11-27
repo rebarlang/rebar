@@ -367,6 +367,24 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Type.
+        /// </summary>
+        internal static string TypeDiagramDocumentType_DefaultDocumentName {
+            get {
+                return ResourceManager.GetString("TypeDiagramDocumentType_DefaultDocumentName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type Diagram.
+        /// </summary>
+        internal static string TypeDiagramDocumentType_DisplayName {
+            get {
+                return ResourceManager.GetString("TypeDiagramDocumentType_DisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The data type connected to this terminal does not have the required trait: Display.
         /// </summary>
         internal static string TypeDoesNotHaveRequiredTrait {

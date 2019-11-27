@@ -1,0 +1,21 @@
+﻿<smShell:DocumentEditControl x:Class="Rebar.Design.TypeDiagram.TypeDiagramEditor"
+                             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                             xmlns:designer="clr-namespace:NationalInstruments.Design;assembly=NationalInstruments.PlatformFramework"
+                             xmlns:smash="clr-namespace:NationalInstruments.Design;assembly=NationalInstruments.PlatformFramework"
+                             xmlns:smShell="clr-namespace:NationalInstruments.Shell;assembly=NationalInstruments.PlatformFramework"
+                             xmlns:shellControls="clr-namespace:NationalInstruments.Controls.Shell;assembly=NationalInstruments.PlatformFramework"
+                             xmlns:coreConverters="clr-namespace:NationalInstruments.Controls;assembly=NationalInstruments.Core">
+  <Grid x:Name="LayoutRoot" Background="White">
+    <designer:DesignerEditControl x:Name="_designer"
+                                  DockedPaletteControl="{Binding ElementName=_dockedPaletteControlHost, Path=Child}">
+      <designer:RootDiagramCanvas x:Name="_diagram" Background="White" />
+    </designer:DesignerEditControl>
+
+    <StackPanel x:Name="_findReplaceControlHost" Margin="0,0,18,0" HorizontalAlignment="Right" />
+
+    <AdornerDecorator x:Name="_dockedPaletteControlHost">
+      <smash:DockedPaletteControl Grid.Row="0" />
+    </AdornerDecorator>
+  </Grid>
+</smShell:DocumentEditControl>

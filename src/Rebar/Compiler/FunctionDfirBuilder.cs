@@ -61,6 +61,14 @@ namespace Rebar.Compiler
 
         public void VisitNode(Node node)
         {
+            var typePassthrough = node as TypePassthrough;
+            if (typePassthrough != null)
+            {
+                var typePassthroughDfir = new Nodes.FunctionalNode(_currentDiagram, Signatures.ImmutablePassthroughType);
+                _map.AddMapping(typePassthrough, typePassthroughDfir);
+                MapTerminalsInOrder(typePassthrough, typePassthroughDfir);
+                return;
+            }
             throw new NotImplementedException();
         }
 
@@ -437,8 +445,8 @@ namespace Rebar.Compiler
                 // Get rid of this once there is source model support for &str Literals
                 Constant stringSliceConstant = Constant.Create(_currentDiagram, literal.Data, DataTypes.StringSliceType.CreateImmutableReference());
                 Nodes.FunctionalNode stringFromSliceNode = new Nodes.FunctionalNode(
-                    _currentDiagram, 
-                    Signatures.StringFromSliceType, 
+                    _currentDiagram,
+                    Signatures.StringFromSliceType,
                     new[] { RebarFeatureToggles.StringDataType });
                 NationalInstruments.Dfir.Wire.Create(_currentDiagram, stringSliceConstant.OutputTerminal, stringFromSliceNode.InputTerminals[0]);
 
@@ -554,50 +562,8 @@ namespace Rebar.Compiler
         {
             foreach (Wire wire in _modelWires)
             {
-                var connectedDfirTerminals = new List<NationalInstruments.Dfir.Terminal>();
-                var looseEnds = new List<Terminal>();
-                foreach (Terminal terminal in wire.Terminals)
-                {
-                    if (terminal.ConnectedTerminal != null)
-                    {
-                        connectedDfirTerminals.Add(_map.GetDfirForTerminal(terminal.ConnectedTerminal));
-                    }
-                    else
-                    {
-                        looseEnds.Add(terminal);
-                    }
-                }
-
-                var parentDiagram = (NationalInstruments.Dfir.Diagram)_map.GetDfirForModel(wire.Owner);
-                NationalInstruments.Dfir.Wire dfirWire = NationalInstruments.Dfir.Wire.Create(parentDiagram, connectedDfirTerminals);
-                _map.AddMapping(wire, dfirWire);
+                NationalInstruments.Dfir.Wire dfirWire = _map.TranslateModelWire(wire);
                 dfirWire.SetWireBeginsMutableVariable(wire.GetWireBeginsMutableVariable());
-                int i = 0;
-                // Map connected model wire terminals
-                foreach (Terminal terminal in wire.Terminals.Where(t => t.ConnectedTerminal != null))
-                {
-                    MapTerminalAndType(terminal, dfirWire.Terminals[i]);
-                    i++;
-                }
-                // Map unconnected model wire terminals
-                foreach (Terminal terminal in looseEnds)
-                {
-                    NationalInstruments.Dfir.Terminal dfirTerminal = dfirWire.CreateBranch();
-                    MapTerminalAndType(terminal, dfirTerminal);
-                }
-                // "Map" loose ends with no terminals in the model
-                int numberOfLooseEndsInModel = wire.Joints.Count(j => j.Dangling);
-                for (int looseEndsIndex = 0; looseEndsIndex < numberOfLooseEndsInModel; ++looseEndsIndex)
-                {
-                    NationalInstruments.Dfir.Terminal dfirTerminal = dfirWire.CreateBranch();
-                    dfirTerminal.DataType = PFTypes.Void;
-                }
-
-                // Now split the wire up into multiple wires if there are multiple sinks
-                if (dfirWire.SinkTerminals.Count > 1)
-                {
-
-                }
             }
 
             // done with stored wires, set to null to avoid memory leaks

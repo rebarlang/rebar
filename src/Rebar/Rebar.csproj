@@ -216,9 +216,13 @@
     <Compile Include="Compiler\AutoBorrowTransform.cs" />
     <Compile Include="Common\Lifetime.cs" />
     <Compile Include="Compiler\DefaultNativeTargetCompileHandler.cs" />
+    <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
+    <Compile Include="Compiler\DfirTranslationHelpers.cs" />
     <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />
+    <Compile Include="Compiler\FunctionCompilerService.cs" />
     <Compile Include="Compiler\FunctionExecutionService.cs" />
     <Compile Include="Compiler\FunctionExecutionServiceInitialization.cs" />
+    <Compile Include="Compiler\FunctionMocReflector.cs" />
     <Compile Include="Compiler\FunctionSupportedTargetTransform.cs" />
     <Compile Include="Compiler\InsertDropTransform.cs" />
     <Compile Include="Compiler\InsertTerminateLifetimeTransform.cs" />
@@ -242,6 +246,8 @@
     <Compile Include="Compiler\Nodes\MethodCallNode.cs" />
     <Compile Include="Compiler\Nodes\OptionPatternStructure.cs" />
     <Compile Include="Compiler\Nodes\OptionPatternStructureSelector.cs" />
+    <Compile Include="Compiler\Nodes\PrimitiveTypeNode.cs" />
+    <Compile Include="Compiler\Nodes\SelfTypeNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeNode.cs" />
     <Compile Include="Compiler\Nodes\TerminateLifetimeTunnel.cs" />
     <Compile Include="Compiler\CreateNodeFacadesTransform.cs" />
@@ -262,10 +268,26 @@
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
+    <Compile Include="Compiler\TypeDiagram\TypeDiagramCompilerService.cs" />
+    <Compile Include="Compiler\TypeDiagram\TypeDiagramDfirBuilder.cs" />
+    <Compile Include="Compiler\TypeDiagram\TypeDiagramMocPlugin.cs" />
+    <Compile Include="Compiler\TypeDiagram\TypeDiagramMocReflector.cs" />
+    <Compile Include="Compiler\TypeDiagram\UnifyTypesAcrossWiresTransform.cs" />
+    <Compile Include="Compiler\TypeDiagram\ValidateTypeUsagesTransform.cs" />
+    <Compile Include="Compiler\TypeUnificationExtensions.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramDocumentType.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramProjectItemInfoService.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramPaletteLoader.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramEditorInfo.cs" />
     <Compile Include="Design\FunctionDiagramEditorInfo.cs" />
     <Compile Include="Design\OptionPatternStructureControl.cs" />
     <Compile Include="Design\OptionPatternStructureDiagramViewModel.cs" />
     <Compile Include="Design\OptionPatternStructureEditor.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramViewModelProvider.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramDocument.cs" />
+    <Compile Include="Design\TypeDiagram\TypeDiagramEditor.xaml.cs">
+      <DependentUpon>TypeDiagramEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -337,6 +359,9 @@
     <Compile Include="RebarTarget\SystemModel\TargetEnvoyCreationServiceBuilder.cs" />
     <Compile Include="RebarTarget\SystemModel\TargetKind.cs" />
     <Compile Include="RebarFeatureToggles.cs" />
+    <Compile Include="RebarTarget\TypeDiagramCompileHandler.cs" />
+    <Compile Include="RebarTarget\TypeDiagramCompileHandlerFactory.cs" />
+    <Compile Include="RebarTarget\TypeDiagramCompileHandlerFactoryFactory.cs" />
     <Compile Include="Resources\ContextHelp.resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -361,6 +386,11 @@
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
+    <Compile Include="SourceModel\TypeDiagram\PrimitiveType.cs" />
+    <Compile Include="SourceModel\TypeDiagram\SelfType.cs" />
+    <Compile Include="SourceModel\TypeDiagram\TypeDiagramCache.cs" />
+    <Compile Include="SourceModel\TypeDiagram\TypeDiagramCacheService.cs" />
+    <Compile Include="SourceModel\TypeDiagram\TypeDiagramDefinition.cs" />
     <Compile Include="SourceModel\FunctionalNode.cs" />
     <Compile Include="SourceModel\Functions.cs" />
     <Compile Include="SourceModel\IBeginLifetimeTunnel.cs" />
@@ -391,11 +421,16 @@
     <Compile Include="SourceModel\TerminateLifetime.cs" />
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
+    <Compile Include="SourceModel\TypePassthrough.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="Design\FunctionDiagramEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Design\TypeDiagram\TypeDiagramEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -494,6 +529,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\OptionPatternStructurePalette.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\TypeDiagramPalette.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\Diagram\Nodes\SelfType.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />

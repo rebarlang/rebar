@@ -10,6 +10,7 @@ using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.SourceModel;
+using Rebar.SourceModel.TypeDiagram;
 
 namespace Rebar.RebarTarget
 {
@@ -38,7 +39,7 @@ namespace Rebar.RebarTarget
         private static readonly List<BindingKeyword> _supportedFileTypes = new List<BindingKeyword>()
         {
             Function.FunctionDefinitionType,
-            // GTypeDefinition.ModelDefinitionTypeString
+            TypeDiagramDefinition.TypeDiagramDefinitionType,
         };
 
         #region ComponentSubtype Members

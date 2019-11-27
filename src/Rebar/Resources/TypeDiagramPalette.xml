@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PaletteControls PaletteBaseName="TypeDiagram" 
+  xmlns:pf="http://www.ni.com/PlatformFramework" 
+  xmlns:moc="http://www.ni.com/MocCommon"
+  xmlns:vi="http://www.ni.com/LabVIEW.VI"
+  xmlns:rb="http://www.ni.com/Rebar"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Category Display="Basic Types" UniqueId="Rebar:PaletteCategory.Basic Types" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="I32" UniqueId="Rebar:I32Type" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:PrimitiveType Type="Int32" />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="Bool" UniqueId="Rebar:BoolType" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:PrimitiveType Type="Boolean" />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+    <Leaf Display="String" UniqueId="Rebar:StringType" Weight="0.14" ImagePath="/NationalInstruments.LabVIEW.VI;component/Design/Resources/FlatSequence_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:PrimitiveType Type="String" />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+</Category>
+</PaletteControls>

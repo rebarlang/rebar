@@ -1053,4 +1053,16 @@
   <data name="StringSliceToStringSplitIterator_slice_Name" xml:space="preserve">
     <value>slice reference</value>
   </data>
+  <data name="PrimitiveType_type_Name" xml:space="preserve">
+    <value>type</value>
+  </data>
+  <data name="SelfType_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SelfType_Name" xml:space="preserve">
+    <value>Self</value>
+  </data>
+  <data name="SelfType_type_Name" xml:space="preserve">
+    <value>type</value>
+  </data>
 </root>

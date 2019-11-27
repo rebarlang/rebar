@@ -1843,6 +1843,15 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to type.
+        /// </summary>
+        internal static string PrimitiveType_type_Name {
+            get {
+                return ResourceManager.GetString("PrimitiveType_type_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
         internal static string Range_Description {
@@ -1992,6 +2001,33 @@ namespace Rebar.Resources {
         internal static string SelectReferenceNode_trueValueRef_Name {
             get {
                 return ResourceManager.GetString("SelectReferenceNode_trueValueRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SelfType_Description {
+            get {
+                return ResourceManager.GetString("SelfType_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Self.
+        /// </summary>
+        internal static string SelfType_Name {
+            get {
+                return ResourceManager.GetString("SelfType_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to type.
+        /// </summary>
+        internal static string SelfType_type_Name {
+            get {
+                return ResourceManager.GetString("SelfType_type_Name", resourceCulture);
             }
         }
         

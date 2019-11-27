@@ -3,6 +3,7 @@ using NationalInstruments.Core;
 using NationalInstruments.Dfir.Component;
 using Rebar.RebarTarget.SystemModel;
 using Rebar.SourceModel;
+using Rebar.SourceModel.TypeDiagram;
 
 namespace Rebar.RebarTarget
 {
@@ -34,7 +35,8 @@ namespace Rebar.RebarTarget
         /// <inheritdoc/>
         public override bool CanBeTopLevel(BindingKeyword modelDefinitionType)
         {
-            return modelDefinitionType.LocalName == Function.FunctionDefinitionType;
+            return modelDefinitionType.LocalName == Function.FunctionDefinitionType
+                || modelDefinitionType.LocalName == TypeDiagramDefinition.TypeDiagramDefinitionType;
         }
 
         /// <inheritdoc/>

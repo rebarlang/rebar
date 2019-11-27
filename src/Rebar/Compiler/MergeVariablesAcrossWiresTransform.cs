@@ -25,47 +25,18 @@ namespace Rebar.Compiler
 
         protected override void VisitNode(Node node)
         {
-            UnifyNodeInputTerminalTypes(node);
+            node.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             this.VisitRebarNode(node);
-        }
-
-        private void UnifyNodeInputTerminalTypes(Node node)
-        {
-            AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(node);
-            foreach (var nodeTerminal in node.InputTerminals)
-            {
-                var connectedWireTerminal = nodeTerminal.ConnectedTerminal;
-                VariableReference unifyWithVariable = connectedWireTerminal != null
-                    // Unify node input terminal with its connected source
-                    ? connectedWireTerminal.GetFacadeVariable()
-                    // Unify node input with immutable Void type
-                    : nodeTerminal.CreateNewVariableForUnwiredTerminal();
-                nodeFacade[nodeTerminal].UnifyWithConnectedWireTypeAsNodeInput(unifyWithVariable, _typeUnificationResults);
-            }
         }
 
         protected override void VisitWire(Wire wire)
         {
-            // Merge the wire's input terminal with its connected source
-            foreach (var wireTerminal in wire.InputTerminals)
-            {
-                var connectedNodeTerminal = wireTerminal.ConnectedTerminal;
-                if (connectedNodeTerminal != null)
-                {
-                    VariableReference wireVariable = wireTerminal.GetFacadeVariable(),
-                        nodeVariable = connectedNodeTerminal.GetFacadeVariable();
-                    wireTerminal.UnifyTerminalTypeWith(
-                        wireVariable.TypeVariableReference,
-                        nodeVariable.TypeVariableReference,
-                        _typeUnificationResults);
-                    wireVariable.MergeInto(nodeVariable);
-                }
-            }
+            wire.UnifyNodeInputTerminalTypes(_typeUnificationResults);
         }
 
         bool IDfirNodeVisitor<bool>.VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
-            UnifyNodeInputTerminalTypes(borrowTunnel);
+            borrowTunnel.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             Terminal inputTerminal = borrowTunnel.InputTerminals[0], outputTerminal = borrowTunnel.OutputTerminals[0];
             OutputLifetimeInterruptsInputVariable(borrowTunnel.InputTerminals[0], borrowTunnel.OutputTerminals[0]);
             return true;
@@ -80,7 +51,7 @@ namespace Rebar.Compiler
         {
             if (dataAccessor.Terminal.Direction == Direction.Input)
             {
-                UnifyNodeInputTerminalTypes(dataAccessor);
+                dataAccessor.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             }
             return true;
         }
@@ -106,13 +77,13 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            UnifyNodeInputTerminalTypes(iterateTunnel);
+            iterateTunnel.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 
         bool IDfirNodeVisitor<bool>.VisitLockTunnel(LockTunnel lockTunnel)
         {
-            UnifyNodeInputTerminalTypes(lockTunnel);
+            lockTunnel.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             OutputLifetimeInterruptsInputVariable(lockTunnel.InputTerminals[0], lockTunnel.OutputTerminals[0]);
             return true;
         }
@@ -139,7 +110,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
-            UnifyNodeInputTerminalTypes(optionPatternStructureSelector);
+            optionPatternStructureSelector.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 
@@ -156,13 +127,13 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitTunnel(Tunnel tunnel)
         {
-            UnifyNodeInputTerminalTypes(tunnel);
+            tunnel.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 
         bool IDfirNodeVisitor<bool>.VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
-            UnifyNodeInputTerminalTypes(unwrapOptionTunnel);
+            unwrapOptionTunnel.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 
