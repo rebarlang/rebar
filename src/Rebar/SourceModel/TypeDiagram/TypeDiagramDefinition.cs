@@ -42,7 +42,7 @@ namespace Rebar.SourceModel.TypeDiagram
         /// <summary>
         /// DefinitionType
         /// </summary>
-        public const string TypeDiagramDefinitionType = "Rebar.SourceModel.TypeDiagramDefinition";
+        public const string TypeDiagramDefinitionType = "Rebar.SourceModel.TypeDiagram.TypeDiagramDefinition";
 
         /// <summary>
         ///  Get the root diagram of the type.
