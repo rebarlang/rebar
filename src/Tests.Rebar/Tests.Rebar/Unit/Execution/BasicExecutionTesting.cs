@@ -293,5 +293,21 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual(-1, BitConverter.ToInt32(inspectValue, 0));
             Assert.AreEqual(10, BitConverter.ToInt32(inspectValue, 4));
         }
+
+        [TestMethod]
+        public void ReborrowMutableReferenceAsImmutableAndOutput_Execute_CorrectValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var mutableBorrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Mutable, 1, true, true);
+            ConnectConstantToInputTerminal(mutableBorrow.InputTerminals[0], PFTypes.Int32, 5, true);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(mutableBorrow.OutputTerminals[0]);
+            // set mutable reference wire to mutable so that it gets a local allocation
+            mutableBorrow.OutputTerminals[0].GetWireIfConnected().SetWireBeginsMutableVariable(true);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 5);
+        }
     }
 }

@@ -17,9 +17,14 @@ namespace Rebar.RebarTarget.LLVM
                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         }
 
+        public static bool IsUninitialized(this LLVMValueRef valueReference)
+        {
+            return valueReference.Pointer == IntPtr.Zero;
+        }
+
         public static void ThrowIfNull(this LLVMValueRef valueReference)
         {
-            if (valueReference.Pointer == IntPtr.Zero)
+            if (valueReference.IsUninitialized())
             {
                 throw new NullReferenceException();
             }

@@ -479,10 +479,15 @@ namespace Rebar.RebarTarget.LLVM
 
         private void InitializeLocalAllocations()
         {
-            IEnumerable<LocalAllocationValueSource> localAllocations =
-                _variableValues.Values.Concat(_additionalValues.Values).OfType<LocalAllocationValueSource>();
+            IEnumerable<LocalAllocationValueSource> localAllocations = _variableValues.Values
+                .Concat(_additionalValues.Values)
+                .OfType<LocalAllocationValueSource>();
             foreach (var localAllocation in localAllocations)
             {
+                if (!localAllocation.AllocationPointer.IsUninitialized())
+                {
+                    continue;
+                }
                 LLVMTypeRef allocationType = localAllocation.AllocationNIType.AsLLVMType();
                 LLVMValueRef allocationPointer = _builder.CreateAlloca(allocationType, localAllocation.AllocationName);
                 localAllocation.AllocationPointer = allocationPointer;
@@ -846,7 +851,12 @@ namespace Rebar.RebarTarget.LLVM
         {
             VariableReference input = explicitBorrowNode.InputTerminals[0].GetTrueVariable(),
                 output = explicitBorrowNode.OutputTerminals[0].GetTrueVariable();
-            BorrowFromVariableIntoVariable(input, output);
+            ValueSource inputSource = _variableValues[input],
+                outputSource = _variableValues[output];
+            if (inputSource != outputSource)
+            {
+                BorrowFromVariableIntoVariable(input, output);
+            }
             return true;
         }
 
