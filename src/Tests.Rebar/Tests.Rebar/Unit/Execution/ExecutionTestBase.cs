@@ -14,10 +14,10 @@ namespace Tests.Rebar.Unit.Execution
 {
     public abstract class ExecutionTestBase : CompilerTestBase
     {
-        internal TestExecutionInstance CompileAndExecuteFunction(DfirRoot function)
+        internal TestExecutionInstance CompileAndExecuteFunction(DfirRoot function, params DfirRoot[] otherFunctions)
         {
             var testExecutionInstance = new TestExecutionInstance();
-            testExecutionInstance.CompileAndExecuteFunction(this, function);
+            testExecutionInstance.CompileAndExecuteFunction(this, function, otherFunctions);
             return testExecutionInstance;
         }
 

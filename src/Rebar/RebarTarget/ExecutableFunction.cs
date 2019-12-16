@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using NationalInstruments.Compiler;
 using NationalInstruments.Composition;
 using NationalInstruments.DataValues;
 using NationalInstruments.ExecutionFramework;
@@ -25,7 +26,7 @@ namespace Rebar.RebarTarget
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;
             CompiledName = runtimeIdentity.EditorName;
-            RuntimeName = runtimeIdentity.RuntimeName;
+            RuntimeName = FunctionCompileHandler.FunctionLLVMName((SpecAndQName)runtimeIdentity);
             _llvmContext = context;
         }
 

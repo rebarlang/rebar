@@ -139,7 +139,8 @@ namespace Rebar.RebarTarget
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
         {
-            return functionSpecAndQName.RuntimeName;
+            QualifiedName relativeQualifiedName = functionSpecAndQName.QualifiedName.Name.AbsoluteQualifiedNameToQualifiedName();
+            return string.Join("::", relativeQualifiedName.Identifiers);
         }
 
         #endregion
