@@ -61,6 +61,16 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            foreach (Terminal inputTerminal in buildTupleNode.InputTerminals)
+            {
+                MarkTrueVariableOfTerminalConsumed(inputTerminal);
+            }
+            MarkFacadeVariableOfTerminalLive(buildTupleNode.OutputTerminals[0]);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             MarkFacadeVariableOfTerminalLive(constant.OutputTerminal);
@@ -72,6 +82,21 @@ namespace Rebar.Compiler
             if (dataAccessor.Terminal.Direction == Direction.Input)
             {
                 MarkTrueVariableOfTerminalConsumed(dataAccessor.Terminal);
+            }
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            Terminal inputTerminal = decomposeTupleNode.InputTerminals[0];
+            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            {
+                MarkFacadeVariableOfTerminalInterrupted(inputTerminal);
+            }
+            MarkTrueVariableOfTerminalConsumed(inputTerminal);
+            foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
+            {
+                MarkFacadeVariableOfTerminalLive(outputTerminal);
             }
             return true;
         }

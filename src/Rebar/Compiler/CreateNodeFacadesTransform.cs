@@ -99,6 +99,23 @@ namespace Rebar.Compiler
             public TypeVariableReference LifetimeType { get; }
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            TypeVariableReference[] elementTypes = new TypeVariableReference[buildTupleNode.InputTerminals.Count];
+            for (int i = 0; i < buildTupleNode.InputTerminals.Count; ++i)
+            {
+                Terminal inputTerminal = buildTupleNode.InputTerminals[i];
+                // TODO: constrain these to be unbounded lifetime
+                TypeVariableReference elementType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, elementType);
+                elementTypes[i] = elementType;
+            }
+            TypeVariableReference tupleType = _typeVariableSet.CreateReferenceToTupleType(elementTypes);
+            Terminal outputTerminal = buildTupleNode.OutputTerminals[0];
+            _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, tupleType);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             Terminal valueOutput = constant.OutputTerminals.ElementAt(0);
@@ -127,6 +144,51 @@ namespace Rebar.Compiler
             {
                 TypeVariableReference dataTypeVariable = _typeVariableSet.CreateTypeVariableReferenceFromNIType(dataAccessor.DataItem.DataType);
                 _nodeFacade[dataAccessor.Terminal] = new SimpleTerminalFacade(dataAccessor.Terminal, dataTypeVariable);
+            }
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            TypeVariableReference[] elementTypes = new TypeVariableReference[decomposeTupleNode.OutputTerminals.Count];
+            TypeVariableReference mutabilityType = default(TypeVariableReference);
+            ReferenceInputTerminalLifetimeGroup inputTerminalGroup = null;
+            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            {
+                mutabilityType = _typeVariableSet.CreateReferenceToMutabilityType();
+                var lifetimeVariableGroup = LifetimeTypeVariableGroup.CreateFromNode(decomposeTupleNode);
+                inputTerminalGroup = _nodeFacade.CreateInputLifetimeGroup(
+                    InputReferenceMutability.Polymorphic,
+                    lifetimeVariableGroup.LazyNewLifetime,
+                    lifetimeVariableGroup.LifetimeType);
+            }
+
+            for (int i = 0; i < decomposeTupleNode.OutputTerminals.Count; ++i)
+            {
+                Terminal outputTerminal = decomposeTupleNode.OutputTerminals[i];
+                TypeVariableReference elementType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                TypeVariableReference outputTerminalType = decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow
+                    ? _typeVariableSet.CreateReferenceToPolymorphicReferenceType(
+                        mutabilityType,
+                        elementType,
+                        inputTerminalGroup.LifetimeType)
+                    : elementType;
+                _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, outputTerminalType);
+                elementTypes[i] = elementType;
+            }
+
+            TypeVariableReference tupleType = _typeVariableSet.CreateReferenceToTupleType(elementTypes);
+            Terminal inputTerminal = decomposeTupleNode.InputTerminals[0];
+            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            {
+                inputTerminalGroup.AddTerminalFacade(
+                    inputTerminal,
+                    tupleType,
+                    mutabilityType);
+            }
+            else
+            {
+                _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, tupleType);
             }
             return true;
         }

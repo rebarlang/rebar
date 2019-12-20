@@ -122,6 +122,12 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            CreateLocalAllocationForVariable(buildTupleNode.OutputTerminals[0].GetTrueVariable());
+            return true;
+        }
+
         public bool VisitConstant(Constant constant)
         {
             CreateLocalAllocationForVariable(constant.OutputTerminal.GetTrueVariable());
@@ -135,6 +141,15 @@ namespace Rebar.RebarTarget
                 VariableReference variable = dataAccessor.Terminal.GetTrueVariable();
                 // For now, create a local allocation and copy the parameter value into it.
                 CreateLocalAllocationForVariable(variable);
+            }
+            return true;
+        }
+
+        public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
+            {
+                CreateLocalAllocationForVariable(outputTerminal.GetTrueVariable());
             }
             return true;
         }

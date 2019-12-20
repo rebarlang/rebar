@@ -42,6 +42,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            buildTupleNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
         {
             return true;
@@ -53,6 +59,12 @@ namespace Rebar.Compiler
             {
                 dataAccessor.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             }
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            decomposeTupleNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 

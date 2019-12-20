@@ -231,6 +231,8 @@
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\NodeInsertionTypeUnificationResultFactory.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
+    <Compile Include="Compiler\Nodes\BuildTupleNode.cs" />
+    <Compile Include="Compiler\Nodes\DecomposeTupleNode.cs" />
     <Compile Include="Compiler\Nodes\DropNode.cs" />
     <Compile Include="Compiler\Nodes\ExplicitBorrowNode.cs" />
     <Compile Include="Compiler\Nodes\FunctionalNode.cs" />
@@ -268,6 +270,7 @@
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
     <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
+    <Compile Include="Compiler\TupleNodeHelpers.cs" />
     <Compile Include="Compiler\TypeDiagram\TypeDiagramCompilerService.cs" />
     <Compile Include="Compiler\TypeDiagram\TypeDiagramDfirBuilder.cs" />
     <Compile Include="Compiler\TypeDiagram\TypeDiagramMocPlugin.cs" />

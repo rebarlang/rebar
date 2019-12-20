@@ -60,6 +60,12 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        {
+            buildTupleNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
+            return true;
+        }
+
         public bool VisitConstant(Constant constant)
         {
             // This node has no inputs.
@@ -87,6 +93,12 @@ namespace Rebar.Compiler
             {
                 dataAccessor.SetDfirMessage(Messages.FeatureNotEnabled);
             }
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        {
+            ValidateRequiredInputTerminal(decomposeTupleNode.InputTerminals[0]);
             return true;
         }
 

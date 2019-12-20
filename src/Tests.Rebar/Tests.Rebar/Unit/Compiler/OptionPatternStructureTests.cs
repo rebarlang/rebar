@@ -36,7 +36,7 @@ namespace Tests.Rebar.Unit.Compiler
             RunSemanticAnalysisUpToValidation(function);
 
             OptionPatternStructureSelector selector = patternStructure.Selector;
-            Assert.IsTrue(selector.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.RequiredTerminalUnconnected));
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(selector.InputTerminals[0]);
         }
 
         [TestMethod]
@@ -49,7 +49,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunSemanticAnalysisUpToValidation(function);
 
-            Assert.IsTrue(outputTunnel.InputTerminals[1].GetDfirMessages().Any(message => message.Descriptor == AllModelsOfComputationErrorMessages.RequiredTerminalUnconnected));
+            AssertTerminalHasRequiredTerminalUnconnectedMessage(outputTunnel.InputTerminals[1]);
         }
     }
 }

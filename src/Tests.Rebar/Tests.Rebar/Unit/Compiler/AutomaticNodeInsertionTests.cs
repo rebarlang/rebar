@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -205,6 +206,24 @@ namespace Tests.Rebar.Unit.Compiler
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
         }
 
+        [TestMethod]
+        public void UnconsumedTupleVariable_AutomaticNodeInsertion_TupleIsMoveDecomposedAndElementsAreDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], PFTypes.Boolean, false);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            DecomposeTupleNode decomposeTuple = AssertDiagramContainsNodeWithSources<DecomposeTupleNode>(function.BlockDiagram, buildTuple.OutputTerminals[0]);
+            Assert.AreEqual(DecomposeMode.Move, decomposeTuple.DecomposeMode);
+            AssertVariablesReferenceSame(buildTuple.OutputTerminals[0].GetTrueVariable(), decomposeTuple.InputTerminals[0].GetTrueVariable());
+            Assert.AreEqual(2, decomposeTuple.OutputTerminals.Count);
+            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[0]);
+            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[1]);
+        }
+
         #region StringToSlice insertion
 
         [TestMethod]
@@ -236,11 +255,11 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
-            ExplicitBorrowNode reborrowNode = AssertDiagramContainsNodeWithSources<ExplicitBorrowNode>(function.BlockDiagram, b => b != borrow, borrow.OutputTerminals[0]);
+            ExplicitBorrowNode reborrowNode = AssertDiagramContainsNodeWithSources<ExplicitBorrowNode>(function.BlockDiagram, borrow.OutputTerminals[0]);
             FunctionalNode stringToSlice = AssertDiagramContainsNodeWithSources<FunctionalNode>(function.BlockDiagram, f => f.Signature == Signatures.StringToSliceType, reborrowNode.OutputTerminals[0]);
             Assert.AreEqual(stringToSlice.OutputTerminals[0], concatString.InputTerminals[0].GetImmediateSourceTerminal());
             TerminateLifetimeNode innerTerminateLifetime = AssertDiagramContainsNodeWithSources<TerminateLifetimeNode>(function.BlockDiagram, concatString.OutputTerminals[0]);
-            TerminateLifetimeNode outerTerminateLifetime = AssertDiagramContainsNodeWithSources<TerminateLifetimeNode>(function.BlockDiagram, t => t != innerTerminateLifetime, innerTerminateLifetime.OutputTerminals[0]);
+            TerminateLifetimeNode outerTerminateLifetime = AssertDiagramContainsNodeWithSources<TerminateLifetimeNode>(function.BlockDiagram, innerTerminateLifetime.OutputTerminals[0]);
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, outerTerminateLifetime.OutputTerminals[0]);
         }
 
@@ -253,14 +272,17 @@ namespace Tests.Rebar.Unit.Compiler
 
         private TNode AssertDiagramContainsNodeWithSources<TNode>(Diagram diagram, Func<TNode, bool> nodePredicate, params Terminal[] sources) where TNode : Node
         {
-            TNode node = diagram.Nodes.OfType<TNode>().FirstOrDefault(nodePredicate ?? (tNode => true));
-            Assert.IsNotNull(node, $"Expected to find a {typeof(TNode).Name}");
-            Assert.AreEqual(sources.Length, node.InputTerminals.Count);
-            for (int i = 0; i < sources.Length; ++i)
+            nodePredicate = nodePredicate ?? (tNode => true);
+            foreach (TNode node in diagram.Nodes.OfType<TNode>().Where(nodePredicate))
             {
-                Assert.AreEqual(sources[i], node.InputTerminals[i].GetImmediateSourceTerminal());
+                if (sources.Length == node.InputTerminals.Count
+                    && sources.Zip(node.InputTerminals).All(pair => pair.Key == pair.Value.GetImmediateSourceTerminal()))
+                {
+                    return node;
+                }
             }
-            return node;
+            Assert.Fail($"Expected to find a {typeof(TNode).Name} with expected sources");
+            return null;
         }
     }
 }

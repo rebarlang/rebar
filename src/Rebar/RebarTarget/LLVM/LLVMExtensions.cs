@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
@@ -199,6 +200,11 @@ namespace Rebar.RebarTarget.LLVM
                             return CreateLLVMSliceReferenceType(sliceElementType.AsLLVMType());
                         }
                         return LLVMTypeRef.PointerType(referentType.AsLLVMType(), 0u);
+                    }
+                    if (niType.IsCluster())
+                    {
+                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(field => field.GetDataType().AsLLVMType()).ToArray();
+                        return LLVMTypeRef.StructType(fieldTypes, false);
                     }
                     if (niType == DataTypes.FileHandleType)
                     {
