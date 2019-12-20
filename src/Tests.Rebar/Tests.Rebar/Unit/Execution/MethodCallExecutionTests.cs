@@ -13,7 +13,25 @@ namespace Tests.Rebar.Unit.Execution
     public class MethodCallExecutionTests : ExecutionTestBase
     {
         [TestMethod]
-        public void FunctionWithCallToFunction_Execute_CalleeFunctionExecutesAndReturnsCorrectResult()
+        public void FunctionWithCallToParameterlessFunction_Execute_CalleeFunctionsExecutes()
+        {
+            string calleeName = "callee";
+            NIType calleeType = DefineFunctionSignatureWithNoParameters(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            Constant calleeConstant = Constant.Create(calleeFunction.BlockDiagram, 5, PFTypes.Int32);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(calleeConstant.OutputTerminal);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 5);
+        }
+
+        [TestMethod]
+        public void FunctionWithCallToFunctionWithInAndOutParameters_Execute_CalleeFunctionExecutesAndReturnsCorrectResult()
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
@@ -36,12 +54,52 @@ namespace Tests.Rebar.Unit.Execution
             AssertByteArrayIsInt32(inspectValue, 6);
         }
 
+        [TestMethod]
+        public void FunctionWithCallToFunctionWithTwoOutParameters_Execute_CalleeFunctionExecutesAndReturnsCorrectResults()
+        {
+            string calleeName = "callee";
+            NIType calleeType = DefineFunctionSignatureWithTwoOutParameters(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DataAccessor outputDataAccessor0 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Input);
+            DataAccessor outputDataAccessor1 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
+            ConnectConstantToInputTerminal(outputDataAccessor0.Terminal, PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(outputDataAccessor1.Terminal, PFTypes.Int32, 6, false);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            FunctionalNode inspect0 = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[0]);
+            FunctionalNode inspect1 = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect0);
+            AssertByteArrayIsInt32(inspectValue, 5);
+            inspectValue = executionInstance.GetLastValueFromInspectNode(inspect1);
+            AssertByteArrayIsInt32(inspectValue, 6);
+        }
+
+        private NIType DefineFunctionSignatureWithNoParameters(string functionName)
+        {
+            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
+            functionBuilder.IsStatic = true;
+            return functionBuilder.CreateType();
+        }
+
         private NIType DefineFunctionSignatureWithInAndOutParameters(string functionName)
         {
             NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
             functionBuilder.IsStatic = true;
             functionBuilder.DefineParameter(PFTypes.Int32, "in", NIParameterPassingRule.Required, NIParameterPassingRule.NotAllowed, "in");
             functionBuilder.DefineParameter(PFTypes.Int32, "out", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out");
+            return functionBuilder.CreateType();
+        }
+
+        private NIType DefineFunctionSignatureWithTwoOutParameters(string functionName)
+        {
+            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
+            functionBuilder.IsStatic = true;
+            functionBuilder.DefineParameter(PFTypes.Int32, "out0", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out0");
+            functionBuilder.DefineParameter(PFTypes.Int32, "out1", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out1");
             return functionBuilder.CreateType();
         }
 
