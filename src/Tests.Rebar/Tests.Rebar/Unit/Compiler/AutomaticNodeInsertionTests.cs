@@ -265,6 +265,28 @@ namespace Tests.Rebar.Unit.Compiler
 
         #endregion
 
+        #region Async node decomposition
+
+        [TestMethod]
+        public void Yield_AutomaticNodeInsertion_YieldReplacedWithCreateYieldPromiseAndAwaitNode()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
+            Constant constant = ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], PFTypes.Int32, false);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            ExplicitBorrowNode borrowNode = AssertDiagramContainsNodeWithSources<ExplicitBorrowNode>(function.BlockDiagram, constant.OutputTerminal);
+            FunctionalNode createYieldPromise = AssertDiagramContainsNodeWithSources<FunctionalNode>(
+                function.BlockDiagram,
+                f => f.Signature == Signatures.CreateYieldPromiseType,
+                borrowNode.OutputTerminals[0]);
+            var awaitNode = AssertDiagramContainsNodeWithSources<AwaitNode>(function.BlockDiagram, createYieldPromise.OutputTerminals[0]);
+            Assert.IsNull(yieldNode.ParentDiagram);
+        }
+
+        #endregion
+
         private TNode AssertDiagramContainsNodeWithSources<TNode>(Diagram diagram, params Terminal[] sources) where TNode : Node
         {
             return AssertDiagramContainsNodeWithSources<TNode>(diagram, null, sources);

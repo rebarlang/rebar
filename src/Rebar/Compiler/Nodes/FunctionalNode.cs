@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -35,6 +36,10 @@ namespace Rebar.Compiler.Nodes
 
         private void CreateTerminalsFromSignature(NIType functionSignature)
         {
+            if (functionSignature.IsUnset())
+            {
+                throw new ArgumentException("Cannot create terminals from an Unset signature", nameof(functionSignature));
+            }
             Signature signature = Signatures.GetSignatureForNIType(functionSignature);
             foreach (SignatureTerminal signatureTerminal in signature.Inputs)
             {

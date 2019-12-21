@@ -13,24 +13,18 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource inputSource = compiler.GetTerminalValueSource(someConstructorNode.InputTerminals[0]),
                 outputSource = compiler.GetTerminalValueSource(someConstructorNode.OutputTerminals[0]);
-            // CreateSomeValueStruct creates a const struct, which isn't allowed since
-            // inputSource.GetValue isn't always a constant.
-
-            LLVMValueRef[] someFieldValues = new[]
-            {
-                true.AsLLVMValue(),
-                inputSource.GetValue(compiler._builder)
-            };
-            ((LocalAllocationValueSource)outputSource).UpdateStructValue(compiler._builder, someFieldValues);
+            LLVMTypeRef outputType = someConstructorNode.OutputTerminals[0].GetTrueVariable().Type.AsLLVMType();
+            LLVMValueRef innerValue = inputSource.GetValue(compiler.Builder);
+            ((IUpdateableValueSource)outputSource).UpdateValue(compiler.Builder, compiler.Builder.BuildOptionValue(outputType, innerValue));
         }
 
         private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
         {
-            ValueSource outputSource = compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
+            var outputSource = (IUpdateableValueSource)compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
             LLVMTypeRef outputType = noneConstructorNode
                 .OutputTerminals[0].GetTrueVariable()
                 .Type.AsLLVMType();
-            outputSource.UpdateValue(compiler._builder, LLVMSharp.LLVM.ConstNull(outputType));
+            outputSource.UpdateValue(compiler.Builder, compiler.Builder.BuildOptionValue(outputType, null));
         }
 
         private static void BuildOptionDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionDropFunction)

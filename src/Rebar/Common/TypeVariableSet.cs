@@ -188,12 +188,7 @@ namespace Rebar.Common
 
             public override NIType RenderNIType()
             {
-                NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
-                for (int i = 0; i < TypeParameters.Count; ++i)
-                {
-                    clusterBuilder.DefineField(TypeParameters[i].RenderNIType(), $"_{i}");
-                }
-                return clusterBuilder.CreateType();
+                return TypeParameters.Select(p => p.RenderNIType()).DefineTupleType();
             }
         }
 

@@ -42,5 +42,7 @@ namespace Rebar.Compiler.Nodes
         {
             return visitor.VisitIterateTunnel(this);
         }
+
+        public string IntermediateValueName => $"iterateIntermediate{UniqueId}";
     }
 }

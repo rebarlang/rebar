@@ -215,7 +215,7 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(growBlock);
             string specializedName = MonomorphizeFunctionName("vector_grow", elementType.ToEnumerable());
-            LLVMValueRef vectorGrowFunction = compiler.GetSpecializedFunction(
+            LLVMValueRef vectorGrowFunction = compiler.GetCachedFunction(
                 specializedName,
                 () => CreateVectorGrowFunction(compiler, specializedName, elementType));
             builder.CreateCall(vectorGrowFunction, new LLVMValueRef[] { vectorPtr }, string.Empty);

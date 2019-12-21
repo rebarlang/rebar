@@ -19,7 +19,7 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal abstract class Allocator<TValueSource, TAllocation, TReference> : VisitorTransformBase, IDfirNodeVisitor<bool>
+    internal abstract class Allocator<TValueSource, TAllocation, TReference> : VisitorTransformBase, IDfirNodeVisitor<bool>, IInternalDfirNodeVisitor<bool>
         where TAllocation : TValueSource 
         where TReference : TValueSource
     {
@@ -48,6 +48,15 @@ namespace Rebar.RebarTarget
             var localAllocation = CreateLocalAllocation(variable);
             _variableAllocations[variable] = localAllocation;
             return localAllocation;
+        }
+
+        protected abstract TAllocation CreateOutputParameterAllocation(VariableReference outputParameterVariable);
+
+        private TAllocation CreateOutputParameterAllocationForVariable(VariableReference outputParameterVariable)
+        {
+            var allocation = CreateOutputParameterAllocation(outputParameterVariable);
+            _variableAllocations[outputParameterVariable] = allocation;
+            return allocation;
         }
 
         protected abstract TReference CreateConstantLocalReference(VariableReference referencedVariable);
@@ -107,6 +116,24 @@ namespace Rebar.RebarTarget
                 {
                     ReuseValueSource(sourceVariable, sinkVariable);
                 }
+            }
+        }
+
+        protected override void VisitDfirRoot(DfirRoot dfirRoot)
+        {
+            dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).ForEach(VisitDataItem);
+            base.VisitDfirRoot(dfirRoot);
+        }
+
+        private void VisitDataItem(DataItem dataItem)
+        {
+            if (dataItem.IsInput)
+            {
+                CreateLocalAllocationForVariable(dataItem.GetVariable());
+            }
+            else
+            {
+                CreateOutputParameterAllocationForVariable(dataItem.GetVariable());
             }
         }
 
@@ -190,9 +217,8 @@ namespace Rebar.RebarTarget
         {
             VariableReference outputVariable = iterateTunnel.OutputTerminals[0].GetTrueVariable();
             CreateLocalAllocationForVariable(outputVariable);
-            _additionalAllocations[iterateTunnel] = CreateLocalAllocation(
-                "iterateTunnel" + iterateTunnel.UniqueId,
-                outputVariable.Type.CreateOption());
+            _additionalAllocations[iterateTunnel.IntermediateValueName] =
+                CreateLocalAllocation(iterateTunnel.IntermediateValueName, outputVariable.Type.CreateOption());
             return true;
         }
 
@@ -290,5 +316,28 @@ namespace Rebar.RebarTarget
         }
 
         #endregion
+
+        #region IInternalDfirNodeVisitor implementation
+
+        bool IInternalDfirNodeVisitor<bool>.VisitAwaitNode(AwaitNode awaitNode)
+        {
+            VariableReference outputVariable = awaitNode.OutputTerminal.GetTrueVariable();
+            // It may be the case that our output variable is the same as an upstream variable (e.g., because
+            // it represents a passthrough of an async node). In that case we should reuse the value source
+            // we already have for it.
+            if (!_variableAllocations.ContainsKey(outputVariable))
+            {
+                CreateLocalAllocationForVariable(outputVariable);
+            }
+            return true;
+        }
+
+        bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
+        {
+            CreateLocalAllocationForVariable(createMethodCallPromise.PromiseTerminal.GetTrueVariable());
+            return true;
+        }
+
+#endregion
     }
 }

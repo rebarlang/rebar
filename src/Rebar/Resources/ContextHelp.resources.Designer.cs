@@ -2903,5 +2903,41 @@ namespace Rebar.Resources {
                 return ResourceManager.GetString("Xor_result_Name", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string Yield_Description {
+            get {
+                return ResourceManager.GetString("Yield_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yield.
+        /// </summary>
+        internal static string Yield_Name {
+            get {
+                return ResourceManager.GetString("Yield_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value reference.
+        /// </summary>
+        internal static string Yield_valueRef_in_Name {
+            get {
+                return ResourceManager.GetString("Yield_valueRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value reference.
+        /// </summary>
+        internal static string Yield_valueRef_out_Name {
+            get {
+                return ResourceManager.GetString("Yield_valueRef_out_Name", resourceCulture);
+            }
+        }
     }
 }

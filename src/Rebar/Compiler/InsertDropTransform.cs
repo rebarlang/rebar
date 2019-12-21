@@ -26,14 +26,23 @@ namespace Rebar.Compiler
                 Diagram parentDiagram = liveUnboundedLifetimeVariable.Terminal.ParentDiagram;
                 if (liveUnboundedLifetimeVariable.Variable.Type.IsCluster())
                 {
-                    InsertDecompositionForTupleVariable(parentDiagram, liveUnboundedLifetimeVariable);
+                    DecomposeTupleNode decomposeTuple = InsertDecompositionForTupleVariable(
+                        parentDiagram,
+                        liveUnboundedLifetimeVariable,
+                        _unificationResultFactory);
+                    foreach (Terminal outputTerminal in decomposeTuple.OutputTerminals)
+                    {
+                        _lifetimeVariableAssociation.MarkVariableLive(outputTerminal.GetFacadeVariable(), outputTerminal);
+                    }
+                    _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
                     continue;
                 }
-                InsertDropForVariable(parentDiagram, liveUnboundedLifetimeVariable);
+                InsertDropForVariable(parentDiagram, liveUnboundedLifetimeVariable, _unificationResultFactory);
+                _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
             }
         }
 
-        private void InsertDropForVariable(Diagram parentDiagram, LiveVariable liveUnboundedLifetimeVariable)
+        internal static void InsertDropForVariable(Diagram parentDiagram, LiveVariable liveUnboundedLifetimeVariable, ITypeUnificationResultFactory unificationResultFactory)
         {
             var drop = new DropNode(parentDiagram);
             Terminal inputTerminal = drop.InputTerminals[0];
@@ -42,11 +51,10 @@ namespace Rebar.Compiler
                 inputTerminal,
                 parentDiagram.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
 
-            liveUnboundedLifetimeVariable.ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, _unificationResultFactory);
-            _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
+            liveUnboundedLifetimeVariable.ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, unificationResultFactory);
         }
 
-        private void InsertDecompositionForTupleVariable(Diagram parentDiagram, LiveVariable liveTupleVariable)
+        internal static DecomposeTupleNode InsertDecompositionForTupleVariable(Diagram parentDiagram, LiveVariable liveTupleVariable, ITypeUnificationResultFactory unificationResultFactory)
         {
             NIType variableType = liveTupleVariable.Variable.Type;
             DecomposeTupleNode decomposeTuple = TupleNodeHelpers.CreateDecomposeTupleNodeWithFacades(
@@ -57,12 +65,8 @@ namespace Rebar.Compiler
             Terminal tupleInputTerminal = decomposeTuple.InputTerminals[0];
             liveTupleVariable.ConnectToTerminalAsInputAndUnifyVariables(
                 tupleInputTerminal,
-                _unificationResultFactory);
-            _lifetimeVariableAssociation.MarkVariableConsumed(liveTupleVariable.Variable);
-            foreach (Terminal outputTerminal in decomposeTuple.OutputTerminals)
-            {
-                _lifetimeVariableAssociation.MarkVariableLive(outputTerminal.GetFacadeVariable(), outputTerminal);
-            }
+                unificationResultFactory);
+            return decomposeTuple;
         }
     }
 }

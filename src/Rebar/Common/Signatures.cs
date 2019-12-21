@@ -440,6 +440,45 @@ namespace Rebar.Common
                 DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "dataRef");
             WriteStringToFileHandleType = functionTypeBuilder.CreateType();
+
+            {
+                functionTypeBuilder = PFTypes.Factory.DefineFunction("Poll");
+                NIType promiseType = AddGenericDataTypeParameter(functionTypeBuilder, "TPromise");
+                NIType valueType = AddGenericDataTypeParameter(functionTypeBuilder, "TValue");
+                AddInputOutputParameter(
+                    functionTypeBuilder,
+                    promiseType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                    "promiseRef");
+                AddInputParameter(
+                    functionTypeBuilder,
+                    DataTypes.WakerType,
+                    "waker");
+                AddOutputParameter(
+                    functionTypeBuilder,
+                    valueType.CreateOption(),
+                    "result");
+                PromisePollType = functionTypeBuilder.CreateType();
+            }
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("Yield");
+            AddInputOutputParameter(
+                functionTypeBuilder,
+                AddGenericDataTypeParameter(functionTypeBuilder, "T").CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
+                "valueRef");
+            YieldType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateYieldPromise");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateImmutableReference(tLifetimeParameter),
+                "valueRef");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateImmutableReference(tLifetimeParameter).CreateYieldPromise(),
+                "promise");
+            CreateYieldPromiseType = functionTypeBuilder.CreateType();
         }
 
         #region Testing functions
@@ -510,6 +549,16 @@ namespace Rebar.Common
         public static NIType WriteStringToFileHandleType { get; }
 
         public static NIType ReadLineFromFileHandleType { get; }
+
+        public static NIType PromisePollType { get; }
+
+        #region Yield
+
+        public static NIType YieldType { get; }
+
+        public static NIType CreateYieldPromiseType { get; }
+
+        #endregion
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {

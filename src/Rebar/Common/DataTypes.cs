@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.DataTypes;
 
@@ -41,6 +42,14 @@ namespace Rebar.Common
         public static NIType FileHandleType { get; }
 
         public static NIType FakeDropType { get; }
+
+        public static NIType PromiseInterfaceGenericType { get; }
+
+        internal static NIType WakerType { get; }
+
+        public static NIType YieldPromiseGenericType { get; }
+
+        public static NIType MethodCallPromiseGenericType { get; }
 
         static DataTypes()
         {
@@ -131,6 +140,28 @@ namespace Rebar.Common
             var fakeDropTypeBuilder = PFTypes.Factory.DefineValueClass("FakeDrop");
             fakeDropTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             FakeDropType = fakeDropTypeBuilder.CreateType();
+
+            var promiseInterfaceGenericTypeBuilder = PFTypes.Factory.DefineReferenceInterface("Promise");
+            promiseInterfaceGenericTypeBuilder.MakeGenericParameters("TValue");
+            promiseInterfaceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            PromiseInterfaceGenericType = promiseInterfaceGenericTypeBuilder.CreateType();
+
+            var wakerTypeBuilder = PFTypes.Factory.DefineValueClass("Waker");
+            WakerType = wakerTypeBuilder.CreateType();
+
+            var yieldPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("YieldPromise");
+            var yieldParameters = yieldPromiseGenericTypeBuilder.MakeGenericParameters("T");
+            var promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(yieldParameters.First().CreateType());
+            yieldPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
+            yieldPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            YieldPromiseGenericType = yieldPromiseGenericTypeBuilder.CreateType();
+
+            var methodCallPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("MethodCallPromise");
+            var methodCallPromiseParameters = methodCallPromiseGenericTypeBuilder.MakeGenericParameters("T");
+            promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(methodCallPromiseParameters.First().CreateType());
+            methodCallPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
+            methodCallPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            MethodCallPromiseGenericType = methodCallPromiseGenericTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -159,6 +190,17 @@ namespace Rebar.Common
             {
                 return false;
             }
+        }
+
+        private static bool TryGetGenericParameterOfSpecialization(this NIType type, NIType genericTypeDefinition, int parameterIndex, out NIType parameter)
+        {
+            if (type.IsGenericTypeSpecialization(genericTypeDefinition))
+            {
+                parameter = type.GetGenericParameters().ElementAt(parameterIndex);
+                return true;
+            }
+            parameter = NIType.Unset;
+            return false;
         }
 
         public static void SetLifetimeTypeAttribute(NIAttributedBaseBuilder builder)
@@ -287,13 +329,7 @@ namespace Rebar.Common
         /// <returns>True if the given type was an Option type; false otherwise.</returns>
         public static bool TryDestructureOptionType(this NIType type, out NIType valueType)
         {
-            if (!IsOptionType(type))
-            {
-                valueType = NIType.Unset;
-                return false;
-            }
-            valueType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(OptionGenericType, 0, out valueType);
         }
 
         public static NIType CreateLockingCell(this NIType dereferenceType)
@@ -333,13 +369,7 @@ namespace Rebar.Common
         /// <returns>True if the given type was an LockingCell type; false otherwise.</returns>
         public static bool TryDestructureLockingCellType(this NIType type, out NIType valueType)
         {
-            if (!IsLockingCellType(type))
-            {
-                valueType = NIType.Unset;
-                return false;
-            }
-            valueType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(LockingCellGenericType, 0, out valueType);
         }
 
         /// <summary>
@@ -350,13 +380,7 @@ namespace Rebar.Common
         /// <returns>True if the given type was an Shared type; false otherwise.</returns>
         public static bool TryDestructureSharedType(this NIType type, out NIType valueType)
         {
-            if (!IsSharedType(type))
-            {
-                valueType = NIType.Unset;
-                return false;
-            }
-            valueType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(SharedGenericType, 0, out valueType);
         }
 
         public static bool TryGetImplementedIteratorInterface(this NIType type, out NIType iteratorInterface)
@@ -389,13 +413,7 @@ namespace Rebar.Common
         /// <returns>True if the given type was an Iterator type; false otherwise.</returns>
         public static bool TryDestructureIteratorType(this NIType type, out NIType valueType)
         {
-            if (!IsIteratorType(type))
-            {
-                valueType = NIType.Unset;
-                return false;
-            }
-            valueType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(IteratorInterfaceGenericType, 0, out valueType);
         }
 
         public static NIType CreateStringSplitIterator(this NIType lifetimeType)
@@ -426,13 +444,7 @@ namespace Rebar.Common
         /// <returns>True if the given type was an Vector type; false otherwise.</returns>
         public static bool TryDestructureVectorType(this NIType type, out NIType itemType)
         {
-            if (!IsVectorType(type))
-            {
-                itemType = NIType.Unset;
-                return false;
-            }
-            itemType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(VectorGenericType, 0, out itemType);
         }
 
         public static NIType CreateSlice(this NIType elementType)
@@ -447,13 +459,27 @@ namespace Rebar.Common
 
         public static bool TryDestructureSliceType(this NIType type, out NIType elementType)
         {
-            if (!IsSlice(type))
-            {
-                elementType = NIType.Unset;
-                return false;
-            }
-            elementType = type.GetGenericParameters().ElementAt(0);
-            return true;
+            return type.TryGetGenericParameterOfSpecialization(SliceGenericType, 0, out elementType);
+        }
+
+        public static NIType CreateYieldPromise(this NIType type)
+        {
+            return SpecializeGenericType(YieldPromiseGenericType, type);
+        }
+
+        public static bool TryDestructureYieldPromiseType(this NIType type, out NIType elementType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(YieldPromiseGenericType, 0, out elementType);
+        }
+
+        public static NIType CreateMethodCallPromise(this NIType type)
+        {
+            return SpecializeGenericType(MethodCallPromiseGenericType, type);
+        }
+
+        public static bool TryDestructureMethodCallPromiseType(this NIType type, out NIType outputType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(MethodCallPromiseGenericType, 0, out outputType);
         }
 
         internal static bool WireTypeMayFork(this NIType wireType)
@@ -499,6 +525,18 @@ namespace Rebar.Common
         internal static bool TypeHasCloneTrait(this NIType type)
         {
             return type == PFTypes.String || type.IsOrImplements(CloneInterfaceType);
+        }
+
+        internal static NIType DefineTupleType(this IEnumerable<NIType> fieldTypes)
+        {
+            NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+            int index = 0;
+            foreach (NIType type in fieldTypes)
+            {
+                clusterBuilder.DefineField(type, $"_{index}");
+                ++index;
+            }
+            return clusterBuilder.CreateType();
         }
     }
 }

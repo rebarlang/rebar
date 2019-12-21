@@ -69,6 +69,7 @@ namespace Rebar.Compiler
                 new AutoBorrowTransform(lifetimeVariableAssociation),
                 new InsertTerminateLifetimeTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory),
                 new InsertDropTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory),
+                new AsyncNodeDecompositionTransform(nodeInsertionTypeUnificationResultFactory),
             };
 
             return new StandardMocTransformManager(

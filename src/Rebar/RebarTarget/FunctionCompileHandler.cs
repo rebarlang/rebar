@@ -125,6 +125,13 @@ namespace Rebar.RebarTarget
             var allocator = new LLVM.Allocator(valueSources, additionalSources);
             allocator.Execute(dfirRoot, cancellationToken);
 
+            var asyncStateGrouper = new AsyncStateGrouper();
+            asyncStateGrouper.Execute(dfirRoot, cancellationToken);
+            IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
+#if DEBUG
+            string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
+#endif
+
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
             var functionCompiler = new LLVM.FunctionCompiler(
@@ -132,8 +139,10 @@ namespace Rebar.RebarTarget
                 compiledFunctionName,
                 dfirRoot.DataItems.ToArray(),
                 valueSources,
-                additionalSources);
-            functionCompiler.Execute(dfirRoot, cancellationToken);
+                additionalSources,
+                allocator.AllocationSet,
+                asyncStateGroups);
+            functionCompiler.CompileFunction(dfirRoot);
             return module;
         }
 

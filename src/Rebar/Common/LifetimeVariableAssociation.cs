@@ -187,6 +187,11 @@ namespace Rebar.Common
 
     internal struct LiveVariable
     {
+        public static LiveVariable FromTerminal(Terminal terminal)
+        {
+            return new LiveVariable(terminal.GetTrueVariable(), terminal);
+        }
+
         public LiveVariable(VariableReference variable, Terminal terminal)
         {
             Variable = variable;

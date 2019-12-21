@@ -143,7 +143,7 @@ namespace Rebar.Compiler
                 if (terminates.Count == borrowInputCount)
                 {
                     Diagram outputParentDiagram = terminates.First().Terminal.ParentDiagram;
-                    var terminateLifetime = TerminateLifetimeNodeHelpers.CreateTerminateLifetimeWithFacades(outputParentDiagram, borrowInputCount, borrowInputCount);
+                    var terminateLifetime = CreateNodeFacadesHelpers.CreateTerminateLifetimeWithFacades(outputParentDiagram, borrowInputCount, borrowInputCount);
 
                     index = 0;
                     foreach (var terminate in terminates)

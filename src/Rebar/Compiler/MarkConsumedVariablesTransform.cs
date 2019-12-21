@@ -180,7 +180,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitTunnel(Tunnel tunnel)
         {
-            MarkTrueVariableOfTerminalConsumed(tunnel.InputTerminals[0]);
+            tunnel.InputTerminals.ForEach(MarkTrueVariableOfTerminalConsumed);
             MarkFacadeVariableOfTerminalLive(tunnel.OutputTerminals[0]);
             return true;
         }

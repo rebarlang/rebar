@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
 
 namespace Rebar.RebarTarget.LLVM
 {
-    internal class Allocator : Allocator<ValueSource, LocalAllocationValueSource, ConstantLocalReferenceValueSource>
+    internal class Allocator : Allocator<ValueSource, AllocationValueSource, ConstantLocalReferenceValueSource>
     {
         public Allocator(
             Dictionary<VariableReference, ValueSource> valueSources,
@@ -15,118 +16,257 @@ namespace Rebar.RebarTarget.LLVM
         {
         }
 
+        public FunctionAllocationSet AllocationSet { get; } = new FunctionAllocationSet();
+
         protected override ConstantLocalReferenceValueSource CreateConstantLocalReference(VariableReference referencedVariable)
         {
-            var localAllocation = (LocalAllocationValueSource)GetValueSourceForVariable(referencedVariable);
-            return new ConstantLocalReferenceValueSource(localAllocation);
+            return new ConstantLocalReferenceValueSource((IAddressableValueSource)GetValueSourceForVariable(referencedVariable));
         }
 
-        protected override LocalAllocationValueSource CreateLocalAllocation(VariableReference variable)
+        protected override AllocationValueSource CreateLocalAllocation(VariableReference variable)
         {
             string name = $"v{variable.Id}";
-            return new LocalAllocationValueSource(name, variable.Type);
+            return AllocationSet.CreateStateField(name, variable.Type);
         }
 
-        protected override LocalAllocationValueSource CreateLocalAllocation(string name, NIType type)
+        protected override AllocationValueSource CreateLocalAllocation(string name, NIType type)
         {
-            return new LocalAllocationValueSource(name, type);
+            return AllocationSet.CreateStateField(name, type);
+        }
+
+        protected override AllocationValueSource CreateOutputParameterAllocation(VariableReference outputParameterVariable)
+        {
+            string name = $"v{outputParameterVariable.Id}";
+            return AllocationSet.CreateOutputParameter(name, outputParameterVariable.Type);
         }
     }
 
     internal abstract class ValueSource
     {
         public abstract LLVMValueRef GetValue(IRBuilder builder);
-
-        public abstract void UpdateValue(IRBuilder builder, LLVMValueRef value);
-
-        public abstract LLVMValueRef GetDeferencedValue(IRBuilder builder);
-
-        public abstract void UpdateDereferencedValue(IRBuilder builder, LLVMValueRef value);
     }
 
-    internal class LocalAllocationValueSource : ValueSource
+    internal interface IAddressableValueSource
+    {
+        LLVMValueRef GetAddress(IRBuilder builder);
+
+        LLVMTypeRef AddressType { get; }
+    }
+
+    internal interface IUpdateableValueSource
+    {
+        void UpdateValue(IRBuilder builder, LLVMValueRef value);
+    }
+
+    internal abstract class AllocationValueSource : ValueSource, IAddressableValueSource, IUpdateableValueSource
     {
         private int _loadCount;
 
-        public LocalAllocationValueSource(string allocationName, NIType allocationNIType)
+        protected AllocationValueSource(string allocationName)
         {
             AllocationName = allocationName;
-            AllocationNIType = allocationNIType;
         }
 
-        public string AllocationName { get; }
+        protected string AllocationName { get; }
 
-        public NIType AllocationNIType { get; }
+        public abstract LLVMTypeRef AddressType { get; }
 
-        public LLVMValueRef AllocationPointer { get; set; }
+        protected abstract LLVMValueRef GetAllocationPointer(IRBuilder builder);
 
-        public override LLVMValueRef GetDeferencedValue(IRBuilder builder)
+        LLVMValueRef IAddressableValueSource.GetAddress(IRBuilder builder)
         {
-            return builder.CreateLoad(GetValue(builder), $"{AllocationName}_deref");
+            return GetValidPointer(builder);
+        }
+
+        private LLVMValueRef GetValidPointer(IRBuilder builder)
+        {
+            LLVMValueRef allocationPointer = GetAllocationPointer(builder);
+            allocationPointer.ThrowIfNull();
+            return allocationPointer;
         }
 
         public override LLVMValueRef GetValue(IRBuilder builder)
         {
             string name = $"{AllocationName}_load_{_loadCount}";
             ++_loadCount;
-            AllocationPointer.ThrowIfNull();
-            return builder.CreateLoad(AllocationPointer, name);
+            return builder.CreateLoad(GetValidPointer(builder), name);
         }
 
-        public override void UpdateDereferencedValue(IRBuilder builder, LLVMValueRef value)
+        void IUpdateableValueSource.UpdateValue(IRBuilder builder, LLVMValueRef value)
         {
-            LLVMValueRef ptr = GetValue(builder);
-            builder.CreateStore(value, ptr);
+            builder.CreateStore(value, GetValidPointer(builder));
+        }
+    }
+
+    internal class LocalAllocationValueSource : AllocationValueSource
+    {
+        private readonly FunctionAllocationSet _allocationSet;
+        private readonly int _allocationIndex;
+
+        public LocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, int allocationIndex)
+            : base(allocationName)
+        {
+            _allocationSet = allocationSet;
+            _allocationIndex = allocationIndex;
         }
 
-        public override void UpdateValue(IRBuilder builder, LLVMValueRef value)
+        public override LLVMTypeRef AddressType => _allocationSet.GetLocalAllocationPointer(_allocationIndex).TypeOf();
+
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_allocationIndex);
+    }
+
+    internal class StateFieldValueSource : AllocationValueSource
+    {
+        private readonly FunctionAllocationSet _allocationSet;
+        private readonly int _fieldIndex;
+
+        public StateFieldValueSource(string allocationName, FunctionAllocationSet allocationSet, int fieldIndex)
+            : base(allocationName)
         {
-            AllocationPointer.ThrowIfNull();
-            builder.CreateStore(value, AllocationPointer);
+            _allocationSet = allocationSet;
+            _fieldIndex = fieldIndex;
         }
 
-        public void UpdateStructValue(IRBuilder builder, LLVMValueRef[] fieldValues)
+        public override LLVMTypeRef AddressType => _allocationSet.GetStateFieldPointerType(_fieldIndex);
+
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetStateFieldPointer(builder, _fieldIndex);
+    }
+
+    internal class OutputParameterValueSource : StateFieldValueSource
+    {
+        public OutputParameterValueSource(string allocationName, FunctionAllocationSet allocationSet, int fieldIndex)
+            : base(allocationName, allocationSet, fieldIndex)
         {
-            LLVMTypeRef structType = AllocationPointer.TypeOf().GetElementType();
-            if (structType.TypeKind != LLVMTypeKind.LLVMStructTypeKind)
-            {
-                throw new InvalidOperationException("Cannot UpdateStructValue on a non-struct");
-            }
-            for (int i = 0; i < fieldValues.Length; ++i)
-            {
-                LLVMValueRef fieldPtr = builder.CreateStructGEP(AllocationPointer, (uint)i, "field");
-                builder.CreateStore(fieldValues[i], fieldPtr);
-            }
+        }
+
+        public override LLVMTypeRef AddressType => base.AddressType.GetElementType();
+
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)
+        {
+            LLVMValueRef stateFieldAllocationPtr = base.GetAllocationPointer(builder),
+                outputParameterAllocationPtr = builder.CreateLoad(stateFieldAllocationPtr, AllocationName + "Load");
+            return outputParameterAllocationPtr;
         }
     }
 
     internal class ConstantLocalReferenceValueSource : ValueSource
     {
-        public ConstantLocalReferenceValueSource(LocalAllocationValueSource referencedAllocation)
-        {
-            ReferencedAllocation = referencedAllocation;
-        }
+        private readonly IAddressableValueSource _referencedAddressableValueSource;
 
-        public LocalAllocationValueSource ReferencedAllocation { get; }
-
-        public override LLVMValueRef GetDeferencedValue(IRBuilder builder)
+        public ConstantLocalReferenceValueSource(IAddressableValueSource referencedAddressableValueSource)
         {
-            return ReferencedAllocation.GetValue(builder);
+            _referencedAddressableValueSource = referencedAddressableValueSource;
         }
 
         public override LLVMValueRef GetValue(IRBuilder builder)
         {
-            return ReferencedAllocation.AllocationPointer;
+            return _referencedAddressableValueSource.GetAddress(builder);
+        }
+    }
+
+    internal static class ValueSourceExtensions
+    {
+        public static LLVMValueRef GetDereferencedValue(this ValueSource valueSource, IRBuilder builder)
+        {
+            return builder.CreateLoad(valueSource.GetValue(builder), $"deref");
         }
 
-        public override void UpdateDereferencedValue(IRBuilder builder, LLVMValueRef value)
+        public static void UpdateDereferencedValue(this ValueSource valueSource, IRBuilder builder, LLVMValueRef value)
         {
-            ReferencedAllocation.UpdateValue(builder, value);
+            builder.CreateStore(value, valueSource.GetValue(builder));
+        }
+    }
+
+    internal class FunctionAllocationSet
+    {
+        private readonly List<Tuple<string, NIType>> _localAllocationTypes = new List<Tuple<string, NIType>>();
+        private readonly List<Tuple<string, NIType>> _stateFieldTypes = new List<Tuple<string, NIType>>();
+        private LLVMValueRef[] _localAllocationPointers;
+
+        private const int FixedFieldCount = 3;
+
+        public LocalAllocationValueSource CreateLocalAllocation(string allocationName, NIType allocationType)
+        {
+            int allocationIndex = _localAllocationTypes.Count;
+            _localAllocationTypes.Add(new Tuple<string, NIType>(allocationName, allocationType));
+            return new LocalAllocationValueSource(allocationName, this, allocationIndex);
         }
 
-        public override void UpdateValue(IRBuilder builder, LLVMValueRef value)
+        public StateFieldValueSource CreateStateField(string allocationName, NIType allocationType)
         {
-            throw new InvalidOperationException("Cannot update a constant reference.");
+            int fieldIndex = _stateFieldTypes.Count;
+            _stateFieldTypes.Add(new Tuple<string, NIType>(allocationName, allocationType));
+            return new StateFieldValueSource(allocationName, this, fieldIndex);
+        }
+
+        public OutputParameterValueSource CreateOutputParameter(string allocationName, NIType allocationType)
+        {
+            int fieldIndex = _stateFieldTypes.Count;
+            _stateFieldTypes.Add(new Tuple<string, NIType>(allocationName, allocationType.CreateMutableReference()));
+            return new OutputParameterValueSource(allocationName, this, fieldIndex);
+        }
+
+        public void InitializeStateType(Module module, string functionName)
+        {
+            StateType = LLVMTypeRef.StructCreateNamed(module.GetModuleContext(), functionName + "_state_t");
+
+            var stateFieldTypes = new List<LLVMTypeRef>();
+            // fixed fields
+            stateFieldTypes.Add(LLVMTypeRef.Int1Type());    // function done?
+            stateFieldTypes.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)); // caller waker function
+            stateFieldTypes.Add(LLVMExtensions.VoidPointerType);    // caller waker state
+            // end fixed fields
+            stateFieldTypes.AddRange(_stateFieldTypes.Select(a => a.Item2.AsLLVMType()));
+            StateType.StructSetBody(stateFieldTypes.ToArray(), false);
+        }
+
+        public void InitializeAllocations(IRBuilder builder)
+        {
+            if (_localAllocationPointers != null)
+            {
+                throw new InvalidOperationException("Already initialized allocations");
+            }
+            _localAllocationPointers = _localAllocationTypes.Select(a => builder.CreateAlloca(a.Item2.AsLLVMType(), a.Item1)).ToArray();
+        }
+
+        public LLVMTypeRef StateType { get; private set; }
+
+        public FunctionCompilerState CompilerState { get; set; }
+
+        public LLVMValueRef StatePointer => CompilerState.StatePointer;
+
+        public LLVMValueRef GetLocalAllocationPointer(int index)
+        {
+            return _localAllocationPointers[index];
+        }
+
+        internal LLVMValueRef GetStateDonePointer(IRBuilder builder)
+        {
+            StatePointer.ThrowIfNull();
+            return builder.CreateStructGEP(StatePointer, 0u, "donePtr");
+        }
+
+        internal LLVMValueRef GetStateCallerWakerFunctionPointer(IRBuilder builder)
+        {
+            StatePointer.ThrowIfNull();
+            return builder.CreateStructGEP(StatePointer, 1u, "callerWakerFunctionPtr");
+        }
+
+        internal LLVMValueRef GetStateCallerWakerStatePointer(IRBuilder builder)
+        {
+            StatePointer.ThrowIfNull();
+            return builder.CreateStructGEP(StatePointer, 2u, "callerWakerStatePtr");
+        }
+
+        internal LLVMValueRef GetStateFieldPointer(IRBuilder builder, int fieldIndex)
+        {
+            StatePointer.ThrowIfNull();
+            return builder.CreateStructGEP(StatePointer, (uint)(fieldIndex + FixedFieldCount), _stateFieldTypes[fieldIndex].Item1 + "_fieldptr");
+        }
+
+        internal LLVMTypeRef GetStateFieldPointerType(int fieldIndex)
+        {
+            return LLVMTypeRef.PointerType(_stateFieldTypes[fieldIndex].Item2.AsLLVMType(), 0u);
         }
     }
 }

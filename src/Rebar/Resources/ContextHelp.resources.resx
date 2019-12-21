@@ -1065,4 +1065,16 @@
   <data name="SelfType_type_Name" xml:space="preserve">
     <value>type</value>
   </data>
+  <data name="Yield_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Yield_Name" xml:space="preserve">
+    <value>Yield</value>
+  </data>
+  <data name="Yield_valueRef_in_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
+  <data name="Yield_valueRef_out_Name" xml:space="preserve">
+    <value>value reference</value>
+  </data>
 </root>

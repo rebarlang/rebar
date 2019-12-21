@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using LLVMSharp;
@@ -9,6 +10,9 @@ namespace Rebar.RebarTarget.LLVM
     {
         private static readonly LLVMMCJITCompilerOptions _options;
         private static IRebarTargetRuntimeServices _runtimeServices;
+        private static readonly IntPtr _topLevelCallerWakerFunctionPtr;
+        private static readonly Queue<ScheduledTask> _scheduledTasks = new Queue<ScheduledTask>();
+        private static bool _executing;
 
         static ExecutionContext()
         {
@@ -28,6 +32,7 @@ namespace Rebar.RebarTarget.LLVM
             };
             LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_options);
 
+            AddSymbolForDelegate("schedule", _schedule);
             AddSymbolForDelegate("output_bool", _outputBool);
             AddSymbolForDelegate("output_int8", _outputInt8);
             AddSymbolForDelegate("output_uint8", _outputUInt8);
@@ -46,6 +51,8 @@ namespace Rebar.RebarTarget.LLVM
             LLVMSharp.LLVM.AddSymbol("CreateFileA", GetProcAddress(kernel32Instance, "CreateFileA"));
             LLVMSharp.LLVM.AddSymbol("ReadFile", GetProcAddress(kernel32Instance, "ReadFile"));
             LLVMSharp.LLVM.AddSymbol("WriteFile", GetProcAddress(kernel32Instance, "WriteFile"));
+
+            _topLevelCallerWakerFunctionPtr = Marshal.GetFunctionPointerForDelegate<CallerWaker>(_topLevelCallerWaker);
         }
 
         private static void AddSymbolForDelegate<TDelegate>(string symbolName, TDelegate del)
@@ -59,6 +66,15 @@ namespace Rebar.RebarTarget.LLVM
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+
+        private struct ScheduledTask
+        {
+            public IntPtr TaskFunction;
+            public IntPtr TaskState;
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void ScheduleDelegate(IntPtr taskFunction, IntPtr taskState);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void OutputBoolDelegate(bool v);
@@ -91,7 +107,16 @@ namespace Rebar.RebarTarget.LLVM
         private delegate void OutputStringDelegate(IntPtr bufferPtr, int size);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void ExecFunc();
+        private delegate void ExecFunc(IntPtr callerWakerFunctionPtr, IntPtr callerWakerStatePtr);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void ScheduledTaskFunction(IntPtr statePtr);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void CallerWaker(IntPtr statePtr);
+
+        private static readonly ScheduleDelegate _schedule = Schedule;
+        private static readonly CallerWaker _topLevelCallerWaker = TopLevelCallerWaker;
 
         private static void OutputBool(bool value)
         {
@@ -182,6 +207,7 @@ namespace Rebar.RebarTarget.LLVM
             _runtimeServices = runtimeServices;
             _globalModule = new Module("global");
             _globalModule.LinkInModule(CommonModules.FakeDropModule.Clone());
+            _globalModule.LinkInModule(CommonModules.SchedulerModule.Clone());
             _globalModule.LinkInModule(CommonModules.StringModule.Clone());
             _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
             _globalModule.LinkInModule(CommonModules.FileModule.Clone());
@@ -211,7 +237,38 @@ namespace Rebar.RebarTarget.LLVM
             funcValue.ThrowIfNull();
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
             ExecFunc func = Marshal.GetDelegateForFunctionPointer<ExecFunc>(pointerToFunc);
-            func();
+
+            _executing = true;
+            func(_topLevelCallerWakerFunctionPtr, IntPtr.Zero);
+            ExecuteTasksUntilDone();
+            if (_executing)
+            {
+                throw new InvalidOperationException("Execution queue is empty, but top-level waker was not called.");
+            }
+        }
+
+        private void ExecuteTasksUntilDone()
+        {
+            while (_scheduledTasks.Count > 0)
+            {
+                if (!_executing)
+                {
+                    throw new InvalidOperationException("Top-level waker was called, but execution queue is not empty.");
+                }
+                ScheduledTask scheduledTask = _scheduledTasks.Dequeue();
+                ScheduledTaskFunction scheduledTaskFunction = Marshal.GetDelegateForFunctionPointer<ScheduledTaskFunction>(scheduledTask.TaskFunction);
+                scheduledTaskFunction(scheduledTask.TaskState);
+            }
+        }
+
+        private static void Schedule(IntPtr taskFunction, IntPtr taskState)
+        {
+            _scheduledTasks.Enqueue(new ScheduledTask() { TaskFunction = taskFunction, TaskState = taskState });
+        }
+
+        private static void TopLevelCallerWaker(IntPtr statePtr)
+        {
+            _executing = false;
         }
 
         public byte[] ReadGlobalData(string globalName)

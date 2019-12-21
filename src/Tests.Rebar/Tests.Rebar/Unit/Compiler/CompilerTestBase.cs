@@ -58,6 +58,8 @@ namespace Tests.Rebar.Unit.Compiler
                 .Execute(dfirRoot, cancellationToken);
             new InsertDropTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory)
                 .Execute(dfirRoot, cancellationToken);
+            new AsyncNodeDecompositionTransform(nodeInsertionTypeUnificationResultFactory)
+                .Execute(dfirRoot, cancellationToken);
         }
 
         internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)

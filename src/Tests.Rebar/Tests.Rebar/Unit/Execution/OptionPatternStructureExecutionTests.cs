@@ -113,8 +113,7 @@ namespace Tests.Rebar.Unit.Execution
             Tunnel outputTunnel = CreateOutputTunnel(patternStructure);
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, someDiagramTunnelValue, false);
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], PFTypes.Int32, noneDiagramTunnelValue, false);
-            FunctionalNode inspectNode = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
-            Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], inspectNode.InputTerminals[0]);
+            ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
             return function;
         }
 

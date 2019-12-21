@@ -153,6 +153,13 @@ namespace Rebar.Compiler
             {
                 methodCallNode.SetDfirMessage(Messages.FeatureNotEnabled);
             }
+            if (methodCallNode.TargetName.IsEmpty)
+            {
+                methodCallNode.SetDfirMessage(new DfirMessage(
+                    NationalInstruments.SourceModel.MessageSeverity.Error,
+                    SemanticAnalysisMessageCategories.Connection,
+                    AllModelsOfComputationErrorMessages.NoValidMethodCallTarget));
+            }
             return true;
         }
 

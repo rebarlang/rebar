@@ -10,6 +10,7 @@ namespace Rebar.Compiler
         private static readonly AttributeDescriptor _lifetimeGraphTreeTokenName = new AttributeDescriptor("Rebar.Compiler.LifetimeGraphTree", true);
         private static readonly AttributeDescriptor _variableSetTokenName = new AttributeDescriptor("Rebar.Compiler.VariableSet", true);
         private static readonly AttributeDescriptor _lifetimeGraphIdentifierTokenName = new AttributeDescriptor("Rebar.Compiler.LifetimeGraphIdentifier", true);
+        private static readonly AttributeDescriptor _dataItemVariableTokenName = new AttributeDescriptor("Rebar.Compiler.DataItemVariable", true);
 
         public static TypeVariableSet GetTypeVariableSet(this DfirRoot dfirRoot)
         {
@@ -47,6 +48,18 @@ namespace Rebar.Compiler
                 current = current.ParentStructure?.ParentDiagram;
             }
             return null;
+        }
+
+        public static VariableReference GetVariable(this DataItem dataItem)
+        {
+            var token = dataItem.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableReference>(_dataItemVariableTokenName);
+            return token.GetAttribute(dataItem);
+        }
+
+        public static void SetVariable(this DataItem dataItem, VariableReference variableReference)
+        {
+            var token = dataItem.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableReference>(_dataItemVariableTokenName);
+            token.SetAttribute(dataItem, variableReference);
         }
 
         public static TypeVariableSet GetTypeVariableSet(this DfirElement element)

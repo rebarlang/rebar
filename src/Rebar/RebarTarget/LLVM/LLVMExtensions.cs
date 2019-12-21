@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using LLVMSharp;
@@ -10,6 +11,8 @@ namespace Rebar.RebarTarget.LLVM
     internal static class LLVMExtensions
     {
         private static System.Reflection.FieldInfo _moduleInstanceFieldInfo;
+
+        private static readonly Dictionary<LLVMContextRef, Dictionary<string, LLVMTypeRef>> _namedStructTypes = new Dictionary<LLVMContextRef, Dictionary<string, LLVMTypeRef>>();
 
         static LLVMExtensions()
         {
@@ -89,6 +92,40 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMTypeRef.Int32Type()
             },
             false);
+
+        private static LLVMTypeRef GetCachedStructType(Module module, string typeName, Func<LLVMTypeRef[]> fields)
+        {
+            LLVMContextRef context = module.GetModuleContext();
+            Dictionary<string, LLVMTypeRef> structTypeDictionary;
+            if (!_namedStructTypes.TryGetValue(context, out structTypeDictionary))
+            {
+                structTypeDictionary = new Dictionary<string, LLVMTypeRef>();
+                _namedStructTypes[context] = structTypeDictionary;
+            }
+
+            LLVMTypeRef structType;
+            if (!structTypeDictionary.TryGetValue(typeName, out structType))
+            {
+                structType = LLVMTypeRef.StructCreateNamed(module.GetModuleContext(), typeName);
+                structType.StructSetBody(fields(), false);
+                structTypeDictionary[typeName] = structType;
+            }
+
+            return structType;
+        }
+
+        public static LLVMTypeRef ScheduledTaskFunctionType { get; } = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new[] { VoidPointerType }, false);
+
+        public static LLVMTypeRef GetScheduledTaskType(Module module)
+        {
+            return GetCachedStructType(module, "scheduled_task", () => new[]
+                {
+                    // task function pointer
+                    LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                    // task state
+                    VoidPointerType
+                });
+        }
 
         public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
         {
@@ -214,6 +251,21 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return FakeDropType;
                     }
+                    if (niType == DataTypes.RangeIteratorType)
+                    {
+                        return RangeIteratorType;
+                    }
+                    if (niType == DataTypes.WakerType)
+                    {
+                        return LLVMTypeRef.StructType(new[]
+                        {
+                            // task function pointer
+                            LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                            // task state
+                            VoidPointerType
+                        },
+                        false);
+                    }
                     NIType innerType;
                     if (niType.TryDestructureOptionType(out innerType))
                     {
@@ -231,9 +283,13 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return CreateLLVMSharedType(innerType.AsLLVMType());
                     }
-                    if (niType == DataTypes.RangeIteratorType)
+                    if (niType.TryDestructureYieldPromiseType(out innerType))
                     {
-                        return RangeIteratorType;
+                        return CreateLLVMYieldPromiseType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureMethodCallPromiseType(out innerType))
+                    {
+                        return CreateLLVMMethodCallPromiseType(innerType.AsLLVMType());
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }
@@ -271,6 +327,25 @@ namespace Rebar.RebarTarget.LLVM
         internal static LLVMTypeRef CreateLLVMRefCountType(this LLVMTypeRef innerType)
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int32Type(), innerType }, false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMYieldPromiseType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(new LLVMTypeRef[] { innerType }, false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMMethodCallPromiseType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(new LLVMTypeRef[]
+            {
+                // poll function pointer
+                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                // function state pointer
+                VoidPointerType,
+                // output struct
+                innerType,
+            },
+            false);
         }
 
         #region Memory Buffer

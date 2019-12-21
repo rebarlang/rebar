@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using Rebar.Common;
@@ -1142,6 +1143,34 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.FileHandleDataType, RebarFeatureToggles.StringDataType };
+    }
+
+    #endregion
+
+    #region Async
+
+    public class Yield : FunctionalNode
+    {
+        private const string ElementName = "Yield";
+
+        protected Yield()
+            : base(Signatures.YieldType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static Yield CreateYield(IElementCreateInfo elementCreateInfo)
+        {
+            var yield = new Yield();
+            yield.Init(elementCreateInfo);
+            return yield;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
     }
 
     #endregion

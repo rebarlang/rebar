@@ -58,6 +58,14 @@ namespace Rebar.Common
                 return typeVariableSet.CreateTypeVariableReferenceFromInterfaceNIType(type, genericTypeParameters);
             }
 
+            if (type.IsCluster())
+            {
+                TypeVariableReference[] elementTypes = type.GetFields()
+                    .Select(t => typeVariableSet.CreateTypeVariableReferenceFromNIType(t.GetDataType(), genericTypeParameters))
+                    .ToArray();
+                return typeVariableSet.CreateReferenceToTupleType(elementTypes);
+            }
+
             if (!type.IsClass())
             {
                 return typeVariableSet.CreateTypeVariableReferenceFromPrimitiveType(type, genericTypeParameters);

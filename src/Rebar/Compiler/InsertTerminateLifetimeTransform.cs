@@ -53,7 +53,7 @@ namespace Rebar.Compiler
                     liveVariables[i] = liveVariable;
                 }
 
-                TerminateLifetimeNode terminateLifetime = TerminateLifetimeNodeHelpers.CreateTerminateLifetimeWithFacades(originDiagram, inputVariableCount, outputVariableCount);
+                TerminateLifetimeNode terminateLifetime = CreateNodeFacadesHelpers.CreateTerminateLifetimeWithFacades(originDiagram, inputVariableCount, outputVariableCount);
                 foreach (var pair in liveVariables.Zip(terminateLifetime.InputTerminals))
                 {
                     // TODO: maybe assert that liveVariable.Terminal is unwired here?

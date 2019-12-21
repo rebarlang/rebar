@@ -6,6 +6,7 @@ namespace Rebar.RebarTarget.LLVM
     internal static class CommonModules
     {
         public static Module FakeDropModule { get; }
+        public static Module SchedulerModule { get; }
         public static Module StringModule { get; }
         public static Module RangeModule { get; }
         public static Module FileModule { get; }
@@ -22,6 +23,8 @@ namespace Rebar.RebarTarget.LLVM
 
         public const string FakeDropCreateName = "fakedrop_create";
         public const string FakeDropDropName = "fakedrop_drop";
+
+        public const string PartialScheduleName = "partial_schedule";
 
         public const string CopySliceToPointerName = "copy_slice_to_pointer";
         public const string CreateEmptyStringName = "create_empty_string";
@@ -51,6 +54,8 @@ namespace Rebar.RebarTarget.LLVM
 
             FakeDropModule = new Module("fakedrop");
             CreateFakeDropModule(FakeDropModule);
+            SchedulerModule = new Module("scheduler");
+            CreateSchedulerModule(SchedulerModule);
             StringModule = new Module("string");
             CreateStringModule(StringModule);
             RangeModule = new Module("range");
@@ -107,6 +112,56 @@ namespace Rebar.RebarTarget.LLVM
                 fakeDropIdPtr = builder.CreateStructGEP(fakeDropPtr, 0u, "fakeDropIdPtr"),
                 fakeDropId = builder.CreateLoad(fakeDropIdPtr, "fakeDropId");
             builder.CreateCall(externalFunctions.FakeDropFunction, new LLVMValueRef[] { fakeDropId }, string.Empty);
+            builder.CreateRetVoid();
+        }
+
+        #endregion
+
+        #region Scheduler Module
+
+        private static void CreateSchedulerModule(Module schedulerModule)
+        {
+            var externalFunctions = new CommonExternalFunctions(schedulerModule);
+
+            CommonModuleSignatures[PartialScheduleName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[]
+                {
+                    LLVMExtensions.VoidPointerType,
+                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0u),
+                    LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)
+                },
+                false);
+            BuildPartialScheduleFunction(schedulerModule, externalFunctions);
+        }
+
+        private static void BuildPartialScheduleFunction(Module schedulerModule, CommonExternalFunctions externalFunctions)
+        {
+            var partialScheduleFunction = schedulerModule.AddFunction(PartialScheduleName, CommonModuleSignatures[PartialScheduleName]);
+            LLVMBasicBlockRef entryBlock = partialScheduleFunction.AppendBasicBlock("entry"),
+                scheduleBlock = partialScheduleFunction.AppendBasicBlock("schedule"),
+                endBlock = partialScheduleFunction.AppendBasicBlock("end");
+            var builder = new IRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef fireCountPtr = partialScheduleFunction.GetParam(1u),
+                one = 1.AsLLVMValue(),
+                previousFireCount = builder.CreateAtomicRMW(
+                    LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpSub,
+                    fireCountPtr,
+                    one,
+                    LLVMAtomicOrdering.LLVMAtomicOrderingMonotonic,
+                    false),
+                previousFireCountWasOne = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, previousFireCount, one, "previousFireCountWasOne");
+            builder.CreateCondBr(previousFireCountWasOne, scheduleBlock, endBlock);
+
+            builder.PositionBuilderAtEnd(scheduleBlock);
+            LLVMValueRef functionPtr = partialScheduleFunction.GetParam(2u),
+                statePtr = partialScheduleFunction.GetParam(0u);
+            builder.CreateCall(externalFunctions.ScheduleFunction, new LLVMValueRef[] { functionPtr, statePtr }, string.Empty);
+            builder.CreateBr(endBlock);
+
+            builder.PositionBuilderAtEnd(endBlock);
             builder.CreateRetVoid();
         }
 
@@ -812,15 +867,20 @@ namespace Rebar.RebarTarget.LLVM
     {
         public CommonExternalFunctions(Module addTo)
         {
-            LLVMTypeRef bytePointerType = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0);
-
             // NB: this will get resolved to the Win32 RtlCopyMemory function.
             LLVMTypeRef copyMemoryFunctionType = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[] { bytePointerType, bytePointerType, LLVMTypeRef.Int64Type() },
+                new LLVMTypeRef[] { LLVMExtensions.BytePointerType, LLVMExtensions.BytePointerType, LLVMTypeRef.Int64Type() },
                 false);
             CopyMemoryFunction = addTo.AddFunction("CopyMemory", copyMemoryFunctionType);
             CopyMemoryFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
+
+            LLVMTypeRef scheduleFunctionType = LLVMTypeRef.FunctionType(
+                LLVMTypeRef.VoidType(),
+                new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u), LLVMExtensions.VoidPointerType },
+                false);
+            ScheduleFunction = addTo.AddFunction("schedule", scheduleFunctionType);
+            ScheduleFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
             OutputBoolFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int1Type(), "output_bool");
             OutputInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_int8");
@@ -836,7 +896,7 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMTypeRef outputStringFunctionType = LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[] { bytePointerType, LLVMTypeRef.Int32Type() },
+                new LLVMTypeRef[] { LLVMExtensions.BytePointerType, LLVMTypeRef.Int32Type() },
                 false);
             OutputStringFunction = addTo.AddFunction("output_string", outputStringFunctionType);
             OutputStringFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
@@ -851,7 +911,7 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMExtensions.VoidPointerType,
                 new LLVMTypeRef[]
                 {
-                    bytePointerType,    // filename
+                    LLVMExtensions.BytePointerType,    // filename
                     LLVMTypeRef.Int32Type(),    // access
                     LLVMTypeRef.Int32Type(),    // share
                     LLVMExtensions.VoidPointerType,    // securityAttributes
@@ -898,6 +958,8 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         public LLVMValueRef CopyMemoryFunction { get; }
+
+        public LLVMValueRef ScheduleFunction { get; }
 
         public LLVMValueRef OutputBoolFunction { get; }
 

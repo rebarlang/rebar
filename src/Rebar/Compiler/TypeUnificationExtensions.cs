@@ -5,7 +5,7 @@ namespace Rebar.Compiler
 {
     internal static class TypeUnificationExtensions
     {
-        public static void UnifyNodeInputTerminalTypes(this Node node, TerminalTypeUnificationResults typeUnificationResults)
+        public static void UnifyNodeInputTerminalTypes(this Node node, ITypeUnificationResultFactory typeUnificationResultFactory)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(node);
             foreach (var nodeTerminal in node.InputTerminals)
@@ -16,7 +16,7 @@ namespace Rebar.Compiler
                     ? connectedWireTerminal.GetFacadeVariable()
                     // Unify node input with immutable Void type
                     : nodeTerminal.CreateNewVariableForUnwiredTerminal();
-                nodeFacade[nodeTerminal].UnifyWithConnectedWireTypeAsNodeInput(unifyWithVariable, typeUnificationResults);
+                nodeFacade[nodeTerminal].UnifyWithConnectedWireTypeAsNodeInput(unifyWithVariable, typeUnificationResultFactory);
             }
         }
 

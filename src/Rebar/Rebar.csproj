@@ -212,10 +212,13 @@
     <Compile Include="Common\TypeVariableSetExtensions.cs" />
     <Compile Include="Common\VariableReference.cs" />
     <Compile Include="Common\VariableSet.cs" />
+    <Compile Include="Compiler\AsyncNodeDecompositionTransform.cs" />
     <Compile Include="Compiler\AutoBorrowNodeFacade.cs" />
     <Compile Include="Compiler\AutoBorrowTransform.cs" />
     <Compile Include="Common\Lifetime.cs" />
     <Compile Include="Compiler\DefaultNativeTargetCompileHandler.cs" />
+    <Compile Include="Compiler\Nodes\CreateMethodCallPromise.cs" />
+    <Compile Include="Compiler\Nodes\IInternalDfirNodeVisitor.cs" />
     <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
     <Compile Include="Compiler\DfirTranslationHelpers.cs" />
     <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />
@@ -230,6 +233,7 @@
     <Compile Include="Compiler\MarkConsumedVariablesTransform.cs" />
     <Compile Include="Compiler\MergeVariablesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\NodeInsertionTypeUnificationResultFactory.cs" />
+    <Compile Include="Compiler\Nodes\AwaitNode.cs" />
     <Compile Include="Compiler\Nodes\BorrowTunnel.cs" />
     <Compile Include="Compiler\Nodes\BuildTupleNode.cs" />
     <Compile Include="Compiler\Nodes\DecomposeTupleNode.cs" />
@@ -268,7 +272,7 @@
     <Compile Include="Compiler\TerminalId.cs" />
     <Compile Include="Compiler\TerminalTypeUnificationResults.cs" />
     <Compile Include="Compiler\TerminateLifetimeInputTerminalFacade.cs" />
-    <Compile Include="Compiler\TerminateLifetimeNodeHelpers.cs" />
+    <Compile Include="Compiler\CreateNodeFacadesHelpers.cs" />
     <Compile Include="Compiler\TunnelTerminalFacade.cs" />
     <Compile Include="Compiler\TupleNodeHelpers.cs" />
     <Compile Include="Compiler\TypeDiagram\TypeDiagramCompilerService.cs" />
@@ -302,6 +306,7 @@
     <Compile Include="RebarTarget\ApplicationCompileHandler.cs" />
     <Compile Include="RebarTarget\ApplicationComponentMocPluginPlugin.cs" />
     <Compile Include="RebarTarget\ApplicationRoot.cs" />
+    <Compile Include="RebarTarget\AsyncStateGrouper.cs" />
     <Compile Include="RebarTarget\DataHelpers.cs" />
     <Compile Include="RebarTarget\ExecutableFunction.cs" />
     <Compile Include="RebarTarget\ExecutionTarget.cs" />
@@ -314,6 +319,7 @@
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.ModuleBuilding.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.OptionType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SliceType.cs" />
