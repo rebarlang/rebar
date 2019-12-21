@@ -65,6 +65,13 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Leaf Display="Mutable Borrow" UniqueId="Rebar:MutableBorrow" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:ImmutableBorrowNode BorrowMode="Mutable" />
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
     <Leaf Display="Drop Value" UniqueId="Rebar:DropValue" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
       <pf:MergeScript>
         <pf:MergeItem>

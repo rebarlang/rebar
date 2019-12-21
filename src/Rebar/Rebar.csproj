@@ -282,6 +282,7 @@
     <Compile Include="Compiler\TypeDiagram\UnifyTypesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\TypeDiagram\ValidateTypeUsagesTransform.cs" />
     <Compile Include="Compiler\TypeUnificationExtensions.cs" />
+    <Compile Include="Design\BorrowNodeViewModel.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramDocumentType.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramProjectItemInfoService.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramPaletteLoader.cs" />

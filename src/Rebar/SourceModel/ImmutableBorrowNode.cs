@@ -2,6 +2,7 @@
 using System.Xml.Linq;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
+using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using Rebar.Common;
@@ -9,9 +10,19 @@ using Rebar.Compiler;
 
 namespace Rebar.SourceModel
 {
-    public class ImmutableBorrowNode : SimpleNode
+    public class ImmutableBorrowNode : SimpleNode, IBorrowTunnel
     {
         private const string ElementName = "ImmutableBorrowNode";
+
+        public static readonly PropertySymbol BorrowModePropertySymbol =
+            ExposeStaticProperty<ImmutableBorrowNode>(
+                "BorrowMode",
+                borrowNode => borrowNode.BorrowMode,
+                (borrowTunnel, value) => borrowTunnel.BorrowMode = (BorrowMode)value,
+                PropertySerializers.CreateEnumSerializer<BorrowMode>(),
+                BorrowMode.Immutable);
+
+        private BorrowMode _borrowMode = BorrowMode.Immutable;
 
         protected ImmutableBorrowNode()
         {
@@ -29,6 +40,25 @@ namespace Rebar.SourceModel
         }
 
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        public BorrowMode BorrowMode
+        {
+            get { return _borrowMode; }
+            set
+            {
+                if (_borrowMode != value)
+                {
+                    TransactionRecruiter.EnlistPropertyItem(
+                        this,
+                        "BorrowMode",
+                        _borrowMode,
+                        value,
+                        (mode, reason) => _borrowMode = mode,
+                        TransactionHints.Semantic);
+                    _borrowMode = value;
+                }
+            }
+        }
 
         protected override void SetIconViewGeometry()
         {
