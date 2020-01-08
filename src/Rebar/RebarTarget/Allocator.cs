@@ -7,6 +7,7 @@ using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Rebar.RebarTarget.LLVM;
 
 namespace Rebar.RebarTarget
 {
@@ -19,55 +20,50 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal abstract class Allocator<TValueSource, TAllocation, TReference> : VisitorTransformBase, IDfirNodeVisitor<bool>, IInternalDfirNodeVisitor<bool>
-        where TAllocation : TValueSource 
-        where TReference : TValueSource
+    internal class Allocator : VisitorTransformBase, IDfirNodeVisitor<bool>, IInternalDfirNodeVisitor<bool>
     {
-        private readonly Dictionary<VariableReference, TValueSource> _variableAllocations;
-        private readonly Dictionary<object, TValueSource> _additionalAllocations;
+        private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
+        private readonly Dictionary<object, ValueSource> _additionalAllocations;
 
         public Allocator(
-            Dictionary<VariableReference, TValueSource> variableAllocations,
-            Dictionary<object, TValueSource> additionalAllocations)
+            Dictionary<VariableReference, ValueSource> variableAllocations,
+            Dictionary<object, ValueSource> additionalAllocations)
         {
             _variableAllocations = variableAllocations;
             _additionalAllocations = additionalAllocations;
         }
 
-        protected TValueSource GetValueSourceForVariable(VariableReference variable)
+        public FunctionAllocationSet AllocationSet { get; } = new FunctionAllocationSet();
+
+        private AllocationValueSource CreateLocalAllocation(string name, NIType type)
         {
-            return _variableAllocations[variable];
+            return AllocationSet.CreateStateField(name, type);
         }
 
-        protected abstract TAllocation CreateLocalAllocation(VariableReference variable);
-
-        protected abstract TAllocation CreateLocalAllocation(string name, NIType type);
-
-        private TAllocation CreateLocalAllocationForVariable(VariableReference variable)
+        private AllocationValueSource CreateLocalAllocationForVariable(VariableReference variable)
         {
-            var localAllocation = CreateLocalAllocation(variable);
+            string name = $"v{variable.Id}";
+            var localAllocation = AllocationSet.CreateStateField(name, variable.Type);
             _variableAllocations[variable] = localAllocation;
             return localAllocation;
         }
 
-        protected abstract TAllocation CreateOutputParameterAllocation(VariableReference outputParameterVariable);
-
-        private TAllocation CreateOutputParameterAllocationForVariable(VariableReference outputParameterVariable)
+        private AllocationValueSource CreateOutputParameterAllocationForVariable(VariableReference outputParameterVariable)
         {
-            var allocation = CreateOutputParameterAllocation(outputParameterVariable);
+            string name = $"v{outputParameterVariable.Id}";
+            var allocation = AllocationSet.CreateOutputParameter(name, outputParameterVariable.Type);
             _variableAllocations[outputParameterVariable] = allocation;
             return allocation;
         }
 
-        protected abstract TReference CreateConstantLocalReference(VariableReference referencedVariable);
-        
         private void CreateConstantLocalReferenceForVariable(VariableReference referencingVariable, VariableReference referencedVariable)
         {
-            if (!(_variableAllocations[referencedVariable] is TAllocation))
+            ValueSource referencedValueSource = _variableAllocations[referencedVariable];
+            if (!(referencedValueSource is AllocationValueSource))
             {
                 throw new ArgumentException("Referenced variable does not have a local allocation.", "referencedVariable");
             }
-            _variableAllocations[referencingVariable] = CreateConstantLocalReference(referencedVariable);
+            _variableAllocations[referencingVariable] = new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
         }
 
         private void CreateReferenceValueSource(VariableReference referenceVariable, VariableReference referencedVariable)
@@ -105,14 +101,14 @@ namespace Rebar.RebarTarget
                 return;
             }
             VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-            TValueSource sourceValueSource = _variableAllocations[sourceVariable];
+            ValueSource sourceValueSource = _variableAllocations[sourceVariable];
             foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable))
             {
-                if (sourceValueSource is TAllocation)
+                if (sourceValueSource is AllocationValueSource)
                 {
                     CreateLocalAllocationForVariable(sinkVariable);
                 }
-                else if (sourceValueSource is TReference)
+                else if (sourceValueSource is ConstantLocalReferenceValueSource)
                 {
                     ReuseValueSource(sourceVariable, sinkVariable);
                 }
@@ -237,7 +233,7 @@ namespace Rebar.RebarTarget
             {
                 CreateLocalAllocationForVariable(inputVariable);
             }
-            var loopConditionAllocation = (TAllocation)_variableAllocations[inputVariable];
+            var loopConditionAllocation = (AllocationValueSource)_variableAllocations[inputVariable];
             CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
             return true;
         }

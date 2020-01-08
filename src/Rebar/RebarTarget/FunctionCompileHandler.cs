@@ -122,7 +122,7 @@ namespace Rebar.RebarTarget
 
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
             var additionalSources = new Dictionary<object, LLVM.ValueSource>();
-            var allocator = new LLVM.Allocator(valueSources, additionalSources);
+            var allocator = new Allocator(valueSources, additionalSources);
             allocator.Execute(dfirRoot, cancellationToken);
 
             var asyncStateGrouper = new AsyncStateGrouper();
