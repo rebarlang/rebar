@@ -21,12 +21,14 @@ namespace Tests.Rebar.Unit.Execution
         public void CompileAndExecuteFunction(CompilerTestBase test, DfirRoot function, DfirRoot[] otherFunctions)
         {
             const string compiledFunctionName = "test";
-            _context.LoadFunction(test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName));
+            FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName);
+            _context.LoadFunction(compileResult.Module);
             foreach (DfirRoot otherFunction in otherFunctions)
             {
-                _context.LoadFunction(test.RunSemanticAnalysisUpToLLVMCodeGeneration(
+                FunctionCompileResult otherCompileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(
                     otherFunction,
-                    FunctionCompileHandler.FunctionLLVMName(otherFunction.SpecAndQName)));
+                    FunctionCompileHandler.FunctionLLVMName(otherFunction.SpecAndQName));
+                _context.LoadFunction(otherCompileResult.Module);
             }
             _context.ExecuteFunctionTopLevel(compiledFunctionName);
         }

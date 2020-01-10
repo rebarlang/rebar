@@ -480,6 +480,7 @@ namespace Rebar.RebarTarget.LLVM
         private readonly FunctionAllocationSet _allocationSet;
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
         private readonly CommonExternalFunctions _commonExternalFunctions;
+        private readonly HashSet<string> _commonModuleDependencies = new HashSet<string>();
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
         private readonly DataItem[] _parameterDataItems;
         private readonly LLVMTypeRef _groupFunctionType;
@@ -533,6 +534,8 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         public Module Module { get; }
+
+        public IEnumerable<string> CommonModuleDependencies => _commonModuleDependencies;
 
         public FunctionCompilerState CurrentState
         {
@@ -1559,5 +1562,18 @@ namespace Rebar.RebarTarget.LLVM
         public override LLVMValueRef StatePointer => StateMalloc;
 
         public LLVMValueRef StateMalloc { get; set; }
+    }
+
+    internal sealed class FunctionCompileResult
+    {
+        public FunctionCompileResult(Module module, string[] commonModuleDependencies)
+        {
+            Module = module;
+            CommonModuleDependencies = commonModuleDependencies;
+        }
+
+        public Module Module { get; }
+
+        public string[] CommonModuleDependencies { get; }
     }
 }
