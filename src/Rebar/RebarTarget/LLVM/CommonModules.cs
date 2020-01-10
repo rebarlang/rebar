@@ -8,12 +8,6 @@ namespace Rebar.RebarTarget.LLVM
     {
         private static readonly Dictionary<string, Module> _modules = new Dictionary<string, Module>();
 
-        public static Module FakeDropModule { get; }
-        public static Module SchedulerModule { get; }
-        public static Module StringModule { get; }
-        public static Module RangeModule { get; }
-        public static Module FileModule { get; }
-
         public static Dictionary<string, LLVMTypeRef> CommonModuleSignatures { get; }
 
         private static LLVMValueRef _copySliceToPointerFunction;
@@ -55,11 +49,11 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
 
-            FakeDropModule = CreateModule("fakedrop", CreateFakeDropModule);
-            SchedulerModule = CreateModule("scheduler", CreateSchedulerModule);
-            StringModule = CreateModule("string", CreateStringModule);
-            RangeModule = CreateModule("range", CreateRangeModule);
-            FileModule = CreateModule("file", CreateFileModule);
+            CreateModule("fakedrop", CreateFakeDropModule);
+            CreateModule("scheduler", CreateSchedulerModule);
+            CreateModule("string", CreateStringModule);
+            CreateModule("range", CreateRangeModule);
+            CreateModule("file", CreateFileModule);
         }
 
         private static Module CreateModule(string name, Action<Module> moduleCreator)

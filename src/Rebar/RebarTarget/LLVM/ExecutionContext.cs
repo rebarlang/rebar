@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using LLVMSharp;
+using NationalInstruments;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -206,11 +207,8 @@ namespace Rebar.RebarTarget.LLVM
         {
             _runtimeServices = runtimeServices;
             _globalModule = new Module("global");
-            _globalModule.LinkInModule(CommonModules.FakeDropModule.Clone());
-            _globalModule.LinkInModule(CommonModules.SchedulerModule.Clone());
-            _globalModule.LinkInModule(CommonModules.StringModule.Clone());
-            _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
-            _globalModule.LinkInModule(CommonModules.FileModule.Clone());
+            string[] modules = new string[] { "fakedrop", "scheduler", "string", "range", "file" };
+            modules.ForEach(m => _globalModule.LinkInModule(CommonModules.GetModule(m).Clone()));
 
             string error;
             LLVMBool Success = new LLVMBool(0);
