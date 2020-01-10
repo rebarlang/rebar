@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LLVMSharp;
 
 namespace Rebar.RebarTarget.LLVM
 {
     internal static class CommonModules
     {
+        private static readonly Dictionary<string, Module> _modules = new Dictionary<string, Module>();
+
         public static Module FakeDropModule { get; }
         public static Module SchedulerModule { get; }
         public static Module StringModule { get; }
@@ -52,16 +55,24 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
 
-            FakeDropModule = new Module("fakedrop");
-            CreateFakeDropModule(FakeDropModule);
-            SchedulerModule = new Module("scheduler");
-            CreateSchedulerModule(SchedulerModule);
-            StringModule = new Module("string");
-            CreateStringModule(StringModule);
-            RangeModule = new Module("range");
-            CreateRangeModule(RangeModule);
-            FileModule = new Module("file");
-            CreateFileModule(FileModule);
+            FakeDropModule = CreateModule("fakedrop", CreateFakeDropModule);
+            SchedulerModule = CreateModule("scheduler", CreateSchedulerModule);
+            StringModule = CreateModule("string", CreateStringModule);
+            RangeModule = CreateModule("range", CreateRangeModule);
+            FileModule = CreateModule("file", CreateFileModule);
+        }
+
+        private static Module CreateModule(string name, Action<Module> moduleCreator)
+        {
+            var module = new Module(name);
+            _modules[name] = module;
+            moduleCreator(module);
+            return module;
+        }
+
+        public static Module GetModule(string moduleName)
+        {
+            return _modules[moduleName];
         }
 
         #region FakeDrop Module
