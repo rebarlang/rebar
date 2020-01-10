@@ -9,6 +9,7 @@ namespace Rebar.RebarTarget.LLVM
         private static readonly Dictionary<string, Module> _modules = new Dictionary<string, Module>();
 
         public static Dictionary<string, LLVMTypeRef> CommonModuleSignatures { get; }
+        private static readonly Dictionary<string, string> _functionModuleNames = new Dictionary<string, string>();
 
         private static LLVMValueRef _copySliceToPointerFunction;
         private static LLVMValueRef _createEmptyStringFunction;
@@ -67,6 +68,11 @@ namespace Rebar.RebarTarget.LLVM
         public static Module GetModule(string moduleName)
         {
             return _modules[moduleName];
+        }
+
+        public static Tuple<LLVMTypeRef, string> GetCommonFunction(string functionName)
+        {
+            return new Tuple<LLVMTypeRef, string>(CommonModuleSignatures[functionName], _functionModuleNames[functionName]);
         }
 
         #region FakeDrop Module
