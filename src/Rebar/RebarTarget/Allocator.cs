@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using LLVMSharp;
 using NationalInstruments;
+using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -24,6 +26,7 @@ namespace Rebar.RebarTarget
     {
         private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
         private readonly Dictionary<object, ValueSource> _additionalAllocations;
+        private readonly Dictionary<VariableReference, VariableUsage> _variableUsages;
 
         public Allocator(
             Dictionary<VariableReference, ValueSource> variableAllocations,
@@ -31,86 +34,112 @@ namespace Rebar.RebarTarget
         {
             _variableAllocations = variableAllocations;
             _additionalAllocations = additionalAllocations;
+            _variableUsages = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableUsage>();
         }
 
         public FunctionAllocationSet AllocationSet { get; } = new FunctionAllocationSet();
 
-        private AllocationValueSource CreateLocalAllocation(string name, NIType type)
+        private VariableUsage GetVariableUsageForVariable(VariableReference variable)
         {
-            return AllocationSet.CreateStateField(name, type);
-        }
-
-        private AllocationValueSource CreateLocalAllocationForVariable(VariableReference variable)
-        {
-            string name = $"v{variable.Id}";
-            var localAllocation = AllocationSet.CreateStateField(name, variable.Type);
-            _variableAllocations[variable] = localAllocation;
-            return localAllocation;
-        }
-
-        private AllocationValueSource CreateOutputParameterAllocationForVariable(VariableReference outputParameterVariable)
-        {
-            string name = $"v{outputParameterVariable.Id}";
-            var allocation = AllocationSet.CreateOutputParameter(name, outputParameterVariable.Type);
-            _variableAllocations[outputParameterVariable] = allocation;
-            return allocation;
-        }
-
-        private void CreateConstantLocalReferenceForVariable(VariableReference referencingVariable, VariableReference referencedVariable)
-        {
-            ValueSource referencedValueSource = _variableAllocations[referencedVariable];
-            if (!(referencedValueSource is AllocationValueSource))
+            VariableUsage usage;
+            if (!_variableUsages.TryGetValue(variable, out usage))
             {
-                throw new ArgumentException("Referenced variable does not have a local allocation.", "referencedVariable");
+                usage = new VariableUsage();
+                _variableUsages[variable] = usage;
             }
-            _variableAllocations[referencingVariable] = new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+            return usage;
         }
 
-        private void CreateReferenceValueSource(VariableReference referenceVariable, VariableReference referencedVariable)
+        private string VariableAllocationName(VariableReference variable)
         {
-            if (referenceVariable.Mutable)
+            return $"v{variable.Id}";
+        }
+
+        public override void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        {
+            base.Execute(dfirRoot, cancellationToken);
+
+            // Now take all of the VariableUsages collected and create appropriate ValueSources from them
+            var valueSources = new Dictionary<VariableUsage, ValueSource>();
+            foreach (var pair in _variableUsages)
             {
-                CreateLocalAllocationForVariable(referenceVariable);
-                return;
-            }
+                VariableReference variable = pair.Key;
+                VariableUsage usage = pair.Value;
 
-            // If the created reference binding is non-mutable, then we can create a ConstantLocalReferenceValueSource
-            CreateConstantLocalReferenceForVariable(referenceVariable, referencedVariable);
-            return;
+                _variableAllocations[variable] = GetValueSourceForUsage(variable, usage, valueSources);
+            }
         }
 
-        private void ReuseValueSource(VariableReference originalVariable, VariableReference newVariable)
+        private ValueSource GetValueSourceForUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> valueSources)
         {
-            _variableAllocations[newVariable] = _variableAllocations[originalVariable];
+            ValueSource valueSource;
+            if (!valueSources.TryGetValue(usage, out valueSource))
+            {
+                valueSource = CreateValueSourceFromUsage(variable, usage, valueSources);
+                valueSources[usage] = valueSource;
+            }
+            return valueSource;
+        }
+
+        private ValueSource CreateValueSourceFromUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> otherValueSources)
+        {
+            if (!usage.TakesAddress && !usage.UpdatesValue && !variable.Mutable)
+            {
+                LLVMValueRef constantValue;
+                if (usage.TryGetConstantInitialValue(out constantValue))
+                {
+                    return new ConstantValueSource(constantValue);
+                }
+            }
+            if (usage.ReferencedVariableUsage != null && !variable.Mutable)
+            {
+                ValueSource referencedValueSource = GetValueSourceForUsage(usage.ReferencedVariable, usage.ReferencedVariableUsage, otherValueSources);
+                var referencedConstantValueSource = referencedValueSource as ConstantValueSource;
+                return referencedConstantValueSource != null
+                    ? (ValueSource)new ReferenceToConstantValueSource(referencedConstantValueSource)
+                    : new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+            }
+            return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
         }
 
         protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
         {
+            InitializeVariableUsagesForAllTerminals(borderNode);
             this.VisitRebarNode(borderNode);
         }
 
         protected override void VisitNode(Node node)
         {
+            InitializeVariableUsagesForAllTerminals(node);
             this.VisitRebarNode(node);
         }
 
         protected override void VisitWire(Wire wire)
         {
+            InitializeVariableUsagesForAllTerminals(wire);
             if (!wire.SinkTerminals.HasMoreThan(1))
             {
                 return;
             }
             VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-            ValueSource sourceValueSource = _variableAllocations[sourceVariable];
+            VariableUsage sourceVariableUsage = GetVariableUsageForVariable(sourceVariable);
             foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable))
             {
-                if (sourceValueSource is AllocationValueSource)
+                VariableUsage sinkVariableUsage = GetVariableUsageForVariable(sinkVariable);
+                sinkVariableUsage.IsReferenceToVariable(sourceVariableUsage.ReferencedVariable, sourceVariableUsage.ReferencedVariableUsage);
+                // TODO: this may create cases where different sinks have different characteristics, requiring
+                // code to transfer value from source to individual sinks
+            }
+        }
+
+        private void InitializeVariableUsagesForAllTerminals(Node node)
+        {
+            foreach (Terminal terminal in node.Terminals)
+            {
+                VariableReference variable = terminal.GetTrueVariable();
+                if (variable.IsValid && !_variableUsages.ContainsKey(variable))
                 {
-                    CreateLocalAllocationForVariable(sinkVariable);
-                }
-                else if (sourceValueSource is ConstantLocalReferenceValueSource)
-                {
-                    ReuseValueSource(sourceVariable, sinkVariable);
+                    _variableUsages[variable] = new VariableUsage();
                 }
             }
         }
@@ -123,14 +152,10 @@ namespace Rebar.RebarTarget
 
         private void VisitDataItem(DataItem dataItem)
         {
-            if (dataItem.IsInput)
-            {
-                CreateLocalAllocationForVariable(dataItem.GetVariable());
-            }
-            else
-            {
-                CreateOutputParameterAllocationForVariable(dataItem.GetVariable());
-            }
+            VariableReference dataItemVariable = dataItem.GetVariable();
+            _variableAllocations[dataItemVariable] = dataItem.IsInput
+                ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
+                : AllocationSet.CreateOutputParameter(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
         }
 
         #region IDfirNodeVisitor implementation
@@ -141,44 +166,48 @@ namespace Rebar.RebarTarget
         {
             VariableReference inputVariable = borrowTunnel.InputTerminals[0].GetTrueVariable(),
                 outputVariable = borrowTunnel.OutputTerminals[0].GetTrueVariable();
-            CreateReferenceValueSource(outputVariable, inputVariable);
+            GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
             return true;
         }
 
         public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
         {
-            CreateLocalAllocationForVariable(buildTupleNode.OutputTerminals[0].GetTrueVariable());
+            // TODO: for each input variable, note that it is moved into another data structure
             return true;
         }
 
         public bool VisitConstant(Constant constant)
         {
-            CreateLocalAllocationForVariable(constant.OutputTerminal.GetTrueVariable());
+            VariableReference outputVariable = constant.OutputTerminal.GetTrueVariable();
+            if (outputVariable.Type.IsInteger())
+            {
+                GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
+                    constant.Value.GetIntegerValue(outputVariable.Type));
+            }
+            else if (outputVariable.Type.IsBoolean())
+            {
+                GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
+                    ((bool)constant.Value).AsLLVMValue());
+            }
             return true;
         }
 
         public bool VisitDataAccessor(DataAccessor dataAccessor)
         {
-            if (dataAccessor.Terminal.Direction == Direction.Output)
-            {
-                VariableReference variable = dataAccessor.Terminal.GetTrueVariable();
-                // For now, create a local allocation and copy the parameter value into it.
-                CreateLocalAllocationForVariable(variable);
-            }
+            // For now, create a local allocation and copy the parameter value into it.
             return true;
         }
 
         public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
         {
-            foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
-            {
-                CreateLocalAllocationForVariable(outputTerminal.GetTrueVariable());
-            }
+            // TODO: for Borrow mode, mark each output reference as a struct offset of the input reference
             return true;
         }
 
         public bool VisitDropNode(DropNode dropNode)
         {
+            // TODO: if the input type has a Drop function, address is taken
+            // This will likely require sharing code with FunctionCompiler.TryGetDropFunction
             return true;
         }
 
@@ -190,14 +219,14 @@ namespace Rebar.RebarTarget
                     outputVariable = terminalPair.Value.GetTrueVariable();
                 if (inputVariable.Type == outputVariable.Type || inputVariable.Type.IsReferenceToSameTypeAs(outputVariable.Type))
                 {
-                    ReuseValueSource(inputVariable, outputVariable);
+                    _variableUsages[outputVariable] = _variableUsages[inputVariable];
                 }
                 else
                 {
                     // TODO: there is a bug here with creating a reference to an immutable reference binding;
                     // in CreateReferenceValueSource we create a constant reference value source for the immutable reference,
                     // which means we can't create a reference to an allocation for it.
-                    CreateReferenceValueSource(outputVariable, inputVariable);
+                    GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
                 }
             }
             return true;
@@ -211,16 +240,19 @@ namespace Rebar.RebarTarget
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
+            GetVariableUsageForVariable(iterateTunnel.InputTerminals[0].GetTrueVariable()).WillGetValue();
+
             VariableReference outputVariable = iterateTunnel.OutputTerminals[0].GetTrueVariable();
-            CreateLocalAllocationForVariable(outputVariable);
             _additionalAllocations[iterateTunnel.IntermediateValueName] =
-                CreateLocalAllocation(iterateTunnel.IntermediateValueName, outputVariable.Type.CreateOption());
+                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputVariable.Type.CreateOption());
+
+            LoopConditionTunnel conditionTunnel = ((Compiler.Nodes.Loop)iterateTunnel.ParentStructure).BorderNodes.OfType<LoopConditionTunnel>().First();
+            GetVariableUsageForVariable(conditionTunnel.InputTerminals[0].GetTrueVariable()).WillUpdateValue();
             return true;
         }
 
         public bool VisitLockTunnel(LockTunnel lockTunnel)
         {
-            CreateLocalAllocationForVariable(lockTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
         }
 
@@ -228,13 +260,16 @@ namespace Rebar.RebarTarget
         {
             Terminal inputTerminal = loopConditionTunnel.InputTerminals[0],
                 outputTerminal = loopConditionTunnel.OutputTerminals[0];
-            VariableReference inputVariable = inputTerminal.GetTrueVariable();
+            VariableReference inputVariable = inputTerminal.GetTrueVariable(),
+                outputVariable = outputTerminal.GetTrueVariable();
+            VariableUsage inputVariableUsage = GetVariableUsageForVariable(inputVariable);
             if (!inputTerminal.IsConnected)
             {
-                CreateLocalAllocationForVariable(inputVariable);
+                inputVariableUsage.WillInitializeWithCompileTimeConstant(true.AsLLVMValue());
             }
-            var loopConditionAllocation = (AllocationValueSource)_variableAllocations[inputVariable];
-            CreateConstantLocalReferenceForVariable(outputTerminal.GetTrueVariable(), inputVariable);
+            inputVariableUsage.WillGetValue();
+
+            GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, inputVariableUsage);
             return true;
         }
 
@@ -246,9 +281,6 @@ namespace Rebar.RebarTarget
 
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
-            Terminal someValueTerminal = optionPatternStructureSelector.OutputTerminals[0];
-            VariableReference someValueVariable = someValueTerminal.GetTrueVariable();
-            CreateLocalAllocationForVariable(someValueVariable);
             return true;
         }
 
@@ -268,13 +300,11 @@ namespace Rebar.RebarTarget
             {
                 VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
                     outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
-                if (outputVariable.Type == inputVariable.Type.CreateOption())
+                if (outputVariable.Type != inputVariable.Type.CreateOption())
                 {
-                    CreateLocalAllocationForVariable(outputVariable);
-                }
-                else
-                {
-                    ReuseValueSource(inputVariable, outputVariable);
+                    // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
+                    // the ValueSource if they are close enough
+                    _variableUsages[outputVariable] = _variableUsages[inputVariable];
                 }
             }
             else
@@ -282,11 +312,7 @@ namespace Rebar.RebarTarget
                 // If this is an output tunnel, each input variable already has its own allocation, but
                 // the output needs a distinct one (for now)
                 // (Eventually we should try to share a single allocation for all variables.)
-                if (tunnel.InputTerminals.HasMoreThan(1))
-                {
-                    CreateLocalAllocationForVariable(tunnel.OutputTerminals[0].GetTrueVariable());
-                }
-                else
+                if (tunnel.InputTerminals.HasFewerThanOrExactly(1))
                 {
                     throw new NotImplementedException();
                 }
@@ -298,16 +324,113 @@ namespace Rebar.RebarTarget
         {
             // TODO: it would be nice to allow the output value source to reference an offset from the input value source,
             // rather than needing a separate allocation.
-            CreateLocalAllocationForVariable(unwrapOptionTunnel.OutputTerminals[0].GetTrueVariable());
             return true;
         }
 
         private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
         {
-            Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
-            foreach (var terminalPair in node.OutputTerminals.Zip(signature.Outputs).Where(pair => !pair.Value.IsPassthrough))
+            switch (nodeFunctionSignature.GetName())
             {
-                CreateLocalAllocationForVariable(terminalPair.Key.GetTrueVariable());
+                case "Assign":
+                    VariableUsage input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillUpdateDereferencedValue();
+                    // TODO: only if deref type is Drop
+                    input0Usage.WillGetValue();
+                    VariableUsage input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
+                    input1Usage.WillGetValue();
+                    return;
+                case "Exchange":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    input0Usage.WillUpdateDereferencedValue();
+                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
+                    input1Usage.WillGetDereferencedValue();
+                    input1Usage.WillUpdateDereferencedValue();
+                    return;
+                case "CreateCopy":
+                    VariableReference input0Variable = node.InputTerminals[0].GetTrueVariable();
+                    input0Usage = GetVariableUsageForVariable(input0Variable);
+                    if (input0Variable.Type.GetReferentType().WireTypeMayFork())
+                    {
+                        input0Usage.WillGetDereferencedValue();
+                    }
+                    else
+                    {
+                        input0Usage.WillGetValue();
+                    }
+                    return;
+                case "SelectReference":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
+                    input1Usage.WillGetValue();
+                    VariableUsage input2Usage = GetVariableUsageForVariable(node.InputTerminals[2].GetTrueVariable());
+                    input2Usage.WillGetValue();
+                    return;
+                case "Increment":
+                case "Not":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    return;
+                case "AccumulateIncrement":
+                case "AccumulateNot":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    input0Usage.WillUpdateDereferencedValue();
+                    return;
+                case "Add":
+                case "Subtract":
+                case "Multiply":
+                case "Divide":
+                case "Modulus":
+                case "And":
+                case "Or":
+                case "Xor":
+                case "Equal":
+                case "NotEqual":
+                case "LessThan":
+                case "LessEqual":
+                case "GreaterThan":
+                case "GreaterEqual":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
+                    input1Usage.WillGetDereferencedValue();
+                    return;
+                case "AccumulateAdd":
+                case "AccumulateSubtract":
+                case "AccumulateMultiply":
+                case "AccumulateDivide":
+                case "AccumulateAnd":
+                case "AccumulateOr":
+                case "AccumulateXor":
+                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
+                    input0Usage.WillGetDereferencedValue();
+                    input0Usage.WillUpdateDereferencedValue();
+                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
+                    input1Usage.WillGetDereferencedValue();
+                    return;
+                case "NoneConstructor":
+                    {
+                        VariableReference outputVariable = node.OutputTerminals[0].GetTrueVariable();
+                        LLVMTypeRef optionType = outputVariable.Type.AsLLVMType();
+                        GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(LLVMSharp.LLVM.ConstNull(optionType));
+                    }
+                    return;
+                case "Output":
+                case "Inspect":
+                    GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable()).WillGetDereferencedValue();
+                    return;
+                case "ImmutPass":
+                case "MutPass":
+                    return;
+            }
+
+            Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
+            foreach (var terminalPair in node.InputTerminals.Zip(signature.Inputs))
+            {
+                VariableReference inputVariable = terminalPair.Key.GetTrueVariable();
+                GetVariableUsageForVariable(inputVariable).WillGetValue();
             }
         }
 
@@ -317,23 +440,90 @@ namespace Rebar.RebarTarget
 
         bool IInternalDfirNodeVisitor<bool>.VisitAwaitNode(AwaitNode awaitNode)
         {
-            VariableReference outputVariable = awaitNode.OutputTerminal.GetTrueVariable();
+            VariableReference inputVariable = awaitNode.InputTerminal.GetTrueVariable();
+            GetVariableUsageForVariable(inputVariable).WillTakeAddress();
             // It may be the case that our output variable is the same as an upstream variable (e.g., because
             // it represents a passthrough of an async node). In that case we should reuse the value source
             // we already have for it.
-            if (!_variableAllocations.ContainsKey(outputVariable))
-            {
-                CreateLocalAllocationForVariable(outputVariable);
-            }
             return true;
         }
 
         bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
         {
-            CreateLocalAllocationForVariable(createMethodCallPromise.PromiseTerminal.GetTrueVariable());
+            foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
+            {
+                VariableReference inputVariable = inputTerminal.GetTrueVariable();
+                GetVariableUsageForVariable(inputVariable).WillGetValue();
+            }
             return true;
         }
 
 #endregion
+
+        private class VariableUsage
+        {
+            private LLVMValueRef? _constantValue;
+
+            public VariableUsage ReferencedVariableUsage { get; private set; }
+
+            public VariableReference ReferencedVariable { get; private set; }
+
+            public bool GetsValue { get; private set; }
+
+            public bool TakesAddress { get; private set; }
+
+            public bool TryGetConstantInitialValue(out LLVMValueRef value)
+            {
+                if (_constantValue != null)
+                {
+                    value = _constantValue.Value;
+                    return true;
+                }
+                else
+                {
+                    value = default(LLVMValueRef);
+                    return false;
+                }
+            }
+
+            public bool UpdatesValue { get; private set; }
+
+            public void IsReferenceToVariable(VariableReference variable, VariableUsage usage)
+            {
+                ReferencedVariable = variable;
+                ReferencedVariableUsage = usage;
+            }
+
+            public void WillGetValue()
+            {
+                GetsValue = true;
+                ReferencedVariableUsage?.WillTakeAddress();
+            }
+
+            public void WillGetDereferencedValue()
+            {
+                ReferencedVariableUsage?.WillGetValue();
+            }
+
+            public void WillTakeAddress()
+            {
+                TakesAddress = true;
+            }
+
+            public void WillInitializeWithCompileTimeConstant(LLVMValueRef constantValue)
+            {
+                _constantValue = constantValue;
+            }
+
+            public void WillUpdateValue()
+            {
+                UpdatesValue = true;
+            }
+
+            public void WillUpdateDereferencedValue()
+            {
+                ReferencedVariableUsage?.WillUpdateValue();
+            }
+        }
     }
 }

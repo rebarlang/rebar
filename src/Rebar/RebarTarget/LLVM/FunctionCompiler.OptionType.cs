@@ -15,16 +15,16 @@ namespace Rebar.RebarTarget.LLVM
                 outputSource = compiler.GetTerminalValueSource(someConstructorNode.OutputTerminals[0]);
             LLVMTypeRef outputType = someConstructorNode.OutputTerminals[0].GetTrueVariable().Type.AsLLVMType();
             LLVMValueRef innerValue = inputSource.GetValue(compiler.Builder);
-            ((IUpdateableValueSource)outputSource).UpdateValue(compiler.Builder, compiler.Builder.BuildOptionValue(outputType, innerValue));
+            compiler.Initialize(outputSource, compiler.Builder.BuildOptionValue(outputType, innerValue));
         }
 
         private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
         {
-            var outputSource = (IUpdateableValueSource)compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
+            ValueSource outputSource = compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
             LLVMTypeRef outputType = noneConstructorNode
                 .OutputTerminals[0].GetTrueVariable()
                 .Type.AsLLVMType();
-            outputSource.UpdateValue(compiler.Builder, compiler.Builder.BuildOptionValue(outputType, null));
+            compiler.InitializeIfNecessary(outputSource, builder => builder.BuildOptionValue(outputType, null));
         }
 
         private static void BuildOptionDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionDropFunction)

@@ -79,6 +79,41 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), intValue, false);
         }
 
+        public static LLVMValueRef GetIntegerValue(this object value, NIType type)
+        {
+            LLVMValueRef constantValueRef;
+            switch (type.GetKind())
+            {
+                case NITypeKind.Int8:
+                    constantValueRef = ((sbyte)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt8:
+                    constantValueRef = ((byte)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int16:
+                    constantValueRef = ((short)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt16:
+                    constantValueRef = ((ushort)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int32:
+                    constantValueRef = ((int)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt32:
+                    constantValueRef = ((uint)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int64:
+                    constantValueRef = ((long)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt64:
+                    constantValueRef = ((ulong)value).AsLLVMValue();
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported numeric constant type: " + type);
+            }
+            return constantValueRef;
+        }
+
         public static LLVMTypeRef VoidPointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
 
         public static LLVMValueRef NullVoidPointer { get; } = LLVMSharp.LLVM.ConstPointerNull(VoidPointerType);
@@ -143,10 +178,12 @@ namespace Rebar.RebarTarget.LLVM
         public static LLVMValueRef BuildOptionValue(this IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
         {
             LLVMTypeRef innerType = optionType.GetSubtypes()[1];
-            return builder.BuildStructValue(
-                optionType,
-                new LLVMValueRef[] { (someValue != null).AsLLVMValue(), someValue ?? LLVMSharp.LLVM.ConstNull(innerType) },
-                "option");
+            return someValue == null
+                ? LLVMSharp.LLVM.ConstNull(optionType)
+                : builder.BuildStructValue(
+                    optionType,
+                    new LLVMValueRef[] { true.AsLLVMValue(), someValue.Value },
+                    "option");
         }
 
         public static LLVMValueRef BuildStructValue(this IRBuilder builder, LLVMTypeRef structType, LLVMValueRef[] fieldValues, string valueName = null)

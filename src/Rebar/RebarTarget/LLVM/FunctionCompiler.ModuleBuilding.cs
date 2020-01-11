@@ -209,7 +209,7 @@ namespace Rebar.RebarTarget.LLVM
                     "bitCastFunction");
                 if (!successor.SignaledConditionally && successor.Predecessors.HasMoreThan(1))
                 {
-                    LLVMValueRef fireCountPtr = ((IAddressableValueSource)successorData.FireCountStateField).GetAddress(Builder);
+                    LLVMValueRef fireCountPtr = GetAddress(successorData.FireCountStateField, Builder);
                     Builder.CreateCall(
                         GetImportedCommonFunction(CommonModules.PartialScheduleName),
                         new LLVMValueRef[] { bitCastStatePtr, fireCountPtr, bitCastSuccessorFunction },

@@ -1,9 +1,13 @@
-﻿using LLVMSharp;
+﻿using System;
+using System.Collections.Generic;
+using LLVMSharp;
 
 namespace Rebar.RebarTarget.LLVM
 {
     internal abstract class ValueSource
     {
+        private bool _initialized;
+
         public abstract LLVMValueRef GetValue(IRBuilder builder);
     }
 
@@ -14,14 +18,57 @@ namespace Rebar.RebarTarget.LLVM
         LLVMTypeRef AddressType { get; }
     }
 
+    internal interface IInitializableValueSource
+    {
+        void InitializeValue(IRBuilder builder, LLVMValueRef value);
+    }
+
     internal interface IUpdateableValueSource
     {
         void UpdateValue(IRBuilder builder, LLVMValueRef value);
     }
 
-    internal abstract class AllocationValueSource : ValueSource, IAddressableValueSource, IUpdateableValueSource
+    internal interface IGetDereferencedValueSource
+    {
+        LLVMValueRef GetDereferencedValue(IRBuilder builder);
+    }
+
+    internal class ConstantValueSource : ValueSource
+    {
+        private readonly LLVMValueRef _value;
+
+        public ConstantValueSource(LLVMValueRef value)
+        {
+            _value = value;
+        }
+
+        public override LLVMValueRef GetValue(IRBuilder builder) => _value;
+    }
+
+    internal class ReferenceToConstantValueSource : ValueSource, IGetDereferencedValueSource
+    {
+        private readonly ConstantValueSource _constantValueSource;
+
+        public ReferenceToConstantValueSource(ConstantValueSource constantValueSource)
+        {
+            _constantValueSource = constantValueSource;
+        }
+
+        public LLVMValueRef GetDereferencedValue(IRBuilder builder)
+        {
+            return _constantValueSource.GetValue(builder);
+        }
+
+        public override LLVMValueRef GetValue(IRBuilder builder)
+        {
+            throw new InvalidOperationException("Cannot get address value from ReferenceToConstantValueSource");
+        }
+    }
+
+    internal abstract class AllocationValueSource : ValueSource, IAddressableValueSource, IInitializableValueSource, IUpdateableValueSource
     {
         private int _loadCount;
+        private readonly Dictionary<LLVMBasicBlockRef, LLVMValueRef> _basicBlockAddresses = new Dictionary<LLVMBasicBlockRef, LLVMValueRef>();
 
         protected AllocationValueSource(string allocationName)
         {
@@ -34,6 +81,11 @@ namespace Rebar.RebarTarget.LLVM
 
         protected abstract LLVMValueRef GetAllocationPointer(IRBuilder builder);
 
+        public void InitializeValue(IRBuilder builder, LLVMValueRef value)
+        {
+            UpdateValue(builder, value);
+        }
+
         LLVMValueRef IAddressableValueSource.GetAddress(IRBuilder builder)
         {
             return GetValidPointer(builder);
@@ -41,8 +93,14 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef GetValidPointer(IRBuilder builder)
         {
-            LLVMValueRef allocationPointer = GetAllocationPointer(builder);
-            allocationPointer.ThrowIfNull();
+            LLVMBasicBlockRef currentBlock = builder.GetInsertBlock();
+            LLVMValueRef allocationPointer;
+            if (!_basicBlockAddresses.TryGetValue(currentBlock, out allocationPointer))
+            {
+                allocationPointer = GetAllocationPointer(builder);
+                allocationPointer.ThrowIfNull();
+                _basicBlockAddresses[currentBlock] = allocationPointer;
+            }
             return allocationPointer;
         }
 
@@ -54,6 +112,11 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         void IUpdateableValueSource.UpdateValue(IRBuilder builder, LLVMValueRef value)
+        {
+            UpdateValue(builder, value);
+        }
+
+        private void UpdateValue(IRBuilder builder, LLVMValueRef value)
         {
             builder.CreateStore(value, GetValidPointer(builder));
         }
@@ -129,7 +192,18 @@ namespace Rebar.RebarTarget.LLVM
     {
         public static LLVMValueRef GetDereferencedValue(this ValueSource valueSource, IRBuilder builder)
         {
-            return builder.CreateLoad(valueSource.GetValue(builder), $"deref");
+            var getDereferenceValueSource = valueSource as IGetDereferencedValueSource;
+            if (getDereferenceValueSource != null)
+            {
+                return getDereferenceValueSource.GetDereferencedValue(builder);
+            }
+
+            LLVMValueRef address = valueSource.GetValue(builder);
+            if (address.TypeOf().TypeKind != LLVMTypeKind.LLVMPointerTypeKind)
+            {
+                throw new InvalidOperationException("Trying to dereference non-pointer value");
+            }
+            return builder.CreateLoad(address, $"deref");
         }
 
         public static void UpdateDereferencedValue(this ValueSource valueSource, IRBuilder builder, LLVMValueRef value)
