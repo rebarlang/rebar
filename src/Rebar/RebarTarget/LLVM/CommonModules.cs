@@ -11,6 +11,12 @@ namespace Rebar.RebarTarget.LLVM
         public static Dictionary<string, LLVMTypeRef> CommonModuleSignatures { get; }
         private static readonly Dictionary<string, string> _functionModuleNames = new Dictionary<string, string>();
 
+        public const string FakeDropModuleName = "fakedrop";
+        public const string SchedulerModuleName = "schduler";
+        public const string StringModuleName = "string";
+        public const string RangeModuleName = "range";
+        public const string FileModuleName = "file";
+
         private static LLVMValueRef _copySliceToPointerFunction;
         private static LLVMValueRef _createEmptyStringFunction;
         private static LLVMValueRef _createNullTerminatedStringFromSliceFunction;
@@ -50,11 +56,11 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
 
-            CreateModule("fakedrop", CreateFakeDropModule);
-            CreateModule("scheduler", CreateSchedulerModule);
-            CreateModule("string", CreateStringModule);
-            CreateModule("range", CreateRangeModule);
-            CreateModule("file", CreateFileModule);
+            CreateModule(FakeDropModuleName, CreateFakeDropModule);
+            CreateModule(SchedulerModuleName, CreateSchedulerModule);
+            CreateModule(StringModuleName, CreateStringModule);
+            CreateModule(RangeModuleName, CreateRangeModule);
+            CreateModule(FileModuleName, CreateFileModule);
         }
 
         private static Module CreateModule(string name, Action<Module> moduleCreator)
@@ -75,26 +81,32 @@ namespace Rebar.RebarTarget.LLVM
             return new Tuple<LLVMTypeRef, string>(CommonModuleSignatures[functionName], _functionModuleNames[functionName]);
         }
 
+        private static void AddFunction(string functionName, string moduleName, LLVMTypeRef functionSignature)
+        {
+            CommonModuleSignatures[functionName] = functionSignature;
+            _functionModuleNames[functionName] = moduleName;
+        }
+
         #region FakeDrop Module
 
         private static void CreateFakeDropModule(Module fakeDropModule)
         {
             var externalFunctions = new CommonExternalFunctions(fakeDropModule);
 
-            CommonModuleSignatures[FakeDropCreateName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(FakeDropCreateName, FakeDropModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] 
                 {
                     LLVMTypeRef.Int32Type(),
                     LLVMTypeRef.PointerType(LLVMExtensions.FakeDropType, 0)
                 },
-                false);
+                false));
             CreateFakeDropCreateFunction(fakeDropModule, externalFunctions);
 
-            CommonModuleSignatures[FakeDropDropName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(FakeDropDropName, FakeDropModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.FakeDropType, 0) },
-                false);
+                false));
             CreateFakeDropDropFunction(fakeDropModule, externalFunctions);
         }
 
@@ -134,7 +146,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             var externalFunctions = new CommonExternalFunctions(schedulerModule);
 
-            CommonModuleSignatures[PartialScheduleName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(PartialScheduleName, SchedulerModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
@@ -142,7 +154,7 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0u),
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)
                 },
-                false);
+                false));
             BuildPartialScheduleFunction(schedulerModule, externalFunctions);
         }
 
@@ -184,89 +196,89 @@ namespace Rebar.RebarTarget.LLVM
         {
             var externalFunctions = new CommonExternalFunctions(stringModule);
 
-            CommonModuleSignatures[CopySliceToPointerName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(CopySliceToPointerName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0) },
-                false);
+                false));
             BuildCopySliceToPointerFunction(stringModule, externalFunctions);
 
-            CommonModuleSignatures[CreateEmptyStringName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(CreateEmptyStringName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) },
-                false);
+                false));
             BuildCreateEmptyStringFunction(stringModule);
 
-            CommonModuleSignatures[CreateNullTerminatedStringFromSliceName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(CreateNullTerminatedStringFromSliceName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMExtensions.BytePointerType,
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType },
-                false);
+                false));
             BuildCreateNullTerminatedStringFromSlice(stringModule);
 
-            CommonModuleSignatures[DropStringName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(DropStringName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) },
-                false);
+                false));
             BuildDropStringFunction(stringModule);
 
-            CommonModuleSignatures[StringCloneName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringCloneName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0),
                     LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0)
                 },
-                false);
+                false));
 
-            CommonModuleSignatures[OutputStringSliceName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(OutputStringSliceName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType },
-                false);
+                false));
             BuildOutputStringSliceFunction(stringModule, externalFunctions);
 
-            CommonModuleSignatures[StringFromSliceName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringFromSliceName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(), 
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) }, 
-                false);
+                false));
             BuildStringFromSliceFunction(stringModule, externalFunctions);
 
-            CommonModuleSignatures[StringToSliceRetName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringToSliceRetName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMExtensions.StringSliceReferenceType,
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0), },
-                false);
+                false));
             BuildStringToSliceRetFunction(stringModule);
 
-            CommonModuleSignatures[StringToSliceName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringToSliceName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0), LLVMTypeRef.PointerType(LLVMExtensions.StringSliceReferenceType, 0) },
-                false);
+                false));
             BuildStringToSliceFunction(stringModule);
 
-            CommonModuleSignatures[StringAppendName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringAppendName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0), LLVMExtensions.StringSliceReferenceType },
-                false);
+                false));
             BuildStringAppendFunction(stringModule, externalFunctions);
 
-            CommonModuleSignatures[StringConcatName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringConcatName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMExtensions.StringType, 0) },
-                false);
+                false));
             BuildStringConcatFunction(stringModule, externalFunctions);
 
-            CommonModuleSignatures[StringSliceToStringSplitIteratorName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringSliceToStringSplitIteratorName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.StringSliceReferenceType, LLVMTypeRef.PointerType(LLVMExtensions.StringSplitIteratorType, 0) },
-                false);
+                false));
             BuildStringSliceToStringSplitIteratorFunction(stringModule);
 
-            CommonModuleSignatures[StringSplitIteratorNextName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(StringSplitIteratorNextName, StringModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] 
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.StringSplitIteratorType, 0),
                     LLVMTypeRef.PointerType(LLVMExtensions.StringSliceReferenceType.CreateLLVMOptionType(), 0)
                 },
-                false);
+                false));
             BuildStringSplitIteratorNextFunction(stringModule);
 
             // depends on StringToSliceRet and StringFromSlice
@@ -600,17 +612,17 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CreateRangeModule(Module rangeModule)
         {
-            CommonModuleSignatures[RangeIteratorNextName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(RangeIteratorNextName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMTypeRef.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.RangeIteratorType, 0),
                     LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type().CreateLLVMOptionType(), 0)
                 },
-                false);
+                false));
             BuildRangeIteratorNextFunction(rangeModule);
 
-            CommonModuleSignatures[CreateRangeIteratorName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(CreateRangeIteratorName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMTypeRef.Int32Type().CreateLLVMOptionType(),
                 new LLVMTypeRef[]
                 {
@@ -618,7 +630,7 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMTypeRef.Int32Type(),
                     LLVMTypeRef.PointerType(LLVMExtensions.RangeIteratorType, 0)
                 },
-                false);
+                false));
             BuildCreateRangeIteratorFunction(rangeModule);
         }
 
