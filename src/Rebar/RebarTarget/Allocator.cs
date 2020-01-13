@@ -22,18 +22,22 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal class Allocator : VisitorTransformBase, IDfirNodeVisitor<bool>, IInternalDfirNodeVisitor<bool>
+    internal class Allocator : VisitorTransformBase, IVisitationHandler<bool>, IInternalDfirNodeVisitor<bool>
     {
         private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
         private readonly Dictionary<object, ValueSource> _additionalAllocations;
+        private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
         private readonly Dictionary<VariableReference, VariableUsage> _variableUsages;
+        private AsyncStateGroup _currentGroup;
 
         public Allocator(
             Dictionary<VariableReference, ValueSource> variableAllocations,
-            Dictionary<object, ValueSource> additionalAllocations)
+            Dictionary<object, ValueSource> additionalAllocations,
+            IEnumerable<AsyncStateGroup> asyncStateGroups)
         {
             _variableAllocations = variableAllocations;
             _additionalAllocations = additionalAllocations;
+            _asyncStateGroups = asyncStateGroups;
             _variableUsages = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableUsage>();
         }
 
@@ -57,9 +61,20 @@ namespace Rebar.RebarTarget
 
         public override void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
+            // First, execute as a VisitorTransform base to initialize VariableUsages for all variables
             base.Execute(dfirRoot, cancellationToken);
 
-            // Now take all of the VariableUsages collected and create appropriate ValueSources from them
+            // Then, handle each Visitation in order to set particular node/wire/structure VariableUsage characteristics
+            foreach (AsyncStateGroup group in _asyncStateGroups)
+            {
+                _currentGroup = group;
+                foreach (Visitation visitation in group.Visitations)
+                {
+                    visitation.Visit(this);
+                }
+            }
+
+            // Finally, take all of the VariableUsages collected and create appropriate ValueSources from them
             var valueSources = new Dictionary<VariableUsage, ValueSource>();
             foreach (var pair in _variableUsages)
             {
@@ -83,6 +98,14 @@ namespace Rebar.RebarTarget
 
         private ValueSource CreateValueSourceFromUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> otherValueSources)
         {
+            if (usage.ReferencedVariableUsage != null && !variable.Mutable)
+            {
+                ValueSource referencedValueSource = GetValueSourceForUsage(usage.ReferencedVariable, usage.ReferencedVariableUsage, otherValueSources);
+                var referencedSingleValueSource = referencedValueSource as SingleValueSource;
+                return referencedSingleValueSource != null
+                    ? (ValueSource)new ReferenceToSingleValueSource(referencedSingleValueSource)
+                    : new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+            }
             if (!usage.TakesAddress && !usage.UpdatesValue && !variable.Mutable)
             {
                 LLVMValueRef constantValue;
@@ -90,46 +113,29 @@ namespace Rebar.RebarTarget
                 {
                     return new ConstantValueSource(constantValue);
                 }
-            }
-            if (usage.ReferencedVariableUsage != null && !variable.Mutable)
-            {
-                ValueSource referencedValueSource = GetValueSourceForUsage(usage.ReferencedVariable, usage.ReferencedVariableUsage, otherValueSources);
-                var referencedConstantValueSource = referencedValueSource as ConstantValueSource;
-                return referencedConstantValueSource != null
-                    ? (ValueSource)new ReferenceToConstantValueSource(referencedConstantValueSource)
-                    : new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+                if (!usage.LiveInMultipleFunctions)
+                {
+                    return new ImmutableValueSource();
+                }
             }
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
         }
 
+        #region VisitorTransformBase overrides
+
         protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
         {
             InitializeVariableUsagesForAllTerminals(borderNode);
-            this.VisitRebarNode(borderNode);
         }
 
         protected override void VisitNode(Node node)
         {
             InitializeVariableUsagesForAllTerminals(node);
-            this.VisitRebarNode(node);
         }
 
         protected override void VisitWire(Wire wire)
         {
             InitializeVariableUsagesForAllTerminals(wire);
-            if (!wire.SinkTerminals.HasMoreThan(1))
-            {
-                return;
-            }
-            VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-            VariableUsage sourceVariableUsage = GetVariableUsageForVariable(sourceVariable);
-            foreach (var sinkVariable in wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable))
-            {
-                VariableUsage sinkVariableUsage = GetVariableUsageForVariable(sinkVariable);
-                sinkVariableUsage.IsReferenceToVariable(sourceVariableUsage.ReferencedVariable, sourceVariableUsage.ReferencedVariableUsage);
-                // TODO: this may create cases where different sinks have different characteristics, requiring
-                // code to transfer value from source to individual sinks
-            }
         }
 
         private void InitializeVariableUsagesForAllTerminals(Node node)
@@ -158,6 +164,8 @@ namespace Rebar.RebarTarget
                 : AllocationSet.CreateOutputParameter(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
         }
 
+        #endregion
+
         #region IDfirNodeVisitor implementation
         // This visitor implementation parallels that of SetVariableTypesTransform:
         // For each variable created by a visited node, this should determine the appropriate ValueSource for that variable.
@@ -167,12 +175,14 @@ namespace Rebar.RebarTarget
             VariableReference inputVariable = borrowTunnel.InputTerminals[0].GetTrueVariable(),
                 outputVariable = borrowTunnel.OutputTerminals[0].GetTrueVariable();
             GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
+            WillInitializeWithValue(borrowTunnel.OutputTerminals[0]);
             return true;
         }
 
         public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
         {
             // TODO: for each input variable, note that it is moved into another data structure
+            WillInitializeWithValue(buildTupleNode.OutputTerminals[0]);
             return true;
         }
 
@@ -189,25 +199,42 @@ namespace Rebar.RebarTarget
                 GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
                     ((bool)constant.Value).AsLLVMValue());
             }
+            else
+            {
+                WillInitializeWithValue(constant.OutputTerminal);
+            }
             return true;
         }
 
         public bool VisitDataAccessor(DataAccessor dataAccessor)
         {
-            // For now, create a local allocation and copy the parameter value into it.
+            if (dataAccessor.Terminal.Direction == Direction.Output)
+            {
+                // TODO: distinguish inout from in parameters?
+                WillInitializeWithValue(dataAccessor.Terminal);
+            }
+            else if (dataAccessor.Terminal.Direction == Direction.Input)
+            {
+                WillUpdateValue(dataAccessor.Terminal);
+            }
             return true;
         }
 
         public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
         {
             // TODO: for Borrow mode, mark each output reference as a struct offset of the input reference
+            WillGetValue(decomposeTupleNode.InputTerminals[0]);
+            decomposeTupleNode.OutputTerminals.ForEach(WillInitializeWithValue);
             return true;
         }
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            // TODO: if the input type has a Drop function, address is taken
-            // This will likely require sharing code with FunctionCompiler.TryGetDropFunction
+            VariableReference droppedVariable = dropNode.InputTerminals[0].GetTrueVariable();
+            if (TraitHelpers.TypeHasDropFunction(droppedVariable.Type))
+            {
+                GetVariableUsageForVariable(droppedVariable).WillTakeAddress();
+            }
             return true;
         }
 
@@ -227,6 +254,7 @@ namespace Rebar.RebarTarget
                     // in CreateReferenceValueSource we create a constant reference value source for the immutable reference,
                     // which means we can't create a reference to an allocation for it.
                     GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
+                    WillInitializeWithValue(terminalPair.Value);
                 }
             }
             return true;
@@ -240,14 +268,15 @@ namespace Rebar.RebarTarget
 
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
-            GetVariableUsageForVariable(iterateTunnel.InputTerminals[0].GetTrueVariable()).WillGetValue();
+            WillGetValue(iterateTunnel.InputTerminals[0]);
 
-            VariableReference outputVariable = iterateTunnel.OutputTerminals[0].GetTrueVariable();
+            Terminal outputTerminal = iterateTunnel.OutputTerminals[0];
             _additionalAllocations[iterateTunnel.IntermediateValueName] =
-                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputVariable.Type.CreateOption());
+                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputTerminal.GetTrueVariable().Type.CreateOption());
+            WillInitializeWithValue(outputTerminal);
 
             LoopConditionTunnel conditionTunnel = ((Compiler.Nodes.Loop)iterateTunnel.ParentStructure).BorderNodes.OfType<LoopConditionTunnel>().First();
-            GetVariableUsageForVariable(conditionTunnel.InputTerminals[0].GetTrueVariable()).WillUpdateValue();
+            WillUpdateValue(conditionTunnel.InputTerminals[0]);
             return true;
         }
 
@@ -267,9 +296,10 @@ namespace Rebar.RebarTarget
             {
                 inputVariableUsage.WillInitializeWithCompileTimeConstant(true.AsLLVMValue());
             }
-            inputVariableUsage.WillGetValue();
+            WillGetValue(inputTerminal);
 
             GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, inputVariableUsage);
+            WillInitializeWithValue(loopConditionTunnel.OutputTerminals[0]);
             return true;
         }
 
@@ -281,6 +311,7 @@ namespace Rebar.RebarTarget
 
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
+            WillInitializeWithValue(optionPatternStructureSelector.OutputTerminals[0]);
             return true;
         }
 
@@ -322,8 +353,25 @@ namespace Rebar.RebarTarget
 
         public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
-            // TODO: it would be nice to allow the output value source to reference an offset from the input value source,
-            // rather than needing a separate allocation.
+            WillGetValue(unwrapOptionTunnel.InputTerminals[0]);
+            WillInitializeWithValue(unwrapOptionTunnel.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            if (!wire.SinkTerminals.HasMoreThan(1))
+            {
+                return true;
+            }
+            VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
+            VariableUsage sourceVariableUsage = GetVariableUsageForVariable(sourceVariable);
+            foreach (var sinkTerminal in wire.SinkTerminals.Skip(1))
+            {
+                VariableUsage sinkVariableUsage = GetVariableUsageForVariable(sinkTerminal.GetTrueVariable());
+                sinkVariableUsage.IsReferenceToVariable(sourceVariableUsage.ReferencedVariable, sourceVariableUsage.ReferencedVariableUsage);
+                WillInitializeWithValue(sinkTerminal);
+            }
             return true;
         }
 
@@ -332,51 +380,50 @@ namespace Rebar.RebarTarget
             switch (nodeFunctionSignature.GetName())
             {
                 case "Assign":
-                    VariableUsage input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillUpdateDereferencedValue();
-                    // TODO: only if deref type is Drop
-                    input0Usage.WillGetValue();
-                    VariableUsage input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
-                    input1Usage.WillGetValue();
+                    {
+                        Terminal assignedInputTerminal = node.InputTerminals[0];
+                        WillUpdateDereferencedValue(assignedInputTerminal);
+                        if (TraitHelpers.TypeHasDropFunction(assignedInputTerminal.GetTrueVariable().Type.GetReferentType()))
+                        {
+                            WillGetValue(assignedInputTerminal);
+                        }
+                        WillGetValue(node.InputTerminals[1]);
+                    }
                     return;
                 case "Exchange":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
-                    input0Usage.WillUpdateDereferencedValue();
-                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
-                    input1Usage.WillGetDereferencedValue();
-                    input1Usage.WillUpdateDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillUpdateDereferencedValue(node.InputTerminals[0]);
+                    WillGetDereferencedValue(node.InputTerminals[1]);
+                    WillUpdateDereferencedValue(node.InputTerminals[1]);
                     return;
                 case "CreateCopy":
                     VariableReference input0Variable = node.InputTerminals[0].GetTrueVariable();
-                    input0Usage = GetVariableUsageForVariable(input0Variable);
                     if (input0Variable.Type.GetReferentType().WireTypeMayFork())
                     {
-                        input0Usage.WillGetDereferencedValue();
+                        WillGetDereferencedValue(node.InputTerminals[0]);
                     }
                     else
                     {
-                        input0Usage.WillGetValue();
+                        WillGetValue(node.InputTerminals[0]);
+                        GetVariableUsageForVariable(node.OutputTerminals[1].GetTrueVariable()).WillTakeAddress();
                     }
+                    WillInitializeWithValue(node.OutputTerminals[1]);
                     return;
                 case "SelectReference":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
-                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
-                    input1Usage.WillGetValue();
-                    VariableUsage input2Usage = GetVariableUsageForVariable(node.InputTerminals[2].GetTrueVariable());
-                    input2Usage.WillGetValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillGetValue(node.InputTerminals[1]);
+                    WillGetValue(node.InputTerminals[2]);
+                    WillInitializeWithValue(node.OutputTerminals[1]);
                     return;
                 case "Increment":
                 case "Not":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillInitializeWithValue(node.OutputTerminals[1]);
                     return;
                 case "AccumulateIncrement":
                 case "AccumulateNot":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
-                    input0Usage.WillUpdateDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillUpdateDereferencedValue(node.InputTerminals[0]);
                     return;
                 case "Add":
                 case "Subtract":
@@ -392,10 +439,9 @@ namespace Rebar.RebarTarget
                 case "LessEqual":
                 case "GreaterThan":
                 case "GreaterEqual":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
-                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
-                    input1Usage.WillGetDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillGetDereferencedValue(node.InputTerminals[1]);
+                    WillInitializeWithValue(node.OutputTerminals[2]);
                     return;
                 case "AccumulateAdd":
                 case "AccumulateSubtract":
@@ -404,11 +450,9 @@ namespace Rebar.RebarTarget
                 case "AccumulateAnd":
                 case "AccumulateOr":
                 case "AccumulateXor":
-                    input0Usage = GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable());
-                    input0Usage.WillGetDereferencedValue();
-                    input0Usage.WillUpdateDereferencedValue();
-                    input1Usage = GetVariableUsageForVariable(node.InputTerminals[1].GetTrueVariable());
-                    input1Usage.WillGetDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    WillUpdateDereferencedValue(node.InputTerminals[0]);
+                    WillGetDereferencedValue(node.InputTerminals[1]);
                     return;
                 case "NoneConstructor":
                     {
@@ -417,9 +461,22 @@ namespace Rebar.RebarTarget
                         GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(LLVMSharp.LLVM.ConstNull(optionType));
                     }
                     return;
-                case "Output":
                 case "Inspect":
-                    GetVariableUsageForVariable(node.InputTerminals[0].GetTrueVariable()).WillGetDereferencedValue();
+                    WillGetDereferencedValue(node.InputTerminals[0]);
+                    return;
+                case "Output":
+                    {
+                        Terminal inputTerminal = node.InputTerminals[0];
+                        NIType inputReferentType = inputTerminal.GetTrueVariable().Type.GetReferentType();
+                        if (inputReferentType.IsInteger() || inputReferentType.IsBoolean())
+                        {
+                            WillGetDereferencedValue(inputTerminal);
+                        }
+                        else
+                        {
+                            WillGetValue(inputTerminal);
+                        }
+                    }
                     return;
                 case "ImmutPass":
                 case "MutPass":
@@ -429,8 +486,16 @@ namespace Rebar.RebarTarget
             Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
             foreach (var terminalPair in node.InputTerminals.Zip(signature.Inputs))
             {
-                VariableReference inputVariable = terminalPair.Key.GetTrueVariable();
-                GetVariableUsageForVariable(inputVariable).WillGetValue();
+                WillGetValue(terminalPair.Key);
+            }
+            foreach (var outputPair in node.OutputTerminals.Zip(signature.Outputs))
+            {
+                if (outputPair.Value.IsPassthrough)
+                {
+                    continue;
+                }
+                WillInitializeWithValue(outputPair.Key);
+                GetVariableUsageForVariable(outputPair.Key.GetTrueVariable()).WillTakeAddress();
             }
         }
 
@@ -445,6 +510,7 @@ namespace Rebar.RebarTarget
             // It may be the case that our output variable is the same as an upstream variable (e.g., because
             // it represents a passthrough of an async node). In that case we should reuse the value source
             // we already have for it.
+            WillInitializeWithValue(awaitNode.OutputTerminal);
             return true;
         }
 
@@ -452,17 +518,112 @@ namespace Rebar.RebarTarget
         {
             foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
             {
-                VariableReference inputVariable = inputTerminal.GetTrueVariable();
-                GetVariableUsageForVariable(inputVariable).WillGetValue();
+                WillGetValue(inputTerminal);
+            }
+            WillInitializeWithValue(createMethodCallPromise.PromiseTerminal);
+            return true;
+        }
+
+        #endregion
+
+        #region IDfirStructureVisitor implementation
+
+        bool IDfirStructureVisitor<bool>.VisitLoop(Compiler.Nodes.Loop loop, StructureTraversalPoint traversalPoint)
+        {
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    foreach (Tunnel outputTunnel in loop.BorderNodes.OfType<Tunnel>().Where(tunnel => tunnel.Direction == Direction.Output))
+                    {
+                        // TODO: these tunnels are required to have local allocations for now.
+                        // As with output tunnels of conditionally-executing Frames, it would be nice
+                        // to treat these as Phi ValueSources.
+                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
+                    }
+                    break;
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    LoopConditionTunnel loopCondition = loop.BorderNodes.OfType<LoopConditionTunnel>().First();
+                    Terminal loopConditionInput = loopCondition.InputTerminals[0];
+                    WillGetValue(loopConditionInput);
+                    break;
             }
             return true;
         }
 
-#endregion
+        bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
+        {
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+                    {
+                        // TODO: these tunnels require local allocations for now.
+                        // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
+                        // initialized by values from different predecessor blocks, but may not change
+                        // after initialization.
+                        WillUpdateValue(tunnel.OutputTerminals[0]);
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitOptionPatternStructure(OptionPatternStructure optionPatternStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
+                    break;
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    if (nestedDiagram == optionPatternStructure.Diagrams[0])
+                    {
+                        WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
+                    }
+                    break;
+                case StructureTraversalPoint.AfterDiagram:
+                    foreach (Tunnel outputTunnel in optionPatternStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
+                    {
+                        Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
+                        WillGetValue(inputTerminal);
+                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        #endregion
+
+        private void WillInitializeWithValue(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillInitializeWithValue(_currentGroup);
+        }
+
+        private void WillGetValue(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillGetValue(_currentGroup);
+        }
+
+        private void WillGetDereferencedValue(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillGetDereferencedValue(_currentGroup);
+        }
+
+        private void WillUpdateValue(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillUpdateValue(_currentGroup);
+        }
+
+        private void WillUpdateDereferencedValue(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillUpdateDereferencedValue(_currentGroup);
+        }
 
         private class VariableUsage
         {
             private LLVMValueRef? _constantValue;
+            private HashSet<AsyncStateGroup> _liveGroups = new HashSet<AsyncStateGroup>();
 
             public VariableUsage ReferencedVariableUsage { get; private set; }
 
@@ -488,21 +649,30 @@ namespace Rebar.RebarTarget
 
             public bool UpdatesValue { get; private set; }
 
+            public bool LiveInMultipleFunctions => _liveGroups.Count > 1;
+
             public void IsReferenceToVariable(VariableReference variable, VariableUsage usage)
             {
                 ReferencedVariable = variable;
                 ReferencedVariableUsage = usage;
             }
 
-            public void WillGetValue()
+            public void WillInitializeWithValue(AsyncStateGroup inGroup)
+            {
+                _liveGroups.Add(inGroup);
+            }
+
+            public void WillGetValue(AsyncStateGroup inGroup)
             {
                 GetsValue = true;
+                _liveGroups.Add(inGroup);
                 ReferencedVariableUsage?.WillTakeAddress();
             }
 
-            public void WillGetDereferencedValue()
+            public void WillGetDereferencedValue(AsyncStateGroup inGroup)
             {
-                ReferencedVariableUsage?.WillGetValue();
+                _liveGroups.Add(inGroup);
+                ReferencedVariableUsage?.WillGetValue(inGroup);
             }
 
             public void WillTakeAddress()
@@ -515,14 +685,16 @@ namespace Rebar.RebarTarget
                 _constantValue = constantValue;
             }
 
-            public void WillUpdateValue()
+            public void WillUpdateValue(AsyncStateGroup inGroup)
             {
+                _liveGroups.Add(inGroup);
                 UpdatesValue = true;
             }
 
-            public void WillUpdateDereferencedValue()
+            public void WillUpdateDereferencedValue(AsyncStateGroup inGroup)
             {
-                ReferencedVariableUsage?.WillUpdateValue();
+                _liveGroups.Add(inGroup);
+                ReferencedVariableUsage?.WillUpdateValue(inGroup);
             }
         }
     }

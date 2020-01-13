@@ -27,7 +27,7 @@ namespace Rebar.RebarTarget.LLVM
             compiler.InitializeIfNecessary(outputSource, builder => builder.BuildOptionValue(outputType, null));
         }
 
-        private static void BuildOptionDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionDropFunction)
+        internal static void BuildOptionDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionDropFunction)
         {
             NIType innerType;
             signature.GetGenericParameters().First().TryDestructureOptionType(out innerType);

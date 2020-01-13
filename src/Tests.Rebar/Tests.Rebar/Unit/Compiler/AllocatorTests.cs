@@ -27,16 +27,51 @@ namespace Tests.Rebar.Unit.Compiler
             ValueSource integerValueSource = valueSources[constant.OutputTerminal.GetTrueVariable()];
             Assert.IsInstanceOfType(integerValueSource, typeof(ConstantValueSource));
             ValueSource inspectInputValueSource = valueSources[inspect.InputTerminals[0].GetTrueVariable()];
-            Assert.IsInstanceOfType(inspectInputValueSource, typeof(ReferenceToConstantValueSource));
+            Assert.IsInstanceOfType(inspectInputValueSource, typeof(ReferenceToSingleValueSource));
+        }
+
+        [TestMethod]
+        public void AddConstants_Allocate_SumGetsImmutableValueSource()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            ConnectConstantToInputTerminal(add.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
+
+            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
+
+            ValueSource sumSource = valueSources[add.OutputTerminals[2].GetTrueVariable()];
+            Assert.IsInstanceOfType(sumSource, typeof(ImmutableValueSource));
+        }
+
+        [TestMethod]
+        public void AddConstantsAndYieldResult_Allocate_SumGetsStateFieldSource()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            ConnectConstantToInputTerminal(add.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
+            var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
+            Wire.Create(function.BlockDiagram, add.OutputTerminals[2], yieldNode.InputTerminals[0]);
+            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
+
+            ValueSource sumSource = valueSources[add.OutputTerminals[2].GetTrueVariable()];
+            Assert.IsInstanceOfType(sumSource, typeof(StateFieldValueSource));
         }
 
         private Dictionary<VariableReference, ValueSource> RunAllocator(DfirRoot function)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(function, cancellationToken);
+            ExecutionOrderSortingVisitor.SortDiagrams(function);
+
+            var asyncStateGrouper = new AsyncStateGrouper();
+            asyncStateGrouper.Execute(function, cancellationToken);
+            IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
+
             Dictionary<VariableReference, ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
             var additionalSources = new Dictionary<object, ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources);
+            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
             allocator.Execute(function, cancellationToken);
             return valueSources;
         }

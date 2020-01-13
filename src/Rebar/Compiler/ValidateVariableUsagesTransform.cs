@@ -27,6 +27,12 @@ namespace Rebar.Compiler
             this.VisitRebarNode(node);
         }
 
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            VisitWire(wire);
+            return true;
+        }
+
         protected override void VisitWire(Wire wire)
         {
             Terminal sourceTerminal;

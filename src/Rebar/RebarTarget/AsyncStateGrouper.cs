@@ -166,7 +166,7 @@ namespace Rebar.RebarTarget
         protected override void VisitWire(Wire wire)
         {
             AsyncStateGroup sourceGroup = _nodeGroups[wire.SourceTerminal.ConnectedTerminal.ParentNode];
-            AddVisitationToGroup(sourceGroup, new WireVisitation(wire));
+            AddVisitationToGroup(sourceGroup, new NodeVisitation(wire));
             _nodeGroups[wire] = sourceGroup;
         }
 
@@ -542,7 +542,28 @@ namespace Rebar.RebarTarget
 
     internal abstract class Visitation
     {
-        public abstract void Visit(FunctionCompiler functionCompiler);
+    }
+
+    internal interface IVisitationHandler<T> : IDfirNodeVisitor<T>, IDfirStructureVisitor<T> { }
+
+    internal static class VisitationExtensions
+    {
+        public static void Visit<T>(this Visitation visitation, IVisitationHandler<T> visitor)
+        {
+            var nodeVisitation = visitation as NodeVisitation;
+            var structureVisitation = visitation as StructureVisitation;
+            if (nodeVisitation != null)
+            {
+                visitor.VisitRebarNode(nodeVisitation.Node);
+            }
+            else if (structureVisitation != null)
+            {
+                visitor.VisitRebarStructure(
+                    structureVisitation.Structure,
+                    structureVisitation.TraversalPoint,
+                    structureVisitation.Diagram);
+            }
+        }
     }
 
     internal sealed class NodeVisitation : Visitation
@@ -553,26 +574,6 @@ namespace Rebar.RebarTarget
         }
 
         public Node Node { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.VisitRebarNode(Node);
-        }
-    }
-
-    internal sealed class WireVisitation : Visitation
-    {
-        public WireVisitation(Wire wire)
-        {
-            Wire = wire;
-        }
-
-        public Wire Wire { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.CompileWire(Wire);
-        }
     }
 
     internal sealed class StructureVisitation : Visitation
@@ -589,11 +590,6 @@ namespace Rebar.RebarTarget
         public Diagram Diagram { get; }
 
         public StructureTraversalPoint TraversalPoint { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.VisitRebarStructure(Structure, TraversalPoint, Diagram);
-        }
     }
 
     internal static class AsyncStateGroupExtensions
@@ -644,7 +640,6 @@ namespace Rebar.RebarTarget
         private static string PrettyPrintVisitation(Visitation visitation)
         {
             var nodeVisitation = visitation as NodeVisitation;
-            var wireVisitation = visitation as WireVisitation;
             var structureVisitation = visitation as StructureVisitation;
             if (nodeVisitation != null)
             {
@@ -652,10 +647,6 @@ namespace Rebar.RebarTarget
                 var functionalNode = node as FunctionalNode;
                 string nodeString = functionalNode != null ? functionalNode.Signature.GetName() : node.GetType().Name;
                 return $"    {nodeString}({node.UniqueId})";
-            }
-            if (wireVisitation != null)
-            {
-                return $"    Wire({wireVisitation.Wire.UniqueId})";
             }
             if (structureVisitation != null)
             {

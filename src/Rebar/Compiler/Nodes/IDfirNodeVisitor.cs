@@ -22,6 +22,7 @@ namespace Rebar.Compiler.Nodes
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);
         T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
+        T VisitWire(Wire wire);
     }
 
     internal static class DfirNodeVisitorExtensions
@@ -33,6 +34,7 @@ namespace Rebar.Compiler.Nodes
             var constant = node as Constant;
             var dataAccessor = node as DataAccessor;
             var tunnel = node as Tunnel;
+            var wire = node as Wire;
             if (dfirNode != null)
             {
                 return dfirNode.AcceptVisitor(visitor);
@@ -52,6 +54,10 @@ namespace Rebar.Compiler.Nodes
             else if (tunnel != null)
             {
                 return visitor.VisitTunnel(tunnel);
+            }
+            else if (wire != null)
+            {
+                return visitor.VisitWire(wire);
             }
             throw new NotImplementedException();
         }

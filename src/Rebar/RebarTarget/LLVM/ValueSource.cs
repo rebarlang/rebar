@@ -33,30 +33,52 @@ namespace Rebar.RebarTarget.LLVM
         LLVMValueRef GetDereferencedValue(IRBuilder builder);
     }
 
-    internal class ConstantValueSource : ValueSource
+    internal abstract class SingleValueSource : ValueSource
     {
-        private readonly LLVMValueRef _value;
+        protected LLVMValueRef? Value { get; set; }
 
-        public ConstantValueSource(LLVMValueRef value)
+        public override LLVMValueRef GetValue(IRBuilder builder)
         {
-            _value = value;
+            if (Value == null)
+            {
+                throw new InvalidOperationException("Trying to get value of uninitialized variable");
+            }
+            return Value.Value;
         }
-
-        public override LLVMValueRef GetValue(IRBuilder builder) => _value;
     }
 
-    internal class ReferenceToConstantValueSource : ValueSource, IGetDereferencedValueSource
+    internal class ConstantValueSource : SingleValueSource
     {
-        private readonly ConstantValueSource _constantValueSource;
-
-        public ReferenceToConstantValueSource(ConstantValueSource constantValueSource)
+        public ConstantValueSource(LLVMValueRef value)
         {
-            _constantValueSource = constantValueSource;
+            Value = value;
+        }
+    }
+
+    internal class ImmutableValueSource : SingleValueSource, IInitializableValueSource
+    {
+        public void InitializeValue(IRBuilder builder, LLVMValueRef value)
+        {
+            if (Value != null)
+            {
+                throw new InvalidOperationException("Trying to re-initialize variable");
+            }
+            Value = value;
+        }
+    }
+
+    internal class ReferenceToSingleValueSource : ValueSource, IGetDereferencedValueSource
+    {
+        private readonly SingleValueSource _singleValueSource;
+
+        public ReferenceToSingleValueSource(SingleValueSource constantValueSource)
+        {
+            _singleValueSource = constantValueSource;
         }
 
         public LLVMValueRef GetDereferencedValue(IRBuilder builder)
         {
-            return _constantValueSource.GetValue(builder);
+            return _singleValueSource.GetValue(builder);
         }
 
         public override LLVMValueRef GetValue(IRBuilder builder)

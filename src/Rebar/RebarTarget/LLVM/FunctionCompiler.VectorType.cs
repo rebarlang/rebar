@@ -130,7 +130,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorDropFunction)
+        internal static void BuildVectorDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorDropFunction)
         {
             NIType elementType;
             signature.GetGenericParameters().First().TryDestructureVectorType(out elementType);
@@ -144,7 +144,7 @@ namespace Rebar.RebarTarget.LLVM
                 vectorAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "vectorAllocationPtr");
 
             LLVMValueRef elementDropFunction;
-            if (compiler.TryGetDropFunction(elementType, out elementDropFunction))
+            if (TraitHelpers.TryGetDropFunction(elementType, compiler, out elementDropFunction))
             {
                 LLVMValueRef vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
                     vectorSize = builder.CreateLoad(vectorSizePtr, "vectorSize");

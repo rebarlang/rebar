@@ -65,7 +65,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildSharedDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef sharedDropFunction)
+        internal static void BuildSharedDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef sharedDropFunction)
         {
             NIType valueType;
             signature.GetGenericParameters().First().TryDestructureSharedType(out valueType);
