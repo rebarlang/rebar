@@ -84,6 +84,16 @@ namespace Rebar.RebarTarget.LLVM
                 dropFunctionCreator = MakeDropFunctionSpecializer(droppedValueType, FunctionCompiler.BuildSharedDropFunction);
                 return true;
             }
+            if (droppedValueType.TryDestructureNotifierReaderType(out innerType))
+            {
+                dropFunctionCreator = MakeDropFunctionSpecializer(droppedValueType, FunctionCompiler.BuildNotifierReaderDropFunction);
+                return true;
+            }
+            if (droppedValueType.TryDestructureNotifierWriterType(out innerType))
+            {
+                dropFunctionCreator = MakeDropFunctionSpecializer(droppedValueType, FunctionCompiler.BuildNotifierWriterDropFunction);
+                return true;
+            }
 
             if (droppedValueType.TypeHasDropTrait())
             {

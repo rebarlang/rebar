@@ -322,6 +322,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.ModuleBuilding.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.NotifierTypes.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.OptionType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SliceType.cs" />
@@ -546,6 +547,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Diagram\Nodes\SelfType.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\NotifierPalette.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />

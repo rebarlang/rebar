@@ -162,6 +162,15 @@ namespace Rebar.RebarTarget.LLVM
                 });
         }
 
+        public static LLVMTypeRef WakerType { get; } = LLVMTypeRef.StructType(new[]
+            {
+                // task function pointer
+                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                // task state
+                VoidPointerType
+            },
+            false);
+
         public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
         {
             return builder.BuildSliceReferenceValue(StringSliceReferenceType, stringPtr, length);
@@ -294,14 +303,7 @@ namespace Rebar.RebarTarget.LLVM
                     }
                     if (niType == DataTypes.WakerType)
                     {
-                        return LLVMTypeRef.StructType(new[]
-                        {
-                            // task function pointer
-                            LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
-                            // task state
-                            VoidPointerType
-                        },
-                        false);
+                        return WakerType;
                     }
                     NIType innerType;
                     if (niType.TryDestructureOptionType(out innerType))
@@ -327,6 +329,18 @@ namespace Rebar.RebarTarget.LLVM
                     if (niType.TryDestructureMethodCallPromiseType(out innerType))
                     {
                         return CreateLLVMMethodCallPromiseType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierReaderType(out innerType))
+                    {
+                        return CreateLLVMNotifierReaderType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierReaderPromiseType(out innerType))
+                    {
+                        return CreateLLVMNotifierReaderPromiseType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierWriterType(out innerType))
+                    {
+                        return CreateLLVMNotifierWriterType(innerType.AsLLVMType());
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }
@@ -375,14 +389,52 @@ namespace Rebar.RebarTarget.LLVM
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[]
             {
-                // poll function pointer
-                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
-                // function state pointer
-                VoidPointerType,
-                // output struct
+                WakerType,
                 innerType,
             },
             false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierSharedDataType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    WakerType,
+                    innerType,
+                    LLVMTypeRef.Int32Type(),
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierReaderType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierReaderPromiseType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierWriterType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
         }
 
         #region Memory Buffer

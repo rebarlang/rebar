@@ -13,7 +13,8 @@ namespace Rebar.RebarTarget.LLVM
         private readonly List<Tuple<string, NIType>> _stateFieldTypes = new List<Tuple<string, NIType>>();
         private LLVMValueRef[] _localAllocationPointers;
 
-        private const int FixedFieldCount = 3;
+        private const int FixedFieldCount = 2;
+        public const int FirstParameterFieldIndex = FixedFieldCount;
 
         public LocalAllocationValueSource CreateLocalAllocation(string allocationName, NIType allocationType)
         {
@@ -43,8 +44,7 @@ namespace Rebar.RebarTarget.LLVM
             var stateFieldTypes = new List<LLVMTypeRef>();
             // fixed fields
             stateFieldTypes.Add(LLVMTypeRef.Int1Type());    // function done?
-            stateFieldTypes.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)); // caller waker function
-            stateFieldTypes.Add(LLVMExtensions.VoidPointerType);    // caller waker state
+            stateFieldTypes.Add(LLVMExtensions.WakerType);  // caller waker
             // end fixed fields
             stateFieldTypes.AddRange(_stateFieldTypes.Select(a => a.Item2.AsLLVMType()));
             StateType.StructSetBody(stateFieldTypes.ToArray(), false);
@@ -76,16 +76,10 @@ namespace Rebar.RebarTarget.LLVM
             return builder.CreateStructGEP(StatePointer, 0u, "donePtr");
         }
 
-        internal LLVMValueRef GetStateCallerWakerFunctionPointer(IRBuilder builder)
+        internal LLVMValueRef GetStateCallerWakerPointer(IRBuilder builder)
         {
             StatePointer.ThrowIfNull();
-            return builder.CreateStructGEP(StatePointer, 1u, "callerWakerFunctionPtr");
-        }
-
-        internal LLVMValueRef GetStateCallerWakerStatePointer(IRBuilder builder)
-        {
-            StatePointer.ThrowIfNull();
-            return builder.CreateStructGEP(StatePointer, 2u, "callerWakerStatePtr");
+            return builder.CreateStructGEP(StatePointer, 1u, "callerWakerPtr");
         }
 
         internal LLVMValueRef GetStateFieldPointer(IRBuilder builder, int fieldIndex)

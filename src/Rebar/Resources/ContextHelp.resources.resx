@@ -1077,4 +1077,40 @@
   <data name="Yield_valueRef_out_Name" xml:space="preserve">
     <value>value reference</value>
   </data>
+  <data name="GetNotifierValue_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="GetNotifierValue_Name" xml:space="preserve">
+    <value>Get Notifier Value</value>
+  </data>
+  <data name="GetNotifierValue_reader_Name" xml:space="preserve">
+    <value>notifier reader</value>
+  </data>
+  <data name="GetNotifierValue_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="NotifierCreate_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="NotifierCreate_Name" xml:space="preserve">
+    <value>Create Notifier</value>
+  </data>
+  <data name="NotifierCreate_reader_Name" xml:space="preserve">
+    <value>notifier reader</value>
+  </data>
+  <data name="NotifierCreate_writer_Name" xml:space="preserve">
+    <value>notifier writer</value>
+  </data>
+  <data name="SetNotifierValue_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SetNotifierValue_Name" xml:space="preserve">
+    <value>Set Notifier Value</value>
+  </data>
+  <data name="SetNotifierValue_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
+  <data name="SetNotifierValue_writer_Name" xml:space="preserve">
+    <value>notifier writer</value>
+  </data>
 </root>

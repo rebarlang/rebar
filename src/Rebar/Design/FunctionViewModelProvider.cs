@@ -83,6 +83,10 @@ namespace Rebar.Design
             AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
             AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
 
+            AddSupportedModel<NotifierCreate>(n => new BasicNodeViewModel(n, "Create Notifier"));
+            AddSupportedModel<GetNotifierValue>(n => new BasicNodeViewModel(n, "Get Notifier Value"));
+            AddSupportedModel<SetNotifierValue>(n => new BasicNodeViewModel(n, "Set Notifier Value"));
+
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));
             AddSupportedModel<BorrowTunnel>(t => new BorrowTunnelViewModel(t));

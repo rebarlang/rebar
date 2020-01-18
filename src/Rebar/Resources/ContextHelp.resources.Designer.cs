@@ -972,6 +972,42 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string GetNotifierValue_Description {
+            get {
+                return ResourceManager.GetString("GetNotifierValue_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Get Notifier Value.
+        /// </summary>
+        internal static string GetNotifierValue_Name {
+            get {
+                return ResourceManager.GetString("GetNotifierValue_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to notifier reader.
+        /// </summary>
+        internal static string GetNotifierValue_reader_Name {
+            get {
+                return ResourceManager.GetString("GetNotifierValue_reader_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value.
+        /// </summary>
+        internal static string GetNotifierValue_value_Name {
+            get {
+                return ResourceManager.GetString("GetNotifierValue_value_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string GreaterEqual_Description {
             get {
                 return ResourceManager.GetString("GreaterEqual_Description", resourceCulture);
@@ -1701,6 +1737,42 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string NotifierCreate_Description {
+            get {
+                return ResourceManager.GetString("NotifierCreate_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create Notifier.
+        /// </summary>
+        internal static string NotifierCreate_Name {
+            get {
+                return ResourceManager.GetString("NotifierCreate_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to notifier reader.
+        /// </summary>
+        internal static string NotifierCreate_reader_Name {
+            get {
+                return ResourceManager.GetString("NotifierCreate_reader_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to notifier writer.
+        /// </summary>
+        internal static string NotifierCreate_writer_Name {
+            get {
+                return ResourceManager.GetString("NotifierCreate_writer_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string OpenFileHandle_Description {
             get {
                 return ResourceManager.GetString("OpenFileHandle_Description", resourceCulture);
@@ -2028,6 +2100,42 @@ namespace Rebar.Resources {
         internal static string SelfType_type_Name {
             get {
                 return ResourceManager.GetString("SelfType_type_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SetNotifierValue_Description {
+            get {
+                return ResourceManager.GetString("SetNotifierValue_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set Notifier Value.
+        /// </summary>
+        internal static string SetNotifierValue_Name {
+            get {
+                return ResourceManager.GetString("SetNotifierValue_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value.
+        /// </summary>
+        internal static string SetNotifierValue_value_Name {
+            get {
+                return ResourceManager.GetString("SetNotifierValue_value_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to notifier writer.
+        /// </summary>
+        internal static string SetNotifierValue_writer_Name {
+            get {
+                return ResourceManager.GetString("SetNotifierValue_writer_Name", resourceCulture);
             }
         }
         

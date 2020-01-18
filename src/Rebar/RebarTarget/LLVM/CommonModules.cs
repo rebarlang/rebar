@@ -25,6 +25,7 @@ namespace Rebar.RebarTarget.LLVM
         public const string FakeDropDropName = "fakedrop_drop";
 
         public const string PartialScheduleName = "partial_schedule";
+        public const string InvokeName = "invoke";
 
         public const string CopySliceToPointerName = "copy_slice_to_pointer";
         public const string CreateEmptyStringName = "create_empty_string";
@@ -133,6 +134,12 @@ namespace Rebar.RebarTarget.LLVM
                 },
                 false);
             BuildPartialScheduleFunction(schedulerModule, externalFunctions);
+
+            CommonModuleSignatures[InvokeName] = LLVMSharp.LLVM.FunctionType(
+                LLVMSharp.LLVM.VoidType(),
+                new LLVMTypeRef[] { LLVMExtensions.WakerType },
+                false);
+            BuildInvokeFunction(schedulerModule);
         }
 
         private static void BuildPartialScheduleFunction(Module schedulerModule, CommonExternalFunctions externalFunctions)
@@ -162,6 +169,20 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateBr(endBlock);
 
             builder.PositionBuilderAtEnd(endBlock);
+            builder.CreateRetVoid();
+        }
+
+        private static void BuildInvokeFunction(Module schedulerModule)
+        {
+            var invokeFunction = schedulerModule.AddFunction(InvokeName, CommonModuleSignatures[InvokeName]);
+            LLVMBasicBlockRef entryBlock = invokeFunction.AppendBasicBlock("entry");
+            var builder = new IRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef invokable = invokeFunction.GetParam(0u),
+                functionPtr = builder.CreateExtractValue(invokable, 0u, "functionPtr"),
+                functionArg = builder.CreateExtractValue(invokable, 1u, "functionArg");
+            builder.CreateCall(functionPtr, new LLVMValueRef[] { functionArg }, string.Empty);
             builder.CreateRetVoid();
         }
 

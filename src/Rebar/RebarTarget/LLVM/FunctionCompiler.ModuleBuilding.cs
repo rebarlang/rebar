@@ -230,14 +230,12 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef donePtr = _allocationSet.GetStateDonePointer(Builder);
             Builder.CreateStore(true.AsLLVMValue(), donePtr);
 
-            LLVMValueRef callerWakerFunctionPtrPtr = _allocationSet.GetStateCallerWakerFunctionPointer(Builder),
-                callerWakerFunctionPtr = Builder.CreateLoad(callerWakerFunctionPtrPtr, "callerWakerFunctionPtr"),
-                callerWakerStatePtrPtr = _allocationSet.GetStateCallerWakerStatePointer(Builder),
-                callerWakerStatePtr = Builder.CreateLoad(callerWakerStatePtrPtr, "callerWakerStatePtr");
+            LLVMValueRef callerWakerPtr = _allocationSet.GetStateCallerWakerPointer(Builder),
+                callerWaker = Builder.CreateLoad(callerWakerPtr, "callerWaker");
 
             // activate the caller waker
             // TODO: invoke caller waker directly, or schedule?
-            Builder.CreateCall(callerWakerFunctionPtr, new LLVMValueRef[] { callerWakerStatePtr }, string.Empty);
+            Builder.CreateCall(GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { callerWaker }, string.Empty);
         }
 
         private static string GetInitializeStateFunctionName(string runtimeFunctionName)
@@ -263,9 +261,8 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef statePtr = builder.CreateMalloc(_allocationSet.StateType, "statePtr");
             builder.CreateStore(false.AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
-            const uint FirstParameterFieldIndex = 3u;
 
-            uint parameterStructFieldIndex = FirstParameterFieldIndex;
+            uint parameterStructFieldIndex = FunctionAllocationSet.FirstParameterFieldIndex;
             uint parameterIndex = 0u;
             foreach (var dataItem in _parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
             {
@@ -331,8 +328,11 @@ namespace Rebar.RebarTarget.LLVM
                 statePtr = Builder.CreateBitCast(voidStatePtr, LLVMTypeRef.PointerType(_allocationSet.StateType, 0u), "statePtr");
             outerFunctionCompilerState.StateMalloc = statePtr;
             // TODO: create constants for these positions
-            Builder.CreateStore(outerFunction.GetParam(0u), Builder.CreateStructGEP(statePtr, 1u, "callerWakerFunctionPtr"));
-            Builder.CreateStore(outerFunction.GetParam(1u), Builder.CreateStructGEP(statePtr, 2u, "callerWakerStatePtr"));
+            LLVMValueRef waker = Builder.BuildStructValue(
+                LLVMExtensions.WakerType,
+                new LLVMValueRef[] { outerFunction.GetParam(0u), outerFunction.GetParam(1u) },
+                "callerWaker");
+            Builder.CreateStore(waker, Builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
 
             Builder.CreateCall(
                 pollFunction,

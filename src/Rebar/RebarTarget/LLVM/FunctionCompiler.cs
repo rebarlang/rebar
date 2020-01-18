@@ -88,6 +88,10 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
 
             _functionalNodeCompilers["CreateYieldPromise"] = CreateSpecializedFunctionCallCompiler(BuildCreateYieldPromiseFunction);
+
+            _functionalNodeCompilers["CreateNotifierPair"] = CreateSpecializedFunctionCallCompiler(BuildCreateNotifierPairFunction);
+            _functionalNodeCompilers["GetReaderPromise"] = CreateSpecializedFunctionCallCompiler(BuildGetNotifierReaderPromiseFunction);
+            _functionalNodeCompilers["SetNotifierValue"] = CreateSpecializedFunctionCallCompiler(BuildSetNotifierValueFunction);
         }
 
         #region Functional node compilers
@@ -426,9 +430,25 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return $"methodCallPromise[{StringifyType(innerType)}]";
                     }
+                    if (type.TryDestructureNotifierReaderType(out innerType))
+                    {
+                        return $"notifierReader[{StringifyType(innerType)}]";
+                    }
+                    if (type.TryDestructureNotifierWriterType(out innerType))
+                    {
+                        return $"notifierWriter[{StringifyType(innerType)}]";
+                    }
+                    if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+                    {
+                        return $"notifierReaderPromise[{StringifyType(innerType)}]";
+                    }
                     if (type == DataTypes.RangeIteratorType)
                     {
                         return "rangeiterator";
+                    }
+                    if (type == DataTypes.WakerType)
+                    {
+                        return "waker";
                     }
                     throw new NotSupportedException("Unsupported type: " + type);
                 }
@@ -770,6 +790,11 @@ namespace Rebar.RebarTarget.LLVM
                 NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
                 return GetSpecializedFunctionWithSignature(signature, BuildMethodCallPromisePollFunction);
             }
+            if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+            {
+                NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType.CreateOption(), NIType.Unset);
+                return GetSpecializedFunctionWithSignature(signature, BuildNotifierReaderPromisePollFunction);
+            }
             throw new NotSupportedException("Cannot find poll function for type " + type);
         }
 
@@ -1097,13 +1122,13 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        private const uint MethodCallPromiseInvokableFieldIndex = 0u,
+            MethodCallPromiseOutputFieldIndex = 1u;
+
         bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
         {
-            const uint PromisePollFunctionFieldIndex = 0u,
-                PromiseFunctionStateFieldIndex = 1u,
-                PromiseOutputFieldIndex = 2u;
             LLVMValueRef promisePtr = GetAddress(GetTerminalValueSource(createMethodCallPromise.PromiseTerminal), Builder),
-                outputPtr = Builder.CreateStructGEP(promisePtr, PromiseOutputFieldIndex, "outputPtr");
+                outputPtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "outputPtr");
             var initializeParameters = new List<LLVMValueRef>();
             foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
             {
@@ -1132,12 +1157,10 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMValueRef initializeStateFunction = GetImportedInitializeStateFunction(createMethodCallPromise),
                 statePtr = Builder.CreateCall(initializeStateFunction, initializeParameters.ToArray(), "statePtr"),
-                promiseStatePtrPtr = Builder.CreateStructGEP(promisePtr, PromiseFunctionStateFieldIndex, "promiseStatePtrPtr");
-            Builder.CreateStore(statePtr, promiseStatePtrPtr);
-
-            LLVMValueRef pollFunction = GetImportedPollFunction(createMethodCallPromise),
-                promisePollFunctionPtr = Builder.CreateStructGEP(promisePtr, PromisePollFunctionFieldIndex, "promisePollFunctionPtr");
-            Builder.CreateStore(pollFunction, promisePollFunctionPtr);
+                pollFunction = GetImportedPollFunction(createMethodCallPromise),
+                invokable = Builder.BuildStructValue(LLVMExtensions.WakerType, new LLVMValueRef[] { pollFunction, statePtr }, "invokable"),
+                promiseInvokablePtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promisePollFunctionPtr");
+            Builder.CreateStore(invokable, promiseInvokablePtr);
 
             return true;
         }
@@ -1153,15 +1176,15 @@ namespace Rebar.RebarTarget.LLVM
             LLVMTypeRef stateType = LLVMTypeRef.StructType(new[]
             {
                 LLVMTypeRef.Int1Type(),
-                LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
-                LLVMExtensions.VoidPointerType,
+                LLVMExtensions.WakerType,
             },
             false);
 
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
-                promiseResultPtr = builder.CreateStructGEP(promisePtr, 2u, "promiseResultPtr"),
-                promiseStateVoidPtrPtr = builder.CreateStructGEP(promisePtr, 1u, "promiseStateVoidPtrPtr"),
-                stateVoidPtr = builder.CreateLoad(promiseStateVoidPtrPtr, "stateVoidPtr"),
+                promiseResultPtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "promiseResultPtr"),
+                promiseInvokablePtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promiseInvokablePtr"),
+                invokable = builder.CreateLoad(promiseInvokablePtr, "invokable"),
+                stateVoidPtr = builder.CreateExtractValue(invokable, 1u, "stateVoidPtr"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
                 isDone = builder.CreateExtractValue(state, 0u, "isDone");
@@ -1177,16 +1200,11 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
 
             builder.PositionBuilderAtEnd(targetNotDoneBlock);
-            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u),
-                wakerFunctionPtr = builder.CreateExtractValue(waker, 0u, "wakerFunctionPtr"),
-                wakerStatePtr = builder.CreateExtractValue(waker, 1u, "wakerStatePtr");
+            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u);
             // TODO: create constants for these positions
-            builder.CreateStore(wakerFunctionPtr, builder.CreateStructGEP(statePtr, 1u, "callerWakerFunctionPtr"));
-            builder.CreateStore(wakerStatePtr, builder.CreateStructGEP(statePtr, 2u, "callerWakerStatePtr"));
+            builder.CreateStore(waker, builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
 
-            LLVMValueRef promisePollFunctionPtrPtr = builder.CreateStructGEP(promisePtr, 0u, "promisePollFunctionPtrPtr"),
-                pollFunctionPtr = builder.CreateLoad(promisePollFunctionPtrPtr, "pollFunctionPtr");
-            builder.CreateCall(pollFunctionPtr, new LLVMValueRef[] { stateVoidPtr }, string.Empty);
+            builder.CreateCall(compiler.GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { invokable }, string.Empty);
             LLVMValueRef noneResult = builder.BuildOptionValue(optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
@@ -1352,7 +1370,7 @@ namespace Rebar.RebarTarget.LLVM
             NIType iteratorType = inputTerminal.GetTrueVariable().Type.GetReferentType();
             LLVMValueRef iteratorNextFunction = GetIteratorNextFunction(iteratorType, iterateTunnel.IteratorNextFunctionType.FunctionNIType);
             Builder.CreateCall(
-                iteratorNextFunction, 
+                iteratorNextFunction,
                 new LLVMValueRef[]
                 {
                     iteratorSource.GetValue(Builder),

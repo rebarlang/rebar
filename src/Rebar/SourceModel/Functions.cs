@@ -1175,6 +1175,85 @@ namespace Rebar.SourceModel
 
     #endregion
 
+    #region Notifier
+
+    public class NotifierCreate : FunctionalNode
+    {
+        private const string ElementName = "NotifierCreate";
+
+        protected NotifierCreate()
+            : base(Signatures.CreateNotifierPairType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static NotifierCreate CreateNotifierCreate(IElementCreateInfo elementCreateInfo)
+        {
+            var notifierCreate = new NotifierCreate();
+            notifierCreate.Init(elementCreateInfo);
+            return notifierCreate;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[] { RebarFeatureToggles.NotifierType };
+    }
+
+    public class SetNotifierValue : FunctionalNode
+    {
+        private const string ElementName = "SetNotifierValue";
+
+        protected SetNotifierValue()
+            : base(Signatures.SetNotifierValueType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SetNotifierValue CreateSetNotifierValue(IElementCreateInfo elementCreateInfo)
+        {
+            var setNotifierValue = new SetNotifierValue();
+            setNotifierValue.Init(elementCreateInfo);
+            return setNotifierValue;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[] { RebarFeatureToggles.NotifierType };
+    }
+
+    public class GetNotifierValue : FunctionalNode
+    {
+        private const string ElementName = "GetNotifierValue";
+
+        protected GetNotifierValue()
+            : base(Signatures.GetNotifierValueType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static GetNotifierValue CreateGetNotifierValue(IElementCreateInfo elementCreateInfo)
+        {
+            var getNotifierValue = new GetNotifierValue();
+            getNotifierValue.Init(elementCreateInfo);
+            return getNotifierValue;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[] { RebarFeatureToggles.NotifierType };
+    }
+
+    #endregion
+
     #region Test nodes
 
     public class ImmutablePassthroughNode : FunctionalNode

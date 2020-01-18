@@ -18,6 +18,7 @@ namespace Rebar.Compiler
         {
             _createPromiseSignatures = new Dictionary<string, NIType>();
             _createPromiseSignatures["Yield"] = Signatures.CreateYieldPromiseType;
+            _createPromiseSignatures["GetNotifierValue"] = Signatures.GetReaderPromiseType;
         }
 
         private readonly ITypeUnificationResultFactory _unificationResultFactory;

@@ -153,6 +153,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_NotifierType_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_NotifierType_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Notifier data type and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_NotifierType_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_NotifierType_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_OptionPatternStructure_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_OptionPatternStructure_Category", resourceCulture);

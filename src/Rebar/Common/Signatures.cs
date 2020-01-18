@@ -479,6 +479,54 @@ namespace Rebar.Common
                 tDataParameter.CreateImmutableReference(tLifetimeParameter).CreateYieldPromise(),
                 "promise");
             CreateYieldPromiseType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateNotifierPair");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierReader(),
+                "reader");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierWriter(),
+                "writer");
+            CreateNotifierPairType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("GetNotifierValue");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierReader(),
+                "reader");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateOption(),
+                "value");
+            GetNotifierValueType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("GetReaderPromise");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierReader(),
+                "reader");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierReaderPromise(),
+                "promise");
+            GetReaderPromiseType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("SetNotifierValue");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateNotifierWriter(),
+                "writer");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter,
+                "value");
+            SetNotifierValueType = functionTypeBuilder.CreateType();
         }
 
         #region Testing functions
@@ -557,6 +605,18 @@ namespace Rebar.Common
         public static NIType YieldType { get; }
 
         public static NIType CreateYieldPromiseType { get; }
+
+        #endregion
+
+        #region Async notifier
+
+        public static NIType CreateNotifierPairType { get; }
+
+        public static NIType GetNotifierValueType { get; }
+
+        public static NIType GetReaderPromiseType { get; }
+
+        public static NIType SetNotifierValueType { get; }
 
         #endregion
 
