@@ -132,6 +132,18 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            structConstructorNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            structFieldAccessorNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             terminateLifetimeNode.UnificationState.UpdateTerminateLifetimeOutputs(terminateLifetimeNode, _lifetimeVariableAssociation);

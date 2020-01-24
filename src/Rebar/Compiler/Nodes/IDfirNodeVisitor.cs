@@ -18,6 +18,8 @@ namespace Rebar.Compiler.Nodes
         T VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel);
         T VisitMethodCallNode(MethodCallNode methodCallNode);
         T VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector);
+        T VisitStructConstructorNode(StructConstructorNode structConstructorNode);
+        T VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode);
         T VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode);
         T VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel);
         T VisitTunnel(Tunnel tunnel);

@@ -79,6 +79,15 @@
         </pf:MergeItem>
       </pf:MergeScript>
     </Leaf>
+    <Leaf Display="Struct Fields" UniqueId="Rebar:StructFieldAccessor" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:StructFieldAccessor>
+            <rb:StructFieldAccessorTerminal Direction="Output" Hotspot="60 35" Id="c0t0v" />
+          </rb:StructFieldAccessor>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
   </Category>
   <Category Display="Data Types" UniqueId="Rebar:PaletteCategory.DataTypes" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
     <Category Display="Boolean" UniqueId="Rebar:PaletteCategory.Boolean" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">

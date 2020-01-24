@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments.Compiler;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.SourceModel.TypeDiagram;
 
 namespace Rebar.Compiler.TypeDiagram
@@ -75,7 +77,30 @@ namespace Rebar.Compiler.TypeDiagram
         public static NIType GetSelfType(this DfirRoot typeDiagramDfirRoot)
         {
             Nodes.SelfTypeNode selfTypeNode = typeDiagramDfirRoot.BlockDiagram.Nodes.OfType<Nodes.SelfTypeNode>().First();
-            return selfTypeNode?.Type ?? NIType.Unset;
+            if (selfTypeNode == null)
+            {
+                return NIType.Unset;
+            }
+            return BuildTypeFromSelfType(selfTypeNode, typeDiagramDfirRoot.SpecAndQName.QualifiedName.GetLastStringIdentifier());
+        }
+
+        private static NIType BuildTypeFromSelfType(Nodes.SelfTypeNode selfTypeNode, string typeName)
+        {
+            switch (selfTypeNode.Mode)
+            {
+                case SelfTypeMode.Struct:
+                    NIClassBuilder classBuilder = PFTypes.Factory.DefineValueClass(typeName);
+                    int fieldIndex = 0;
+                    foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
+                    {
+                        NIType fieldType = inputTerminal.GetTrueVariable().Type;
+                        classBuilder.DefineField(fieldType, $"_{fieldIndex}", NIFieldAccessPolicies.ReadWrite);
+                        ++fieldIndex;
+                    }
+                    return classBuilder.CreateType();
+                default:
+                    throw new NotImplementedException($"SelfTypeMode: {selfTypeNode.Mode}");
+            }
         }
     }
 }

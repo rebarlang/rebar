@@ -80,6 +80,7 @@ namespace Rebar.Compiler
             // Update terminals on a TerminateLifetime before reflecting types
             var terminateLifetime = connectable as TerminateLifetime;
             var typePassthrough = connectable as TypePassthrough;
+            var structFieldAccessor = connectable as StructFieldAccessor;
             if (terminateLifetime != null)
             {
                 VisitTerminateLifetime(terminateLifetime);
@@ -88,6 +89,11 @@ namespace Rebar.Compiler
             {
                 NIType type = _map.GetDfirForTerminal(typePassthrough.InputTerminals.ElementAt(0)).GetTrueVariable().Type.GetReferentType();
                 typePassthrough.Type = type;
+            }
+            if (structFieldAccessor != null)
+            {
+                var structFieldAccessorDfir = (StructFieldAccessorNode)_map.GetDfirForModel(structFieldAccessor);
+                structFieldAccessor.UpdateDependencies(structFieldAccessorDfir.StructType);
             }
 
             foreach (var nodeTerminal in connectable.Terminals)
@@ -130,7 +136,7 @@ namespace Rebar.Compiler
             {
                 if (!_map.ContainsTerminal(pair.Key))
                 {
-                    _map.AddMapping(pair.Key, pair.Value);
+                    _map.MapTerminalAndType(pair.Key, pair.Value);
                 }
             }
         }

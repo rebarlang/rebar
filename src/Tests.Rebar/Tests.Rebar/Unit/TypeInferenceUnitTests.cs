@@ -122,7 +122,7 @@ namespace Tests.Rebar.Unit
                 true,
                 typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32),
                 typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
-            var constraint = new CopyTraitConstraint();
+            var constraint = new SimpleTraitConstraint("Copy");
             TypeVariableReference typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable(constraint.ToEnumerable());
             var testTypeUnificationResult = new TestTypeUnificationResult();
 

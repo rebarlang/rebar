@@ -1113,4 +1113,19 @@
   <data name="SetNotifierValue_writer_Name" xml:space="preserve">
     <value>notifier writer</value>
   </data>
+  <data name="StructTypeBuilder_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StructTypeBuilder_Name" xml:space="preserve">
+    <value>Struct</value>
+  </data>
+  <data name="StructFieldAccessor_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StructFieldAccessor_Name" xml:space="preserve">
+    <value>Field Accessor</value>
+  </data>
+  <data name="StructFieldAccessor_valueRef_Name" xml:space="preserve">
+    <value>struct value reference</value>
+  </data>
 </root>

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -86,19 +86,28 @@ namespace Rebar.Compiler
             }
             if (unificationResult.FailedConstraints != null)
             {
-                if (unificationResult.FailedConstraints.OfType<CopyTraitConstraint>().Any())
+                foreach (var failedConstraint in unificationResult.FailedConstraints)
                 {
-                    terminal.ParentNode.SetDfirMessage(Messages.WireCannotFork);
-                }
-                if (unificationResult.FailedConstraints.OfType<OutlastsLifetimeGraphConstraint>().Any())
-                {
-                    terminal.SetDfirMessage(Messages.WiredReferenceDoesNotLiveLongEnough);
-                }
-                if (unificationResult.FailedConstraints.OfType<DisplayTraitConstraint>().Any()
-                    || unificationResult.FailedConstraints.OfType<IteratorTraitConstraint>().Any())
-                {
-                    // TODO: customize message with name of missing trait
-                    terminal.SetDfirMessage(Messages.TypeDoesNotHaveRequiredTrait);
+                    var traitConstraint = failedConstraint as TraitConstraint;
+                    if (traitConstraint != null)
+                    {
+                        if (traitConstraint.TraitName == "Copy" && terminal.ParentNode is Wire)
+                        {
+                            terminal.ParentNode.SetDfirMessage(Messages.WireCannotFork);
+                        }
+                        else
+                        {
+                            terminal.SetDfirMessage(Messages.CreateTypeDoesNotHaveRequiredTraitMessage(((TraitConstraint)failedConstraint).TraitName));
+                        }
+                    }
+                    else if (failedConstraint is OutlastsLifetimeGraphConstraint)
+                    {
+                        terminal.SetDfirMessage(Messages.WiredReferenceDoesNotLiveLongEnough);
+                    }
+                    else
+                    {
+                        throw new NotSupportedException("Don't know how to set a terminal DfirMessage for failed constraint " + failedConstraint.GetType().Name);
+                    }
                 }
             }
         }

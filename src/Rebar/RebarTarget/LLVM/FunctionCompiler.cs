@@ -450,6 +450,10 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return "waker";
                     }
+                    if (type.IsValueClass())
+                    {
+                        return type.GetTypeDefinitionQualifiedName().ToString("::");
+                    }
                     throw new NotSupportedException("Unsupported type: " + type);
                 }
             }
@@ -990,6 +994,41 @@ namespace Rebar.RebarTarget.LLVM
             throw new NotImplementedException("Parameter direction is wrong");
         }
 
+        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            LLVMValueRef[] fieldValues = structConstructorNode.InputTerminals
+                .Select(t => GetTerminalValueSource(t).GetValue(Builder))
+                .ToArray();
+            Terminal outputTerminal = structConstructorNode.OutputTerminals[0];
+            LLVMValueRef structValue = Builder.BuildStructValue(
+                outputTerminal.GetTrueVariable().Type.AsLLVMType(),
+                fieldValues,
+                "struct");
+            Initialize(GetTerminalValueSource(outputTerminal), structValue);
+            return true;
+        }
+
+        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            NIType structType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+            string[] structFieldNames = structType.GetFields().Select(f => f.GetName()).ToArray();
+            LLVMValueRef structPtr = GetTerminalValueSource(structFieldAccessorNode.StructInputTerminal).GetValue(Builder);
+            foreach (var pair in structFieldAccessorNode.FieldNames.Zip(structFieldAccessorNode.OutputTerminals))
+            {
+                string accessedFieldName = pair.Key;
+                int accessedFieldIndex = structFieldNames.IndexOf(accessedFieldName);
+                if (accessedFieldIndex == -1)
+                {
+                    throw new InvalidStateException("Field name not found in struct type: " + accessedFieldName);
+                }
+                LLVMValueRef structFieldPtr = Builder.CreateStructGEP(structPtr, (uint)accessedFieldIndex, accessedFieldName + "Ptr");
+
+                Terminal outputTerminal = pair.Value;
+                Initialize(GetTerminalValueSource(outputTerminal), structFieldPtr);
+            }
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             return true;
@@ -1208,6 +1247,20 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef noneResult = builder.BuildOptionValue(optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
+        }
+
+        bool IInternalDfirNodeVisitor<bool>.VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode)
+        {
+            ValueSource structSource = GetTerminalValueSource(decomposeStructNode.InputTerminals[0]);
+            LLVMValueRef structValue = structSource.GetValue(Builder);
+            uint fieldIndex = 0;
+            foreach (Terminal outputTerminal in decomposeStructNode.OutputTerminals)
+            {
+                LLVMValueRef structFieldValue = Builder.CreateExtractValue(structValue, fieldIndex, outputTerminal.Name);
+                Initialize(GetTerminalValueSource(outputTerminal), structFieldValue);
+                ++fieldIndex;
+            }
+            return true;
         }
 
 #endregion

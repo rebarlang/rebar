@@ -2538,6 +2538,51 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string StructFieldAccessor_Description {
+            get {
+                return ResourceManager.GetString("StructFieldAccessor_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Field Accessor.
+        /// </summary>
+        internal static string StructFieldAccessor_Name {
+            get {
+                return ResourceManager.GetString("StructFieldAccessor_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to struct value reference.
+        /// </summary>
+        internal static string StructFieldAccessor_valueRef_Name {
+            get {
+                return ResourceManager.GetString("StructFieldAccessor_valueRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string StructTypeBuilder_Description {
+            get {
+                return ResourceManager.GetString("StructTypeBuilder_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Struct.
+        /// </summary>
+        internal static string StructTypeBuilder_Name {
+            get {
+                return ResourceManager.GetString("StructTypeBuilder_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string Subtract_Description {
             get {
                 return ResourceManager.GetString("Subtract_Description", resourceCulture);

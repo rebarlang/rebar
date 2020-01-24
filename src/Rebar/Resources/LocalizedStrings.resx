@@ -232,7 +232,10 @@
     <value>Type Diagram</value>
   </data>
   <data name="TypeDoesNotHaveRequiredTrait" xml:space="preserve">
-    <value>The data type connected to this terminal does not have the required trait: Display</value>
+    <value>This terminal requires a trait that the connected data type does not implement</value>
+  </data>
+  <data name="TypeIsNotStructType" xml:space="preserve">
+    <value>The connected data type is not a struct type.</value>
   </data>
   <data name="TypeNotDetermined" xml:space="preserve">
     <value>The type of value created by this terminal has not been fully determined.</value>

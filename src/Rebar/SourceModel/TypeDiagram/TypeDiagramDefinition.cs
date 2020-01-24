@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
+using NationalInstruments.Design;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.PanelCommon.SourceModel;
@@ -71,7 +73,7 @@ namespace Rebar.SourceModel.TypeDiagram
         protected override NationalInstruments.SourceModel.RootDiagram CreateNewRootDiagram()
         {
             BlockDiagram blockDiagram = BlockDiagram.Create(ElementCreateInfo.ForNew);
-            SelfType selfTypeNode = SelfType.CreateSelfTypeNode(ElementCreateInfo.ForNew);
+            SelfType selfTypeNode = SelfType.CreateSelfType(ElementCreateInfo.ForNew);
             blockDiagram.AddChild(selfTypeNode);
             selfTypeNode.Left = 300;
             selfTypeNode.Top = 200;
@@ -130,9 +132,17 @@ namespace Rebar.SourceModel.TypeDiagram
 
         private NIType CreateType()
         {
-            string name = Name.Last;
             QualifiedName targetRelativeName = Envoy != null ? Envoy.MakeRelativeDependencyName().BeginningSegment : QualifiedName.Empty;
-            NITypedefBuilder builder = UnderlyingType.DefineTypedef(name);
+            NIAttributedBaseBuilder builder;
+            if (UnderlyingType.IsClass())
+            {
+                builder = UnderlyingType.DefineClassFromExisting();
+            }
+            else
+            {
+                string name = Name.Last;
+                builder = UnderlyingType.DefineTypedef(name);
+            }
             builder.DefineNamespaceName(targetRelativeName);
             return builder.CreateType();
         }
@@ -149,6 +159,7 @@ namespace Rebar.SourceModel.TypeDiagram
             if (symbol == UnderlyingTypePropertySymbol)
             {
                 UpdateUnderlyingType(dataType, false);
+                return;
             }
             throw new NotImplementedException();
         }
@@ -163,5 +174,20 @@ namespace Rebar.SourceModel.TypeDiagram
         }
 
         #endregion
+    }
+
+    public static class TypeDiagramExtensions
+    {
+        public static async Task<NIType> GetTypeDiagramSignatureAsync(this Envoy typeDiagramEnvoy)
+        {
+            IProvideDataType typeDiagramCacheService = typeDiagramEnvoy.GetBasicCacheServices()
+                .OfType<IProvideDataType>()
+                .FirstOrDefault();
+            if (typeDiagramCacheService != null)
+            {
+                return await typeDiagramCacheService.GetDataTypeAsync();
+            }
+            return NIType.Unset;
+        }
     }
 }

@@ -175,6 +175,30 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            structConstructorNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
+            return true;
+        }
+
+        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            ValidateRequiredInputTerminal(structFieldAccessorNode.StructInputTerminal);
+            NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+            if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+            {
+                structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+            }
+            foreach (Terminal outputTerminal in structFieldAccessorNode.OutputTerminals)
+            {
+                if (outputTerminal.GetTrueVariable().TypeVariableReference.IsOrContainsTypeVariable)
+                {
+                    outputTerminal.SetDfirMessage(Messages.TypeNotDetermined);
+                }
+            }
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             foreach (var inputTerminal in terminateLifetimeNode.InputTerminals)

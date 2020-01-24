@@ -403,11 +403,20 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The data type connected to this terminal does not have the required trait: Display.
+        ///   Looks up a localized string similar to This terminal requires a trait that the connected data type does not implement.
         /// </summary>
         internal static string TypeDoesNotHaveRequiredTrait {
             get {
                 return ResourceManager.GetString("TypeDoesNotHaveRequiredTrait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The connected data type is not a struct type..
+        /// </summary>
+        internal static string TypeIsNotStructType {
+            get {
+                return ResourceManager.GetString("TypeIsNotStructType", resourceCulture);
             }
         }
         

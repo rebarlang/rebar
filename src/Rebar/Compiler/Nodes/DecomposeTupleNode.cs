@@ -1,5 +1,4 @@
-﻿using System;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace Rebar.Compiler.Nodes
@@ -16,7 +15,7 @@ namespace Rebar.Compiler.Nodes
                 CreateTerminal(Direction.Output, PFTypes.Void, $"out_{i}");
             }
         }
-        
+
         private DecomposeTupleNode(Node parentNode, DecomposeTupleNode copyFrom, NodeCopyInfo copyInfo)
             : base(parentNode, copyFrom, copyInfo)
         {

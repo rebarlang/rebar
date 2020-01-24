@@ -206,13 +206,16 @@ namespace Rebar.Common
             genericTypeDefinition = NIType.Unset;
             try
             {
-                genericTypeDefinition = type.GetGenericTypeDefinition();
-                return true;
+                if (type.IsClassOrInterface() || type.IsFunction())
+                {
+                    genericTypeDefinition = type.GetGenericTypeDefinition();
+                    return true;
+                }
             }
             catch (InvalidOperationException)
             {
-                return false;
             }
+            return false;
         }
 
         private static bool TryGetGenericParameterOfSpecialization(this NIType type, NIType genericTypeDefinition, int parameterIndex, out NIType parameter)

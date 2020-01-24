@@ -248,6 +248,8 @@ namespace Rebar.RebarTarget.LLVM
             },
             false);
 
+        // TechDebt: for some of the types below, it would be nicer to return named types, but this requires
+        // passing around an LLVM context.
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
             switch (niType.GetKind())
@@ -341,6 +343,11 @@ namespace Rebar.RebarTarget.LLVM
                     if (niType.TryDestructureNotifierWriterType(out innerType))
                     {
                         return CreateLLVMNotifierWriterType(innerType.AsLLVMType());
+                    }
+                    if (niType.IsValueClass())
+                    {
+                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => f.GetDataType().AsLLVMType()).ToArray();
+                        return LLVMTypeRef.StructType(fieldTypes, false);
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }

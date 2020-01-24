@@ -10,6 +10,11 @@ namespace Rebar.Compiler
         protected override void VisitNode(Node node)
         {
             ReflectAllTerminalTypes(node);
+            var structFieldAccessorNode = node as StructFieldAccessorNode;
+            if (structFieldAccessorNode != null)
+            {
+                structFieldAccessorNode.StructType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+            }
         }
 
         protected override void VisitWire(Wire wire)

@@ -167,7 +167,7 @@ namespace Tests.Rebar.Unit.Compiler
 
         protected void AssertTerminalHasMissingTraitMessage(Terminal terminal)
         {
-            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
+            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTraitDescriptor));
         }
     }
 }

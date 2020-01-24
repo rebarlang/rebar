@@ -315,6 +315,21 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            // TODO: the input variables can become references to fields of the output variable
+            WillInitializeWithValue(structConstructorNode.OutputTerminals[0]);
+            return true;
+        }
+
+        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            // TODO: the output variables can become constant GEPs of the input pointer variable
+            WillGetValue(structFieldAccessorNode.StructInputTerminal);
+            structFieldAccessorNode.OutputTerminals.ForEach(WillInitializeWithValue);
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             return true;
@@ -521,6 +536,13 @@ namespace Rebar.RebarTarget
                 WillGetValue(inputTerminal);
             }
             WillInitializeWithValue(createMethodCallPromise.PromiseTerminal);
+            return true;
+        }
+
+        bool IInternalDfirNodeVisitor<bool>.VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode)
+        {
+            WillGetValue(decomposeStructNode.InputTerminals[0]);
+            decomposeStructNode.OutputTerminals.ForEach(WillInitializeWithValue);
             return true;
         }
 

@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using DfirDiagram = NationalInstruments.Dfir.Diagram;
+using DfirNode = NationalInstruments.Dfir.Node;
+using SMNode = NationalInstruments.SourceModel.Node;
 using DfirTerminal = NationalInstruments.Dfir.Terminal;
 using SMTerminal = NationalInstruments.SourceModel.Terminal;
 using DfirWire = NationalInstruments.Dfir.Wire;
@@ -54,7 +57,7 @@ namespace Rebar.Compiler
             return dfirWire;
         }
 
-        private static void MapTerminalAndType(
+        public static void MapTerminalAndType(
             this DfirModelMap dfirModelMap,
             SMTerminal modelTerminal,
             DfirTerminal dfirTerminal)
@@ -62,6 +65,14 @@ namespace Rebar.Compiler
             dfirModelMap.AddMapping(modelTerminal, dfirTerminal);
             dfirTerminal.SetSourceModelId(modelTerminal);
             dfirTerminal.DataType = modelTerminal.DataType.IsUnset() ? PFTypes.Void : modelTerminal.DataType;
+        }
+
+        public static void MapTerminalsInOrder(this DfirModelMap dfirModelMap, SMNode sourceModelNode, DfirNode dfirNode)
+        {
+            foreach (var pair in sourceModelNode.Terminals.Zip(dfirNode.Terminals))
+            {
+                dfirModelMap.MapTerminalAndType(pair.Key, pair.Value);
+            }
         }
     }
 }

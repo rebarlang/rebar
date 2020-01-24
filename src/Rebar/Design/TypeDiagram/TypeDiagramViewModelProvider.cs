@@ -11,7 +11,7 @@ namespace Rebar.Design.TypeDiagram
         public TypeDiagramViewModelProvider()
         {
             AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
-            AddSupportedModel<SelfType>(n => new BasicNodeViewModel(n, "Self", @"Resources\Diagram\Nodes\SelfType.png"));
+            AddSupportedModel<SelfType>(n => new SelfTypeViewModel(n /*, @"Resources\Diagram\Nodes\SelfType.png"*/));
             AddSupportedModel<PrimitiveType>(n => new BasicNodeViewModel(n, "Primitive Type"));
         }
     }

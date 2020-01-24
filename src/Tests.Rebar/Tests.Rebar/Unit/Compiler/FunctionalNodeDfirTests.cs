@@ -480,7 +480,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
-            Assert.IsTrue(output.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
+            Assert.IsTrue(output.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTraitDescriptor));
         }
 
         #endregion

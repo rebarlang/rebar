@@ -24,13 +24,27 @@ namespace Rebar.Compiler
             while (_lifetimeVariableAssociation.TryGetLiveVariableWithUnboundedLifetime(out liveUnboundedLifetimeVariable))
             {
                 Diagram parentDiagram = liveUnboundedLifetimeVariable.Terminal.ParentDiagram;
-                if (liveUnboundedLifetimeVariable.Variable.Type.IsCluster())
+                NIType variableType = liveUnboundedLifetimeVariable.Variable.Type;
+                if (variableType.IsCluster())
                 {
                     DecomposeTupleNode decomposeTuple = InsertDecompositionForTupleVariable(
                         parentDiagram,
                         liveUnboundedLifetimeVariable,
                         _unificationResultFactory);
                     foreach (Terminal outputTerminal in decomposeTuple.OutputTerminals)
+                    {
+                        _lifetimeVariableAssociation.MarkVariableLive(outputTerminal.GetFacadeVariable(), outputTerminal);
+                    }
+                    _lifetimeVariableAssociation.MarkVariableConsumed(liveUnboundedLifetimeVariable.Variable);
+                    continue;
+                }
+                if (variableType.IsValueClass() && variableType.GetFields().Any())
+                {
+                    DecomposeStructNode decomposeStruct = InsertDecompositionForStructVariable(
+                        parentDiagram,
+                        liveUnboundedLifetimeVariable,
+                        _unificationResultFactory);
+                    foreach (Terminal outputTerminal in decomposeStruct.OutputTerminals)
                     {
                         _lifetimeVariableAssociation.MarkVariableLive(outputTerminal.GetFacadeVariable(), outputTerminal);
                     }
@@ -67,6 +81,20 @@ namespace Rebar.Compiler
                 tupleInputTerminal,
                 unificationResultFactory);
             return decomposeTuple;
+        }
+
+        internal static DecomposeStructNode InsertDecompositionForStructVariable(Diagram parentDiagram, LiveVariable liveStructVariable, ITypeUnificationResultFactory unificationResultFactory)
+        {
+            NIType variableType = liveStructVariable.Variable.Type;
+            DecomposeStructNode decomposeStruct = TupleNodeHelpers.CreateDecomposeStructNodeWithFacades(
+                parentDiagram,
+                variableType);
+
+            Terminal structInputTerminal = decomposeStruct.InputTerminals[0];
+            liveStructVariable.ConnectToTerminalAsInputAndUnifyVariables(
+                structInputTerminal,
+                unificationResultFactory);
+            return decomposeStruct;
         }
     }
 }

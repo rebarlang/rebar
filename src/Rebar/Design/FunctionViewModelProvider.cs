@@ -18,6 +18,9 @@ namespace Rebar.Design
             AddSupportedModel<Wire>(w => new FunctionWireViewModel(w));
             AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
             AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
+            AddSupportedModel<Constructor>(n => new ConstructorViewModel(n));
+            AddSupportedModel<StructFieldAccessor>(n => new StructFieldAccessorViewModel(n));
+            AddSupportedModel<StructFieldAccessorTerminal>(t => new StructFieldAccessorTerminalViewModel(t));
 
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value", @"Resources\Diagram\Nodes\Drop.png"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
