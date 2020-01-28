@@ -124,6 +124,12 @@ namespace Rebar.RebarTarget.LLVM
 
             Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
 
+            // Here we are assuming that the group whose label matches the function name is also the entry group.
+            if (asyncStateGroup.FunctionId == asyncStateGroup.Label)
+            {
+                _allocationSet.InitializeFunctionLocalAllocations(asyncStateGroup.FunctionId, Builder);
+            }
+
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
             if (conditionalContinuation != null)
             {

@@ -557,8 +557,6 @@ namespace Rebar.RebarTarget.LLVM
             }
 
             _commonExternalFunctions = new CommonExternalFunctions(module);
-            // TODO: reinitialize local allocations every time we switch to a different function
-            // _allocationSet.InitializeAllocations(Builder);
         }
 
         public Module Module { get; }
