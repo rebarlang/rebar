@@ -150,6 +150,13 @@ namespace Tests.Rebar.Unit.Compiler
             return patternStructure;
         }
 
+        internal FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal)
+        {
+            var someConstructor = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.SomeConstructorType);
+            Wire.Create(inputTerminal.ParentDiagram, someConstructor.OutputTerminals[0], inputTerminal);
+            return someConstructor;
+        }
+
         protected void AssertVariablesReferenceSame(VariableReference expected, VariableReference actual)
         {
             Assert.IsTrue(actual.ReferencesSame(expected));

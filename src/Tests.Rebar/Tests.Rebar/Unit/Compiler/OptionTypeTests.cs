@@ -129,12 +129,5 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(outputVariable.Type.TryDestructureOptionType(out innerType));
             Assert.IsTrue(innerType.IsInt32());
         }
-
-        internal static FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal)
-        {
-            FunctionalNode someConstructor = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.SomeConstructorType);
-            Wire wire = Wire.Create(inputTerminal.ParentDiagram, someConstructor.OutputTerminals[0], inputTerminal);
-            return someConstructor;
-        }
     }
 }

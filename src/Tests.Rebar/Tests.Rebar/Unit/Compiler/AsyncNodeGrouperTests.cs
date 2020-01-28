@@ -14,6 +14,41 @@ namespace Tests.Rebar.Unit.Compiler
     public class AsyncNodeGrouperTests : CompilerTestBase
     {
         [TestMethod]
+        public void UnconditionalFrameWithNoInteriorAwaits_GroupAsyncStates_AllFrameAsyncStateGroupsInSameFunction()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            Tunnel inputTunnel = CreateInputTunnel(frame);
+            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
+            Wire.Create(frame.Diagram, inputTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+
+            AsyncStateGroup firstGroup = asyncStateGroups.First();
+            var groupFunctionId = firstGroup.FunctionId;
+            Assert.IsTrue(asyncStateGroups.All(g => g.FunctionId == groupFunctionId));
+        }
+
+        [TestMethod]
+        public void FrameWithUnwrapOptionTunnelAndNoInteriorAwaits_GroupAsyncStates_AllFrameAsyncStateGroupsInSameFunction()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapTunnel = CreateUnwrapOptionTunnel(frame);
+            FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(unwrapTunnel.InputTerminals[0]);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+            var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
+            Wire.Create(frame.Diagram, unwrapTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+
+            AsyncStateGroup firstGroup = asyncStateGroups.First();
+            var groupFunctionId = firstGroup.FunctionId;
+            Assert.IsTrue(asyncStateGroups.All(g => g.FunctionId == groupFunctionId));
+        }
+
+        [TestMethod]
         public void FrameContainingPromiseIntoAwait_GroupAsyncStates_Stuff()
         {
             DfirRoot function = DfirRoot.Create();

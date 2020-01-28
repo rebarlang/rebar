@@ -527,12 +527,15 @@ namespace Rebar.RebarTarget
         public AsyncStateGroup(string groupLabel, IEnumerable<Visitation> visitations, IEnumerable<AsyncStateGroup> predecessors, Continuation continuation)
         {
             Label = groupLabel;
+            FunctionId = groupLabel;
             Visitations = visitations;
             Predecessors = predecessors;
             Continuation = continuation;
         }
 
         public string Label { get; }
+
+        public string FunctionId { get; set; }
 
         public IEnumerable<Visitation> Visitations { get; }
 
