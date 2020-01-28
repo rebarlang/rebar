@@ -43,9 +43,11 @@ namespace Tests.Rebar.Unit.Compiler
 
             IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
 
-            AsyncStateGroup firstGroup = asyncStateGroups.First();
-            var groupFunctionId = firstGroup.FunctionId;
-            Assert.IsTrue(asyncStateGroups.All(g => g.FunctionId == groupFunctionId));
+            AsyncStateGroup frameInitialGroup = asyncStateGroups.First(g => GroupContainsStructureTraversalPoint(g, frame, frame.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes)),
+                frameDiagramInitialGroup = asyncStateGroups.First(g => GroupContainsNode(g, output)),
+                frameTerminalGroup = asyncStateGroups.First(g => GroupContainsStructureTraversalPoint(g, frame, frame.Diagram, StructureTraversalPoint.AfterRightBorderNodes));
+            Assert.AreEqual(frameInitialGroup.FunctionId, frameDiagramInitialGroup.FunctionId);
+            Assert.AreEqual(frameInitialGroup.FunctionId, frameTerminalGroup.FunctionId);
         }
 
         [TestMethod]
@@ -83,14 +85,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             string terminalGroupName = $"loop{firstLoop.UniqueId}_terminalGroup";
             AsyncStateGroup firstLoopTerminalGroup = asyncStateGroups.First(g => g.Label == terminalGroupName);
-            AsyncStateGroup secondLoopInitialGroup = asyncStateGroups.First(g => g.Visitations.Any(
-                v =>
-                {
-                    var structureVisitation = v as StructureVisitation;
-                    return structureVisitation != null
-                        && structureVisitation.Structure == secondLoop
-                        && structureVisitation.TraversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes;
-                }));
+            AsyncStateGroup secondLoopInitialGroup = asyncStateGroups.First(g => GroupContainsStructureTraversalPoint(g, secondLoop, secondLoop.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes));
             Assert.AreEqual(firstLoopTerminalGroup, secondLoopInitialGroup);
         }
 
@@ -100,6 +95,30 @@ namespace Tests.Rebar.Unit.Compiler
             var asyncStateGrouper = new AsyncStateGrouper();
             asyncStateGrouper.Execute(function, new NationalInstruments.Compiler.CompileCancellationToken());
             return asyncStateGrouper.GetAsyncStateGroups();
+        }
+
+        private bool GroupContainsNode(AsyncStateGroup group, Node node)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var nodeVisitation = v as NodeVisitation;
+                    return nodeVisitation != null
+                        && nodeVisitation.Node == node;
+                });
+        }
+
+        private bool GroupContainsStructureTraversalPoint(AsyncStateGroup group, Structure structure, Diagram diagram, StructureTraversalPoint traversalPoint)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var structureVisitation = v as StructureVisitation;
+                    return structureVisitation != null
+                        && structureVisitation.Structure == structure
+                        && structureVisitation.Diagram == diagram
+                        && structureVisitation.TraversalPoint == traversalPoint;
+                });
         }
     }
 }

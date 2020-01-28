@@ -6,7 +6,6 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.LLVM;
 using DfirBorderNode = NationalInstruments.Dfir.BorderNode;
 using Loop = Rebar.Compiler.Nodes.Loop;
 
@@ -280,7 +279,21 @@ namespace Rebar.RebarTarget
                     }
                 case StructureTraversalPoint.AfterRightBorderNodes:
                     {
-                        currentGroup = _nodeGroups[frame];
+                        AsyncStateGroup frameTerminalGroup = _nodeGroups[frame];
+                        currentGroup = frameTerminalGroup;
+
+                        // attempt to consolidate groups
+                        if (frame.DoesStructureExecuteConditionally())
+                        {
+                            AsyncStateGroup diagramInitialGroup = _diagramInitialGroups[frame.Diagram],
+                                diagramTerminalGroup = _structureOutputBorderNodeGroups[frame];
+                            if (diagramInitialGroup == diagramTerminalGroup)
+                            {
+                                AsyncStateGroup frameInitialGroup = _structureInitialGroups[frame];
+                                diagramTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                                frameTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                            }
+                        }
                         break;
                     }
             }
