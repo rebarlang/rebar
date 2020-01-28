@@ -165,7 +165,11 @@ namespace Rebar.RebarTarget
 
         protected override void VisitWire(Wire wire)
         {
-            AsyncStateGroup sourceGroup = _nodeGroups[wire.SourceTerminal.ConnectedTerminal.ParentNode];
+            AsyncStateGroup sourceGroup = GetTerminalPredecessorGroup(wire, wire.SourceTerminal);
+            if (sourceGroup == null)
+            {
+                throw new InvalidStateException("Wire source terminal should have a group");
+            }
             AddVisitationToGroup(sourceGroup, new NodeVisitation(wire));
             _nodeGroups[wire] = sourceGroup;
         }
@@ -478,23 +482,43 @@ namespace Rebar.RebarTarget
         {
             foreach (Terminal inputTerminal in node.InputTerminals.Where(terminal => terminal.ParentDiagram == onDiagram))
             {
-                Terminal sourceTerminal = inputTerminal.GetImmediateSourceTerminal();
-                if (sourceTerminal != null)
+                AsyncStateGroup inputTerminalPredecessorGroup = GetTerminalPredecessorGroup(node, inputTerminal);
+                if (inputTerminalPredecessorGroup != null)
                 {
-                    var sourceBorderNode = sourceTerminal.ParentNode as DfirBorderNode;
-                    if (sourceBorderNode != null && sourceBorderNode.Direction == Direction.Input)
+                    yield return inputTerminalPredecessorGroup;
+                }
+            }
+        }
+
+        private AsyncStateGroup GetTerminalPredecessorGroup(Node terminalParent, Terminal terminal)
+        {
+            Terminal sourceTerminal = terminal.GetImmediateSourceTerminal();
+            if (sourceTerminal != null)
+            {
+                var sourceBorderNode = sourceTerminal.ParentNode as DfirBorderNode;
+                if (sourceBorderNode != null)
+                {
+                    if (sourceBorderNode.Direction == Direction.Input)
                     {
                         // If the source is an input border node, its group is probably the containing structure's initial group.
                         // Instead of that, use the argument node's diagram's initial group.
-                        Diagram parentDiagram = (node is DfirBorderNode ? node.ParentNode : node).ParentDiagram;
-                        yield return _diagramInitialGroups[parentDiagram];
+                        Diagram parentDiagram = (terminalParent is DfirBorderNode ? terminalParent.ParentNode : terminalParent).ParentDiagram;
+                        return _diagramInitialGroups[parentDiagram];
                     }
                     else
                     {
-                        yield return _nodeGroups[sourceTerminal.ParentNode];
+                        // TODO: if the source is an output border node, its group is _structureOutputBorderNodeGroups[sourceBorderNode],
+                        // but what we really want is the border node's parent structure's terminal group.
+                        // TODO TODO TODO test
+                        return _nodeGroups[sourceBorderNode.ParentStructure];
                     }
                 }
+                else
+                {
+                    return _nodeGroups[sourceTerminal.ParentNode];
+                }
             }
+            return null;
         }
     }
 

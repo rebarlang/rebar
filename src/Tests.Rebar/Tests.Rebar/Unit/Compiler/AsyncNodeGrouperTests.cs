@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
+using Loop = Rebar.Compiler.Nodes.Loop;
 
 namespace Tests.Rebar.Unit.Compiler
 {
@@ -32,6 +30,33 @@ namespace Tests.Rebar.Unit.Compiler
             Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], inspect.InputTerminals[0]);
 
             IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+        }
+
+        [TestMethod]
+        public void LoopFollowedByLoop_GroupAsyncStates_SubsequentLoopStartsInPredecessorLoopTerminalGroup()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Loop firstLoop = new Loop(function.BlockDiagram);
+            BorrowTunnel firstLoopBorrow = CreateBorrowTunnel(firstLoop, BorrowMode.Immutable);
+            ConnectConstantToInputTerminal(firstLoopBorrow.InputTerminals[0], PFTypes.Int32, false);
+            TerminateLifetimeTunnel firstLoopTerminate = firstLoopBorrow.TerminateLifetimeTunnel;
+            Loop secondLoop = new Loop(function.BlockDiagram);
+            Tunnel loopTunnel = CreateInputTunnel(secondLoop);
+            Wire.Create(function.BlockDiagram, firstLoopTerminate.OutputTerminals[0], loopTunnel.InputTerminals[0]);
+
+            IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+
+            string terminalGroupName = $"loop{firstLoop.UniqueId}_terminalGroup";
+            AsyncStateGroup firstLoopTerminalGroup = asyncStateGroups.First(g => g.Label == terminalGroupName);
+            AsyncStateGroup secondLoopInitialGroup = asyncStateGroups.First(g => g.Visitations.Any(
+                v =>
+                {
+                    var structureVisitation = v as StructureVisitation;
+                    return structureVisitation != null
+                        && structureVisitation.Structure == secondLoop
+                        && structureVisitation.TraversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes;
+                }));
+            Assert.AreEqual(firstLoopTerminalGroup, secondLoopInitialGroup);
         }
 
         private IEnumerable<AsyncStateGroup> GroupAsyncStates(DfirRoot function)
