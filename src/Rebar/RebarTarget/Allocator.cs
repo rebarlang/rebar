@@ -671,7 +671,7 @@ namespace Rebar.RebarTarget
 
             public bool UpdatesValue { get; private set; }
 
-            public bool LiveInMultipleFunctions => _liveGroups.Count > 1;
+            public bool LiveInMultipleFunctions => _liveGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
 
             public void IsReferenceToVariable(VariableReference variable, VariableUsage usage)
             {
