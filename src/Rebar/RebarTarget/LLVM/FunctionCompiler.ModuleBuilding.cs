@@ -15,10 +15,12 @@ namespace Rebar.RebarTarget.LLVM
             public AsyncStateGroupData(
                 AsyncStateGroup asyncStateGroup,
                 LLVMValueRef function,
+                LLVMBasicBlockRef initialBasicBlock,
                 StateFieldValueSource fireCountStateField)
             {
                 AsyncStateGroup = asyncStateGroup;
                 Function = function;
+                InitialBasicBlock = initialBasicBlock;
                 FireCountStateField = fireCountStateField;
             }
 
@@ -28,10 +30,14 @@ namespace Rebar.RebarTarget.LLVM
             public AsyncStateGroup AsyncStateGroup { get; }
 
             /// <summary>
-            /// The LLVM function that is generated for the <see cref="AsyncStateGroup"/>.
+            /// The LLVM function into which the <see cref="AsyncStateGroup"/> will be generated.
             /// </summary>
-            /// <remarks><see cref="AsyncStateGroup"/>s and LLVM functions are in a one-to-one relationship.</remarks>
             public LLVMValueRef Function { get; }
+
+            /// <summary>
+            /// The initial basic block created for the <see cref="AsyncStateGroup"/>.
+            /// </summary>
+            public LLVMBasicBlockRef InitialBasicBlock { get; }
 
             /// <summary>
             /// If the <see cref="AsyncStateGroup"/> needs to be scheduled by multiple predecessors, this
@@ -116,8 +122,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef groupFunction = groupData.Function;
             CurrentState = new AsyncStateGroupCompilerState(groupFunction, new IRBuilder());
 
-            LLVMBasicBlockRef entryBlock = groupFunction.AppendBasicBlock("entry");
-            Builder.PositionBuilderAtEnd(entryBlock);
+            Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
 
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
             if (conditionalContinuation != null)
