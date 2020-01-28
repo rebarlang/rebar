@@ -538,11 +538,18 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
                 false);
 
+            var functions = new Dictionary<string, LLVMValueRef>();
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
-                string groupFunctionName = $"{_functionName}::{asyncStateGroup.Label}"; 
-                LLVMValueRef groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                LLVMValueRef groupFunction;
+                if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
+                {
+                    string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
+                    groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                    functions[asyncStateGroup.FunctionId] = groupFunction;
+                }
+
                 LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
