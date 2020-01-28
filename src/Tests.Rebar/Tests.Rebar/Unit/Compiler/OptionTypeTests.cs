@@ -130,11 +130,6 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(innerType.IsInt32());
         }
 
-        private static UnwrapOptionTunnel CreateUnwrapOptionTunnel(Frame frame)
-        {
-            return new UnwrapOptionTunnel(frame);
-        }
-
         internal static FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal)
         {
             FunctionalNode someConstructor = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.SomeConstructorType);

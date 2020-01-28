@@ -312,24 +312,14 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
 
             LLVMValueRef stringSliceReference = _stringFromSliceFunction.GetParam(0u),
-                stringPtr = _stringFromSliceFunction.GetParam(1u),
-                stringAllocationPtrPtr = builder.CreateStructGEP(stringPtr, 0u, "stringAllocationPtrPtr"),
-                stringSizePtr = builder.CreateStructGEP(stringPtr, 1u, "stringSizePtr");
-
-            LLVMValueRef sliceAllocationPtr = builder.CreateExtractValue(stringSliceReference, 0u, "sliceAllocationPtr");
-            LLVMValueRef sliceSize = builder.CreateExtractValue(stringSliceReference, 1u, "sliceSize");
-
-            // Get a pointer to a heap allocation big enough for the string
-            LLVMValueRef allocationPtr = builder.CreateArrayMalloc(LLVMTypeRef.Int8Type(), sliceSize, "allocationPtr");
-            builder.CreateStore(allocationPtr, stringAllocationPtrPtr);
-
-            // Copy the data from the string slice to the heap allocation
-            LLVMValueRef sizeExtend = builder.CreateSExt(sliceSize, LLVMTypeRef.Int64Type(), "sizeExtend");
-            builder.CreateCall(externalFunctions.CopyMemoryFunction, new LLVMValueRef[] { allocationPtr, sliceAllocationPtr, sizeExtend }, string.Empty);
-
-            // Copy actual size into string handle
-            builder.CreateStore(sliceSize, stringSizePtr);
-
+                sliceAllocationPtr = builder.CreateExtractValue(stringSliceReference, 0u, "sliceAllocationPtr"),
+                sliceSize = builder.CreateExtractValue(stringSliceReference, 1u, "sliceSize"),
+                // Get a pointer to a heap allocation big enough for the string
+                allocationPtr = builder.CreateArrayMalloc(LLVMTypeRef.Int8Type(), sliceSize, "allocationPtr");
+            builder.CreateCallToCopyMemory(externalFunctions, allocationPtr, sliceAllocationPtr, sliceSize);
+            LLVMValueRef stringValue = builder.BuildStructValue(LLVMExtensions.StringType, new LLVMValueRef[] { allocationPtr, sliceSize }, "string"),
+                stringPtr = _stringFromSliceFunction.GetParam(1u);
+            builder.CreateStore(stringValue, stringPtr);
             builder.CreateRetVoid();
         }
 
@@ -433,9 +423,8 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef slice = _copySliceToPointerFunction.GetParam(0u),
                 sourcePtr = builder.CreateExtractValue(slice, 0u, "sourcePtr"),
                 size = builder.CreateExtractValue(slice, 1u, "size"),
-                sizeExtend = builder.CreateSExt(size, LLVMTypeRef.Int64Type(), "sizeExtend"),
                 destinationPtr = _copySliceToPointerFunction.GetParam(1u);
-            builder.CreateCall(externalFunctions.CopyMemoryFunction, new LLVMValueRef[] { destinationPtr, sourcePtr, sizeExtend }, string.Empty);
+            builder.CreateCallToCopyMemory(externalFunctions, destinationPtr, sourcePtr, size);
             builder.CreateRetVoid();
         }
 
@@ -882,6 +871,14 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         #endregion
+
+        public static void CreateCallToCopyMemory(this IRBuilder builder, CommonExternalFunctions externalFunctions, LLVMValueRef destinationPtr, LLVMValueRef sourcePtr, LLVMValueRef bytesToCopy)
+        {
+            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, LLVMTypeRef.Int64Type(), "bytesToCopyExtend"),
+                sourcePtrCast = builder.CreateBitCast(sourcePtr, LLVMExtensions.BytePointerType, "sourcePtrCast"),
+                destinationPtrCast = builder.CreateBitCast(destinationPtr, LLVMExtensions.BytePointerType, "destinationPtrCast");
+            builder.CreateCall(externalFunctions.CopyMemoryFunction, new LLVMValueRef[] { destinationPtrCast, sourcePtrCast, bytesToCopyExtend }, string.Empty);
+        }
     }
 
     public class CommonExternalFunctions

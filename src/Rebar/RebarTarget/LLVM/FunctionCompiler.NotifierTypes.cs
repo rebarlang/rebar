@@ -41,7 +41,7 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMValueRef notifierReader = builder.BuildStructValue(notifierReaderType, new[] { refCountAllocationPtr });
             builder.CreateStore(notifierReader, createNotifierPairFunction.GetParam(0u));
-            LLVMValueRef notifierWriter = builder.BuildStructValue(notifierReaderType, new[] { refCountAllocationPtr });
+            LLVMValueRef notifierWriter = builder.BuildStructValue(notifierWriterType, new[] { refCountAllocationPtr });
             builder.CreateStore(notifierWriter, createNotifierPairFunction.GetParam(1u));
             builder.CreateRetVoid();
         }

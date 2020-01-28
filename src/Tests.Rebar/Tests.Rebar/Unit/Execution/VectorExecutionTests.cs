@@ -5,6 +5,7 @@ using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Loop = Rebar.Compiler.Nodes.Loop;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -84,6 +85,55 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = new FunctionalNode(frame.Diagram, Signatures.InspectType);
             Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], inspect.InputTerminals[0]);
             return new Tuple<DfirRoot, FunctionalNode>(function, inspect);
+        }
+
+        [TestMethod]
+        public void FillVectorEnoughToGrowItThenRemoveAllElements_Execute_AllElementsPreservedAndRemoved()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var createVector = new FunctionalNode(function.BlockDiagram, Signatures.VectorCreateType);
+            Loop firstLoop = new Loop(function.BlockDiagram);
+            CreateLoopConditionTunnel(firstLoop);
+            BorrowTunnel firstLoopBorrowTunnel = CreateBorrowTunnel(firstLoop, BorrowMode.Mutable);
+            Wire.Create(function.BlockDiagram, createVector.OutputTerminals[0], firstLoopBorrowTunnel.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            IterateTunnel iterateTunnel = CreateRangeAndIterateTunnel(firstLoop, 1, 7);
+            var appendToVector = new FunctionalNode(firstLoop.Diagram, Signatures.VectorAppendType);
+            Wire.Create(firstLoop.Diagram, firstLoopBorrowTunnel.OutputTerminals[0], appendToVector.InputTerminals[0]);
+            Wire.Create(firstLoop.Diagram, iterateTunnel.OutputTerminals[0], appendToVector.InputTerminals[1]);
+            Loop secondLoop = new Loop(function.BlockDiagram);
+            CreateLoopConditionTunnel(secondLoop);
+            BorrowTunnel secondLoopBorrowTunnel = CreateBorrowTunnel(secondLoop, BorrowMode.Mutable);
+            Wire.Create(function.BlockDiagram, firstLoopBorrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0], secondLoopBorrowTunnel.InputTerminals[0]);
+            CreateRangeAndIterateTunnel(secondLoop, 1, 7);
+            var removeLastFromVector = new FunctionalNode(secondLoop.Diagram, Signatures.VectorRemoveLastType);
+            Wire.Create(secondLoop.Diagram, secondLoopBorrowTunnel.OutputTerminals[0], removeLastFromVector.InputTerminals[0]);
+            BorrowTunnel resultBorrowTunnel = CreateBorrowTunnel(secondLoop, BorrowMode.Mutable);
+            ConnectConstantToInputTerminal(resultBorrowTunnel.InputTerminals[0], PFTypes.Int32, 0, true);
+            Frame unwrapFrame = Frame.Create(secondLoop.Diagram);
+            UnwrapOptionTunnel unwrapTunnel = CreateUnwrapOptionTunnel(unwrapFrame);
+            Wire.Create(secondLoop.Diagram, removeLastFromVector.OutputTerminals[1], unwrapTunnel.InputTerminals[0]);
+            Tunnel inputTunnel = CreateInputTunnel(unwrapFrame);
+            Wire.Create(secondLoop.Diagram, resultBorrowTunnel.OutputTerminals[0], inputTunnel.InputTerminals[0]);
+            var accumulateAdd = new FunctionalNode(unwrapFrame.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32));
+            Wire.Create(unwrapFrame.Diagram, inputTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
+            Wire.Create(unwrapFrame.Diagram, unwrapTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(resultBorrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 21);
+        }
+
+        private IterateTunnel CreateRangeAndIterateTunnel(Loop loop, int rangeLow, int rangeHigh)
+        {
+            var range = new FunctionalNode(loop.ParentDiagram, Signatures.RangeType);
+            ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, 1, false);
+            ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, 7, false);
+            IterateTunnel iterateTunnel = CreateIterateTunnel(loop);
+            Wire.Create(loop.ParentDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0]);
+            return iterateTunnel;
         }
     }
 }

@@ -120,6 +120,11 @@ namespace Tests.Rebar.Unit.Compiler
             return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
         }
 
+        internal UnwrapOptionTunnel CreateUnwrapOptionTunnel(Frame frame)
+        {
+            return new UnwrapOptionTunnel(frame);
+        }
+
         internal LoopConditionTunnel CreateLoopConditionTunnel(Loop loop)
         {
             var loopConditionTunnel = new LoopConditionTunnel(loop);
