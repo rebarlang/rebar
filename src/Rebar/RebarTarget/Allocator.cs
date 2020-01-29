@@ -98,25 +98,33 @@ namespace Rebar.RebarTarget
 
         private ValueSource CreateValueSourceFromUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> otherValueSources)
         {
-            if (usage.ReferencedVariableUsage != null && !variable.Mutable)
+            if (!variable.Mutable)
             {
-                ValueSource referencedValueSource = GetValueSourceForUsage(usage.ReferencedVariable, usage.ReferencedVariableUsage, otherValueSources);
-                var referencedSingleValueSource = referencedValueSource as SingleValueSource;
-                return referencedSingleValueSource != null
-                    ? (ValueSource)new ReferenceToSingleValueSource(referencedSingleValueSource)
-                    : new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+                if (usage.ReferencedVariableUsage != null)
+                {
+                    ValueSource referencedValueSource = GetValueSourceForUsage(usage.ReferencedVariable, usage.ReferencedVariableUsage, otherValueSources);
+                    var referencedSingleValueSource = referencedValueSource as SingleValueSource;
+                    return referencedSingleValueSource != null
+                        ? (ValueSource)new ReferenceToSingleValueSource(referencedSingleValueSource)
+                        : new ConstantLocalReferenceValueSource((IAddressableValueSource)referencedValueSource);
+                }
+                if (!usage.TakesAddress && !usage.UpdatesValue)
+                {
+                    LLVMValueRef constantValue;
+                    if (usage.TryGetConstantInitialValue(out constantValue))
+                    {
+                        return new ConstantValueSource(constantValue);
+                    }
+                    if (!usage.LiveInMultipleFunctions)
+                    {
+                        return new ImmutableValueSource();
+                    }
+                }
             }
-            if (!usage.TakesAddress && !usage.UpdatesValue && !variable.Mutable)
+
+            if (!usage.LiveInMultipleFunctions)
             {
-                LLVMValueRef constantValue;
-                if (usage.TryGetConstantInitialValue(out constantValue))
-                {
-                    return new ConstantValueSource(constantValue);
-                }
-                if (!usage.LiveInMultipleFunctions)
-                {
-                    return new ImmutableValueSource();
-                }
+                return AllocationSet.CreateLocalAllocation(usage.ContainingFunctionName, VariableAllocationName(variable), variable.Type);
             }
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
         }
@@ -192,11 +200,13 @@ namespace Rebar.RebarTarget
             if (outputVariable.Type.IsInteger())
             {
                 GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
+                    _currentGroup,
                     constant.Value.GetIntegerValue(outputVariable.Type));
             }
             else if (outputVariable.Type.IsBoolean())
             {
                 GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
+                    _currentGroup,
                     ((bool)constant.Value).AsLLVMValue());
             }
             else
@@ -233,7 +243,7 @@ namespace Rebar.RebarTarget
             VariableReference droppedVariable = dropNode.InputTerminals[0].GetTrueVariable();
             if (TraitHelpers.TypeHasDropFunction(droppedVariable.Type))
             {
-                GetVariableUsageForVariable(droppedVariable).WillTakeAddress();
+                WillTakeAddress(dropNode.InputTerminals[0]);
             }
             return true;
         }
@@ -294,7 +304,9 @@ namespace Rebar.RebarTarget
             VariableUsage inputVariableUsage = GetVariableUsageForVariable(inputVariable);
             if (!inputTerminal.IsConnected)
             {
-                inputVariableUsage.WillInitializeWithCompileTimeConstant(true.AsLLVMValue());
+                var loop = (Compiler.Nodes.Loop)loopConditionTunnel.ParentStructure;
+                AsyncStateGroup loopInitialGroup = _asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(loop, loop.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes));
+                inputVariableUsage.WillInitializeWithCompileTimeConstant(loopInitialGroup, true.AsLLVMValue());
             }
             WillGetValue(inputTerminal);
 
@@ -420,7 +432,7 @@ namespace Rebar.RebarTarget
                     else
                     {
                         WillGetValue(node.InputTerminals[0]);
-                        GetVariableUsageForVariable(node.OutputTerminals[1].GetTrueVariable()).WillTakeAddress();
+                        WillTakeAddress(node.OutputTerminals[1]);
                     }
                     WillInitializeWithValue(node.OutputTerminals[1]);
                     return;
@@ -473,7 +485,7 @@ namespace Rebar.RebarTarget
                     {
                         VariableReference outputVariable = node.OutputTerminals[0].GetTrueVariable();
                         LLVMTypeRef optionType = outputVariable.Type.AsLLVMType();
-                        GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(LLVMSharp.LLVM.ConstNull(optionType));
+                        GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(_currentGroup, LLVMSharp.LLVM.ConstNull(optionType));
                     }
                     return;
                 case "Inspect":
@@ -510,7 +522,7 @@ namespace Rebar.RebarTarget
                     continue;
                 }
                 WillInitializeWithValue(outputPair.Key);
-                GetVariableUsageForVariable(outputPair.Key.GetTrueVariable()).WillTakeAddress();
+                WillTakeAddress(outputPair.Key);
             }
         }
 
@@ -520,8 +532,7 @@ namespace Rebar.RebarTarget
 
         bool IInternalDfirNodeVisitor<bool>.VisitAwaitNode(AwaitNode awaitNode)
         {
-            VariableReference inputVariable = awaitNode.InputTerminal.GetTrueVariable();
-            GetVariableUsageForVariable(inputVariable).WillTakeAddress();
+            WillTakeAddress(awaitNode.InputTerminal);
             // It may be the case that our output variable is the same as an upstream variable (e.g., because
             // it represents a passthrough of an async node). In that case we should reuse the value source
             // we already have for it.
@@ -642,10 +653,15 @@ namespace Rebar.RebarTarget
             GetVariableUsageForVariable(terminal.GetTrueVariable()).WillUpdateDereferencedValue(_currentGroup);
         }
 
+        private void WillTakeAddress(Terminal terminal)
+        {
+            GetVariableUsageForVariable(terminal.GetTrueVariable()).WillTakeAddress(_currentGroup);
+        }
+
         private class VariableUsage
         {
             private LLVMValueRef? _constantValue;
-            private HashSet<AsyncStateGroup> _liveGroups = new HashSet<AsyncStateGroup>();
+            private HashSet<string> _liveFunctionNames = new HashSet<string>();
 
             public VariableUsage ReferencedVariableUsage { get; private set; }
 
@@ -671,7 +687,9 @@ namespace Rebar.RebarTarget
 
             public bool UpdatesValue { get; private set; }
 
-            public bool LiveInMultipleFunctions => _liveGroups.Count > 1;
+            public bool LiveInMultipleFunctions => _liveFunctionNames.Count > 1;
+
+            public string ContainingFunctionName => _liveFunctionNames.Count > 1 ? null : _liveFunctionNames.First();
 
             public void IsReferenceToVariable(VariableReference variable, VariableUsage usage)
             {
@@ -681,41 +699,43 @@ namespace Rebar.RebarTarget
 
             public void WillInitializeWithValue(AsyncStateGroup inGroup)
             {
-                _liveGroups.Add(inGroup);
+                _liveFunctionNames.Add(inGroup.FunctionId);
             }
 
             public void WillGetValue(AsyncStateGroup inGroup)
             {
                 GetsValue = true;
-                _liveGroups.Add(inGroup);
-                ReferencedVariableUsage?.WillTakeAddress();
+                _liveFunctionNames.Add(inGroup.FunctionId);
+                ReferencedVariableUsage?.WillTakeAddress(inGroup);
             }
 
             public void WillGetDereferencedValue(AsyncStateGroup inGroup)
             {
-                _liveGroups.Add(inGroup);
+                _liveFunctionNames.Add(inGroup.FunctionId);
                 ReferencedVariableUsage?.WillGetValue(inGroup);
             }
 
-            public void WillTakeAddress()
+            public void WillTakeAddress(AsyncStateGroup inGroup)
             {
+                _liveFunctionNames.Add(inGroup.FunctionId);
                 TakesAddress = true;
             }
 
-            public void WillInitializeWithCompileTimeConstant(LLVMValueRef constantValue)
+            public void WillInitializeWithCompileTimeConstant(AsyncStateGroup inGroup, LLVMValueRef constantValue)
             {
+                _liveFunctionNames.Add(inGroup.FunctionId);
                 _constantValue = constantValue;
             }
 
             public void WillUpdateValue(AsyncStateGroup inGroup)
             {
-                _liveGroups.Add(inGroup);
+                _liveFunctionNames.Add(inGroup.FunctionId);
                 UpdatesValue = true;
             }
 
             public void WillUpdateDereferencedValue(AsyncStateGroup inGroup)
             {
-                _liveGroups.Add(inGroup);
+                _liveFunctionNames.Add(inGroup.FunctionId);
                 ReferencedVariableUsage?.WillUpdateValue(inGroup);
             }
         }

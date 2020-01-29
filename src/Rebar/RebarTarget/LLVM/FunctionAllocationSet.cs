@@ -9,31 +9,64 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal class FunctionAllocationSet
     {
-        private readonly List<Tuple<string, NIType>> _localAllocationTypes = new List<Tuple<string, NIType>>();
-        private readonly List<Tuple<string, NIType>> _stateFieldTypes = new List<Tuple<string, NIType>>();
-        private LLVMValueRef[] _localAllocationPointers;
+        private class LocalAllocation
+        {
+            public LocalAllocation(string name, NIType type)
+            {
+                Name = name;
+                Type = type;
+            }
+
+            public string Name { get; }
+
+            public NIType Type { get; }
+
+            public LLVMValueRef Pointer { get; set; }
+        }
+
+        private class StateFieldAllocation
+        {
+            public StateFieldAllocation(string name, NIType type)
+            {
+                Name = name;
+                Type = type;
+            }
+
+            public string Name { get; }
+
+            public NIType Type { get; }
+        }
+
+        private readonly Dictionary<string, List<LocalAllocation>> _functionLocalAllocations = new Dictionary<string, List<LocalAllocation>>();
+        private readonly List<StateFieldAllocation> _stateFields = new List<StateFieldAllocation>();
 
         private const int FixedFieldCount = 2;
         public const int FirstParameterFieldIndex = FixedFieldCount;
 
-        public LocalAllocationValueSource CreateLocalAllocation(string allocationName, NIType allocationType)
+        public LocalAllocationValueSource CreateLocalAllocation(string containingFunctionName, string allocationName, NIType allocationType)
         {
-            int allocationIndex = _localAllocationTypes.Count;
-            _localAllocationTypes.Add(new Tuple<string, NIType>(allocationName, allocationType));
-            return new LocalAllocationValueSource(allocationName, this, allocationIndex);
+            List<LocalAllocation> functionLocals;
+            if (!_functionLocalAllocations.TryGetValue(containingFunctionName, out functionLocals))
+            {
+                functionLocals = new List<LocalAllocation>();
+                _functionLocalAllocations[containingFunctionName] = functionLocals;
+            }
+            int allocationIndex = functionLocals.Count;
+            functionLocals.Add(new LocalAllocation(allocationName, allocationType));
+            return new LocalAllocationValueSource(allocationName, this, containingFunctionName, allocationIndex);
         }
 
         public StateFieldValueSource CreateStateField(string allocationName, NIType allocationType)
         {
-            int fieldIndex = _stateFieldTypes.Count;
-            _stateFieldTypes.Add(new Tuple<string, NIType>(allocationName, allocationType));
+            int fieldIndex = _stateFields.Count;
+            _stateFields.Add(new StateFieldAllocation(allocationName, allocationType));
             return new StateFieldValueSource(allocationName, this, fieldIndex);
         }
 
         public OutputParameterValueSource CreateOutputParameter(string allocationName, NIType allocationType)
         {
-            int fieldIndex = _stateFieldTypes.Count;
-            _stateFieldTypes.Add(new Tuple<string, NIType>(allocationName, allocationType.CreateMutableReference()));
+            int fieldIndex = _stateFields.Count;
+            _stateFields.Add(new StateFieldAllocation(allocationName, allocationType.CreateMutableReference()));
             return new OutputParameterValueSource(allocationName, this, fieldIndex);
         }
 
@@ -46,17 +79,25 @@ namespace Rebar.RebarTarget.LLVM
             stateFieldTypes.Add(LLVMTypeRef.Int1Type());    // function done?
             stateFieldTypes.Add(LLVMExtensions.WakerType);  // caller waker
             // end fixed fields
-            stateFieldTypes.AddRange(_stateFieldTypes.Select(a => a.Item2.AsLLVMType()));
+            stateFieldTypes.AddRange(_stateFields.Select(a => a.Type.AsLLVMType()));
             StateType.StructSetBody(stateFieldTypes.ToArray(), false);
         }
 
-        public void InitializeAllocations(IRBuilder builder)
+        public void InitializeFunctionLocalAllocations(string functionName, IRBuilder builder)
         {
-            if (_localAllocationPointers != null)
+            List<LocalAllocation> functionLocals;
+            if (!_functionLocalAllocations.TryGetValue(functionName, out functionLocals))
             {
-                throw new InvalidOperationException("Already initialized allocations");
+                return;
             }
-            _localAllocationPointers = _localAllocationTypes.Select(a => builder.CreateAlloca(a.Item2.AsLLVMType(), a.Item1)).ToArray();
+            if (functionLocals.Any(l => !l.Pointer.IsUninitialized()))
+            {
+                throw new InvalidOperationException("Already initialized allocations for function " + functionName);
+            }
+            foreach (LocalAllocation allocation in functionLocals)
+            {
+                allocation.Pointer = builder.CreateAlloca(allocation.Type.AsLLVMType(), allocation.Name);
+            }
         }
 
         public LLVMTypeRef StateType { get; private set; }
@@ -65,9 +106,9 @@ namespace Rebar.RebarTarget.LLVM
 
         public LLVMValueRef StatePointer => CompilerState.StatePointer;
 
-        public LLVMValueRef GetLocalAllocationPointer(int index)
+        public LLVMValueRef GetLocalAllocationPointer(string functionName, int index)
         {
-            return _localAllocationPointers[index];
+            return _functionLocalAllocations[functionName][index].Pointer;
         }
 
         internal LLVMValueRef GetStateDonePointer(IRBuilder builder)
@@ -85,12 +126,12 @@ namespace Rebar.RebarTarget.LLVM
         internal LLVMValueRef GetStateFieldPointer(IRBuilder builder, int fieldIndex)
         {
             StatePointer.ThrowIfNull();
-            return builder.CreateStructGEP(StatePointer, (uint)(fieldIndex + FixedFieldCount), _stateFieldTypes[fieldIndex].Item1 + "_fieldptr");
+            return builder.CreateStructGEP(StatePointer, (uint)(fieldIndex + FixedFieldCount), _stateFields[fieldIndex].Name + "_fieldptr");
         }
 
         internal LLVMTypeRef GetStateFieldPointerType(int fieldIndex)
         {
-            return LLVMTypeRef.PointerType(_stateFieldTypes[fieldIndex].Item2.AsLLVMType(), 0u);
+            return LLVMTypeRef.PointerType(_stateFields[fieldIndex].Type.AsLLVMType(), 0u);
         }
     }
 }

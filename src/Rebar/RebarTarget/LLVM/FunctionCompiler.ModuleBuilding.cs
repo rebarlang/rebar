@@ -15,10 +15,12 @@ namespace Rebar.RebarTarget.LLVM
             public AsyncStateGroupData(
                 AsyncStateGroup asyncStateGroup,
                 LLVMValueRef function,
+                LLVMBasicBlockRef initialBasicBlock,
                 StateFieldValueSource fireCountStateField)
             {
                 AsyncStateGroup = asyncStateGroup;
                 Function = function;
+                InitialBasicBlock = initialBasicBlock;
                 FireCountStateField = fireCountStateField;
             }
 
@@ -28,10 +30,14 @@ namespace Rebar.RebarTarget.LLVM
             public AsyncStateGroup AsyncStateGroup { get; }
 
             /// <summary>
-            /// The LLVM function that is generated for the <see cref="AsyncStateGroup"/>.
+            /// The LLVM function into which the <see cref="AsyncStateGroup"/> will be generated.
             /// </summary>
-            /// <remarks><see cref="AsyncStateGroup"/>s and LLVM functions are in a one-to-one relationship.</remarks>
             public LLVMValueRef Function { get; }
+
+            /// <summary>
+            /// The initial basic block created for the <see cref="AsyncStateGroup"/>.
+            /// </summary>
+            public LLVMBasicBlockRef InitialBasicBlock { get; }
 
             /// <summary>
             /// If the <see cref="AsyncStateGroup"/> needs to be scheduled by multiple predecessors, this
@@ -116,8 +122,13 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef groupFunction = groupData.Function;
             CurrentState = new AsyncStateGroupCompilerState(groupFunction, new IRBuilder());
 
-            LLVMBasicBlockRef entryBlock = groupFunction.AppendBasicBlock("entry");
-            Builder.PositionBuilderAtEnd(entryBlock);
+            Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
+
+            // Here we are assuming that the group whose label matches the function name is also the entry group.
+            if (asyncStateGroup.FunctionId == asyncStateGroup.Label)
+            {
+                _allocationSet.InitializeFunctionLocalAllocations(asyncStateGroup.FunctionId, Builder);
+            }
 
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
             if (conditionalContinuation != null)
@@ -136,12 +147,22 @@ namespace Rebar.RebarTarget.LLVM
                 visitation.Visit(this);
             }
 
+            bool returnAfterGroup = true;
             var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
             if (unconditionalContinuation != null)
             {
                 if (unconditionalContinuation.Successors.Any())
                 {
-                    CreateInvokeOrScheduleOfSuccessors(unconditionalContinuation.Successors);
+                    AsyncStateGroup singleSuccessor;
+                    if (unconditionalContinuation.Successors.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId)
+                    {
+                        Builder.CreateBr(AsyncStateGroups[singleSuccessor].InitialBasicBlock);
+                        returnAfterGroup = false;
+                    }
+                    else
+                    {
+                        CreateInvokeOrScheduleOfSuccessors(unconditionalContinuation.Successors);
+                    }
                 }
                 else
                 {
@@ -150,24 +171,40 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (conditionalContinuation != null)
             {
-                LLVMBasicBlockRef continuationConditionFalseBlock = groupFunction.AppendBasicBlock("continuationConditionFalse"),
-                    continuationConditionTrueBlock = groupFunction.AppendBasicBlock("continuationConditionTrue"),
-                    exitBlock = groupFunction.AppendBasicBlock("exit");
                 LLVMValueRef condition = Builder.CreateLoad(groupData.ContinuationConditionVariable, "condition");
-                Builder.CreateCondBr(condition, continuationConditionTrueBlock, continuationConditionFalseBlock);
 
-                Builder.PositionBuilderAtEnd(continuationConditionFalseBlock);
-                CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[0]);
-                Builder.CreateBr(exitBlock);
+                AsyncStateGroup singleTrueSuccessor, singleFalseSuccessor;
+                if (conditionalContinuation.SuccessorConditionGroups[0].TryGetSingleElement(out singleFalseSuccessor)
+                    && conditionalContinuation.SuccessorConditionGroups[1].TryGetSingleElement(out singleTrueSuccessor)
+                    && singleFalseSuccessor.FunctionId == asyncStateGroup.FunctionId
+                    && singleTrueSuccessor.FunctionId == asyncStateGroup.FunctionId)
+                {
+                    Builder.CreateCondBr(condition, AsyncStateGroups[singleTrueSuccessor].InitialBasicBlock, AsyncStateGroups[singleFalseSuccessor].InitialBasicBlock);
+                    returnAfterGroup = false;
+                }
+                else
+                {
+                    LLVMBasicBlockRef continuationConditionFalseBlock = groupFunction.AppendBasicBlock("continuationConditionFalse"),
+                        continuationConditionTrueBlock = groupFunction.AppendBasicBlock("continuationConditionTrue"),
+                        exitBlock = groupFunction.AppendBasicBlock("exit");
+                    Builder.CreateCondBr(condition, continuationConditionTrueBlock, continuationConditionFalseBlock);
 
-                Builder.PositionBuilderAtEnd(continuationConditionTrueBlock);
-                CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[1]);
-                Builder.CreateBr(exitBlock);
+                    Builder.PositionBuilderAtEnd(continuationConditionFalseBlock);
+                    CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[0]);
+                    Builder.CreateBr(exitBlock);
 
-                Builder.PositionBuilderAtEnd(exitBlock);
+                    Builder.PositionBuilderAtEnd(continuationConditionTrueBlock);
+                    CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[1]);
+                    Builder.CreateBr(exitBlock);
+
+                    Builder.PositionBuilderAtEnd(exitBlock);
+                }
             }
 
-            Builder.CreateRetVoid();
+            if (returnAfterGroup)
+            {
+                Builder.CreateRetVoid();
+            }
 
             CurrentGroup = null;
             CurrentState = previousState;

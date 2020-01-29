@@ -6,16 +6,12 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal abstract class ValueSource
     {
-        private bool _initialized;
-
         public abstract LLVMValueRef GetValue(IRBuilder builder);
     }
 
     internal interface IAddressableValueSource
     {
         LLVMValueRef GetAddress(IRBuilder builder);
-
-        LLVMTypeRef AddressType { get; }
     }
 
     internal interface IInitializableValueSource
@@ -99,8 +95,6 @@ namespace Rebar.RebarTarget.LLVM
 
         protected string AllocationName { get; }
 
-        public abstract LLVMTypeRef AddressType { get; }
-
         protected abstract LLVMValueRef GetAllocationPointer(IRBuilder builder);
 
         public void InitializeValue(IRBuilder builder, LLVMValueRef value)
@@ -147,18 +141,18 @@ namespace Rebar.RebarTarget.LLVM
     internal class LocalAllocationValueSource : AllocationValueSource
     {
         private readonly FunctionAllocationSet _allocationSet;
+        private readonly string _functionName;
         private readonly int _allocationIndex;
 
-        public LocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, int allocationIndex)
+        public LocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, string functionName, int allocationIndex)
             : base(allocationName)
         {
             _allocationSet = allocationSet;
+            _functionName = functionName;
             _allocationIndex = allocationIndex;
         }
 
-        public override LLVMTypeRef AddressType => _allocationSet.GetLocalAllocationPointer(_allocationIndex).TypeOf();
-
-        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_allocationIndex);
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_functionName, _allocationIndex);
     }
 
     internal class StateFieldValueSource : AllocationValueSource
@@ -173,8 +167,6 @@ namespace Rebar.RebarTarget.LLVM
             _fieldIndex = fieldIndex;
         }
 
-        public override LLVMTypeRef AddressType => _allocationSet.GetStateFieldPointerType(_fieldIndex);
-
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetStateFieldPointer(builder, _fieldIndex);
     }
 
@@ -184,8 +176,6 @@ namespace Rebar.RebarTarget.LLVM
             : base(allocationName, allocationSet, fieldIndex)
         {
         }
-
-        public override LLVMTypeRef AddressType => base.AddressType.GetElementType();
 
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)
         {

@@ -6,7 +6,6 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.LLVM;
 using DfirBorderNode = NationalInstruments.Dfir.BorderNode;
 using Loop = Rebar.Compiler.Nodes.Loop;
 
@@ -280,7 +279,21 @@ namespace Rebar.RebarTarget
                     }
                 case StructureTraversalPoint.AfterRightBorderNodes:
                     {
-                        currentGroup = _nodeGroups[frame];
+                        AsyncStateGroup frameTerminalGroup = _nodeGroups[frame];
+                        currentGroup = frameTerminalGroup;
+
+                        // attempt to consolidate groups
+                        if (frame.DoesStructureExecuteConditionally())
+                        {
+                            AsyncStateGroup diagramInitialGroup = _diagramInitialGroups[frame.Diagram],
+                                diagramTerminalGroup = _structureOutputBorderNodeGroups[frame];
+                            if (diagramInitialGroup == diagramTerminalGroup)
+                            {
+                                AsyncStateGroup frameInitialGroup = _structureInitialGroups[frame];
+                                diagramTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                                frameTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                            }
+                        }
                         break;
                     }
             }
@@ -527,12 +540,15 @@ namespace Rebar.RebarTarget
         public AsyncStateGroup(string groupLabel, IEnumerable<Visitation> visitations, IEnumerable<AsyncStateGroup> predecessors, Continuation continuation)
         {
             Label = groupLabel;
+            FunctionId = groupLabel;
             Visitations = visitations;
             Predecessors = predecessors;
             Continuation = continuation;
         }
 
         public string Label { get; }
+
+        public string FunctionId { get; set; }
 
         public IEnumerable<Visitation> Visitations { get; }
 
@@ -587,6 +603,30 @@ namespace Rebar.RebarTarget
                     structureVisitation.TraversalPoint,
                     structureVisitation.Diagram);
             }
+        }
+
+        public static bool GroupContainsNode(this AsyncStateGroup group, Node node)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var nodeVisitation = v as NodeVisitation;
+                    return nodeVisitation != null
+                        && nodeVisitation.Node == node;
+                });
+        }
+
+        public static bool GroupContainsStructureTraversalPoint(this AsyncStateGroup group, Structure structure, Diagram diagram, StructureTraversalPoint traversalPoint)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var structureVisitation = v as StructureVisitation;
+                    return structureVisitation != null
+                        && structureVisitation.Structure == structure
+                        && structureVisitation.Diagram == diagram
+                        && structureVisitation.TraversalPoint == traversalPoint;
+                });
         }
     }
 

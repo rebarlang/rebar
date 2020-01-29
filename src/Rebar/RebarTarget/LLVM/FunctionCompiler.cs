@@ -538,19 +538,25 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
                 false);
 
+            var functions = new Dictionary<string, LLVMValueRef>();
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
-                string groupFunctionName = $"{_functionName}::{asyncStateGroup.Label}"; 
-                LLVMValueRef groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                LLVMValueRef groupFunction;
+                if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
+                {
+                    string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
+                    groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                    functions[asyncStateGroup.FunctionId] = groupFunction;
+                }
+
+                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, fireCountStateField);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
             }
 
             _commonExternalFunctions = new CommonExternalFunctions(module);
-            // TODO: reinitialize local allocations every time we switch to a different function
-            // _allocationSet.InitializeAllocations(Builder);
         }
 
         public Module Module { get; }
@@ -1271,15 +1277,10 @@ namespace Rebar.RebarTarget.LLVM
         {
             public ConditionallyExecutingFrameData(Frame frame, FunctionCompiler functionCompiler)
             {
-                UnwrapFailedBlock = frame.DoesStructureExecuteConditionally()
-                    ? functionCompiler.CurrentFunction.AppendBasicBlock($"frame{frame.UniqueId}_unwrapFailed")
-                    : default(LLVMBasicBlockRef);
-                EndBlock = functionCompiler.CurrentFunction.AppendBasicBlock($"frame{frame.UniqueId}_end");
+                ConditionValue = true.AsLLVMValue();
             }
 
-            public LLVMBasicBlockRef UnwrapFailedBlock { get; }
-
-            public LLVMBasicBlockRef EndBlock { get; }
+            public LLVMValueRef ConditionValue { get; set; }
         }
 
         private readonly Dictionary<Frame, ConditionallyExecutingFrameData> _frameData = new Dictionary<Frame, ConditionallyExecutingFrameData>();
@@ -1303,19 +1304,7 @@ namespace Rebar.RebarTarget.LLVM
             if (frame.DoesStructureExecuteConditionally())
             {
                 _frameData[frame] = new ConditionallyExecutingFrameData(frame, this);
-                CurrentGroupData.CreateContinuationStateChange(Builder, true.AsLLVMValue());
-            }
-        }
 
-        private void VisitFrameAfterLeftBorderNodes(Frame frame)
-        {
-            if (frame.DoesStructureExecuteConditionally())
-            {
-                LLVMBasicBlockRef unwrapFailedBlock = _frameData[frame].UnwrapFailedBlock;
-                LLVMBasicBlockRef endBlock = _frameData[frame].EndBlock;
-                Builder.CreateBr(endBlock);
-
-                Builder.PositionBuilderAtEnd(unwrapFailedBlock);
                 foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
                 {
                     // Store a None value for the tunnel
@@ -1328,10 +1317,14 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
                     Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
                 }
-                CurrentGroupData.CreateContinuationStateChange(Builder, false.AsLLVMValue());
-                Builder.CreateBr(endBlock);
+            }
+        }
 
-                Builder.PositionBuilderAtEnd(endBlock);
+        private void VisitFrameAfterLeftBorderNodes(Frame frame)
+        {
+            if (frame.DoesStructureExecuteConditionally())
+            {
+                CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
             }
         }
 
@@ -1340,14 +1333,10 @@ namespace Rebar.RebarTarget.LLVM
             ConditionallyExecutingFrameData frameData = _frameData[(Frame)unwrapOptionTunnel.ParentStructure];
             ValueSource tunnelInputSource = GetTerminalValueSource(unwrapOptionTunnel.InputTerminals[0]);
             LLVMValueRef inputOption = tunnelInputSource.GetValue(Builder),
-                isSome = Builder.CreateExtractValue(inputOption, 0u, "isSome");
-            LLVMBasicBlockRef someBlock = CurrentFunction.AppendBasicBlock($"unwrapOption{unwrapOptionTunnel.UniqueId}_some");
-            Builder.CreateCondBr(isSome, someBlock, frameData.UnwrapFailedBlock);
-
-            Builder.PositionBuilderAtEnd(someBlock);
-            LLVMValueRef value = Builder.CreateExtractValue(inputOption, 1u, "value");
-            ValueSource tunnelOutputSource = GetTerminalValueSource(unwrapOptionTunnel.OutputTerminals[0]);
-            Initialize(tunnelOutputSource, value);
+                isSome = Builder.CreateExtractValue(inputOption, 0u, "isSome"),
+                value = Builder.CreateExtractValue(inputOption, 1u, "value");
+            frameData.ConditionValue = Builder.CreateAnd(frameData.ConditionValue, isSome, "frameCondition");
+            Initialize(GetTerminalValueSource(unwrapOptionTunnel.OutputTerminals[0]), value);
             return true;
         }
 

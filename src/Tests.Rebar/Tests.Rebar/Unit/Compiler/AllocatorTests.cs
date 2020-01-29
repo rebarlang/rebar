@@ -45,7 +45,7 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
-        public void AddConstantsAndYieldResult_Allocate_SumGetsStateFieldSource()
+        public void AddConstantsAndYieldResult_Allocate_SumGetsLocalAllocation()
         {
             DfirRoot function = DfirRoot.Create();
             var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
@@ -56,6 +56,21 @@ namespace Tests.Rebar.Unit.Compiler
             Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
 
             ValueSource sumSource = valueSources[add.OutputTerminals[2].GetTrueVariable()];
+            Assert.IsInstanceOfType(sumSource, typeof(LocalAllocationValueSource));
+        }
+
+        [TestMethod]
+        public void ConcatenateStringsAndYieldResult_Allocate_ConcatenatedStringGetsStateField()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var concat = new FunctionalNode(function.BlockDiagram, Signatures.StringConcatType);
+            ConnectConstantToInputTerminal(concat.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            ConnectConstantToInputTerminal(concat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
+            var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
+            Wire.Create(function.BlockDiagram, concat.OutputTerminals[2], yieldNode.InputTerminals[0]);
+            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
+
+            ValueSource sumSource = valueSources[concat.OutputTerminals[2].GetTrueVariable()];
             Assert.IsInstanceOfType(sumSource, typeof(StateFieldValueSource));
         }
 

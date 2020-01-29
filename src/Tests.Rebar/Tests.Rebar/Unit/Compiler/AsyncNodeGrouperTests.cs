@@ -14,6 +14,43 @@ namespace Tests.Rebar.Unit.Compiler
     public class AsyncNodeGrouperTests : CompilerTestBase
     {
         [TestMethod]
+        public void UnconditionalFrameWithNoInteriorAwaits_GroupAsyncStates_AllFrameAsyncStateGroupsInSameFunction()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            Tunnel inputTunnel = CreateInputTunnel(frame);
+            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
+            Wire.Create(frame.Diagram, inputTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+
+            AsyncStateGroup firstGroup = asyncStateGroups.First();
+            var groupFunctionId = firstGroup.FunctionId;
+            Assert.IsTrue(asyncStateGroups.All(g => g.FunctionId == groupFunctionId));
+        }
+
+        [TestMethod]
+        public void FrameWithUnwrapOptionTunnelAndNoInteriorAwaits_GroupAsyncStates_AllFrameAsyncStateGroupsInSameFunction()
+        {
+            DfirRoot function = DfirRoot.Create();
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapTunnel = CreateUnwrapOptionTunnel(frame);
+            FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(unwrapTunnel.InputTerminals[0]);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+            var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
+            Wire.Create(frame.Diagram, unwrapTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            IEnumerable<AsyncStateGroup> asyncStateGroups = GroupAsyncStates(function);
+
+            AsyncStateGroup frameInitialGroup = asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(frame, frame.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes)),
+                frameDiagramInitialGroup = asyncStateGroups.First(g => g.GroupContainsNode(output)),
+                frameTerminalGroup = asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(frame, frame.Diagram, StructureTraversalPoint.AfterRightBorderNodes));
+            Assert.AreEqual(frameInitialGroup.FunctionId, frameDiagramInitialGroup.FunctionId);
+            Assert.AreEqual(frameInitialGroup.FunctionId, frameTerminalGroup.FunctionId);
+        }
+
+        [TestMethod]
         public void FrameContainingPromiseIntoAwait_GroupAsyncStates_Stuff()
         {
             DfirRoot function = DfirRoot.Create();
@@ -48,14 +85,7 @@ namespace Tests.Rebar.Unit.Compiler
 
             string terminalGroupName = $"loop{firstLoop.UniqueId}_terminalGroup";
             AsyncStateGroup firstLoopTerminalGroup = asyncStateGroups.First(g => g.Label == terminalGroupName);
-            AsyncStateGroup secondLoopInitialGroup = asyncStateGroups.First(g => g.Visitations.Any(
-                v =>
-                {
-                    var structureVisitation = v as StructureVisitation;
-                    return structureVisitation != null
-                        && structureVisitation.Structure == secondLoop
-                        && structureVisitation.TraversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes;
-                }));
+            AsyncStateGroup secondLoopInitialGroup = asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(secondLoop, secondLoop.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes));
             Assert.AreEqual(firstLoopTerminalGroup, secondLoopInitialGroup);
         }
 
