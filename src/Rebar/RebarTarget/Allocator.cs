@@ -547,6 +547,11 @@ namespace Rebar.RebarTarget
                 WillGetValue(inputTerminal);
             }
             WillInitializeWithValue(createMethodCallPromise.PromiseTerminal);
+
+            string calleeFunctionName = FunctionCompiler.GetFunctionName(createMethodCallPromise);
+            _additionalAllocations[createMethodCallPromise] = AllocationSet.CreateCalleeState(
+                $"call{createMethodCallPromise.UniqueId}_state",
+                calleeFunctionName);
             return true;
         }
 

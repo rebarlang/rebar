@@ -108,6 +108,8 @@ namespace Rebar.RebarTarget.LLVM
             // callee states
             foreach (var calleeState in _calleeStates)
             {
+                // Seems like putting opaque struct type fields in causes CreateStructGEP on the StatePointer below to segfault.
+                // To fix this, we would need the true struct type.
                 LLVMTypeRef calleeStateType = LLVMTypeRef.StructCreateNamed(moduleContext, calleeState.CalleeStateTypeName);
                 stateFieldTypes.Add(calleeStateType);
             }

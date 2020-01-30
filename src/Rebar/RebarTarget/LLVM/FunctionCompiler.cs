@@ -597,12 +597,18 @@ namespace Rebar.RebarTarget.LLVM
             return GetImportedFunction(targetFunctionName, () => TranslateFunctionType(methodCallNode.Signature));
         }
 
+        internal static string GetFunctionName(CreateMethodCallPromise createMethodCallPromise)
+        {
+            DfirRoot dfirRoot = createMethodCallPromise.DfirRoot;
+            return FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(dfirRoot.BuildSpec, createMethodCallPromise.TargetName));
+        }
+
         private LLVMValueRef GetImportedInitializeStateFunction(CreateMethodCallPromise createMethodCallPromise)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
             return GetImportedFunction(
                 GetInitializeStateFunctionName(targetFunctionName),
-                () => TranslateInitializeFunctionType(createMethodCallPromise.Signature));
+                () => TranslateInitializeStateFunctionType(createMethodCallPromise.Signature));
         }
 
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
@@ -973,10 +979,12 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
         }
 
-        private LLVMTypeRef TranslateInitializeFunctionType(NIType functionType)
+        private LLVMTypeRef TranslateInitializeStateFunctionType(NIType functionType)
         {
-            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
-            return LLVMSharp.LLVM.FunctionType(LLVMExtensions.VoidPointerType, parameterTypes, false);
+            var initializeStateFunctionParameterTypes = new List<LLVMTypeRef>() { LLVMExtensions.VoidPointerType };
+            initializeStateFunctionParameterTypes.AddRange(functionType.GetParameters().Select(TranslateParameterType));
+            LLVMTypeRef[] parameterTypes = initializeStateFunctionParameterTypes.ToArray();
+            return LLVMSharp.LLVM.FunctionType(LLVMTypeRef.VoidType(), parameterTypes, false);
         }
 
         private LLVMTypeRef TranslateParameterType(NIType parameterType)
@@ -1174,7 +1182,12 @@ namespace Rebar.RebarTarget.LLVM
         {
             LLVMValueRef promisePtr = GetAddress(GetTerminalValueSource(createMethodCallPromise.PromiseTerminal), Builder),
                 outputPtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "outputPtr");
-            var initializeParameters = new List<LLVMValueRef>();
+
+            var calleeStateValueSource = (CalleeStateValueSource)_additionalValues[createMethodCallPromise];
+            LLVMValueRef calleeStatePtr = ((IAddressableValueSource)calleeStateValueSource).GetAddress(Builder),
+                voidCalleeStatePtr = Builder.CreateBitCast(calleeStatePtr, LLVMExtensions.VoidPointerType, "voidCalleeStatePtr");
+
+            var initializeParameters = new List<LLVMValueRef>() { voidCalleeStatePtr };
             foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
             {
                 initializeParameters.Add(GetTerminalValueSource(inputTerminal).GetValue(Builder));
@@ -1200,10 +1213,10 @@ namespace Rebar.RebarTarget.LLVM
                     break;
             }
 
-            LLVMValueRef initializeStateFunction = GetImportedInitializeStateFunction(createMethodCallPromise),
-                statePtr = Builder.CreateCall(initializeStateFunction, initializeParameters.ToArray(), "statePtr"),
-                pollFunction = GetImportedPollFunction(createMethodCallPromise),
-                invokable = Builder.BuildStructValue(LLVMExtensions.WakerType, new LLVMValueRef[] { pollFunction, statePtr }, "invokable"),
+            LLVMValueRef initializeStateFunction = GetImportedInitializeStateFunction(createMethodCallPromise);
+            Builder.CreateCall(initializeStateFunction, initializeParameters.ToArray(), string.Empty);
+            LLVMValueRef pollFunction = GetImportedPollFunction(createMethodCallPromise),
+                invokable = Builder.BuildStructValue(LLVMExtensions.WakerType, new LLVMValueRef[] { pollFunction, calleeStatePtr }, "invokable"),
                 promiseInvokablePtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promisePollFunctionPtr");
             Builder.CreateStore(invokable, promiseInvokablePtr);
 
