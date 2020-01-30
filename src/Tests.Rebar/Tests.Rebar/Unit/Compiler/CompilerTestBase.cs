@@ -8,6 +8,7 @@ using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
+using Rebar.RebarTarget.LLVM;
 using Loop = Rebar.Compiler.Nodes.Loop;
 
 namespace Tests.Rebar.Unit.Compiler
@@ -62,7 +63,7 @@ namespace Tests.Rebar.Unit.Compiler
                 .Execute(dfirRoot, cancellationToken);
         }
 
-        internal LLVMSharp.Module RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
+        internal FunctionCompileResult RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);

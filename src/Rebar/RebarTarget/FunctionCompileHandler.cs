@@ -95,12 +95,12 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            Module compiledFunctionModule = CompileFunctionForLLVM(targetDfir, cancellationToken);
+            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(targetDfir, cancellationToken);
             var builtPackage = new LLVM.FunctionBuiltPackage(
                 specAndQName,
                 Compiler.TargetName,
                 dependencyIdentities.ToArray(),
-                compiledFunctionModule);
+                functionCompileResult.Module);
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
@@ -116,7 +116,7 @@ namespace Rebar.RebarTarget
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-        internal static Module CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
+        internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
         {
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
@@ -143,7 +143,7 @@ namespace Rebar.RebarTarget
                 allocator.AllocationSet,
                 asyncStateGroups);
             functionCompiler.CompileFunction(dfirRoot);
-            return module;
+            return new LLVM.FunctionCompileResult(module);
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
