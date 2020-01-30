@@ -323,6 +323,7 @@
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionAllocationSet.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompileResult.cs" />
     <Compile Include="RebarTarget\LLVM\TraitHelpers.cs" />
     <Compile Include="RebarTarget\LLVM\ValueSource.cs" />
     <Compile Include="RebarTarget\LLVM\CommonModules.cs" />
