@@ -152,6 +152,11 @@ namespace Rebar.RebarTarget
             return string.Join("::", relativeQualifiedName.Identifiers);
         }
 
+        internal static string FunctionLLVMStateTypeName(string functionLLVMName)
+        {
+            return functionLLVMName + "::state_t";
+        }
+
         #endregion
 
         /// <inheritdoc/>

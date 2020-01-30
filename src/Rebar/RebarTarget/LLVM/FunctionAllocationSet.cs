@@ -37,11 +37,26 @@ namespace Rebar.RebarTarget.LLVM
             public NIType Type { get; }
         }
 
+        private class CalleeStateAllocation
+        {
+            public CalleeStateAllocation(string allocationName, string calleeStateTypeName)
+            {
+                Name = allocationName;
+                CalleeStateTypeName = calleeStateTypeName;
+            }
+
+            public string Name { get; }
+
+            public string CalleeStateTypeName { get; }
+        }
+
         private readonly Dictionary<string, List<LocalAllocation>> _functionLocalAllocations = new Dictionary<string, List<LocalAllocation>>();
         private readonly List<StateFieldAllocation> _stateFields = new List<StateFieldAllocation>();
+        private readonly List<CalleeStateAllocation> _calleeStates = new List<CalleeStateAllocation>();
 
         private const int FixedFieldCount = 2;
         public const int FirstParameterFieldIndex = FixedFieldCount;
+        private int FirstCalleeStateIndex => FixedFieldCount + _stateFields.Count;
 
         public LocalAllocationValueSource CreateLocalAllocation(string containingFunctionName, string allocationName, NIType allocationType)
         {
@@ -70,16 +85,33 @@ namespace Rebar.RebarTarget.LLVM
             return new OutputParameterValueSource(allocationName, this, fieldIndex);
         }
 
-        public void InitializeStateType(Module module, string functionName)
+        public CalleeStateValueSource CreateCalleeState(string allocationName, string calleeLLVMName)
         {
-            StateType = LLVMTypeRef.StructCreateNamed(module.GetModuleContext(), functionName + "_state_t");
+            int index = _calleeStates.Count;
+            _calleeStates.Add(new CalleeStateAllocation(allocationName, FunctionCompileHandler.FunctionLLVMStateTypeName(calleeLLVMName)));
+            return new CalleeStateValueSource(allocationName, this, index);
+        }
+
+        public void InitializeStateType(Module module, string functionLLVMName)
+        {
+            LLVMContextRef moduleContext = module.GetModuleContext();
+            StateType = LLVMTypeRef.StructCreateNamed(moduleContext, FunctionCompileHandler.FunctionLLVMStateTypeName(functionLLVMName));
 
             var stateFieldTypes = new List<LLVMTypeRef>();
             // fixed fields
             stateFieldTypes.Add(LLVMTypeRef.Int1Type());    // function done?
             stateFieldTypes.Add(LLVMExtensions.WakerType);  // caller waker
             // end fixed fields
+            // state fields
             stateFieldTypes.AddRange(_stateFields.Select(a => a.Type.AsLLVMType()));
+            // end state fields
+            // callee states
+            foreach (var calleeState in _calleeStates)
+            {
+                LLVMTypeRef calleeStateType = LLVMTypeRef.StructCreateNamed(moduleContext, calleeState.CalleeStateTypeName);
+                stateFieldTypes.Add(calleeStateType);
+            }
+            // end callee states
             StateType.StructSetBody(stateFieldTypes.ToArray(), false);
         }
 
@@ -129,9 +161,10 @@ namespace Rebar.RebarTarget.LLVM
             return builder.CreateStructGEP(StatePointer, (uint)(fieldIndex + FixedFieldCount), _stateFields[fieldIndex].Name + "_fieldptr");
         }
 
-        internal LLVMTypeRef GetStateFieldPointerType(int fieldIndex)
+        internal LLVMValueRef GetCalleeStatePointer(IRBuilder builder, int calleeStateIndex)
         {
-            return LLVMTypeRef.PointerType(_stateFields[fieldIndex].Type.AsLLVMType(), 0u);
+            StatePointer.ThrowIfNull();
+            return builder.CreateStructGEP(StatePointer, (uint)(calleeStateIndex + FirstCalleeStateIndex), _calleeStates[calleeStateIndex].Name + "_state");
         }
     }
 }

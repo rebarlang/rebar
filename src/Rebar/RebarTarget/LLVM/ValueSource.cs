@@ -200,6 +200,23 @@ namespace Rebar.RebarTarget.LLVM
         }
     }
 
+    internal class CalleeStateValueSource : AllocationValueSource
+    {
+        private readonly FunctionAllocationSet _functionAllocationSet;
+        private readonly int _index;
+
+        public CalleeStateValueSource(string allocationName, FunctionAllocationSet functionAllocationSet, int index) : base(allocationName)
+        {
+            _functionAllocationSet = functionAllocationSet;
+            _index = index;
+        }
+
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)
+        {
+            return _functionAllocationSet.GetCalleeStatePointer(builder, _index);
+        }
+    }
+
     internal static class ValueSourceExtensions
     {
         public static LLVMValueRef GetDereferencedValue(this ValueSource valueSource, IRBuilder builder)
