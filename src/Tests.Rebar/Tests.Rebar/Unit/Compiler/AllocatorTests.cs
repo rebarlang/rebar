@@ -77,7 +77,7 @@ namespace Tests.Rebar.Unit.Compiler
         private Dictionary<VariableReference, ValueSource> RunAllocator(DfirRoot function)
         {
             var cancellationToken = new CompileCancellationToken();
-            RunCompilationUpToAutomaticNodeInsertion(function, cancellationToken);
+            RunCompilationUpToAsyncNodeDecomposition(function, cancellationToken);
             ExecutionOrderSortingVisitor.SortDiagrams(function);
 
             var asyncStateGrouper = new AsyncStateGrouper();

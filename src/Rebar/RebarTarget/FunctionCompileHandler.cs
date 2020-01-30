@@ -11,6 +11,7 @@ using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using Rebar.Compiler;
 using Rebar.Common;
+using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget
 {
@@ -95,7 +96,14 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(targetDfir, cancellationToken);
+            var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
+            foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
+            {
+                CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
+                calleesIsYielding[methodCallNode.TargetName] = calleeSignature.IsYielding;
+            }
+
+            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(targetDfir, cancellationToken, calleesIsYielding);
             var builtPackage = new LLVM.FunctionBuiltPackage(
                 specAndQName,
                 Compiler.TargetName,
@@ -116,8 +124,16 @@ namespace Rebar.RebarTarget
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-        internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
+        internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(
+            DfirRoot dfirRoot,
+            CompileCancellationToken cancellationToken,
+            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
+            string compiledFunctionName = "")
         {
+            // TODO: running this here because it needs to know which callee Functions are yielding.
+            new AsyncNodeDecompositionTransform(calleesIsYielding, new NodeInsertionTypeUnificationResultFactory())
+                .Execute(dfirRoot, cancellationToken);
+
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             var asyncStateGrouper = new AsyncStateGrouper();
