@@ -126,6 +126,7 @@ namespace Rebar.RebarTarget
 #if DEBUG
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
+            bool isYielding = true; // = asyncStateGroups.HasMoreThan(1);
 
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
             var additionalSources = new Dictionary<object, LLVM.ValueSource>();
@@ -143,7 +144,7 @@ namespace Rebar.RebarTarget
                 allocator.AllocationSet,
                 asyncStateGroups);
             functionCompiler.CompileFunction(dfirRoot);
-            return new LLVM.FunctionCompileResult(module);
+            return new LLVM.FunctionCompileResult(module, isYielding);
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
