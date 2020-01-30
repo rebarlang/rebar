@@ -68,17 +68,17 @@ namespace Rebar.RebarTarget
             }
 
             CompileSignature topSignature = new CompileSignature(
-                targetDfir.Name,
-                compileSignatureParameters, // GenerateParameters(targetDfir),
-                targetDfir.GetDeclaringType(),
-                targetDfir.Reentrancy,
-                true,
-                true,
-                ThreadAffinity.Standard,
-                false,
-                true,
-                ExecutionPriority.Normal,
-                CallingConvention.StdCall);
+                functionName: targetDfir.Name,
+                parameters: compileSignatureParameters, // GenerateParameters(targetDfir),
+                declaringType: targetDfir.GetDeclaringType(),
+                reentrancy: targetDfir.Reentrancy,
+                isYielding: true,
+                isFunctional: true,
+                threadAffinity: ThreadAffinity.Standard,
+                shouldAlwaysInline: false,
+                mayWantToInline: true,
+                priority: ExecutionPriority.Normal,
+                callingConvention: CallingConvention.StdCall);
 
             var compileSignatures = new Dictionary<ExtendedQualifiedName, CompileSignature>();
             var dependencyIdentities = new HashSet<SpecAndQName>();
