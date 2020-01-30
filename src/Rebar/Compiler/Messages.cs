@@ -66,13 +66,23 @@ namespace Rebar.Compiler
                 SemanticAnalysisMessageCategories.Connection,
                 WireCannotForkDescriptor);
 
-        private static readonly MessageDescriptor TypeDoesNotHaveRequiredTraitDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeDoesNotHaveRequiredTrait");
+        internal static readonly MessageDescriptor TypeDoesNotHaveRequiredTraitDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeDoesNotHaveRequiredTrait");
 
-        public static readonly DfirMessage TypeDoesNotHaveRequiredTrait =
+        public static DfirMessage CreateTypeDoesNotHaveRequiredTraitMessage(string traitName) =>
             new DfirMessage(
                 MessageSeverity.Error,
                 SemanticAnalysisMessageCategories.Connection,
-                TypeDoesNotHaveRequiredTraitDescriptor);
+                TypeDoesNotHaveRequiredTraitDescriptor,
+                "Trait",
+                traitName);
+
+        private static readonly MessageDescriptor TypeIsNotStructTypeDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeIsNotStructType");
+
+        public static readonly DfirMessage TypeIsNotStructType =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                TypeIsNotStructTypeDescriptor);
 
         private static readonly MessageDescriptor TypeNotDeterminedDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeNotDetermined");
 

@@ -39,13 +39,19 @@ namespace Rebar.Compiler
             diagram.DfirRoot.GetLifetimeGraphTree().EstablishLifetimeGraph(diagramGraphIdentifier, parentGraphIdentifier);
         }
 
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            VisitWire(wire);
+            return true;
+        }
+
         protected override void VisitWire(Wire wire)
         {
             TypeVariableReference wireTypeVariable;
             var constraints = new List<Constraint>();
             if (wire.SinkTerminals.HasMoreThan(1))
             {
-                constraints.Add(new CopyTraitConstraint());
+                constraints.Add(new SimpleTraitConstraint("Copy"));
             }
             wireTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(constraints);
 
@@ -90,6 +96,17 @@ namespace Rebar.Compiler
             Terminal outputTerminal = buildTupleNode.OutputTerminals[0];
             _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, tupleType);
             return true;
+        }
+
+
+        private ReferenceInputTerminalLifetimeGroup CreateTerminalLifetimeGroup(
+            InputReferenceMutability mutability,
+            LifetimeTypeVariableGroup variableGroup)
+        {
+            return _nodeFacade.CreateInputLifetimeGroup(
+                mutability,
+                variableGroup.LazyNewLifetime,
+                variableGroup.LifetimeType);
         }
 
         bool IDfirNodeVisitor<bool>.VisitConstant(Constant constant)
@@ -241,8 +258,7 @@ namespace Rebar.Compiler
             TypeVariableReference itemTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable();
             TypeVariableReference implementsIteratorTypeVariable = _typeVariableSet.CreateReferenceToNewTypeVariable(
                 new Constraint[] { new IteratorTraitConstraint(itemTypeVariable) });
-            ReferenceInputTerminalLifetimeGroup group = _nodeFacade
-                .CreateInputLifetimeGroup(InputReferenceMutability.RequireMutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType);
+            ReferenceInputTerminalLifetimeGroup group = CreateTerminalLifetimeGroup(InputReferenceMutability.RequireMutable, lifetimeTypeVariableGroup);
             group.AddTerminalFacade(iteratorInput, implementsIteratorTypeVariable, default(TypeVariableReference));
 
             _nodeFacade[itemOutput] = new SimpleTerminalFacade(itemOutput, itemTypeVariable);
@@ -265,8 +281,7 @@ namespace Rebar.Compiler
             LifetimeTypeVariableGroup lifetimeTypeVariableGroup = LifetimeTypeVariableGroup.CreateFromTerminal(lockInput);
             TypeVariableReference dataVariableType = _typeVariableSet.CreateReferenceToNewTypeVariable();
             TypeVariableReference lockType = _typeVariableSet.CreateReferenceToLockingCellType(dataVariableType);
-            _nodeFacade
-                .CreateInputLifetimeGroup(InputReferenceMutability.AllowImmutable, lifetimeTypeVariableGroup.LazyNewLifetime, lifetimeTypeVariableGroup.LifetimeType)
+            CreateTerminalLifetimeGroup(InputReferenceMutability.AllowImmutable, lifetimeTypeVariableGroup)
                 .AddTerminalFacade(lockInput, lockType, default(TypeVariableReference));
 
             Lifetime innerLifetime = referenceOutput.GetDiagramLifetime();
@@ -310,6 +325,61 @@ namespace Rebar.Compiler
                 outerTypeReference = _typeVariableSet.CreateReferenceToOptionType(innerTypeVariable);
             _nodeFacade[selectorInput] = new SimpleTerminalFacade(selectorInput, outerTypeReference);
             _nodeFacade[selectorSomeOutput] = new SimpleTerminalFacade(selectorSomeOutput, innerTypeVariable);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            NIType structType = structConstructorNode.Type;
+            foreach (var pair in structConstructorNode.InputTerminals.Zip(structType.GetFields()))
+            {
+                Terminal inputTerminal = pair.Key;
+                _nodeFacade[inputTerminal] = new SimpleTerminalFacade(
+                    inputTerminal,
+                    _typeVariableSet.CreateTypeVariableReferenceFromNIType(pair.Value.GetDataType()));
+            }
+            _nodeFacade[structConstructorNode.OutputTerminals[0]] = new SimpleTerminalFacade(
+                structConstructorNode.OutputTerminals[0],
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(structType));
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            TypeVariableReference mutabilityType = _typeVariableSet.CreateReferenceToMutabilityType();
+            var lifetimeVariableGroup = LifetimeTypeVariableGroup.CreateFromNode(structFieldAccessorNode);
+            ReferenceInputTerminalLifetimeGroup inputTerminalGroup = CreateTerminalLifetimeGroup(
+                InputReferenceMutability.Polymorphic,
+                lifetimeVariableGroup);
+
+            var fieldTypes = new Dictionary<string, TypeVariableReference>();
+            foreach (var terminalPair in structFieldAccessorNode.OutputTerminals.Zip(structFieldAccessorNode.FieldNames))
+            {
+                string fieldName = terminalPair.Value;
+                TypeVariableReference fieldType;
+                if (string.IsNullOrEmpty(fieldName))
+                {
+                    fieldType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                }
+                else if (!fieldTypes.TryGetValue(fieldName, out fieldType))
+                {
+                    fieldType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                    fieldTypes[fieldName] = fieldType;
+                }
+                TypeVariableReference terminalTypeVariable = _typeVariableSet.CreateReferenceToPolymorphicReferenceType(
+                    mutabilityType,
+                    fieldType,
+                    inputTerminalGroup.LifetimeType);
+                Terminal outputTerminal = terminalPair.Key;
+                _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, terminalTypeVariable);
+            }
+
+            TypeVariableReference fieldedType = _typeVariableSet.CreateReferenceToIndefiniteFieldedType(fieldTypes);
+            inputTerminalGroup.AddTerminalFacade(
+                structFieldAccessorNode.StructInputTerminal,
+                fieldedType,
+                mutabilityType);
+
             return true;
         }
 

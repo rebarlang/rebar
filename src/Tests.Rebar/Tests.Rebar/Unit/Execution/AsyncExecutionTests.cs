@@ -88,5 +88,60 @@ namespace Tests.Rebar.Unit.Execution
             byte[] finalValue = executionInstance.GetLastValueFromInspectNode(inspect);
             AssertByteArrayIsInt32(finalValue, 0);
         }
+
+        [TestMethod]
+        public void CreateNotifierPairSetNotifierValueAndGetNotifierValue_Execute_ExecutionFinishesAndSomeValueReadFromInspect()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var createNotifierPair = new FunctionalNode(function.BlockDiagram, Signatures.CreateNotifierPairType);
+            var getNotifierValue = new FunctionalNode(function.BlockDiagram, Signatures.GetNotifierValueType);
+            Wire.Create(function.BlockDiagram, createNotifierPair.OutputTerminals[0], getNotifierValue.InputTerminals[0]);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(getNotifierValue.OutputTerminals[0]);
+            var setNotifierValue = new FunctionalNode(function.BlockDiagram, Signatures.SetNotifierValueType);
+            Wire.Create(function.BlockDiagram, createNotifierPair.OutputTerminals[1], setNotifierValue.InputTerminals[0]);
+            ConnectConstantToInputTerminal(setNotifierValue.InputTerminals[1], PFTypes.Int32, 5, false);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsSomeInteger(inspectValue, 5);
+        }
+
+        [TestMethod]
+        public void CreateNotifierPairDropNotifierWriterAndGetNotifierValue_Execute_ExecutionFinishesAndNoValueOutput()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var createNotifierPair = new FunctionalNode(function.BlockDiagram, Signatures.CreateNotifierPairType);
+            var getNotifierValue = new FunctionalNode(function.BlockDiagram, Signatures.GetNotifierValueType);
+            Wire.Create(function.BlockDiagram, createNotifierPair.OutputTerminals[0], getNotifierValue.InputTerminals[0]);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(getNotifierValue.OutputTerminals[0]);
+            // Create a frame that adds to the unwrapped value to coerce it to Int32, even though the value should be None
+            Frame frame = Frame.Create(function.BlockDiagram);
+            UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, inspect.OutputTerminals[0], unwrapOption.InputTerminals[0]);
+            var add = new FunctionalNode(frame.Diagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], add.InputTerminals[0]);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, 0, false);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsNoneInteger(inspectValue);
+        }
+
+        [TestMethod]
+        public void CreateNotifierPairSetNotifierValueAndDropNotifierReader_Execute_ExecutionFinishesAndValueDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var createNotifierPair = new FunctionalNode(function.BlockDiagram, Signatures.CreateNotifierPairType);
+            var setNotifierValue = new FunctionalNode(function.BlockDiagram, Signatures.SetNotifierValueType);
+            Wire.Create(function.BlockDiagram, createNotifierPair.OutputTerminals[1], setNotifierValue.InputTerminals[0]);
+            FunctionalNode createFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
+            Wire.Create(function.BlockDiagram, createFakeDrop.OutputTerminals[0], setNotifierValue.InputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
+        }
     }
 }

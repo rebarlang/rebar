@@ -6,7 +6,7 @@ namespace Rebar.Compiler
 {
     internal abstract class VisitorTransformBase : IDfirTransform
     {
-        public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
+        public virtual void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
             VisitDfirRoot(dfirRoot);
             VisitDiagram(dfirRoot.BlockDiagram);

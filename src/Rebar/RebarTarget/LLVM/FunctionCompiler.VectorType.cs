@@ -21,12 +21,11 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef vectorPtr = vectorCreateFunction.GetParam(0u),
                 vectorCapacity = 4.AsLLVMValue(),
                 allocationPtr = builder.CreateArrayMalloc(elementLLVMType, vectorCapacity, "allocationPtr"),
-                vectorAllocationPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorAllocationPtrPtr"),
-                vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
-                vectorCapacityPtr = builder.CreateStructGEP(vectorPtr, 2u, "vectorCapacityPtr");
-            builder.CreateStore(allocationPtr, vectorAllocationPtrPtr);
-            builder.CreateStore(0.AsLLVMValue(), vectorSizePtr);
-            builder.CreateStore(vectorCapacity, vectorCapacityPtr);
+                vector = builder.BuildStructValue(
+                    elementLLVMType.CreateLLVMVectorType(),
+                    new LLVMValueRef[] { allocationPtr, 0.AsLLVMValue(), vectorCapacity },
+                    "vector");
+            builder.CreateStore(vector, vectorPtr);
             builder.CreateRetVoid();
         }
 
@@ -118,10 +117,8 @@ namespace Rebar.RebarTarget.LLVM
             else
             {
                 LLVMValueRef existingVectorSizeExtend = builder.CreateSExt(existingVectorSize, LLVMTypeRef.Int64Type(), "existingVectorSizeExtend"),
-                    bytesToCopyExtend = builder.CreateMul(existingVectorSizeExtend, elementLLVMType.SizeOf(), "bytesToCopyExtend"),
-                    existingAllocationPtrCast = builder.CreateBitCast(existingVectorAllocationPtr, LLVMExtensions.BytePointerType, "existingAllocationPtrCast"),
-                    newAllocationPtrCast = builder.CreateBitCast(newVectorAllocationPtr, LLVMExtensions.BytePointerType, "newAllocationPtrCast");
-                builder.CreateCall(compiler._commonExternalFunctions.CopyMemoryFunction, new LLVMValueRef[] { existingAllocationPtrCast, newAllocationPtrCast, bytesToCopyExtend }, string.Empty);
+                    bytesToCopy = builder.CreateMul(existingVectorSizeExtend, elementLLVMType.SizeOf(), "bytesToCopy");
+                builder.CreateCallToCopyMemory(compiler._commonExternalFunctions, newVectorAllocationPtr, existingVectorAllocationPtr, bytesToCopy);
             }
 
             LLVMValueRef newVector = builder.CreateInsertValue(existingVector, newVectorAllocationPtr, 0u, "newVector"),
@@ -130,7 +127,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorDropFunction)
+        internal static void BuildVectorDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorDropFunction)
         {
             NIType elementType;
             signature.GetGenericParameters().First().TryDestructureVectorType(out elementType);
@@ -144,7 +141,7 @@ namespace Rebar.RebarTarget.LLVM
                 vectorAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "vectorAllocationPtr");
 
             LLVMValueRef elementDropFunction;
-            if (compiler.TryGetDropFunction(elementType, out elementDropFunction))
+            if (TraitHelpers.TryGetDropFunction(elementType, compiler, out elementDropFunction))
             {
                 LLVMValueRef vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
                     vectorSize = builder.CreateLoad(vectorSizePtr, "vectorSize");
@@ -248,21 +245,19 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorGrowFunction.GetParam(0u),
-                vectorAllocationPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorAllocationPtrPtr"),
-                oldAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "oldAllocationPtr"),
-                vectorCapacityPtr = builder.CreateStructGEP(vectorPtr, 2u, "vector"),
-                oldVectorCapacity = builder.CreateLoad(vectorCapacityPtr, "oldVectorCapacity"),
+                vector = builder.CreateLoad(vectorPtr, "vector"),
+                oldAllocationPtr = builder.CreateExtractValue(vector, 0u, "oldAllocationPtr"),
+                oldVectorCapacity = builder.CreateExtractValue(vector, 2u, "oldVectorCapacity"),
                 // TODO: ideally handle integer overflow; also there are ways this could be smarter
                 newVectorCapacity = builder.CreateMul(oldVectorCapacity, 2.AsLLVMValue(), "newVectorCapacity"),
                 // TODO: handle the case where the allocation fails
                 newAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, newVectorCapacity, "newAllocationPtr"),
                 oldVectorCapacityExtend = builder.CreateSExt(oldVectorCapacity, LLVMTypeRef.Int64Type(), "oldVectorCapacityExtend"),
-                bytesToCopyExtend = builder.CreateMul(oldVectorCapacityExtend, elementLLVMType.SizeOf(), "bytesToCopyExtend"),
-                oldAllocationPtrCast = builder.CreateBitCast(oldAllocationPtr, LLVMExtensions.BytePointerType, "oldAllocationPtrCast"),
-                newAllocationPtrCast = builder.CreateBitCast(newAllocationPtr, LLVMExtensions.BytePointerType, "newAllocationPtrCast");
-            builder.CreateCall(compiler._commonExternalFunctions.CopyMemoryFunction, new LLVMValueRef[] { oldAllocationPtrCast, newAllocationPtrCast, bytesToCopyExtend }, string.Empty);
-            builder.CreateStore(newAllocationPtr, vectorAllocationPtrPtr);
-            builder.CreateStore(newVectorCapacity, vectorCapacityPtr);
+                bytesToCopy = builder.CreateMul(oldVectorCapacityExtend, elementLLVMType.SizeOf(), "bytesToCopy");
+            builder.CreateCallToCopyMemory(compiler._commonExternalFunctions, newAllocationPtr, oldAllocationPtr, bytesToCopy);
+            LLVMValueRef newVector0 = builder.CreateInsertValue(vector, newAllocationPtr, 0u, "newVector0"),
+                newVector = builder.CreateInsertValue(newVector0, newVectorCapacity, 2u, "newVector");
+            builder.CreateStore(newVector, vectorPtr);
             builder.CreateFree(oldAllocationPtr);
             builder.CreateRetVoid();
             return vectorGrowFunction;

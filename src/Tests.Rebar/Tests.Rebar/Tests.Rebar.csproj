@@ -167,6 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Unit\Compiler\AllocatorTests.cs" />
     <Compile Include="Unit\Compiler\AsyncNodeGrouperTests.cs" />
     <Compile Include="Unit\Compiler\AutomaticNodeInsertionTests.cs" />
     <Compile Include="Unit\Compiler\BorrowNodeTests.cs" />
@@ -181,6 +182,7 @@
     <Compile Include="Unit\Compiler\OptionPatternStructureTests.cs" />
     <Compile Include="Unit\Compiler\OptionTypeTests.cs" />
     <Compile Include="Unit\Compiler\StringTypeTests.cs" />
+    <Compile Include="Unit\Compiler\StructTests.cs" />
     <Compile Include="Unit\Compiler\TerminateLifetimeNodeTests.cs" />
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
     <Compile Include="Unit\Compiler\TupleTests.cs" />
@@ -201,6 +203,7 @@
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
     <Compile Include="Unit\Execution\PrimitiveOpExecutionTest.cs" />
     <Compile Include="Unit\Execution\StringExecutionTests.cs" />
+    <Compile Include="Unit\Execution\StructExecutionTests.cs" />
     <Compile Include="Unit\Execution\TestExecutionInstance.cs" />
     <Compile Include="Unit\Execution\TupleExecutionTests.cs" />
     <Compile Include="Unit\Execution\VectorExecutionTests.cs" />

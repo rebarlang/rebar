@@ -121,17 +121,17 @@ namespace Rebar.RebarTarget
         {
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
-            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources);
-            allocator.Execute(dfirRoot, cancellationToken);
-
             var asyncStateGrouper = new AsyncStateGrouper();
             asyncStateGrouper.Execute(dfirRoot, cancellationToken);
             IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
 #if DEBUG
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
+
+            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
+            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
+            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
+            allocator.Execute(dfirRoot, cancellationToken);
 
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;

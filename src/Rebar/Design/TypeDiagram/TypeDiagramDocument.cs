@@ -231,7 +231,6 @@ namespace Rebar.Design.TypeDiagram
         /// </summary>
         public AutoResetEvent CanCloseEditorsResetEvent { get; set; }
 
-
 #if FALSE
         private bool _onlyShowSketchDiagramEditor;
 

@@ -147,6 +147,12 @@
   <data name="FeatureToggle_LLVMCompiler_Description" xml:space="preserve">
     <value>Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target)</value>
   </data>
+  <data name="FeatureToggle_NotifierType_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_NotifierType_Description" xml:space="preserve">
+    <value>Enable the Notifier data type and related nodes</value>
+  </data>
   <data name="FeatureToggle_OptionPatternStructure_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>
@@ -226,7 +232,10 @@
     <value>Type Diagram</value>
   </data>
   <data name="TypeDoesNotHaveRequiredTrait" xml:space="preserve">
-    <value>The data type connected to this terminal does not have the required trait: Display</value>
+    <value>This terminal requires a trait that the connected data type does not implement</value>
+  </data>
+  <data name="TypeIsNotStructType" xml:space="preserve">
+    <value>The connected data type is not a struct type.</value>
   </data>
   <data name="TypeNotDetermined" xml:space="preserve">
     <value>The type of value created by this terminal has not been fully determined.</value>

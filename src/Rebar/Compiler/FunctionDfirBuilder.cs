@@ -66,7 +66,7 @@ namespace Rebar.Compiler
             {
                 var typePassthroughDfir = new Nodes.FunctionalNode(_currentDiagram, Signatures.ImmutablePassthroughType);
                 _map.AddMapping(typePassthrough, typePassthroughDfir);
-                MapTerminalsInOrder(typePassthrough, typePassthroughDfir);
+                _map.MapTerminalsInOrder(typePassthrough, typePassthroughDfir);
                 return;
             }
             throw new NotImplementedException();
@@ -258,7 +258,7 @@ namespace Rebar.Compiler
                 int i = 0;
                 foreach (var terminal in sourceModelBorderNode.OuterTerminals)
                 {
-                    MapTerminalAndType(terminal, dfirBorderNode.GetOuterTerminal(i));
+                    _map.MapTerminalAndType(terminal, dfirBorderNode.GetOuterTerminal(i));
                     ++i;
                 }
                 i = 0;
@@ -268,7 +268,7 @@ namespace Rebar.Compiler
                     // also assumes that the border node has the same terminals on each diagram, which
                     // won't be true for the pattern selector
                     // Fortunately, for now, the only inner terminal on OptionPatternStructureSelector is on the first diagram
-                    MapTerminalAndType(terminal, dfirBorderNode.GetInnerTerminal(i, 0));
+                    _map.MapTerminalAndType(terminal, dfirBorderNode.GetInnerTerminal(i, 0));
                     ++i;
                 }
             }
@@ -406,7 +406,7 @@ namespace Rebar.Compiler
             var dfirDataItem = (NationalInstruments.Dfir.DataItem)_map.GetDfirForModel(dataAccessor.DataItem);
             NationalInstruments.Dfir.DataAccessor dfirDataAccessor = NationalInstruments.Dfir.DataAccessor.Create(_currentDiagram, dfirDataItem, dataAccessor.Direction.ToDfirDirection());
             _map.AddMapping(dataAccessor, dfirDataAccessor);
-            _map.AddMapping(dataAccessor.Terminal, dfirDataAccessor.Terminal);
+            _map.MapTerminalsInOrder(dataAccessor, dfirDataAccessor);
         }
 
         public void VisitDataItem(DataItem dataItem)
@@ -451,7 +451,7 @@ namespace Rebar.Compiler
                 NationalInstruments.Dfir.Wire.Create(_currentDiagram, stringSliceConstant.OutputTerminal, stringFromSliceNode.InputTerminals[0]);
 
                 _map.AddMapping((Content)literal, stringFromSliceNode);
-                _map.AddMapping(literal.OutputTerminal, stringFromSliceNode.OutputTerminals[1]);
+                _map.MapTerminalAndType(literal.OutputTerminal, stringFromSliceNode.OutputTerminals[1]);
                 return;
             }
 
@@ -465,7 +465,7 @@ namespace Rebar.Compiler
             }
             Constant constant = Constant.Create(_currentDiagram, literal.Data, constantType);
             _map.AddMapping((Content)literal, constant);
-            _map.AddMapping(literal.OutputTerminal, constant.Terminals.ElementAt(0));
+            _map.MapTerminalsInOrder((Node)literal, constant);
         }
 
         public void VisitMethodCall(MocCommonMethodCall callStatic)
@@ -473,10 +473,7 @@ namespace Rebar.Compiler
             ExtendedQualifiedName targetName = callStatic.SelectedMethodCallTarget.QualifiedTarget.CreateExtendedQualifiedName();
             var methodCallDfir = new MethodCallNode(_currentDiagram, targetName, callStatic.Signature);
             _map.AddMapping(callStatic, methodCallDfir);
-            foreach (var terminalPair in callStatic.Terminals.Zip(methodCallDfir.Terminals))
-            {
-                _map.AddMapping(terminalPair.Key, terminalPair.Value);
-            }
+            _map.MapTerminalsInOrder(callStatic, methodCallDfir);
         }
 
         public void VisitPropertyNode(PropertyNode propertyNode)
@@ -498,28 +495,55 @@ namespace Rebar.Compiler
         {
             var functionalNodeDfir = new Nodes.FunctionalNode(_currentDiagram, functionalNode.Signature, functionalNode.RequiredFeatureToggles);
             _map.AddMapping(functionalNode, functionalNodeDfir);
-            MapTerminalsInOrder(functionalNode, functionalNodeDfir);
+            _map.MapTerminalsInOrder(functionalNode, functionalNodeDfir);
+        }
+
+        public void VisitConstructor(Constructor constructor)
+        {
+            NIType dependencyType = constructor.Type;
+            if (dependencyType.IsValueClass() && dependencyType.GetFields().Count() > 0)
+            {
+                var structConstructorNode = new StructConstructorNode(_currentDiagram, dependencyType);
+                _map.AddMapping(constructor, structConstructorNode);
+                _map.MapTerminalsInOrder(constructor, structConstructorNode);
+                return;
+            }
+            else
+            {
+                Constant constant = Constant.CreateConstantWithDefaultValue(_currentDiagram, dependencyType);
+                _map.AddMapping(constructor, constant);
+                _map.MapTerminalsInOrder(constructor, constant);
+            }
         }
 
         public void VisitDropNode(SourceModel.DropNode dropNode)
         {
             var dropDfir = new Nodes.DropNode(_currentDiagram);
             _map.AddMapping(dropNode, dropDfir);
-            MapTerminalsInOrder(dropNode, dropDfir);
+            _map.MapTerminalsInOrder(dropNode, dropDfir);
         }
 
         public void VisitTerminateLifetimeNode(TerminateLifetime node)
         {
             var terminateLifetimeDfir = new TerminateLifetimeNode(_currentDiagram, node.InputTerminals.Count(), node.OutputTerminals.Count());
             _map.AddMapping(node, terminateLifetimeDfir);
-            MapTerminalsInOrder(node, terminateLifetimeDfir);
+            _map.MapTerminalsInOrder(node, terminateLifetimeDfir);
         }
 
         public void VisitImmutableBorrowNode(ImmutableBorrowNode immutableBorrowNode)
         {
             var explicitBorrowDfir = new ExplicitBorrowNode(_currentDiagram, BorrowMode.Immutable, 1, true, true);
             _map.AddMapping(immutableBorrowNode, explicitBorrowDfir);
-            MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
+            _map.MapTerminalsInOrder(immutableBorrowNode, explicitBorrowDfir);
+        }
+
+        public void VisitStructFieldAccessor(StructFieldAccessor structFieldAccessor)
+        {
+            var structFieldAccessorDfir = new StructFieldAccessorNode(
+                _currentDiagram,
+                structFieldAccessor.FieldTerminals.Select(fieldTerminal => fieldTerminal.FieldName).ToArray());
+            _map.AddMapping(structFieldAccessor, structFieldAccessorDfir);
+            _map.MapTerminalsInOrder(structFieldAccessor, structFieldAccessorDfir);
         }
 
         public void VisitFunction(Function function)
@@ -537,21 +561,6 @@ namespace Rebar.Compiler
             _map.AddMapping(function.Diagram, CreatedDfirRoot.BlockDiagram);
             function.Diagram.AcceptVisitor(this);
             ConnectWires();
-        }
-
-        private void MapTerminalAndType(Terminal modelTerminal, NationalInstruments.Dfir.Terminal dfirTerminal)
-        {
-            _map.AddMapping(modelTerminal, dfirTerminal);
-            dfirTerminal.SetSourceModelId(modelTerminal);
-            dfirTerminal.DataType = modelTerminal.DataType.IsUnset() ? PFTypes.Void : modelTerminal.DataType;
-        }
-
-        private void MapTerminalsInOrder(Node sourceModelNode, NationalInstruments.Dfir.Node dfirNode)
-        {
-            foreach (var pair in sourceModelNode.Terminals.Zip(dfirNode.Terminals))
-            {
-                _map.AddMapping(pair.Key, pair.Value);
-            }
         }
 
         /// <summary>

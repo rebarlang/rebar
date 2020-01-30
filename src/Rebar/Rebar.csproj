@@ -207,6 +207,7 @@
     <Compile Include="Common\ITypeUnificationResult.cs" />
     <Compile Include="Common\LifetimeVariableAssociation.cs" />
     <Compile Include="Common\PrimitiveOps.cs" />
+    <Compile Include="Common\SelfTypeMode.cs" />
     <Compile Include="Common\Signatures.cs" />
     <Compile Include="Common\TypeVariableSet.cs" />
     <Compile Include="Common\TypeVariableSetExtensions.cs" />
@@ -218,7 +219,10 @@
     <Compile Include="Common\Lifetime.cs" />
     <Compile Include="Compiler\DefaultNativeTargetCompileHandler.cs" />
     <Compile Include="Compiler\Nodes\CreateMethodCallPromise.cs" />
+    <Compile Include="Compiler\Nodes\DecomposeStructNode.cs" />
     <Compile Include="Compiler\Nodes\IInternalDfirNodeVisitor.cs" />
+    <Compile Include="Compiler\Nodes\StructConstructorNode.cs" />
+    <Compile Include="Compiler\Nodes\StructFieldAccessorNode.cs" />
     <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
     <Compile Include="Compiler\DfirTranslationHelpers.cs" />
     <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />
@@ -282,6 +286,10 @@
     <Compile Include="Compiler\TypeDiagram\UnifyTypesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\TypeDiagram\ValidateTypeUsagesTransform.cs" />
     <Compile Include="Compiler\TypeUnificationExtensions.cs" />
+    <Compile Include="Design\StructFieldAccessorTerminalViewModel.cs" />
+    <Compile Include="Design\StructFieldAccessorViewModel.cs" />
+    <Compile Include="Design\ConstructorViewModel.cs" />
+    <Compile Include="Design\TypeDiagram\SelfTypeViewModel.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramDocumentType.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramProjectItemInfoService.cs" />
     <Compile Include="Design\TypeDiagram\TypeDiagramPaletteLoader.cs" />
@@ -315,12 +323,14 @@
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionAllocationSet.cs" />
+    <Compile Include="RebarTarget\LLVM\TraitHelpers.cs" />
     <Compile Include="RebarTarget\LLVM\ValueSource.cs" />
     <Compile Include="RebarTarget\LLVM\CommonModules.cs" />
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.ModuleBuilding.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompiler.NotifierTypes.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.OptionType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SliceType.cs" />
@@ -396,11 +406,13 @@
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
+    <Compile Include="SourceModel\StructFieldAccessor.cs" />
     <Compile Include="SourceModel\TypeDiagram\PrimitiveType.cs" />
     <Compile Include="SourceModel\TypeDiagram\SelfType.cs" />
     <Compile Include="SourceModel\TypeDiagram\TypeDiagramCache.cs" />
     <Compile Include="SourceModel\TypeDiagram\TypeDiagramCacheService.cs" />
     <Compile Include="SourceModel\TypeDiagram\TypeDiagramDefinition.cs" />
+    <Compile Include="SourceModel\Constructor.cs" />
     <Compile Include="SourceModel\FunctionalNode.cs" />
     <Compile Include="SourceModel\Functions.cs" />
     <Compile Include="SourceModel\IBeginLifetimeTunnel.cs" />
@@ -431,6 +443,8 @@
     <Compile Include="SourceModel\TerminateLifetime.cs" />
     <Compile Include="SourceModel\FlatSequenceTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\TerminateLifetimeTunnelGuide.cs" />
+    <Compile Include="SourceModel\TypeDiagramDependency.cs" />
+    <Compile Include="SourceModel\TypeDiagram\TypeDiagramMergeScriptDataServiceFactory.cs" />
     <Compile Include="SourceModel\TypePassthrough.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
@@ -545,6 +559,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Diagram\Nodes\SelfType.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\NotifierPalette.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets" Condition="Exists('..\packages\LibLLVM.5.0.1\build\net461\libLLVM.targets')" />

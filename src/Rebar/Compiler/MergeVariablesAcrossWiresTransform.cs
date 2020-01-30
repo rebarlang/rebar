@@ -29,6 +29,12 @@ namespace Rebar.Compiler
             this.VisitRebarNode(node);
         }
 
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            VisitWire(wire);
+            return true;
+        }
+
         protected override void VisitWire(Wire wire)
         {
             wire.UnifyNodeInputTerminalTypes(_typeUnificationResults);
@@ -123,6 +129,18 @@ namespace Rebar.Compiler
         bool IDfirNodeVisitor<bool>.VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
             optionPatternStructureSelector.UnifyNodeInputTerminalTypes(_typeUnificationResults);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            structConstructorNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            structFieldAccessorNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 

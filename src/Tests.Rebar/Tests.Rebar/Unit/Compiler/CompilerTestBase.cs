@@ -121,6 +121,11 @@ namespace Tests.Rebar.Unit.Compiler
             return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
         }
 
+        internal UnwrapOptionTunnel CreateUnwrapOptionTunnel(Frame frame)
+        {
+            return new UnwrapOptionTunnel(frame);
+        }
+
         internal LoopConditionTunnel CreateLoopConditionTunnel(Loop loop)
         {
             var loopConditionTunnel = new LoopConditionTunnel(loop);
@@ -146,6 +151,13 @@ namespace Tests.Rebar.Unit.Compiler
             return patternStructure;
         }
 
+        internal FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal)
+        {
+            var someConstructor = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.SomeConstructorType);
+            Wire.Create(inputTerminal.ParentDiagram, someConstructor.OutputTerminals[0], inputTerminal);
+            return someConstructor;
+        }
+
         protected void AssertVariablesReferenceSame(VariableReference expected, VariableReference actual)
         {
             Assert.IsTrue(actual.ReferencesSame(expected));
@@ -168,7 +180,7 @@ namespace Tests.Rebar.Unit.Compiler
 
         protected void AssertTerminalHasMissingTraitMessage(Terminal terminal)
         {
-            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTrait.Descriptor));
+            Assert.IsTrue(terminal.GetDfirMessages().Any(message => message.Descriptor == Messages.TypeDoesNotHaveRequiredTraitDescriptor));
         }
     }
 }

@@ -55,16 +55,16 @@ namespace Rebar.Compiler.TypeDiagram
             var primitiveTypeNode = node as PrimitiveType;
             if (selfTypeNode != null)
             {
-                var selfTypeDfirNode = new Nodes.SelfTypeNode(_currentDiagram);
+                var selfTypeDfirNode = new Nodes.SelfTypeNode(_currentDiagram, selfTypeNode.Mode, selfTypeNode.InputTerminals.Count());
                 DfirModelMap.AddMapping(selfTypeNode, selfTypeDfirNode);
-                DfirModelMap.AddMapping(selfTypeNode.InputTerminals.ElementAt(0), selfTypeDfirNode.InputTerminal);
+                DfirModelMap.MapTerminalsInOrder(selfTypeNode, selfTypeDfirNode);
                 return;
             }
             if (primitiveTypeNode != null)
             {
                 var primitiveTypeDfirNode = new Nodes.PrimitiveTypeNode(_currentDiagram, primitiveTypeNode.Type);
                 DfirModelMap.AddMapping(primitiveTypeNode, primitiveTypeDfirNode);
-                DfirModelMap.AddMapping(primitiveTypeNode.OutputTerminals.ElementAt(0), primitiveTypeDfirNode.OutputTerminal);
+                DfirModelMap.MapTerminalAndType(primitiveTypeNode.OutputTerminals.ElementAt(0), primitiveTypeDfirNode.OutputTerminal);
                 return;
             }
             throw new NotSupportedException($"Unsupported node type: {node.GetType().Name}");

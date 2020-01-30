@@ -51,6 +51,12 @@ namespace Rebar.Common
 
         public static NIType MethodCallPromiseGenericType { get; }
 
+        public static NIType NotifierReaderGenericType { get; }
+
+        public static NIType NotifierWriterGenericType { get; }
+
+        internal static NIType NotifierReaderPromiseGenericType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -162,6 +168,23 @@ namespace Rebar.Common
             methodCallPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
             methodCallPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             MethodCallPromiseGenericType = methodCallPromiseGenericTypeBuilder.CreateType();
+
+            var notifierReaderGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierReader");
+            notifierReaderGenericTypeBuilder.MakeGenericParameters("T");
+            notifierReaderGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            NotifierReaderGenericType = notifierReaderGenericTypeBuilder.CreateType();
+
+            var notifierWriterGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierWriter");
+            notifierWriterGenericTypeBuilder.MakeGenericParameters("T");
+            notifierWriterGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            NotifierWriterGenericType = notifierWriterGenericTypeBuilder.CreateType();
+
+            var notifierReaderPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierReaderPromise");
+            var notifierParameters = notifierReaderPromiseGenericTypeBuilder.MakeGenericParameters("T");
+            promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(notifierParameters.First().CreateType().CreateOption());
+            notifierReaderPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
+            notifierReaderPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            NotifierReaderPromiseGenericType = notifierReaderPromiseGenericTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -183,13 +206,16 @@ namespace Rebar.Common
             genericTypeDefinition = NIType.Unset;
             try
             {
-                genericTypeDefinition = type.GetGenericTypeDefinition();
-                return true;
+                if (type.IsClassOrInterface() || type.IsFunction())
+                {
+                    genericTypeDefinition = type.GetGenericTypeDefinition();
+                    return true;
+                }
             }
             catch (InvalidOperationException)
             {
-                return false;
             }
+            return false;
         }
 
         private static bool TryGetGenericParameterOfSpecialization(this NIType type, NIType genericTypeDefinition, int parameterIndex, out NIType parameter)
@@ -480,6 +506,45 @@ namespace Rebar.Common
         public static bool TryDestructureMethodCallPromiseType(this NIType type, out NIType outputType)
         {
             return type.TryGetGenericParameterOfSpecialization(MethodCallPromiseGenericType, 0, out outputType);
+        }
+
+        public static NIType CreateNotifierReader(this NIType type)
+        {
+            return SpecializeGenericType(NotifierReaderGenericType, type);
+        }
+
+        public static bool TryDestructureNotifierReaderType(this NIType type, out NIType valueType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(NotifierReaderGenericType, 0, out valueType);
+        }
+
+        public static NIType CreateNotifierReaderPromise(this NIType type)
+        {
+            return SpecializeGenericType(NotifierReaderPromiseGenericType, type);
+        }
+
+        public static bool TryDestructureNotifierReaderPromiseType(this NIType type, out NIType valueType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(NotifierReaderPromiseGenericType, 0, out valueType);
+        }
+
+        public static NIType CreateNotifierWriter(this NIType type)
+        {
+            return SpecializeGenericType(NotifierWriterGenericType, type);
+        }
+
+        public static bool TryDestructureNotifierWriterType(this NIType type, out NIType valueType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(NotifierWriterGenericType, 0, out valueType);
+        }
+
+        internal static NIType CreateNotifierSharedDataType(this NIType valueType)
+        {
+            NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+            clusterBuilder.DefineField(WakerType, "waker");
+            clusterBuilder.DefineField(valueType, "value");
+            clusterBuilder.DefineField(PFTypes.Int32, "state");
+            return clusterBuilder.CreateType();
         }
 
         internal static bool WireTypeMayFork(this NIType wireType)

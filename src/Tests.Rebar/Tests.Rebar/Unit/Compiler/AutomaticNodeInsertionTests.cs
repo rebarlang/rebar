@@ -206,6 +206,8 @@ namespace Tests.Rebar.Unit.Compiler
             AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
         }
 
+        // TODO: test that in a DFIR graph where a tuple/struct variable is sent to a DropNode, a Decompose*Node is inserted before the DropNode
+
         [TestMethod]
         public void UnconsumedTupleVariable_AutomaticNodeInsertion_TupleIsMoveDecomposedAndElementsAreDropped()
         {
@@ -220,8 +222,38 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.AreEqual(DecomposeMode.Move, decomposeTuple.DecomposeMode);
             AssertVariablesReferenceSame(buildTuple.OutputTerminals[0].GetTrueVariable(), decomposeTuple.InputTerminals[0].GetTrueVariable());
             Assert.AreEqual(2, decomposeTuple.OutputTerminals.Count);
-            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[0]);
-            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[1]);
+            DropNode drop0 = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[0]);
+            AssertDropInputVariableHasType(drop0, PFTypes.Int32);
+            DropNode drop1 = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[1]);
+            AssertDropInputVariableHasType(drop1, PFTypes.Boolean);
+        }
+
+        [TestMethod]
+        public void UnconsumedTupleVariable_AutomaticNodeInsertion_StructIsDecomposedAndElementsAreDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var constructorNode = new StructConstructorNode(function.BlockDiagram, StructType);
+            Constant constant = Constant.Create(function.BlockDiagram, string.Empty, DataTypes.StringSliceType.CreateImmutableReference());
+            var stringFromSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromSliceType);
+            Wire.Create(function.BlockDiagram, constant.OutputTerminal, stringFromSlice.InputTerminals[0]);
+            Wire.Create(function.BlockDiagram, stringFromSlice.OutputTerminals[1], constructorNode.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            DecomposeStructNode decomposeStruct = AssertDiagramContainsNodeWithSources<DecomposeStructNode>(function.BlockDiagram, constructorNode.OutputTerminals[0]);
+            Assert.AreEqual(StructType, decomposeStruct.Type);
+            DropNode dropNode = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeStruct.OutputTerminals[0]);
+            AssertDropInputVariableHasType(dropNode, PFTypes.String);
+        }
+
+        private NIType StructType
+        {
+            get
+            {
+                NIClassBuilder structBuilder = PFTypes.Factory.DefineValueClass("struct.td");
+                structBuilder.DefineField(PFTypes.String, "_0", NIFieldAccessPolicies.ReadWrite);
+                return structBuilder.CreateType();
+            }
         }
 
         #region StringToSlice insertion
@@ -305,6 +337,12 @@ namespace Tests.Rebar.Unit.Compiler
             }
             Assert.Fail($"Expected to find a {typeof(TNode).Name} with expected sources");
             return null;
+        }
+
+        private void AssertDropInputVariableHasType(DropNode dropNode, NIType type)
+        {
+            VariableReference dropInputVariable = dropNode.InputTerminals[0].GetTrueVariable();
+            Assert.AreEqual(type, dropInputVariable.Type);
         }
     }
 }

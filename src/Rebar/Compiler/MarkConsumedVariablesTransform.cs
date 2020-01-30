@@ -35,6 +35,12 @@ namespace Rebar.Compiler
             this.VisitRebarNode(node);
         }
 
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            VisitWire(wire);
+            return true;
+        }
+
         protected override void VisitWire(Wire wire)
         {
         }
@@ -157,6 +163,21 @@ namespace Rebar.Compiler
         {
             MarkTrueVariableOfTerminalConsumed(optionPatternStructureSelector.InputTerminals[0]);
             MarkFacadeVariableOfTerminalLive(optionPatternStructureSelector.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            structConstructorNode.InputTerminals.ForEach(MarkTrueVariableOfTerminalConsumed);
+            MarkFacadeVariableOfTerminalLive(structConstructorNode.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            MarkFacadeVariableOfTerminalInterrupted(structFieldAccessorNode.StructInputTerminal);
+            MarkTrueVariableOfTerminalConsumed(structFieldAccessorNode.StructInputTerminal);
+            structFieldAccessorNode.OutputTerminals.ForEach(MarkFacadeVariableOfTerminalLive);
             return true;
         }
 

@@ -1,4 +1,6 @@
-﻿using LLVMSharp;
+﻿using System;
+using System.Collections.Generic;
+using LLVMSharp;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -10,8 +12,11 @@ namespace Rebar.RebarTarget.LLVM
     internal interface IAddressableValueSource
     {
         LLVMValueRef GetAddress(IRBuilder builder);
+    }
 
-        LLVMTypeRef AddressType { get; }
+    internal interface IInitializableValueSource
+    {
+        void InitializeValue(IRBuilder builder, LLVMValueRef value);
     }
 
     internal interface IUpdateableValueSource
@@ -19,9 +24,69 @@ namespace Rebar.RebarTarget.LLVM
         void UpdateValue(IRBuilder builder, LLVMValueRef value);
     }
 
-    internal abstract class AllocationValueSource : ValueSource, IAddressableValueSource, IUpdateableValueSource
+    internal interface IGetDereferencedValueSource
+    {
+        LLVMValueRef GetDereferencedValue(IRBuilder builder);
+    }
+
+    internal abstract class SingleValueSource : ValueSource
+    {
+        protected LLVMValueRef? Value { get; set; }
+
+        public override LLVMValueRef GetValue(IRBuilder builder)
+        {
+            if (Value == null)
+            {
+                throw new InvalidOperationException("Trying to get value of uninitialized variable");
+            }
+            return Value.Value;
+        }
+    }
+
+    internal class ConstantValueSource : SingleValueSource
+    {
+        public ConstantValueSource(LLVMValueRef value)
+        {
+            Value = value;
+        }
+    }
+
+    internal class ImmutableValueSource : SingleValueSource, IInitializableValueSource
+    {
+        public void InitializeValue(IRBuilder builder, LLVMValueRef value)
+        {
+            if (Value != null)
+            {
+                throw new InvalidOperationException("Trying to re-initialize variable");
+            }
+            Value = value;
+        }
+    }
+
+    internal class ReferenceToSingleValueSource : ValueSource, IGetDereferencedValueSource
+    {
+        private readonly SingleValueSource _singleValueSource;
+
+        public ReferenceToSingleValueSource(SingleValueSource constantValueSource)
+        {
+            _singleValueSource = constantValueSource;
+        }
+
+        public LLVMValueRef GetDereferencedValue(IRBuilder builder)
+        {
+            return _singleValueSource.GetValue(builder);
+        }
+
+        public override LLVMValueRef GetValue(IRBuilder builder)
+        {
+            throw new InvalidOperationException("Cannot get address value from ReferenceToConstantValueSource");
+        }
+    }
+
+    internal abstract class AllocationValueSource : ValueSource, IAddressableValueSource, IInitializableValueSource, IUpdateableValueSource
     {
         private int _loadCount;
+        private readonly Dictionary<LLVMBasicBlockRef, LLVMValueRef> _basicBlockAddresses = new Dictionary<LLVMBasicBlockRef, LLVMValueRef>();
 
         protected AllocationValueSource(string allocationName)
         {
@@ -30,9 +95,12 @@ namespace Rebar.RebarTarget.LLVM
 
         protected string AllocationName { get; }
 
-        public abstract LLVMTypeRef AddressType { get; }
-
         protected abstract LLVMValueRef GetAllocationPointer(IRBuilder builder);
+
+        public void InitializeValue(IRBuilder builder, LLVMValueRef value)
+        {
+            UpdateValue(builder, value);
+        }
 
         LLVMValueRef IAddressableValueSource.GetAddress(IRBuilder builder)
         {
@@ -41,8 +109,14 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef GetValidPointer(IRBuilder builder)
         {
-            LLVMValueRef allocationPointer = GetAllocationPointer(builder);
-            allocationPointer.ThrowIfNull();
+            LLVMBasicBlockRef currentBlock = builder.GetInsertBlock();
+            LLVMValueRef allocationPointer;
+            if (!_basicBlockAddresses.TryGetValue(currentBlock, out allocationPointer))
+            {
+                allocationPointer = GetAllocationPointer(builder);
+                allocationPointer.ThrowIfNull();
+                _basicBlockAddresses[currentBlock] = allocationPointer;
+            }
             return allocationPointer;
         }
 
@@ -55,6 +129,11 @@ namespace Rebar.RebarTarget.LLVM
 
         void IUpdateableValueSource.UpdateValue(IRBuilder builder, LLVMValueRef value)
         {
+            UpdateValue(builder, value);
+        }
+
+        private void UpdateValue(IRBuilder builder, LLVMValueRef value)
+        {
             builder.CreateStore(value, GetValidPointer(builder));
         }
     }
@@ -62,18 +141,18 @@ namespace Rebar.RebarTarget.LLVM
     internal class LocalAllocationValueSource : AllocationValueSource
     {
         private readonly FunctionAllocationSet _allocationSet;
+        private readonly string _functionName;
         private readonly int _allocationIndex;
 
-        public LocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, int allocationIndex)
+        public LocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, string functionName, int allocationIndex)
             : base(allocationName)
         {
             _allocationSet = allocationSet;
+            _functionName = functionName;
             _allocationIndex = allocationIndex;
         }
 
-        public override LLVMTypeRef AddressType => _allocationSet.GetLocalAllocationPointer(_allocationIndex).TypeOf();
-
-        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_allocationIndex);
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_functionName, _allocationIndex);
     }
 
     internal class StateFieldValueSource : AllocationValueSource
@@ -88,8 +167,6 @@ namespace Rebar.RebarTarget.LLVM
             _fieldIndex = fieldIndex;
         }
 
-        public override LLVMTypeRef AddressType => _allocationSet.GetStateFieldPointerType(_fieldIndex);
-
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetStateFieldPointer(builder, _fieldIndex);
     }
 
@@ -99,8 +176,6 @@ namespace Rebar.RebarTarget.LLVM
             : base(allocationName, allocationSet, fieldIndex)
         {
         }
-
-        public override LLVMTypeRef AddressType => base.AddressType.GetElementType();
 
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)
         {
@@ -129,7 +204,18 @@ namespace Rebar.RebarTarget.LLVM
     {
         public static LLVMValueRef GetDereferencedValue(this ValueSource valueSource, IRBuilder builder)
         {
-            return builder.CreateLoad(valueSource.GetValue(builder), $"deref");
+            var getDereferenceValueSource = valueSource as IGetDereferencedValueSource;
+            if (getDereferenceValueSource != null)
+            {
+                return getDereferenceValueSource.GetDereferencedValue(builder);
+            }
+
+            LLVMValueRef address = valueSource.GetValue(builder);
+            if (address.TypeOf().TypeKind != LLVMTypeKind.LLVMPointerTypeKind)
+            {
+                throw new InvalidOperationException("Trying to dereference non-pointer value");
+            }
+            return builder.CreateLoad(address, $"deref");
         }
 
         public static void UpdateDereferencedValue(this ValueSource valueSource, IRBuilder builder, LLVMValueRef value)

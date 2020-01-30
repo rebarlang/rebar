@@ -108,7 +108,11 @@ namespace Rebar.Common
             {
                 throw new NotSupportedException("Unknown non-class type: " + type);
             }
-            return typeVariableSet.CreateReferenceToConcreteType(type, new TypeVariableReference[0], implementedTraits.ToArray());
+            return typeVariableSet.CreateReferenceToConcreteType(
+                type,
+                new TypeVariableReference[0],
+                new Dictionary<string, TypeVariableReference>(),
+                implementedTraits.ToArray());
         }
 
         private static TypeVariableReference CreateTypeVariableReferenceFromInterfaceNIType(
@@ -137,6 +141,11 @@ namespace Rebar.Common
                 ? type.GetGenericParameters().Select(t => typeVariableSet.CreateTypeVariableReferenceFromNIType(t, genericTypeParameters)).ToArray()
                 : new TypeVariableReference[0];
             TypeVariableReference[] traits = typeVariableSet.GetImplementedTraitTypeVariables(type, genericTypeParameters).ToArray();
+            var fieldTypes = new Dictionary<string, TypeVariableReference>();
+            foreach (NIType fieldType in type.GetFields())
+            {
+                fieldTypes.Add(fieldType.GetName(), typeVariableSet.CreateTypeVariableReferenceFromNIType(fieldType.GetDataType(), genericTypeParameters));
+            }
 
             // TODO: eventually it would be nice to decorate the generic type definition with [Derive] attributes
             // that say which traits to derive from the inner type, so that this can be made more generic.
@@ -151,7 +160,7 @@ namespace Rebar.Common
                 traitDeriver = new TraitDeriver(parameterTypeVariables[0], "Clone");
             }
 
-            return typeVariableSet.CreateReferenceToConcreteType(type, parameterTypeVariables, traits, traitDeriver);
+            return typeVariableSet.CreateReferenceToConcreteType(type, parameterTypeVariables, fieldTypes, traits, traitDeriver);
         }
 
         private static IEnumerable<TypeVariableReference> GetImplementedTraitTypeVariables(this TypeVariableSet typeVariableSet, NIType type, Dictionary<NIType, TypeVariableReference> genericTypeParameters)
@@ -173,11 +182,9 @@ namespace Rebar.Common
                 switch (interfaceName)
                 {
                     case "Clone":
-                        return new CloneTraitConstraint();
                     case "Copy":
-                        return new CopyTraitConstraint();
                     case "Display":
-                        return new DisplayTraitConstraint();
+                        return new SimpleTraitConstraint(interfaceName);
                 }
             }
             throw new NotImplementedException("Don't know how to translate generic type constraint " + niTypeConstraint);

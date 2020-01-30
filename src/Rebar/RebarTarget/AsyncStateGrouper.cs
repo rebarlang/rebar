@@ -6,7 +6,6 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
-using Rebar.RebarTarget.LLVM;
 using DfirBorderNode = NationalInstruments.Dfir.BorderNode;
 using Loop = Rebar.Compiler.Nodes.Loop;
 
@@ -165,8 +164,12 @@ namespace Rebar.RebarTarget
 
         protected override void VisitWire(Wire wire)
         {
-            AsyncStateGroup sourceGroup = _nodeGroups[wire.SourceTerminal.ConnectedTerminal.ParentNode];
-            AddVisitationToGroup(sourceGroup, new WireVisitation(wire));
+            AsyncStateGroup sourceGroup = GetTerminalPredecessorGroup(wire, wire.SourceTerminal);
+            if (sourceGroup == null)
+            {
+                throw new InvalidStateException("Wire source terminal should have a group");
+            }
+            AddVisitationToGroup(sourceGroup, new NodeVisitation(wire));
             _nodeGroups[wire] = sourceGroup;
         }
 
@@ -276,7 +279,21 @@ namespace Rebar.RebarTarget
                     }
                 case StructureTraversalPoint.AfterRightBorderNodes:
                     {
-                        currentGroup = _nodeGroups[frame];
+                        AsyncStateGroup frameTerminalGroup = _nodeGroups[frame];
+                        currentGroup = frameTerminalGroup;
+
+                        // attempt to consolidate groups
+                        if (frame.DoesStructureExecuteConditionally())
+                        {
+                            AsyncStateGroup diagramInitialGroup = _diagramInitialGroups[frame.Diagram],
+                                diagramTerminalGroup = _structureOutputBorderNodeGroups[frame];
+                            if (diagramInitialGroup == diagramTerminalGroup)
+                            {
+                                AsyncStateGroup frameInitialGroup = _structureInitialGroups[frame];
+                                diagramTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                                frameTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+                            }
+                        }
                         break;
                     }
             }
@@ -478,23 +495,43 @@ namespace Rebar.RebarTarget
         {
             foreach (Terminal inputTerminal in node.InputTerminals.Where(terminal => terminal.ParentDiagram == onDiagram))
             {
-                Terminal sourceTerminal = inputTerminal.GetImmediateSourceTerminal();
-                if (sourceTerminal != null)
+                AsyncStateGroup inputTerminalPredecessorGroup = GetTerminalPredecessorGroup(node, inputTerminal);
+                if (inputTerminalPredecessorGroup != null)
                 {
-                    var sourceBorderNode = sourceTerminal.ParentNode as DfirBorderNode;
-                    if (sourceBorderNode != null && sourceBorderNode.Direction == Direction.Input)
+                    yield return inputTerminalPredecessorGroup;
+                }
+            }
+        }
+
+        private AsyncStateGroup GetTerminalPredecessorGroup(Node terminalParent, Terminal terminal)
+        {
+            Terminal sourceTerminal = terminal.GetImmediateSourceTerminal();
+            if (sourceTerminal != null)
+            {
+                var sourceBorderNode = sourceTerminal.ParentNode as DfirBorderNode;
+                if (sourceBorderNode != null)
+                {
+                    if (sourceBorderNode.Direction == Direction.Input)
                     {
                         // If the source is an input border node, its group is probably the containing structure's initial group.
                         // Instead of that, use the argument node's diagram's initial group.
-                        Diagram parentDiagram = (node is DfirBorderNode ? node.ParentNode : node).ParentDiagram;
-                        yield return _diagramInitialGroups[parentDiagram];
+                        Diagram parentDiagram = (terminalParent is DfirBorderNode ? terminalParent.ParentNode : terminalParent).ParentDiagram;
+                        return _diagramInitialGroups[parentDiagram];
                     }
                     else
                     {
-                        yield return _nodeGroups[sourceTerminal.ParentNode];
+                        // TODO: if the source is an output border node, its group is _structureOutputBorderNodeGroups[sourceBorderNode],
+                        // but what we really want is the border node's parent structure's terminal group.
+                        // TODO TODO TODO test
+                        return _nodeGroups[sourceBorderNode.ParentStructure];
                     }
                 }
+                else
+                {
+                    return _nodeGroups[sourceTerminal.ParentNode];
+                }
             }
+            return null;
         }
     }
 
@@ -503,12 +540,15 @@ namespace Rebar.RebarTarget
         public AsyncStateGroup(string groupLabel, IEnumerable<Visitation> visitations, IEnumerable<AsyncStateGroup> predecessors, Continuation continuation)
         {
             Label = groupLabel;
+            FunctionId = groupLabel;
             Visitations = visitations;
             Predecessors = predecessors;
             Continuation = continuation;
         }
 
         public string Label { get; }
+
+        public string FunctionId { get; set; }
 
         public IEnumerable<Visitation> Visitations { get; }
 
@@ -542,7 +582,52 @@ namespace Rebar.RebarTarget
 
     internal abstract class Visitation
     {
-        public abstract void Visit(FunctionCompiler functionCompiler);
+    }
+
+    internal interface IVisitationHandler<T> : IDfirNodeVisitor<T>, IDfirStructureVisitor<T> { }
+
+    internal static class VisitationExtensions
+    {
+        public static void Visit<T>(this Visitation visitation, IVisitationHandler<T> visitor)
+        {
+            var nodeVisitation = visitation as NodeVisitation;
+            var structureVisitation = visitation as StructureVisitation;
+            if (nodeVisitation != null)
+            {
+                visitor.VisitRebarNode(nodeVisitation.Node);
+            }
+            else if (structureVisitation != null)
+            {
+                visitor.VisitRebarStructure(
+                    structureVisitation.Structure,
+                    structureVisitation.TraversalPoint,
+                    structureVisitation.Diagram);
+            }
+        }
+
+        public static bool GroupContainsNode(this AsyncStateGroup group, Node node)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var nodeVisitation = v as NodeVisitation;
+                    return nodeVisitation != null
+                        && nodeVisitation.Node == node;
+                });
+        }
+
+        public static bool GroupContainsStructureTraversalPoint(this AsyncStateGroup group, Structure structure, Diagram diagram, StructureTraversalPoint traversalPoint)
+        {
+            return group.Visitations.Any(
+                v =>
+                {
+                    var structureVisitation = v as StructureVisitation;
+                    return structureVisitation != null
+                        && structureVisitation.Structure == structure
+                        && structureVisitation.Diagram == diagram
+                        && structureVisitation.TraversalPoint == traversalPoint;
+                });
+        }
     }
 
     internal sealed class NodeVisitation : Visitation
@@ -553,26 +638,6 @@ namespace Rebar.RebarTarget
         }
 
         public Node Node { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.VisitRebarNode(Node);
-        }
-    }
-
-    internal sealed class WireVisitation : Visitation
-    {
-        public WireVisitation(Wire wire)
-        {
-            Wire = wire;
-        }
-
-        public Wire Wire { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.CompileWire(Wire);
-        }
     }
 
     internal sealed class StructureVisitation : Visitation
@@ -589,11 +654,6 @@ namespace Rebar.RebarTarget
         public Diagram Diagram { get; }
 
         public StructureTraversalPoint TraversalPoint { get; }
-
-        public override void Visit(FunctionCompiler functionCompiler)
-        {
-            functionCompiler.VisitRebarStructure(Structure, TraversalPoint, Diagram);
-        }
     }
 
     internal static class AsyncStateGroupExtensions
@@ -644,7 +704,6 @@ namespace Rebar.RebarTarget
         private static string PrettyPrintVisitation(Visitation visitation)
         {
             var nodeVisitation = visitation as NodeVisitation;
-            var wireVisitation = visitation as WireVisitation;
             var structureVisitation = visitation as StructureVisitation;
             if (nodeVisitation != null)
             {
@@ -652,10 +711,6 @@ namespace Rebar.RebarTarget
                 var functionalNode = node as FunctionalNode;
                 string nodeString = functionalNode != null ? functionalNode.Signature.GetName() : node.GetType().Name;
                 return $"    {nodeString}({node.UniqueId})";
-            }
-            if (wireVisitation != null)
-            {
-                return $"    Wire({wireVisitation.Wire.UniqueId})";
             }
             if (structureVisitation != null)
             {

@@ -4,5 +4,6 @@
     {
         T VisitAwaitNode(AwaitNode awaitNode);
         T VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise);
+        T VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode);
     }
 }

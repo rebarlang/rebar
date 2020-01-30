@@ -13,7 +13,7 @@ using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget.LLVM
 {
-    internal partial class FunctionCompiler : VisitorTransformBase, IDfirNodeVisitor<bool>, IInternalDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
+    internal partial class FunctionCompiler : VisitorTransformBase, IVisitationHandler<bool>, IInternalDfirNodeVisitor<bool>
     {
         private static readonly Dictionary<string, Action<FunctionCompiler, FunctionalNode>> _functionalNodeCompilers;
 
@@ -88,6 +88,10 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["WriteStringToFileHandle"] = CreateImportedCommonFunctionCompiler(CommonModules.WriteStringToFileHandleName);
 
             _functionalNodeCompilers["CreateYieldPromise"] = CreateSpecializedFunctionCallCompiler(BuildCreateYieldPromiseFunction);
+
+            _functionalNodeCompilers["CreateNotifierPair"] = CreateSpecializedFunctionCallCompiler(BuildCreateNotifierPairFunction);
+            _functionalNodeCompilers["GetReaderPromise"] = CreateSpecializedFunctionCallCompiler(BuildGetNotifierReaderPromiseFunction);
+            _functionalNodeCompilers["SetNotifierValue"] = CreateSpecializedFunctionCallCompiler(BuildSetNotifierValueFunction);
         }
 
         #region Functional node compilers
@@ -210,8 +214,8 @@ namespace Rebar.RebarTarget.LLVM
             if (valueType.WireTypeMayFork())
             {
                 ValueSource copyFromSource = compiler.GetTerminalValueSource(createCopyNode.InputTerminals[0]);
-                var copySource = (IUpdateableValueSource)compiler.GetTerminalValueSource(createCopyNode.OutputTerminals[1]);
-                copySource.UpdateValue(compiler.Builder, copyFromSource.GetDereferencedValue(compiler.Builder));
+                ValueSource copySource = compiler.GetTerminalValueSource(createCopyNode.OutputTerminals[1]);
+                compiler.InitializeIfNecessary(copySource, copyFromSource.GetDereferencedValue);
                 return;
             }
 
@@ -266,8 +270,8 @@ namespace Rebar.RebarTarget.LLVM
                 trueValueSource.GetValue(compiler.Builder),
                 falseValueSource.GetValue(compiler.Builder),
                 "select");
-            var selectedValueSource = (IUpdateableValueSource)compiler.GetTerminalValueSource(selectReferenceNode.OutputTerminals[1]);
-            selectedValueSource.UpdateValue(compiler.Builder, selectedValue);
+            ValueSource selectedValueSource = compiler.GetTerminalValueSource(selectReferenceNode.OutputTerminals[1]);
+            compiler.Initialize(selectedValueSource, selectedValue);
         }
 
         private static Action<FunctionCompiler, FunctionalNode> CreatePureUnaryOperationCompiler(Func<FunctionCompiler, LLVMValueRef, LLVMValueRef> generateOperation)
@@ -288,16 +292,14 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource inputValueSource = compiler.GetTerminalValueSource(operationNode.InputTerminals[0]);
             LLVMValueRef inputValue = inputValueSource.GetDereferencedValue(compiler.Builder);
-            LLVMValueRef resultValue = generateOperation(compiler, inputValue);
-
             if (!mutating)
             {
-                var outputValueSource = (IUpdateableValueSource)compiler.GetTerminalValueSource(operationNode.OutputTerminals[1]);
-                outputValueSource.UpdateValue(compiler.Builder, resultValue);
+                ValueSource outputValueSource = compiler.GetTerminalValueSource(operationNode.OutputTerminals[1]);
+                compiler.InitializeIfNecessary(outputValueSource, builder => generateOperation(compiler, inputValue));
             }
             else
             {
-                inputValueSource.UpdateDereferencedValue(compiler.Builder, resultValue);
+                inputValueSource.UpdateDereferencedValue(compiler.Builder, generateOperation(compiler, inputValue));
             }
         }
 
@@ -321,15 +323,14 @@ namespace Rebar.RebarTarget.LLVM
                 rightValueSource = compiler.GetTerminalValueSource(operationNode.InputTerminals[1]);
             LLVMValueRef leftValue = leftValueSource.GetDereferencedValue(compiler.Builder),
                 rightValue = rightValueSource.GetDereferencedValue(compiler.Builder);
-            LLVMValueRef resultValue = generateOperation(compiler, leftValue, rightValue);
             if (!mutating)
             {
-                var outputValueSource = (IUpdateableValueSource)compiler.GetTerminalValueSource(operationNode.OutputTerminals[2]);
-                outputValueSource.UpdateValue(compiler.Builder, resultValue);
+                ValueSource outputValueSource = compiler.GetTerminalValueSource(operationNode.OutputTerminals[2]);
+                compiler.InitializeIfNecessary(outputValueSource, builder => generateOperation(compiler, leftValue, rightValue));
             }
             else
             {
-                leftValueSource.UpdateDereferencedValue(compiler.Builder, resultValue);
+                leftValueSource.UpdateDereferencedValue(compiler.Builder, generateOperation(compiler, leftValue, rightValue));
             }
         }
 
@@ -429,9 +430,29 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return $"methodCallPromise[{StringifyType(innerType)}]";
                     }
+                    if (type.TryDestructureNotifierReaderType(out innerType))
+                    {
+                        return $"notifierReader[{StringifyType(innerType)}]";
+                    }
+                    if (type.TryDestructureNotifierWriterType(out innerType))
+                    {
+                        return $"notifierWriter[{StringifyType(innerType)}]";
+                    }
+                    if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+                    {
+                        return $"notifierReaderPromise[{StringifyType(innerType)}]";
+                    }
                     if (type == DataTypes.RangeIteratorType)
                     {
                         return "rangeiterator";
+                    }
+                    if (type == DataTypes.WakerType)
+                    {
+                        return "waker";
+                    }
+                    if (type.IsValueClass())
+                    {
+                        return type.GetTypeDefinitionQualifiedName().ToString("::");
                     }
                     throw new NotSupportedException("Unsupported type: " + type);
                 }
@@ -518,19 +539,25 @@ namespace Rebar.RebarTarget.LLVM
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
                 false);
 
+            var functions = new Dictionary<string, LLVMValueRef>();
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
-                string groupFunctionName = $"{_functionName}::{asyncStateGroup.Label}"; 
-                LLVMValueRef groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                LLVMValueRef groupFunction;
+                if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
+                {
+                    string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
+                    groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                    functions[asyncStateGroup.FunctionId] = groupFunction;
+                }
+
+                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, fireCountStateField);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
             }
 
             _commonExternalFunctions = new CommonExternalFunctions(module);
-            // TODO: reinitialize local allocations every time we switch to a different function
-            // _allocationSet.InitializeAllocations(Builder);
         }
 
         public Module Module { get; }
@@ -557,7 +584,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private DfirRoot TargetDfir { get; set; }
 
-        private LLVMValueRef GetImportedCommonFunction(string functionName)
+        internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
             return GetCachedFunction(functionName, () =>
             {
@@ -597,7 +624,7 @@ namespace Rebar.RebarTarget.LLVM
             return GetSpecializedFunctionWithSignature(functionalNode.FunctionType.FunctionNIType, createFunction);
         }
 
-        private LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
+        internal LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
         {
             string specializedFunctionName = MonomorphizeFunctionName(specializedSignature);
             return GetCachedFunction(specializedFunctionName, () =>
@@ -648,8 +675,7 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     continue;
                 }
-                var allocationSource = (IAddressableValueSource)GetTerminalValueSource(outputPair.Key);
-                arguments.Add(allocationSource.GetAddress(Builder));
+                arguments.Add(GetAddress(GetTerminalValueSource(outputPair.Key), Builder));
             }
             Builder.CreateCall(function, arguments.ToArray(), string.Empty);
         }
@@ -675,29 +701,21 @@ namespace Rebar.RebarTarget.LLVM
             this.VisitRebarNode(node);
         }
 
-        internal void CompileWire(Wire wire)
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
         {
             VisitWire(wire);
+            return true;
         }
 
         protected override void VisitWire(Wire wire)
         {
             if (wire.SinkTerminals.HasMoreThan(1))
             {
-                VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-                if (!(_variableValues[sourceVariable] is IUpdateableValueSource))
-                {
-                    // if the source is not updateable, then presumably the sinks aren't either and
-                    // there's nothing to copy
-                    // TODO: this may change later if it becomes possible to have different sink branches 
-                    // have different mutability settings
-                    return;
-                }
                 VariableReference[] sinkVariables = wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable).ToArray();
-                NIType variableType = sourceVariable.Type;
+                Func<IRBuilder, LLVMValueRef> valueGetter = GetTerminalValueSource(wire.SourceTerminal).GetValue;
                 foreach (var sinkVariable in sinkVariables)
                 {
-                    CopyValueToValue(sinkVariable, sourceVariable, variableType);
+                    InitializeIfNecessary(_variableValues[sinkVariable], valueGetter);
                 }
             }
         }
@@ -726,20 +744,48 @@ namespace Rebar.RebarTarget.LLVM
             return _variableValues[terminal.GetTrueVariable()];
         }
 
-        private void CopyValueToValue(VariableReference destinationValue, VariableReference copyFromValue, NIType valueType)
-        {
-            ((IUpdateableValueSource)_variableValues[destinationValue]).UpdateValue(Builder, _variableValues[copyFromValue].GetValue(Builder));
-        }
-
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
         {
-            var intoAllocation = _variableValues[into] as IUpdateableValueSource;
-            if (intoAllocation != null)
+            InitializeIfNecessary(_variableValues[into], builder => GetAddress(_variableValues[from], builder));
+        }
+
+        private void Initialize(ValueSource toInitialize, LLVMValueRef value)
+        {
+            var initializable = toInitialize as IInitializableValueSource;
+            if (initializable == null)
             {
-                var fromAllocation = (IAddressableValueSource)_variableValues[from];
-                LLVMValueRef fromAddress = fromAllocation.GetAddress(Builder);
-                intoAllocation.UpdateValue(Builder, fromAddress);
+                throw new ArgumentException("Trying to initialize non-initializable variable", nameof(toInitialize));
             }
+            initializable.InitializeValue(Builder, value);
+        }
+
+        private void InitializeIfNecessary(ValueSource toInitialize, Func<IRBuilder, LLVMValueRef> valueGetter)
+        {
+            var initializable = toInitialize as IInitializableValueSource;
+            if (initializable != null)
+            {
+                initializable.InitializeValue(Builder, valueGetter(Builder));
+            }
+        }
+
+        private void Update(ValueSource toUpdate, LLVMValueRef value)
+        {
+            var updateable = toUpdate as IUpdateableValueSource;
+            if (updateable == null)
+            {
+                throw new ArgumentException("Trying to update non-updateable variable", nameof(toUpdate));
+            }
+            updateable.UpdateValue(Builder, value);
+        }
+
+        private LLVMValueRef GetAddress(ValueSource valueSource, IRBuilder builder)
+        {
+            var addressable = valueSource as IAddressableValueSource;
+            if (addressable == null)
+            {
+                throw new ArgumentException("Trying to get address of non-addressable variable", nameof(valueSource));
+            }
+            return addressable.GetAddress(builder);
         }
 
 #endregion
@@ -757,17 +803,19 @@ namespace Rebar.RebarTarget.LLVM
                 NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
                 return GetSpecializedFunctionWithSignature(signature, BuildMethodCallPromisePollFunction);
             }
+            if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+            {
+                NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType.CreateOption(), NIType.Unset);
+                return GetSpecializedFunctionWithSignature(signature, BuildNotifierReaderPromisePollFunction);
+            }
             throw new NotSupportedException("Cannot find poll function for type " + type);
         }
 
         public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
         {
             VariableReference output = borrowTunnel.OutputTerminals[0].GetTrueVariable();
-            if (_variableValues[output] is IAddressableValueSource)
-            {
-                VariableReference input = borrowTunnel.InputTerminals[0].GetTrueVariable();
-                BorrowFromVariableIntoVariable(input, output);
-            }
+            VariableReference input = borrowTunnel.InputTerminals[0].GetTrueVariable();
+            BorrowFromVariableIntoVariable(input, output);
             return true;
         }
 
@@ -778,57 +826,26 @@ namespace Rebar.RebarTarget.LLVM
                 .Select(input => GetTerminalValueSource(input).GetValue(Builder))
                 .ToArray();
             Terminal outputTerminal = buildTupleNode.OutputTerminals[0];
-            var outputAllocationSource = ((IUpdateableValueSource)GetTerminalValueSource(outputTerminal));
+            ValueSource outputAllocationSource = GetTerminalValueSource(outputTerminal);
             LLVMTypeRef outputLLVMType = outputTerminal.GetTrueVariable().Type.AsLLVMType();
             LLVMValueRef tuple = Builder.BuildStructValue(
                 outputLLVMType,
                 fieldValues,
                 "tuple");
-            outputAllocationSource.UpdateValue(Builder, tuple);
+            Initialize(outputAllocationSource, tuple);
             return true;
         }
 
         public bool VisitConstant(Constant constant)
         {
-            var outputAllocation = (IUpdateableValueSource)GetTerminalValueSource(constant.OutputTerminal);
+            ValueSource outputValueSource = GetTerminalValueSource(constant.OutputTerminal);
             if (constant.DataType.IsInteger())
             {
-                LLVMValueRef constantValueRef;
-                switch (constant.DataType.GetKind())
-                {
-                    case NITypeKind.Int8:
-                        constantValueRef = ((sbyte)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.UInt8:
-                        constantValueRef = ((byte)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.Int16:
-                        constantValueRef = ((short)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.UInt16:
-                        constantValueRef = ((ushort)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.Int32:
-                        constantValueRef = ((int)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.UInt32:
-                        constantValueRef = ((uint)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.Int64:
-                        constantValueRef = ((long)constant.Value).AsLLVMValue();
-                        break;
-                    case NITypeKind.UInt64:
-                        constantValueRef = ((ulong)constant.Value).AsLLVMValue();
-                        break;
-                    default:
-                        throw new NotSupportedException("Unsupported numeric constant type: " + constant.DataType);
-                }
-                outputAllocation.UpdateValue(Builder, constantValueRef);
+                InitializeIfNecessary(outputValueSource, builder => constant.Value.GetIntegerValue(constant.DataType));
             }
-            else if (constant.Value is bool)
+            else if (constant.DataType.IsBoolean())
             {
-                LLVMValueRef constantValueRef = ((bool)constant.Value).AsLLVMValue();
-                outputAllocation.UpdateValue(Builder, constantValueRef);
+                InitializeIfNecessary(outputValueSource, builder => ((bool)constant.Value).AsLLVMValue());
             }
             else if (constant.Value is string)
             {
@@ -851,7 +868,7 @@ namespace Rebar.RebarTarget.LLVM
                         length.AsLLVMValue()
                     };
                     LLVMValueRef stringSliceValue = LLVMValueRef.ConstStruct(stringSliceFields, false);
-                    outputAllocation.UpdateValue(Builder, stringSliceValue);
+                    Initialize(outputValueSource, stringSliceValue);
                 }
             }
             else
@@ -869,43 +886,31 @@ namespace Rebar.RebarTarget.LLVM
             {
                 // TODO: distinguish inout from in parameters?
                 LLVMValueRef parameterValue = _variableValues[dataItemVariable].GetValue(Builder);
-                ((IUpdateableValueSource)terminalValueSource).UpdateValue(Builder, parameterValue);
+                Initialize(terminalValueSource, parameterValue);
             }
             else if (dataAccessor.Terminal.Direction == Direction.Input)
             {
                 // assume that the function parameter is a pointer to where we need to store the value
                 LLVMValueRef value = terminalValueSource.GetValue(Builder);
-                ((IUpdateableValueSource)_variableValues[dataItemVariable]).UpdateValue(Builder, value);
+                Update(_variableValues[dataItemVariable], value);
             }
             return true;
         }
 
         public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
         {
-            // TODO: un-duplicate this code
-            if (decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow)
+            ValueSource tupleRefSource = GetTerminalValueSource(decomposeTupleNode.InputTerminals[0]);
+            LLVMValueRef tupleValue = tupleRefSource.GetValue(Builder);
+            uint fieldIndex = 0;
+            foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
             {
-                ValueSource tupleRefSource = GetTerminalValueSource(decomposeTupleNode.InputTerminals[0]);
-                LLVMValueRef tuplePtr = tupleRefSource.GetValue(Builder);
-                uint fieldIndex = 0;
-                foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
-                {
-                    LLVMValueRef tupleElementPtr = Builder.CreateStructGEP(tuplePtr, fieldIndex, "tupleElement");
-                    ((IUpdateableValueSource)GetTerminalValueSource(outputTerminal)).UpdateValue(Builder, tupleElementPtr);
-                    ++fieldIndex;
-                }
-            }
-            else
-            {
-                ValueSource tupleSource = GetTerminalValueSource(decomposeTupleNode.InputTerminals[0]);
-                LLVMValueRef tuple = tupleSource.GetValue(Builder);
-                uint fieldIndex = 0;
-                foreach (Terminal outputTerminal in decomposeTupleNode.OutputTerminals)
-                {
-                    LLVMValueRef tupleElement = Builder.CreateExtractValue(tuple, fieldIndex, "tupleElement");
-                    ((IUpdateableValueSource)GetTerminalValueSource(outputTerminal)).UpdateValue(Builder, tupleElement);
-                    ++fieldIndex;
-                }
+                // TODO: for DecomposeMode.Borrow, it would be better to be able to extract elements from the dereferenced
+                // input value without needing to take an address
+                LLVMValueRef tupleElementValue = decomposeTupleNode.DecomposeMode == DecomposeMode.Borrow
+                    ? Builder.CreateStructGEP(tupleValue, fieldIndex, "tupleElement")
+                    : Builder.CreateExtractValue(tupleValue, fieldIndex, "tupleElement");
+                Initialize(GetTerminalValueSource(outputTerminal), tupleElementValue);
+                ++fieldIndex;
             }
             return true;
         }
@@ -913,61 +918,15 @@ namespace Rebar.RebarTarget.LLVM
         public bool VisitDropNode(DropNode dropNode)
         {
             VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
-            var inputAllocation = (IAddressableValueSource)_variableValues[input];
-            CreateDropCallIfDropFunctionExists(Builder, input.Type, inputAllocation.GetAddress);
+            var inputValueSource = _variableValues[input];
+            CreateDropCallIfDropFunctionExists(Builder, input.Type, builder => GetAddress(inputValueSource, builder));
             return true;
-        }
-
-        private bool TryGetDropFunction(NIType droppedValueType, out LLVMValueRef dropFunction)
-        {
-            dropFunction = default(LLVMValueRef);
-            var functionBuilder = Signatures.DropType.DefineFunctionFromExisting();
-            functionBuilder.ReplaceGenericParameters(droppedValueType, NIType.Unset);
-            NIType signature = functionBuilder.CreateType();
-
-            NIType innerType;
-            if (droppedValueType == PFTypes.String)
-            {
-                dropFunction = GetImportedCommonFunction(CommonModules.DropStringName);
-                return true;
-            }
-            if (droppedValueType == DataTypes.FileHandleType)
-            {
-                dropFunction = GetImportedCommonFunction(CommonModules.DropFileHandleName);
-                return true;
-            }
-            if (droppedValueType == DataTypes.FakeDropType)
-            {
-                dropFunction = GetImportedCommonFunction(CommonModules.FakeDropDropName);
-                return true;
-            }
-            if (droppedValueType.IsVectorType())
-            {
-                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildVectorDropFunction);
-                return true;
-            }
-            if (droppedValueType.TryDestructureOptionType(out innerType) && TryGetDropFunction(innerType, out dropFunction))
-            {
-                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildOptionDropFunction);
-                return true;
-            }
-            if (droppedValueType.IsSharedType())
-            {
-                dropFunction = GetSpecializedFunctionWithSignature(signature, BuildSharedDropFunction);
-                return true;
-            }
-
-            if (droppedValueType.TypeHasDropTrait())
-            {
-                throw new NotSupportedException("Drop function not found for type: " + droppedValueType);
-            }
-            return false;
         }
 
         private void CreateDropCallIfDropFunctionExists(IRBuilder builder, NIType droppedValueType, Func<IRBuilder, LLVMValueRef> getDroppedValuePtr)
         {
             LLVMValueRef dropFunction;
-            if (TryGetDropFunction(droppedValueType, out dropFunction))
+            if (TraitHelpers.TryGetDropFunction(droppedValueType, this, out dropFunction))
             {
                 LLVMValueRef droppedValuePtr = getDroppedValuePtr(builder);
                 builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
@@ -1044,6 +1003,41 @@ namespace Rebar.RebarTarget.LLVM
             throw new NotImplementedException("Parameter direction is wrong");
         }
 
+        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            LLVMValueRef[] fieldValues = structConstructorNode.InputTerminals
+                .Select(t => GetTerminalValueSource(t).GetValue(Builder))
+                .ToArray();
+            Terminal outputTerminal = structConstructorNode.OutputTerminals[0];
+            LLVMValueRef structValue = Builder.BuildStructValue(
+                outputTerminal.GetTrueVariable().Type.AsLLVMType(),
+                fieldValues,
+                "struct");
+            Initialize(GetTerminalValueSource(outputTerminal), structValue);
+            return true;
+        }
+
+        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            NIType structType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+            string[] structFieldNames = structType.GetFields().Select(f => f.GetName()).ToArray();
+            LLVMValueRef structPtr = GetTerminalValueSource(structFieldAccessorNode.StructInputTerminal).GetValue(Builder);
+            foreach (var pair in structFieldAccessorNode.FieldNames.Zip(structFieldAccessorNode.OutputTerminals))
+            {
+                string accessedFieldName = pair.Key;
+                int accessedFieldIndex = structFieldNames.IndexOf(accessedFieldName);
+                if (accessedFieldIndex == -1)
+                {
+                    throw new InvalidStateException("Field name not found in struct type: " + accessedFieldName);
+                }
+                LLVMValueRef structFieldPtr = Builder.CreateStructGEP(structPtr, (uint)accessedFieldIndex, accessedFieldName + "Ptr");
+
+                Terminal outputTerminal = pair.Value;
+                Initialize(GetTerminalValueSource(outputTerminal), structFieldPtr);
+            }
+            return true;
+        }
+
         public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
         {
             return true;
@@ -1081,7 +1075,7 @@ namespace Rebar.RebarTarget.LLVM
                 if (output.Type == input.Type.CreateOption())
                 {
                     LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
-                    ((IUpdateableValueSource)outputValueSource).UpdateValue(Builder, Builder.BuildOptionValue(output.Type.AsLLVMType(), innerValue));
+                    Initialize(outputValueSource, Builder.BuildOptionValue(output.Type.AsLLVMType(), innerValue));
                     return true;
                 }
 
@@ -1121,7 +1115,7 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-        #region IInternalDfirNodeVisitor implementation
+#region IInternalDfirNodeVisitor implementation
 
         bool IInternalDfirNodeVisitor<bool>.VisitAwaitNode(AwaitNode awaitNode)
         {
@@ -1159,23 +1153,30 @@ namespace Rebar.RebarTarget.LLVM
 
             Builder.PositionBuilderAtEnd(promiseDoneBlock);
             CreateDropCallIfDropFunctionExists(Builder, promiseType, promiseValueSource.GetAddress);
-            var updatableOutputSource = GetTerminalValueSource(awaitNode.OutputTerminal) as IUpdateableValueSource;
-            if (updatableOutputSource != null)
+            ValueSource outputValueSource = GetTerminalValueSource(awaitNode.OutputTerminal);
+            var updateableOutputSource = outputValueSource as IUpdateableValueSource;
+            var initializableOutputSource = outputValueSource as IInitializableValueSource;
+            if (updateableOutputSource != null)
             {
                 LLVMValueRef pollResultInnerValue = Builder.CreateExtractValue(pollResult, 1u, "pollResultInnerValue");
-                updatableOutputSource.UpdateValue(Builder, pollResultInnerValue);
+                updateableOutputSource.UpdateValue(Builder, pollResultInnerValue);
+            }
+            else if (initializableOutputSource != null)
+            {
+                LLVMValueRef pollResultInnerValue = Builder.CreateExtractValue(pollResult, 1u, "pollResultInnerValue");
+                initializableOutputSource.InitializeValue(Builder, pollResultInnerValue);
             }
 
             return true;
         }
 
+        private const uint MethodCallPromiseInvokableFieldIndex = 0u,
+            MethodCallPromiseOutputFieldIndex = 1u;
+
         bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
         {
-            const uint PromisePollFunctionFieldIndex = 0u,
-                PromiseFunctionStateFieldIndex = 1u,
-                PromiseOutputFieldIndex = 2u;
-            LLVMValueRef promisePtr = ((IAddressableValueSource)GetTerminalValueSource(createMethodCallPromise.PromiseTerminal)).GetAddress(Builder),
-                outputPtr = Builder.CreateStructGEP(promisePtr, PromiseOutputFieldIndex, "outputPtr");
+            LLVMValueRef promisePtr = GetAddress(GetTerminalValueSource(createMethodCallPromise.PromiseTerminal), Builder),
+                outputPtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "outputPtr");
             var initializeParameters = new List<LLVMValueRef>();
             foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
             {
@@ -1204,12 +1205,10 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMValueRef initializeStateFunction = GetImportedInitializeStateFunction(createMethodCallPromise),
                 statePtr = Builder.CreateCall(initializeStateFunction, initializeParameters.ToArray(), "statePtr"),
-                promiseStatePtrPtr = Builder.CreateStructGEP(promisePtr, PromiseFunctionStateFieldIndex, "promiseStatePtrPtr");
-            Builder.CreateStore(statePtr, promiseStatePtrPtr);
-
-            LLVMValueRef pollFunction = GetImportedPollFunction(createMethodCallPromise),
-                promisePollFunctionPtr = Builder.CreateStructGEP(promisePtr, PromisePollFunctionFieldIndex, "promisePollFunctionPtr");
-            Builder.CreateStore(pollFunction, promisePollFunctionPtr);
+                pollFunction = GetImportedPollFunction(createMethodCallPromise),
+                invokable = Builder.BuildStructValue(LLVMExtensions.WakerType, new LLVMValueRef[] { pollFunction, statePtr }, "invokable"),
+                promiseInvokablePtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promisePollFunctionPtr");
+            Builder.CreateStore(invokable, promiseInvokablePtr);
 
             return true;
         }
@@ -1225,15 +1224,15 @@ namespace Rebar.RebarTarget.LLVM
             LLVMTypeRef stateType = LLVMTypeRef.StructType(new[]
             {
                 LLVMTypeRef.Int1Type(),
-                LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
-                LLVMExtensions.VoidPointerType,
+                LLVMExtensions.WakerType,
             },
             false);
 
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
-                promiseResultPtr = builder.CreateStructGEP(promisePtr, 2u, "promiseResultPtr"),
-                promiseStateVoidPtrPtr = builder.CreateStructGEP(promisePtr, 1u, "promiseStateVoidPtrPtr"),
-                stateVoidPtr = builder.CreateLoad(promiseStateVoidPtrPtr, "stateVoidPtr"),
+                promiseResultPtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "promiseResultPtr"),
+                promiseInvokablePtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promiseInvokablePtr"),
+                invokable = builder.CreateLoad(promiseInvokablePtr, "invokable"),
+                stateVoidPtr = builder.CreateExtractValue(invokable, 1u, "stateVoidPtr"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
                 isDone = builder.CreateExtractValue(state, 0u, "isDone");
@@ -1249,19 +1248,28 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
 
             builder.PositionBuilderAtEnd(targetNotDoneBlock);
-            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u),
-                wakerFunctionPtr = builder.CreateExtractValue(waker, 0u, "wakerFunctionPtr"),
-                wakerStatePtr = builder.CreateExtractValue(waker, 1u, "wakerStatePtr");
+            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u);
             // TODO: create constants for these positions
-            builder.CreateStore(wakerFunctionPtr, builder.CreateStructGEP(statePtr, 1u, "callerWakerFunctionPtr"));
-            builder.CreateStore(wakerStatePtr, builder.CreateStructGEP(statePtr, 2u, "callerWakerStatePtr"));
+            builder.CreateStore(waker, builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
 
-            LLVMValueRef promisePollFunctionPtrPtr = builder.CreateStructGEP(promisePtr, 0u, "promisePollFunctionPtrPtr"),
-                pollFunctionPtr = builder.CreateLoad(promisePollFunctionPtrPtr, "pollFunctionPtr");
-            builder.CreateCall(pollFunctionPtr, new LLVMValueRef[] { stateVoidPtr }, string.Empty);
+            builder.CreateCall(compiler.GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { invokable }, string.Empty);
             LLVMValueRef noneResult = builder.BuildOptionValue(optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
+        }
+
+        bool IInternalDfirNodeVisitor<bool>.VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode)
+        {
+            ValueSource structSource = GetTerminalValueSource(decomposeStructNode.InputTerminals[0]);
+            LLVMValueRef structValue = structSource.GetValue(Builder);
+            uint fieldIndex = 0;
+            foreach (Terminal outputTerminal in decomposeStructNode.OutputTerminals)
+            {
+                LLVMValueRef structFieldValue = Builder.CreateExtractValue(structValue, fieldIndex, outputTerminal.Name);
+                Initialize(GetTerminalValueSource(outputTerminal), structFieldValue);
+                ++fieldIndex;
+            }
+            return true;
         }
 
 #endregion
@@ -1272,15 +1280,10 @@ namespace Rebar.RebarTarget.LLVM
         {
             public ConditionallyExecutingFrameData(Frame frame, FunctionCompiler functionCompiler)
             {
-                UnwrapFailedBlock = frame.DoesStructureExecuteConditionally()
-                    ? functionCompiler.CurrentFunction.AppendBasicBlock($"frame{frame.UniqueId}_unwrapFailed")
-                    : default(LLVMBasicBlockRef);
-                EndBlock = functionCompiler.CurrentFunction.AppendBasicBlock($"frame{frame.UniqueId}_end");
+                ConditionValue = true.AsLLVMValue();
             }
 
-            public LLVMBasicBlockRef UnwrapFailedBlock { get; }
-
-            public LLVMBasicBlockRef EndBlock { get; }
+            public LLVMValueRef ConditionValue { get; set; }
         }
 
         private readonly Dictionary<Frame, ConditionallyExecutingFrameData> _frameData = new Dictionary<Frame, ConditionallyExecutingFrameData>();
@@ -1304,7 +1307,19 @@ namespace Rebar.RebarTarget.LLVM
             if (frame.DoesStructureExecuteConditionally())
             {
                 _frameData[frame] = new ConditionallyExecutingFrameData(frame, this);
-                CurrentGroupData.CreateContinuationStateChange(Builder, true.AsLLVMValue());
+
+                foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+                {
+                    // Store a None value for the tunnel
+                    // TODO: for now, this means that these tunnels require local allocations.
+                    // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
+                    // initialized by values from different predecessor blocks, but may not change
+                    // after initialization.
+                    VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
+                    ValueSource outputSource = _variableValues[outputVariable];
+                    LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
+                    Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
+                }
             }
         }
 
@@ -1312,41 +1327,19 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                LLVMBasicBlockRef unwrapFailedBlock = _frameData[frame].UnwrapFailedBlock;
-                LLVMBasicBlockRef endBlock = _frameData[frame].EndBlock;
-                Builder.CreateBr(endBlock);
-
-                Builder.PositionBuilderAtEnd(unwrapFailedBlock);
-                foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
-                {
-                    // Store a None value for the tunnel
-                    VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
-                    var outputSource = (IUpdateableValueSource)_variableValues[outputVariable];
-                    LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
-                    outputSource.UpdateValue(Builder, LLVMSharp.LLVM.ConstNull(outputType));
-                }
-                CurrentGroupData.CreateContinuationStateChange(Builder, false.AsLLVMValue());
-                Builder.CreateBr(endBlock);
-
-                Builder.PositionBuilderAtEnd(endBlock);
+                CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
             }
         }
 
         public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
             ConditionallyExecutingFrameData frameData = _frameData[(Frame)unwrapOptionTunnel.ParentStructure];
-            var tunnelInputAllocationSource = (IAddressableValueSource)GetTerminalValueSource(unwrapOptionTunnel.InputTerminals[0]);
-            LLVMValueRef tunnelInputAllocationAddress = tunnelInputAllocationSource.GetAddress(Builder);
-            LLVMValueRef isSomePtr = Builder.CreateStructGEP(tunnelInputAllocationAddress, 0, "isSomePtr");
-            LLVMValueRef isSome = Builder.CreateLoad(isSomePtr, "isSome");
-            LLVMBasicBlockRef someBlock = CurrentFunction.AppendBasicBlock($"unwrapOption{unwrapOptionTunnel.UniqueId}_some");
-            Builder.CreateCondBr(isSome, someBlock, frameData.UnwrapFailedBlock);
-
-            Builder.PositionBuilderAtEnd(someBlock);
-            LLVMValueRef valuePtr = Builder.CreateStructGEP(tunnelInputAllocationAddress, 1, "valuePtr");
-            LLVMValueRef value = Builder.CreateLoad(valuePtr, "value");
-            var tunnelOutputSource = (IUpdateableValueSource)GetTerminalValueSource(unwrapOptionTunnel.OutputTerminals[0]);
-            tunnelOutputSource.UpdateValue(Builder, value);
+            ValueSource tunnelInputSource = GetTerminalValueSource(unwrapOptionTunnel.InputTerminals[0]);
+            LLVMValueRef inputOption = tunnelInputSource.GetValue(Builder),
+                isSome = Builder.CreateExtractValue(inputOption, 0u, "isSome"),
+                value = Builder.CreateExtractValue(inputOption, 1u, "value");
+            frameData.ConditionValue = Builder.CreateAnd(frameData.ConditionValue, isSome, "frameCondition");
+            Initialize(GetTerminalValueSource(unwrapOptionTunnel.OutputTerminals[0]), value);
             return true;
         }
 
@@ -1385,17 +1378,19 @@ namespace Rebar.RebarTarget.LLVM
 
             if (!loopConditionInput.IsConnected)
             {
-                // if loop condition was unwired, initialize it to true
-                ((IUpdateableValueSource)GetConditionAllocationSource(loop)).UpdateValue(Builder, true.AsLLVMValue());
+                InitializeIfNecessary(GetConditionAllocationSource(loop), _ => true.AsLLVMValue());
             }
 
             // initialize all output tunnels with None values, in case the loop interior does not execute
             foreach (Tunnel outputTunnel in loop.BorderNodes.OfType<Tunnel>().Where(tunnel => tunnel.Direction == Direction.Output))
             {
+                // TODO: this requires these tunnels to have local allocations for now.
+                // As with output tunnels of conditionally-executing Frames, it would be nice
+                // to treat these as Phi ValueSources.
                 VariableReference tunnelOutputVariable = outputTunnel.OutputTerminals[0].GetTrueVariable();
-                var tunnelOutputSource = (IUpdateableValueSource)_variableValues[tunnelOutputVariable];
+                ValueSource tunnelOutputSource = _variableValues[tunnelOutputVariable];
                 LLVMTypeRef tunnelOutputType = tunnelOutputVariable.Type.AsLLVMType();
-                tunnelOutputSource.UpdateValue(Builder, LLVMSharp.LLVM.ConstNull(tunnelOutputType));
+                Update(tunnelOutputSource, LLVMSharp.LLVM.ConstNull(tunnelOutputType));
             }
         }
 
@@ -1413,18 +1408,18 @@ namespace Rebar.RebarTarget.LLVM
         public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
         {
             ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]);
-            var itemSource = (IUpdateableValueSource)GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
+            ValueSource itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
             var intermediateOptionSource = _additionalValues[iterateTunnel.IntermediateValueName];
             Terminal inputTerminal = iterateTunnel.InputTerminals[0];
 
             NIType iteratorType = inputTerminal.GetTrueVariable().Type.GetReferentType();
             LLVMValueRef iteratorNextFunction = GetIteratorNextFunction(iteratorType, iterateTunnel.IteratorNextFunctionType.FunctionNIType);
             Builder.CreateCall(
-                iteratorNextFunction, 
+                iteratorNextFunction,
                 new LLVMValueRef[]
                 {
                     iteratorSource.GetValue(Builder),
-                    ((IAddressableValueSource)intermediateOptionSource).GetAddress(Builder)
+                    GetAddress(intermediateOptionSource, Builder)
                 },
                 string.Empty);
             LLVMValueRef itemOption = intermediateOptionSource.GetValue(Builder),
@@ -1436,10 +1431,10 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource loopConditionAllocationSource = GetConditionAllocationSource(loop);
             LLVMValueRef condition = loopConditionAllocationSource.GetValue(Builder);
             LLVMValueRef conditionAndIsSome = Builder.CreateAnd(condition, isSome, "conditionAndIsSome");
-            ((IUpdateableValueSource)loopConditionAllocationSource).UpdateValue(Builder, conditionAndIsSome);
+            Update(loopConditionAllocationSource, conditionAndIsSome);
 
             // bind the inner value to the output tunnel
-            itemSource.UpdateValue(Builder, item);
+            Initialize(itemSource, item);
             return true;
         }
 
@@ -1480,10 +1475,9 @@ namespace Rebar.RebarTarget.LLVM
 
         private void VisitOptionPatternStructureBeforeLeftBorderNodes(OptionPatternStructure optionPatternStructure)
         {
-            OptionPatternStructureSelector selector = optionPatternStructure.Selector;
-            var selectorInputAllocationSource = (IAddressableValueSource)GetTerminalValueSource(selector.InputTerminals[0]);
-            LLVMValueRef isSomePtr = Builder.CreateStructGEP(selectorInputAllocationSource.GetAddress(Builder), 0, "isSomePtr");
-            LLVMValueRef isSome = Builder.CreateLoad(isSomePtr, "isSome"),
+            ValueSource selectorInputAllocationSource = GetTerminalValueSource(optionPatternStructure.Selector.InputTerminals[0]);
+            LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder);
+            LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
             CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
         }
@@ -1493,8 +1487,7 @@ namespace Rebar.RebarTarget.LLVM
             // TODO: this should be in a diagram-specific VisitOptionPatternStructureSelector
             if (diagram == optionPatternStructure.Diagrams[0])
             {
-                var selector = optionPatternStructure.BorderNodes.OfType<OptionPatternStructureSelector>().First();
-                DestructureSelectorValueInSomeCase(selector);
+                DestructureSelectorValueInSomeCase(optionPatternStructure.Selector);
             }
         }
         
@@ -1504,9 +1497,10 @@ namespace Rebar.RebarTarget.LLVM
             foreach (Tunnel outputTunnel in optionPatternStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
             {
                 Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == diagram);
-                var inputTerminalValueSource = GetTerminalValueSource(inputTerminal);
-                var outputTerminalValueSource = (IUpdateableValueSource)GetTerminalValueSource(outputTunnel.OutputTerminals[0]);
-                outputTerminalValueSource.UpdateValue(Builder, inputTerminalValueSource.GetValue(Builder));
+                ValueSource inputTerminalValueSource = GetTerminalValueSource(inputTerminal);
+                ValueSource outputTerminalValueSource = GetTerminalValueSource(outputTunnel.OutputTerminals[0]);
+                // TODO: these Tunnel output variables should also be able to be Phi ValueSources
+                Update(outputTerminalValueSource, inputTerminalValueSource.GetValue(Builder));
             }
         }
 
@@ -1517,11 +1511,11 @@ namespace Rebar.RebarTarget.LLVM
 
         private void DestructureSelectorValueInSomeCase(OptionPatternStructureSelector optionPatternStructureSelector)
         {
-            var selectorInputAllocationSource = (IAddressableValueSource)GetTerminalValueSource(optionPatternStructureSelector.InputTerminals[0]);
-            var selectorOutputAllocationSource = (IUpdateableValueSource)GetTerminalValueSource(optionPatternStructureSelector.OutputTerminals[0]);
-            LLVMValueRef innerValuePtr = Builder.CreateStructGEP(selectorInputAllocationSource.GetAddress(Builder), 1, "innerValuePtr");
-            LLVMValueRef innerValue = Builder.CreateLoad(innerValuePtr, "innerValue");
-            selectorOutputAllocationSource.UpdateValue(Builder, innerValue);
+            ValueSource selectorInputAllocationSource = GetTerminalValueSource(optionPatternStructureSelector.InputTerminals[0]);
+            ValueSource selectorOutputSource = GetTerminalValueSource(optionPatternStructureSelector.OutputTerminals[0]);
+            LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder),
+                innerValue = Builder.CreateExtractValue(option, 1, "innerValue");
+            Initialize(selectorOutputSource, innerValue);
         }
 
 #endregion

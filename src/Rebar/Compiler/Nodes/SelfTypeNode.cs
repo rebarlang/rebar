@@ -1,25 +1,29 @@
 ﻿using System;
+using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 
 namespace Rebar.Compiler.Nodes
 {
     internal class SelfTypeNode : DfirNode
     {
-        public SelfTypeNode(Node parentNode) : base(parentNode)
+        public SelfTypeNode(Node parentNode, SelfTypeMode mode, int inputCount) : base(parentNode)
         {
-            InputTerminal = CreateTerminal(Direction.Input, PFTypes.Void, "type");
+            Mode = mode;
+            foreach (int i in Enumerable.Range(0, inputCount))
+            {
+                CreateTerminal(Direction.Input, PFTypes.Void, $"type{i}");
+            }
         }
 
         private SelfTypeNode(Node newParentNode, SelfTypeNode nodeToCopy, NodeCopyInfo copyInfo)
             : base(newParentNode, nodeToCopy, copyInfo)
         {
-            InputTerminal = copyInfo.GetMappingFor(nodeToCopy.InputTerminal);
+            Mode = nodeToCopy.Mode;
         }
 
-        public Terminal InputTerminal { get; }
-
-        public NIType Type => InputTerminal.GetTrueVariable().Type;
+        public SelfTypeMode Mode { get; }
 
         public override T AcceptVisitor<T>(IDfirNodeVisitor<T> visitor)
         {

@@ -72,15 +72,23 @@ namespace Rebar.Common
         {
             private readonly NIType _niType;
 
-            public ConcreteType(NIType niType, TypeVariableReference[] typeParameters, TypeVariableReference[] implementedTraits, TraitDeriver traitDeriver = null)
+            public ConcreteType(
+                NIType niType,
+                TypeVariableReference[] typeParameters,
+                IReadOnlyDictionary<string, TypeVariableReference> fieldTypes,
+                TypeVariableReference[] implementedTraits,
+                TraitDeriver traitDeriver = null)
                 : base(typeParameters)
             {
                 _niType = niType;
+                FieldTypes = fieldTypes;
                 ImplementedTraits = implementedTraits;
                 TraitDeriver = traitDeriver;
             }
 
             public string TypeName => _niType.GetName();
+
+            public IReadOnlyDictionary<string, TypeVariableReference> FieldTypes { get; }
 
             public IReadOnlyList<TypeVariableReference> ImplementedTraits { get; }
 
@@ -190,6 +198,32 @@ namespace Rebar.Common
             {
                 return TypeParameters.Select(p => p.RenderNIType()).DefineTupleType();
             }
+        }
+
+        private sealed class IndefiniteFieldedType : TypeBase
+        {
+            public IndefiniteFieldedType(IReadOnlyDictionary<string, TypeVariableReference> fieldTypes)
+            {
+                FieldTypes = fieldTypes;
+            }
+
+            public IReadOnlyDictionary<string, TypeVariableReference> FieldTypes { get; }
+
+            public override string DebuggerDisplay
+            {
+                get
+                {
+                    string joinedFields = string.Join(", ", FieldTypes.Select(fieldTypePair => $"{fieldTypePair.Key}: {fieldTypePair.Value.DebuggerDisplay}"));
+                    return $"{{{joinedFields}}}";
+                }
+            }
+
+            public override Lifetime Lifetime => Lifetime.Unbounded;
+
+            // An IndefiniteFieldedType not unified with any ConcreteTypes cannot determine its NIType.
+            public override NIType RenderNIType() => PFTypes.Void;
+
+            public override bool IsOrContainsTypeVariable() => true;
         }
 
         private sealed class ReferenceType : TypeBase
@@ -426,9 +460,14 @@ namespace Rebar.Common
             return CreateReferenceToNewType(new TypeVariable(id, constraints));
         }
 
-        public TypeVariableReference CreateReferenceToConcreteType(NIType niType, TypeVariableReference[] typeArguments, TypeVariableReference[] implementedTraits, TraitDeriver traitDeriver = null)
+        public TypeVariableReference CreateReferenceToConcreteType(
+            NIType niType,
+            TypeVariableReference[] typeArguments,
+            IReadOnlyDictionary<string, TypeVariableReference> fieldTypes,
+            TypeVariableReference[] implementedTraits,
+            TraitDeriver traitDeriver = null)
         {
-            return CreateReferenceToNewType(new ConcreteType(niType, typeArguments, implementedTraits, traitDeriver));
+            return CreateReferenceToNewType(new ConcreteType(niType, typeArguments, fieldTypes, implementedTraits, traitDeriver));
         }
 
         public TypeVariableReference CreateReferenceToTraitType(string typeName, TypeVariableReference[] typeArguments)
@@ -450,6 +489,11 @@ namespace Rebar.Common
         public TypeVariableReference CreateReferenceToTupleType(TypeVariableReference[] elementTypes)
         {
             return CreateReferenceToNewType(new TupleType(elementTypes));
+        }
+
+        public TypeVariableReference CreateReferenceToIndefiniteFieldedType(IReadOnlyDictionary<string, TypeVariableReference> fieldTypes)
+        {
+            return CreateReferenceToNewType(new IndefiniteFieldedType(fieldTypes));
         }
 
         public TypeVariableReference CreateReferenceToReferenceType(bool mutable, TypeVariableReference underlyingType, TypeVariableReference lifetimeType)
@@ -546,6 +590,25 @@ namespace Rebar.Common
                 return;
             }
 
+            IndefiniteFieldedType toUnifyFieldedType = toUnifyTypeBase as IndefiniteFieldedType,
+                toUnifyWithFieldedType = toUnifyWithTypeBase as IndefiniteFieldedType;
+            if (toUnifyConcrete != null && toUnifyWithFieldedType != null)
+            {
+                if (UnifyConcreteTypeWithIndefiniteFieldedType(toUnifyConcrete, toUnifyWithFieldedType, unificationResult))
+                {
+                    MergeTypeVariableIntoTypeVariable(toUnifyWith, toUnify);
+                }
+                return;
+            }
+            if (toUnifyWithConcrete != null && toUnifyFieldedType != null)
+            {
+                if (UnifyConcreteTypeWithIndefiniteFieldedType(toUnifyWithConcrete, toUnifyFieldedType, unificationResult))
+                {
+                    MergeTypeVariableIntoTypeVariable(toUnify, toUnifyWith);
+                }
+                return;
+            }
+
             TupleType toUnifyTuple = toUnifyTypeBase as TupleType,
                 toUnifyWithTuple = toUnifyWithTypeBase as TupleType;
             if (toUnifyTuple != null && toUnifyWithTuple != null)
@@ -604,6 +667,25 @@ namespace Rebar.Common
 
             unificationResult.SetTypeMismatch();
             return;
+        }
+
+        private bool UnifyConcreteTypeWithIndefiniteFieldedType(ConcreteType concreteType, IndefiniteFieldedType fieldedType, ITypeUnificationResult unificationResult)
+        {
+            bool success = true;
+            foreach (var fieldPair in fieldedType.FieldTypes)
+            {
+                string fieldName = fieldPair.Key;
+                TypeVariableReference concreteField;
+                if (concreteType.FieldTypes.TryGetValue(fieldName, out concreteField))
+                {
+                    Unify(fieldPair.Value, concreteField, unificationResult);
+                }
+                else
+                {
+                    success = false;
+                }
+            }
+            return success;
         }
 
         private void UnifyTypeVariableWithNonTypeVariable(TypeVariableReference typeVariable, TypeVariableReference nonTypeVariable, ITypeUnificationResult unificationResult)
@@ -773,44 +855,31 @@ namespace Rebar.Common
         public abstract void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult);
     }
 
-    internal class CopyTraitConstraint : Constraint
+    internal abstract class TraitConstraint : Constraint
     {
-        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
-        {
-            TypeVariableReference copyTrait;
-            if (!type.TypeVariableSet.TryGetImplementedTrait(type, "Copy", out copyTrait))
-            {
-                unificationResult.AddFailedTypeConstraint(this);
-            }
-        }
+        public abstract string TraitName { get; }
     }
 
-    internal class CloneTraitConstraint : Constraint
+    internal class SimpleTraitConstraint : TraitConstraint
     {
+        public SimpleTraitConstraint(string traitName)
+        {
+            TraitName = traitName;
+        }
+
         public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
         {
             TypeVariableReference unused;
-            TypeVariableSet typeVariableSet = type.TypeVariableSet;
-            if (!typeVariableSet.TryGetImplementedTrait(type, "Clone", out unused))
+            if (!type.TypeVariableSet.TryGetImplementedTrait(type, TraitName, out unused))
             {
                 unificationResult.AddFailedTypeConstraint(this);
             }
         }
+
+        public override string TraitName { get; }
     }
 
-    internal class DisplayTraitConstraint : Constraint
-    {
-        public override void ValidateConstraintForType(TypeVariableReference type, ITypeUnificationResult unificationResult)
-        {
-            TypeVariableReference displayTrait;
-            if (!type.TypeVariableSet.TryGetImplementedTrait(type, "Display", out displayTrait))
-            {
-                unificationResult.AddFailedTypeConstraint(this);
-            }
-        }
-    }
-
-    internal class IteratorTraitConstraint : Constraint
+    internal class IteratorTraitConstraint : TraitConstraint
     {
         private readonly TypeVariableReference _itemTypeVariable;
 
@@ -833,6 +902,8 @@ namespace Rebar.Common
                 unificationResult.AddFailedTypeConstraint(this);
             }
         }
+
+        public override string TraitName => "Iterator";
     }
 
     internal class OutlastsLifetimeGraphConstraint : Constraint

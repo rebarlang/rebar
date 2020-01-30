@@ -79,6 +79,41 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), intValue, false);
         }
 
+        public static LLVMValueRef GetIntegerValue(this object value, NIType type)
+        {
+            LLVMValueRef constantValueRef;
+            switch (type.GetKind())
+            {
+                case NITypeKind.Int8:
+                    constantValueRef = ((sbyte)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt8:
+                    constantValueRef = ((byte)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int16:
+                    constantValueRef = ((short)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt16:
+                    constantValueRef = ((ushort)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int32:
+                    constantValueRef = ((int)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt32:
+                    constantValueRef = ((uint)value).AsLLVMValue();
+                    break;
+                case NITypeKind.Int64:
+                    constantValueRef = ((long)value).AsLLVMValue();
+                    break;
+                case NITypeKind.UInt64:
+                    constantValueRef = ((ulong)value).AsLLVMValue();
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported numeric constant type: " + type);
+            }
+            return constantValueRef;
+        }
+
         public static LLVMTypeRef VoidPointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
 
         public static LLVMValueRef NullVoidPointer { get; } = LLVMSharp.LLVM.ConstPointerNull(VoidPointerType);
@@ -127,6 +162,15 @@ namespace Rebar.RebarTarget.LLVM
                 });
         }
 
+        public static LLVMTypeRef WakerType { get; } = LLVMTypeRef.StructType(new[]
+            {
+                // task function pointer
+                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                // task state
+                VoidPointerType
+            },
+            false);
+
         public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
         {
             return builder.BuildSliceReferenceValue(StringSliceReferenceType, stringPtr, length);
@@ -143,10 +187,12 @@ namespace Rebar.RebarTarget.LLVM
         public static LLVMValueRef BuildOptionValue(this IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
         {
             LLVMTypeRef innerType = optionType.GetSubtypes()[1];
-            return builder.BuildStructValue(
-                optionType,
-                new LLVMValueRef[] { (someValue != null).AsLLVMValue(), someValue ?? LLVMSharp.LLVM.ConstNull(innerType) },
-                "option");
+            return someValue == null
+                ? LLVMSharp.LLVM.ConstNull(optionType)
+                : builder.BuildStructValue(
+                    optionType,
+                    new LLVMValueRef[] { true.AsLLVMValue(), someValue.Value },
+                    "option");
         }
 
         public static LLVMValueRef BuildStructValue(this IRBuilder builder, LLVMTypeRef structType, LLVMValueRef[] fieldValues, string valueName = null)
@@ -202,6 +248,8 @@ namespace Rebar.RebarTarget.LLVM
             },
             false);
 
+        // TechDebt: for some of the types below, it would be nicer to return named types, but this requires
+        // passing around an LLVM context.
         public static LLVMTypeRef AsLLVMType(this NIType niType)
         {
             switch (niType.GetKind())
@@ -257,14 +305,7 @@ namespace Rebar.RebarTarget.LLVM
                     }
                     if (niType == DataTypes.WakerType)
                     {
-                        return LLVMTypeRef.StructType(new[]
-                        {
-                            // task function pointer
-                            LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
-                            // task state
-                            VoidPointerType
-                        },
-                        false);
+                        return WakerType;
                     }
                     NIType innerType;
                     if (niType.TryDestructureOptionType(out innerType))
@@ -290,6 +331,23 @@ namespace Rebar.RebarTarget.LLVM
                     if (niType.TryDestructureMethodCallPromiseType(out innerType))
                     {
                         return CreateLLVMMethodCallPromiseType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierReaderType(out innerType))
+                    {
+                        return CreateLLVMNotifierReaderType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierReaderPromiseType(out innerType))
+                    {
+                        return CreateLLVMNotifierReaderPromiseType(innerType.AsLLVMType());
+                    }
+                    if (niType.TryDestructureNotifierWriterType(out innerType))
+                    {
+                        return CreateLLVMNotifierWriterType(innerType.AsLLVMType());
+                    }
+                    if (niType.IsValueClass())
+                    {
+                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => f.GetDataType().AsLLVMType()).ToArray();
+                        return LLVMTypeRef.StructType(fieldTypes, false);
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }
@@ -338,14 +396,52 @@ namespace Rebar.RebarTarget.LLVM
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[]
             {
-                // poll function pointer
-                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
-                // function state pointer
-                VoidPointerType,
-                // output struct
+                WakerType,
                 innerType,
             },
             false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierSharedDataType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    WakerType,
+                    innerType,
+                    LLVMTypeRef.Int32Type(),
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierReaderType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierReaderPromiseType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierWriterType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                },
+                false);
         }
 
         #region Memory Buffer

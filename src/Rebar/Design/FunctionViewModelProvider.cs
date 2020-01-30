@@ -18,6 +18,9 @@ namespace Rebar.Design
             AddSupportedModel<Wire>(w => new FunctionWireViewModel(w));
             AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
             AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
+            AddSupportedModel<Constructor>(n => new ConstructorViewModel(n));
+            AddSupportedModel<StructFieldAccessor>(n => new StructFieldAccessorViewModel(n));
+            AddSupportedModel<StructFieldAccessorTerminal>(t => new StructFieldAccessorTerminalViewModel(t));
 
             AddSupportedModel<DropNode>(n => new BasicNodeViewModel(n, "Drop Value", @"Resources\Diagram\Nodes\Drop.png"));
             AddSupportedModel<ImmutablePassthroughNode>(n => new BasicNodeViewModel(n, "Immutable Passthrough"));
@@ -82,6 +85,10 @@ namespace Rebar.Design
             AddSupportedModel<OpenFileHandle>(n => new BasicNodeViewModel(n, "Open File Handle"));
             AddSupportedModel<ReadLineFromFileHandle>(n => new BasicNodeViewModel(n, "Read Line From File Handle"));
             AddSupportedModel<WriteStringToFileHandle>(n => new BasicNodeViewModel(n, "Write To File Handle"));
+
+            AddSupportedModel<NotifierCreate>(n => new BasicNodeViewModel(n, "Create Notifier"));
+            AddSupportedModel<GetNotifierValue>(n => new BasicNodeViewModel(n, "Get Notifier Value"));
+            AddSupportedModel<SetNotifierValue>(n => new BasicNodeViewModel(n, "Set Notifier Value"));
 
             AddSupportedModel((SourceModel.FlatSequence s) => new FlatSequenceEditor(s));
             AddSupportedModel<FlatSequenceDiagram>(d => new FlatSequenceDiagramViewModel(d));

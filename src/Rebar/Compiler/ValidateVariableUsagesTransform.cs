@@ -27,6 +27,12 @@ namespace Rebar.Compiler
             this.VisitRebarNode(node);
         }
 
+        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        {
+            VisitWire(wire);
+            return true;
+        }
+
         protected override void VisitWire(Wire wire)
         {
             Terminal sourceTerminal;
@@ -166,6 +172,30 @@ namespace Rebar.Compiler
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
             ValidateRequiredInputTerminal(optionPatternStructureSelector.InputTerminals[0]);
+            return true;
+        }
+
+        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
+        {
+            structConstructorNode.InputTerminals.ForEach(ValidateRequiredInputTerminal);
+            return true;
+        }
+
+        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
+        {
+            ValidateRequiredInputTerminal(structFieldAccessorNode.StructInputTerminal);
+            NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+            if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+            {
+                structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+            }
+            foreach (Terminal outputTerminal in structFieldAccessorNode.OutputTerminals)
+            {
+                if (outputTerminal.GetTrueVariable().TypeVariableReference.IsOrContainsTypeVariable)
+                {
+                    outputTerminal.SetDfirMessage(Messages.TypeNotDetermined);
+                }
+            }
             return true;
         }
 

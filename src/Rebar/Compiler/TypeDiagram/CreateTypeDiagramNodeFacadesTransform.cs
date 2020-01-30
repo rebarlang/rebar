@@ -35,8 +35,11 @@ namespace Rebar.Compiler.TypeDiagram
             }
             if (selfTypeNode != null)
             {
-                TypeVariableReference selfTypeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
-                nodeFacade[selfTypeNode.InputTerminal] = new SimpleTerminalFacade(selfTypeNode.InputTerminal, selfTypeVariable);
+                foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
+                {
+                    TypeVariableReference typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
+                    nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, typeVariable);
+                }
                 return;
             }
             throw new NotSupportedException($"Unsupported node type: {node.GetType().Name}");

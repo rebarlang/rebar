@@ -153,6 +153,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_NotifierType_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_NotifierType_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the Notifier data type and related nodes.
+        /// </summary>
+        internal static string FeatureToggle_NotifierType_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_NotifierType_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_OptionPatternStructure_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_OptionPatternStructure_Category", resourceCulture);
@@ -385,11 +403,20 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The data type connected to this terminal does not have the required trait: Display.
+        ///   Looks up a localized string similar to This terminal requires a trait that the connected data type does not implement.
         /// </summary>
         internal static string TypeDoesNotHaveRequiredTrait {
             get {
                 return ResourceManager.GetString("TypeDoesNotHaveRequiredTrait", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The connected data type is not a struct type..
+        /// </summary>
+        internal static string TypeIsNotStructType {
+            get {
+                return ResourceManager.GetString("TypeIsNotStructType", resourceCulture);
             }
         }
         
