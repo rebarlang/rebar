@@ -504,6 +504,7 @@ namespace Rebar.RebarTarget.LLVM
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
         private readonly DataItem[] _parameterDataItems;
         private readonly LLVMTypeRef _groupFunctionType;
+        private readonly bool _singleFunction;
 
         public FunctionCompiler(
             Module module,
@@ -521,6 +522,7 @@ namespace Rebar.RebarTarget.LLVM
             _additionalValues = additionalValues;
             _allocationSet = allocationSet;
             _asyncStateGroups = asyncStateGroups;
+            _singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
 
             var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)

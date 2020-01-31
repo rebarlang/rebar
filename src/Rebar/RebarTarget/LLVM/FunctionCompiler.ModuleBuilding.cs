@@ -85,11 +85,24 @@ namespace Rebar.RebarTarget.LLVM
         public void CompileFunction(DfirRoot dfirRoot)
         {
             TargetDfir = dfirRoot;
-            foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
+            List<LLVMTypeRef> parameterTypes = GetParameterLLVMTypes();
+            LLVMValueRef initializeStateFunction = default(LLVMValueRef),
+                pollFunction = default(LLVMValueRef);
+            if (!_singleFunction)
             {
-                CompileAsyncStateGroup(asyncStateGroup);
-            }
+                foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
+                {
+                    CompileAsyncStateGroup(asyncStateGroup);
+                }
 
+                initializeStateFunction = BuildInitializeStateFunction(parameterTypes);
+                pollFunction = BuildPollFunction();
+            }
+            BuildOuterFunction(parameterTypes, initializeStateFunction, pollFunction);
+        }
+
+        private List<LLVMTypeRef> GetParameterLLVMTypes()
+        {
             var parameterTypes = new List<LLVMTypeRef>();
             foreach (var dataItem in _parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
             {
@@ -108,10 +121,7 @@ namespace Rebar.RebarTarget.LLVM
                     throw new NotImplementedException("Can only handle in and out parameters");
                 }
             }
-
-            LLVMValueRef initializeStateFunction = BuildInitializeStateFunction(parameterTypes),
-                pollFunction = BuildPollFunction();
-            BuildOuterFunction(parameterTypes, initializeStateFunction, pollFunction);
+            return parameterTypes;
         }
 
         private void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup)
@@ -299,20 +309,25 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef statePtr = builder.CreateMalloc(_allocationSet.StateType, "statePtr");
             builder.CreateStore(false.AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
 
+            InitializeParameterAllocations(initializeStateFunction, builder);
+            LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePtr, LLVMExtensions.VoidPointerType, "bitCastStatePtr");
+            builder.CreateRet(bitCastStatePtr);
+
+            return initializeStateFunction;
+        }
+
+        private void InitializeParameterAllocations(LLVMValueRef function, IRBuilder builder)
+        {
             uint parameterStructFieldIndex = FunctionAllocationSet.FirstParameterFieldIndex;
             uint parameterIndex = 0u;
             foreach (var dataItem in _parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
             {
                 builder.CreateStore(
-                    initializeStateFunction.GetParam(parameterIndex),
+                    function.GetParam(parameterIndex),
                     builder.CreateStructGEP(statePtr, parameterStructFieldIndex, string.Empty));
                 ++parameterStructFieldIndex;
                 ++parameterIndex;
             }
-            LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePtr, LLVMExtensions.VoidPointerType, "bitCastStatePtr");
-            builder.CreateRet(bitCastStatePtr);
-
-            return initializeStateFunction;
         }
 
         private LLVMValueRef BuildPollFunction()
@@ -346,8 +361,11 @@ namespace Rebar.RebarTarget.LLVM
         private void BuildOuterFunction(List<LLVMTypeRef> parameterTypes, LLVMValueRef initializeStateFunction, LLVMValueRef pollFunction)
         {
             var outerFunctionParameters = new List<LLVMTypeRef>();
-            outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
-            outerFunctionParameters.Add(LLVMExtensions.VoidPointerType);
+            if (!_singleFunction)
+            {
+                outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
+                outerFunctionParameters.Add(LLVMExtensions.VoidPointerType);
+            }
             outerFunctionParameters.AddRange(parameterTypes);
 
             LLVMTypeRef outerFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), outerFunctionParameters.ToArray(), false);
@@ -357,24 +375,32 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef outerEntryBlock = outerFunction.AppendBasicBlock("entry");
             Builder.PositionBuilderAtEnd(outerEntryBlock);
 
-            // TODO: deallocate state block for the top-level case!
-            LLVMValueRef voidStatePtr = Builder.CreateCall(
-                initializeStateFunction,
-                outerFunction.GetParams().Skip(2).ToArray(),
-                "voidStatePtr"),
-                statePtr = Builder.CreateBitCast(voidStatePtr, LLVMTypeRef.PointerType(_allocationSet.StateType, 0u), "statePtr");
-            outerFunctionCompilerState.StateMalloc = statePtr;
-            // TODO: create constants for these positions
-            LLVMValueRef waker = Builder.BuildStructValue(
-                LLVMExtensions.WakerType,
-                new LLVMValueRef[] { outerFunction.GetParam(0u), outerFunction.GetParam(1u) },
-                "callerWaker");
-            Builder.CreateStore(waker, Builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
+            if (_singleFunction)
+            {
+                // TODO: deallocate state block for the top-level case!
+                LLVMValueRef voidStatePtr = Builder.CreateCall(
+                    initializeStateFunction,
+                    outerFunction.GetParams().Skip(2).ToArray(),
+                    "voidStatePtr"),
+                    statePtr = Builder.CreateBitCast(voidStatePtr, LLVMTypeRef.PointerType(_allocationSet.StateType, 0u), "statePtr");
+                outerFunctionCompilerState.StateMalloc = statePtr;
+                // TODO: create constants for these positions
+                LLVMValueRef waker = Builder.BuildStructValue(
+                    LLVMExtensions.WakerType,
+                    new LLVMValueRef[] { outerFunction.GetParam(0u), outerFunction.GetParam(1u) },
+                    "callerWaker");
+                Builder.CreateStore(waker, Builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
 
-            Builder.CreateCall(
-                pollFunction,
-                new LLVMValueRef[] { voidStatePtr },
-                string.Empty);
+                Builder.CreateCall(
+                    pollFunction,
+                    new LLVMValueRef[] { voidStatePtr },
+                    string.Empty);
+            }
+            else
+            {
+                LLVMValueRef localStatePtr = Builder.CreateAlloca(_allocationSet.StateType, "localStatePtr");
+                outerFunctionCompilerState.StateMalloc = localStatePtr;
+            }
             Builder.CreateRetVoid();
         }
     }
