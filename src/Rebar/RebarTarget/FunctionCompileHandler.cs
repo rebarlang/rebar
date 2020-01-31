@@ -12,6 +12,7 @@ using NationalInstruments.Linking;
 using Rebar.Compiler;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
+using NationalInstruments;
 
 namespace Rebar.RebarTarget
 {
@@ -68,19 +69,6 @@ namespace Rebar.RebarTarget
                 compileSignatureParameters.Add(compileSignatureParameter);
             }
 
-            CompileSignature topSignature = new CompileSignature(
-                functionName: targetDfir.Name,
-                parameters: compileSignatureParameters, // GenerateParameters(targetDfir),
-                declaringType: targetDfir.GetDeclaringType(),
-                reentrancy: targetDfir.Reentrancy,
-                isYielding: true,
-                isFunctional: true,
-                threadAffinity: ThreadAffinity.Standard,
-                shouldAlwaysInline: false,
-                mayWantToInline: true,
-                priority: ExecutionPriority.Normal,
-                callingConvention: CallingConvention.StdCall);
-
             var compileSignatures = new Dictionary<ExtendedQualifiedName, CompileSignature>();
             var dependencyIdentities = new HashSet<SpecAndQName>();
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
@@ -121,6 +109,19 @@ namespace Rebar.RebarTarget
                 compileThreadState,
                 false);
 
+            CompileSignature topSignature = new CompileSignature(
+                functionName: targetDfir.Name,
+                parameters: compileSignatureParameters, // GenerateParameters(targetDfir),
+                declaringType: targetDfir.GetDeclaringType(),
+                reentrancy: targetDfir.Reentrancy,
+                isYielding: functionCompileResult.IsYielding,
+                isFunctional: true,
+                threadAffinity: ThreadAffinity.Standard,
+                shouldAlwaysInline: false,
+                mayWantToInline: true,
+                priority: ExecutionPriority.Normal,
+                callingConvention: CallingConvention.StdCall);
+
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
@@ -142,7 +143,7 @@ namespace Rebar.RebarTarget
 #if DEBUG
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
-            bool isYielding = true; // = asyncStateGroups.HasMoreThan(1);
+            bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
 
             Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
             var additionalSources = new Dictionary<object, LLVM.ValueSource>();

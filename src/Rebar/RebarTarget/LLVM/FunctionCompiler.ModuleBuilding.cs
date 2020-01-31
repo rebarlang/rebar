@@ -5,6 +5,7 @@ using LLVMSharp;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Compiler;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -92,7 +93,8 @@ namespace Rebar.RebarTarget.LLVM
             {
                 foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
                 {
-                    CompileAsyncStateGroup(asyncStateGroup);
+                    AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
+                    CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(groupData.Function, new IRBuilder()));
                 }
 
                 initializeStateFunction = BuildInitializeStateFunction(parameterTypes);
@@ -124,18 +126,18 @@ namespace Rebar.RebarTarget.LLVM
             return parameterTypes;
         }
 
-        private void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup)
+        private void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup, FunctionCompilerState compilerState)
         {
             FunctionCompilerState previousState = CurrentState;
             CurrentGroup = asyncStateGroup;
+            CurrentState = compilerState;
             AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
             LLVMValueRef groupFunction = groupData.Function;
-            CurrentState = new AsyncStateGroupCompilerState(groupFunction, new IRBuilder());
 
             Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
 
             // Here we are assuming that the group whose label matches the function name is also the entry group.
-            if (asyncStateGroup.FunctionId == asyncStateGroup.Label)
+            if (asyncStateGroup.FunctionId == asyncStateGroup.Label && !_singleFunction)
             {
                 _allocationSet.InitializeFunctionLocalAllocations(asyncStateGroup.FunctionId, Builder);
             }
@@ -174,7 +176,7 @@ namespace Rebar.RebarTarget.LLVM
                         CreateInvokeOrScheduleOfSuccessors(unconditionalContinuation.Successors);
                     }
                 }
-                else
+                else if (!_singleFunction)
                 {
                     GenerateFunctionTerminator();
                 }
@@ -285,6 +287,11 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateCall(GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { callerWaker }, string.Empty);
         }
 
+        private string GetSynchronousFunctionName(string functionName)
+        {
+            return $"{functionName}::sync";
+        }
+
         private static string GetInitializeStateFunctionName(string runtimeFunctionName)
         {
             return $"{runtimeFunctionName}::InitializeState";
@@ -307,6 +314,7 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef statePtr = builder.CreateMalloc(_allocationSet.StateType, "statePtr");
+            CurrentState = new OuterFunctionCompilerState(initializeStateFunction, builder) { StateMalloc = statePtr };
             builder.CreateStore(false.AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
 
             InitializeParameterAllocations(initializeStateFunction, builder);
@@ -318,14 +326,11 @@ namespace Rebar.RebarTarget.LLVM
 
         private void InitializeParameterAllocations(LLVMValueRef function, IRBuilder builder)
         {
-            uint parameterStructFieldIndex = FunctionAllocationSet.FirstParameterFieldIndex;
             uint parameterIndex = 0u;
             foreach (var dataItem in _parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
             {
-                builder.CreateStore(
-                    function.GetParam(parameterIndex),
-                    builder.CreateStructGEP(statePtr, parameterStructFieldIndex, string.Empty));
-                ++parameterStructFieldIndex;
+                LLVMValueRef parameterAllocationPtr = GetAddress(_variableValues[dataItem.GetVariable()], builder);
+                builder.CreateStore(function.GetParam(parameterIndex), parameterAllocationPtr);
                 ++parameterIndex;
             }
         }
@@ -361,11 +366,8 @@ namespace Rebar.RebarTarget.LLVM
         private void BuildOuterFunction(List<LLVMTypeRef> parameterTypes, LLVMValueRef initializeStateFunction, LLVMValueRef pollFunction)
         {
             var outerFunctionParameters = new List<LLVMTypeRef>();
-            if (!_singleFunction)
-            {
-                outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
-                outerFunctionParameters.Add(LLVMExtensions.VoidPointerType);
-            }
+            outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
+            outerFunctionParameters.Add(LLVMExtensions.VoidPointerType);
             outerFunctionParameters.AddRange(parameterTypes);
 
             LLVMTypeRef outerFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), outerFunctionParameters.ToArray(), false);
@@ -375,7 +377,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef outerEntryBlock = outerFunction.AppendBasicBlock("entry");
             Builder.PositionBuilderAtEnd(outerEntryBlock);
 
-            if (_singleFunction)
+            if (!_singleFunction)
             {
                 // TODO: deallocate state block for the top-level case!
                 LLVMValueRef voidStatePtr = Builder.CreateCall(
@@ -395,13 +397,30 @@ namespace Rebar.RebarTarget.LLVM
                     pollFunction,
                     new LLVMValueRef[] { voidStatePtr },
                     string.Empty);
+                Builder.CreateRetVoid();
             }
             else
             {
-                LLVMValueRef localStatePtr = Builder.CreateAlloca(_allocationSet.StateType, "localStatePtr");
-                outerFunctionCompilerState.StateMalloc = localStatePtr;
+                Builder.CreateCall(_syncFunction, outerFunction.GetParams().Skip(2).ToArray(), string.Empty);
+                // activate the caller waker
+                // TODO: invoke caller waker directly, or schedule?
+                Builder.CreateCall(outerFunction.GetParam(0u), new LLVMValueRef[] { outerFunction.GetParam(1u) }, string.Empty);
+                Builder.CreateRetVoid();
+
+                var syncBuilder = new IRBuilder();
+
+                syncBuilder.PositionBuilderAtEnd(_syncFunctionEntryBlock);
+                string singleFunctionName = _asyncStateGroups.First().FunctionId;
+                _allocationSet.InitializeFunctionLocalAllocations(singleFunctionName, syncBuilder);
+                InitializeParameterAllocations(_syncFunction, syncBuilder);
+                syncBuilder.CreateBr(AsyncStateGroups[_asyncStateGroups.First()].InitialBasicBlock);
+
+                foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
+                {
+                    AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
+                    CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(_syncFunction, syncBuilder));
+                }
             }
-            Builder.CreateRetVoid();
         }
     }
 }

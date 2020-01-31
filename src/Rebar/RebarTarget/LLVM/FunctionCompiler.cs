@@ -505,6 +505,8 @@ namespace Rebar.RebarTarget.LLVM
         private readonly DataItem[] _parameterDataItems;
         private readonly LLVMTypeRef _groupFunctionType;
         private readonly bool _singleFunction;
+        private readonly LLVMValueRef _syncFunction;
+        private readonly LLVMValueRef _syncFunctionEntryBlock;
 
         public FunctionCompiler(
             Module module,
@@ -524,32 +526,49 @@ namespace Rebar.RebarTarget.LLVM
             _asyncStateGroups = asyncStateGroups;
             _singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
 
-            var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
-            foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
+            if (_singleFunction)
             {
-                string groupName = asyncStateGroup.Label;
-                if (asyncStateGroup.MaxFireCount > 1)
-                {
-                    fireCountFields[asyncStateGroup] = _allocationSet.CreateStateField($"{groupName}FireCount", PFTypes.Int32);
-                }
+                var parameterTypes = GetParameterLLVMTypes();
+                LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes.ToArray(), false);
+                _syncFunction = Module.AddFunction(GetSynchronousFunctionName(_functionName), syncFunctionType);
+                _syncFunctionEntryBlock = _syncFunction.AppendBasicBlock("entry");
             }
 
-            _allocationSet.InitializeStateType(module, functionName);
-            _groupFunctionType = LLVMTypeRef.FunctionType(
-                LLVMTypeRef.VoidType(),
-                new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
-                false);
+            var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
+            if (!_singleFunction)
+            {
+                foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
+                {
+                    string groupName = asyncStateGroup.Label;
+                    if (asyncStateGroup.MaxFireCount > 1)
+                    {
+                        fireCountFields[asyncStateGroup] = _allocationSet.CreateStateField($"{groupName}FireCount", PFTypes.Int32);
+                    }
+                }
+                _allocationSet.InitializeStateType(module, functionName);
+                _groupFunctionType = LLVMTypeRef.FunctionType(
+                    LLVMTypeRef.VoidType(),
+                    new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
+                    false);
+            }
 
             var functions = new Dictionary<string, LLVMValueRef>();
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
                 LLVMValueRef groupFunction;
-                if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
+                if (_singleFunction)
                 {
-                    string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
-                    groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
-                    functions[asyncStateGroup.FunctionId] = groupFunction;
+                    groupFunction = _syncFunction;
+                }
+                else
+                {
+                    if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
+                    {
+                        string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
+                        groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                        functions[asyncStateGroup.FunctionId] = groupFunction;
+                    }
                 }
 
                 LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
@@ -593,10 +612,12 @@ namespace Rebar.RebarTarget.LLVM
             });
         }
 
-        private LLVMValueRef GetImportedFunction(MethodCallNode methodCallNode)
+        private LLVMValueRef GetImportedSynchronousFunction(MethodCallNode methodCallNode)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
-            return GetImportedFunction(targetFunctionName, () => TranslateFunctionType(methodCallNode.Signature));
+            return GetImportedFunction(
+                GetSynchronousFunctionName(targetFunctionName),
+                () => TranslateFunctionType(methodCallNode.Signature));
         }
 
         private LLVMValueRef GetImportedInitializeStateFunction(CreateMethodCallPromise createMethodCallPromise)
@@ -964,7 +985,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitMethodCallNode(MethodCallNode methodCallNode)
         {
-            LLVMValueRef targetFunction = GetImportedFunction(methodCallNode);
+            LLVMValueRef targetFunction = GetImportedSynchronousFunction(methodCallNode);
             CreateCallForFunctionalNode(targetFunction, methodCallNode, methodCallNode.Signature);
             return true;
         }
