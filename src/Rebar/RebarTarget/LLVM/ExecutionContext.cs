@@ -241,12 +241,14 @@ namespace Rebar.RebarTarget.LLVM
 
             if (!_wroteModule)
             {
+                Module globalClone = _globalModule.Clone();
                 LLVMTypeRef startFunctionType = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new LLVMTypeRef[0], false);
-                LLVMValueRef startFunction = _globalModule.AddFunction("_start", startFunctionType);
+                LLVMValueRef startFunction = globalClone.AddFunction("_start", startFunctionType);
                 var builder = new IRBuilder();
                 builder.PositionBuilderAtEnd(startFunction.AppendBasicBlock("entry"));
+                LLVMValueRef cloneFuncValue = globalClone.GetNamedFunction(functionName);
                 builder.CreateCall(
-                    funcValue,
+                    cloneFuncValue,
                     new LLVMValueRef[]
                     {
                         // TODO: this would need to be a real waker function
@@ -256,16 +258,17 @@ namespace Rebar.RebarTarget.LLVM
                     string.Empty);
                 builder.CreateRetVoid();
 
-                _globalModule.VerifyAndThrowIfInvalid();
+                globalClone.VerifyAndThrowIfInvalid();
                 // NOTE: required for wasm-ld to work
-                _globalModule.SetTarget("wasm32-unknown-unknown");
-                _globalModule.SetDataLayout("E-m:e-p:32:32-i64:64-n32");
+                globalClone.SetTarget("wasm32-unknown-unknown");
+                globalClone.SetDataLayout("E-m:e-p:32:32-i64:64-n32");
 
                 // string filePath = Path.Combine("C:\\temp\\llvm", Path.ChangeExtension(Path.GetRandomFileName(), ".bc"));
                 // NOTE: all parts of the directory path need to exist for this to work
                 string filePath = Path.Combine("C:\\temp\\llvm\\foo.bc");
-                int ret = _globalModule.WriteBitcodeToFile(filePath);
+                int ret = globalClone.WriteBitcodeToFile(filePath);
                 _wroteModule = true;
+                globalClone.DisposeModule();
             }
 
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
