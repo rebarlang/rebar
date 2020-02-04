@@ -610,7 +610,7 @@ namespace Rebar.RebarTarget.LLVM
             BuildRangeIteratorNextFunction(rangeModule);
 
             CommonModuleSignatures[CreateRangeIteratorName] = LLVMSharp.LLVM.FunctionType(
-                LLVMTypeRef.Int32Type().CreateLLVMOptionType(),
+                LLVMTypeRef.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.Int32Type(),
