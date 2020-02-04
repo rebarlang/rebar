@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using LLVMSharp;
@@ -231,8 +232,22 @@ namespace Rebar.RebarTarget.LLVM
             _globalModule.LinkInModule(functionModule.Clone());
         }
 
+        private bool _wroteModule = false;
+
         public void ExecuteFunctionTopLevel(string functionName)
         {
+            if (!_wroteModule)
+            {
+                // TODO: need to add a "_start" symbol to the module for this to do anything
+                // NOTE: required for wasm-ld to work
+                _globalModule.SetTarget("wasm32-unknown-unknown");
+                // string filePath = Path.Combine("C:\\temp\\llvm", Path.ChangeExtension(Path.GetRandomFileName(), ".bc"));
+                // NOTE: all parts of the directory path need to exist for this to work
+                string filePath = Path.Combine("C:\\temp\\llvm\\foo.bc");
+                int ret = _globalModule.WriteBitcodeToFile(filePath);
+                _wroteModule = true;
+            }
+
             LLVMValueRef funcValue = _globalModule.GetNamedFunction(functionName);
             funcValue.ThrowIfNull();
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
