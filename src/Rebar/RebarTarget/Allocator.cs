@@ -29,6 +29,7 @@ namespace Rebar.RebarTarget
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
         private readonly Dictionary<VariableReference, VariableUsage> _variableUsages;
         private AsyncStateGroup _currentGroup;
+        private readonly string _singleFunctionName;
 
         public Allocator(
             Dictionary<VariableReference, ValueSource> variableAllocations,
@@ -38,6 +39,7 @@ namespace Rebar.RebarTarget
             _variableAllocations = variableAllocations;
             _additionalAllocations = additionalAllocations;
             _asyncStateGroups = asyncStateGroups;
+            _asyncStateGroups.Select(g => g.FunctionId).Distinct().TryGetSingleElement(out _singleFunctionName);
             _variableUsages = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableUsage>();
         }
 
@@ -167,9 +169,18 @@ namespace Rebar.RebarTarget
         private void VisitDataItem(DataItem dataItem)
         {
             VariableReference dataItemVariable = dataItem.GetVariable();
-            _variableAllocations[dataItemVariable] = dataItem.IsInput
-                ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
-                : AllocationSet.CreateOutputParameter(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
+            if (_singleFunctionName != null)
+            {
+                _variableAllocations[dataItemVariable] = dataItem.IsInput
+                    ? AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type)
+                    : AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type);
+            }
+            else
+            {
+                _variableAllocations[dataItemVariable] = dataItem.IsInput
+                    ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
+                    : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
+            }
         }
 
         #endregion
@@ -225,7 +236,7 @@ namespace Rebar.RebarTarget
             }
             else if (dataAccessor.Terminal.Direction == Direction.Input)
             {
-                WillUpdateValue(dataAccessor.Terminal);
+                WillGetValue(dataAccessor.Terminal);
             }
             return true;
         }

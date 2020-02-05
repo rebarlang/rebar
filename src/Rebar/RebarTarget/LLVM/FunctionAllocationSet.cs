@@ -63,11 +63,24 @@ namespace Rebar.RebarTarget.LLVM
             return new StateFieldValueSource(allocationName, this, fieldIndex);
         }
 
-        public OutputParameterValueSource CreateOutputParameter(string allocationName, NIType allocationType)
+        public OutputParameterStateFieldValueSource CreateOutputParameterStateField(string allocationName, NIType allocationType)
         {
             int fieldIndex = _stateFields.Count;
             _stateFields.Add(new StateFieldAllocation(allocationName, allocationType.CreateMutableReference()));
-            return new OutputParameterValueSource(allocationName, this, fieldIndex);
+            return new OutputParameterStateFieldValueSource(allocationName, this, fieldIndex);
+        }
+
+        public OutputParameterLocalAllocationValueSource CreateOutputParameterLocalAllocation(string containingFunctionName, string allocationName, NIType allocationType)
+        {
+            List<LocalAllocation> functionLocals;
+            if (!_functionLocalAllocations.TryGetValue(containingFunctionName, out functionLocals))
+            {
+                functionLocals = new List<LocalAllocation>();
+                _functionLocalAllocations[containingFunctionName] = functionLocals;
+            }
+            int allocationIndex = functionLocals.Count;
+            functionLocals.Add(new LocalAllocation(allocationName, allocationType.CreateMutableReference()));
+            return new OutputParameterLocalAllocationValueSource(allocationName, this, containingFunctionName, allocationIndex);
         }
 
         public void InitializeStateType(Module module, string functionName)
