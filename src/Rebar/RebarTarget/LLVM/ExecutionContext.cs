@@ -258,6 +258,44 @@ namespace Rebar.RebarTarget.LLVM
                     string.Empty);
                 builder.CreateRetVoid();
 
+                // Create a WASI-specific output_bool implementation
+                // TODO: it would be much nicer to have a single output_slice function (which is what output_string basically already is)
+                // and have output_bool, output_i32, etc. construct strings on-stack and call output_slice.
+
+                // size_t __wasi_fd_write(__wasi_fd_t fd, const __wasi_ciovec_t *iovs, size_t iovs_len)
+                // typedef uint32 __wasi_fd_t;
+                // typedef struct { const void *buf, size_t buf_len } __wasi_ciovec_t;
+                LLVMTypeRef sizeType = LLVMTypeRef.Int32Type();
+                LLVMTypeRef iovecType = LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMExtensions.VoidPointerType, sizeType }, false);
+                LLVMTypeRef fdwriteType = LLVMTypeRef.FunctionType(
+                    sizeType,
+                    new LLVMTypeRef[] { LLVMTypeRef.Int32Type(), LLVMTypeRef.PointerType(iovecType, 0u), sizeType },
+                    false);
+                LLVMValueRef fdwriteFunction = globalClone.AddFunction("rb_fd_write", fdwriteType);
+
+                LLVMValueRef trueConstantPtr = globalClone.DefineStringGlobalInModule("trueString", "true"),
+                    falseConstantPtr = globalClone.DefineStringGlobalInModule("falseString", "false");
+
+                LLVMValueRef outputBoolFunction = globalClone.GetNamedFunction("output_bool");
+                builder.PositionBuilderAtEnd(outputBoolFunction.AppendBasicBlock("entry"));
+                LLVMValueRef iovecPtr = builder.CreateAlloca(iovecType, "localIovec"),
+                    trueConstantCast = builder.CreateBitCast(trueConstantPtr, LLVMExtensions.BytePointerType, "trueConstantCast"),
+                    falseConstantCast = builder.CreateBitCast(falseConstantPtr, LLVMExtensions.BytePointerType, "falseConstantCast"),
+                    selectedConstantPtr = builder.CreateSelect(outputBoolFunction.GetParam(0u), trueConstantCast, falseConstantCast, "selectedConstantPtr"),
+                    selectedConstantSize = builder.CreateSelect(outputBoolFunction.GetParam(0u), 4.AsLLVMValue(), 5.AsLLVMValue(), "selectedConstantSize"),
+                    iovec = builder.BuildStructValue(iovecType, new LLVMValueRef[] { selectedConstantPtr, selectedConstantSize });
+                builder.CreateStore(iovec, iovecPtr);
+                builder.CreateCall(
+                    fdwriteFunction,
+                    new LLVMValueRef[]
+                    {
+                        1.AsLLVMValue(),    // STDOUT
+                        iovecPtr,           // iovs
+                        1.AsLLVMValue()     // iovs_len
+                    },
+                    "bytesWritten");
+                builder.CreateRetVoid();
+
                 globalClone.VerifyAndThrowIfInvalid();
                 // NOTE: required for wasm-ld to work
                 globalClone.SetTarget("wasm32-unknown-unknown");

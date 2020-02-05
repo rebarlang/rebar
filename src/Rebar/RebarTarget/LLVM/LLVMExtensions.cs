@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
@@ -471,6 +472,14 @@ namespace Rebar.RebarTarget.LLVM
         #endregion
 
         #region Module
+
+        internal static LLVMValueRef DefineStringGlobalInModule(this Module module, string name, string value)
+        {
+            LLVMValueRef stringValueConstant = LLVMSharp.LLVM.ConstString(value, (uint)Encoding.UTF8.GetByteCount(value), true);
+            LLVMValueRef stringConstantPtr = module.AddGlobal(stringValueConstant.TypeOf(), name);
+            stringConstantPtr.SetInitializer(stringValueConstant);
+            return stringConstantPtr;
+        }
 
         internal static byte[] SerializeModuleAsBitcode(this Module module)
         {

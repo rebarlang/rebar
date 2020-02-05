@@ -874,9 +874,7 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     string stringValue = (string)constant.Value;
                     int length = Encoding.UTF8.GetByteCount(stringValue);
-                    LLVMValueRef stringValueConstant = LLVMSharp.LLVM.ConstString(stringValue, (uint)length, true);
-                    LLVMValueRef stringConstantPtr = Module.AddGlobal(stringValueConstant.TypeOf(), $"string{constant.UniqueId}");
-                    stringConstantPtr.SetInitializer(stringValueConstant);
+                    LLVMValueRef stringConstantPtr = Module.DefineStringGlobalInModule($"string{constant.UniqueId}", stringValue);
 
                     LLVMValueRef castPointer = Builder.CreateBitCast(
                         stringConstantPtr,
