@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using LLVMSharp;
@@ -231,10 +232,45 @@ namespace Rebar.RebarTarget.LLVM
             _globalModule.LinkInModule(functionModule.Clone());
         }
 
+        private bool _wroteModule = false;
+
         public void ExecuteFunctionTopLevel(string functionName)
         {
             LLVMValueRef funcValue = _globalModule.GetNamedFunction(functionName);
             funcValue.ThrowIfNull();
+
+            if (!_wroteModule)
+            {
+                Module globalClone = _globalModule.Clone();
+                LLVMTypeRef startFunctionType = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new LLVMTypeRef[0], false);
+                LLVMValueRef startFunction = globalClone.AddFunction("_start", startFunctionType);
+                var builder = new IRBuilder();
+                builder.PositionBuilderAtEnd(startFunction.AppendBasicBlock("entry"));
+                LLVMValueRef cloneFuncValue = globalClone.GetNamedFunction(functionName);
+                builder.CreateCall(
+                    cloneFuncValue,
+                    new LLVMValueRef[]
+                    {
+                        // TODO: this would need to be a real waker function
+                        LLVMSharp.LLVM.ConstNull(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)),
+                        LLVMSharp.LLVM.ConstNull(LLVMExtensions.VoidPointerType)
+                    },
+                    string.Empty);
+                builder.CreateRetVoid();
+
+                globalClone.VerifyAndThrowIfInvalid();
+                // NOTE: required for wasm-ld to work
+                globalClone.SetTarget("wasm32-unknown-unknown");
+                globalClone.SetDataLayout("E-m:e-p:32:32-i64:64-n32");
+
+                // string filePath = Path.Combine("C:\\temp\\llvm", Path.ChangeExtension(Path.GetRandomFileName(), ".bc"));
+                // NOTE: all parts of the directory path need to exist for this to work
+                string filePath = Path.Combine("C:\\temp\\llvm\\foo.bc");
+                int ret = globalClone.WriteBitcodeToFile(filePath);
+                _wroteModule = true;
+                globalClone.DisposeModule();
+            }
+
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
             ExecFunc func = Marshal.GetDelegateForFunctionPointer<ExecFunc>(pointerToFunc);
 
