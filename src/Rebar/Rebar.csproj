@@ -338,6 +338,8 @@
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.VectorType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
+    <Compile Include="RebarTarget\LLVM\WasiExternsModule.cs" />
+    <Compile Include="RebarTarget\LLVM\WasiModuleBuilder.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
     <Compile Include="RebarTarget\TargetCompiler.cs" />
     <Compile Include="RebarTarget\TargetCompilerServices.cs" />

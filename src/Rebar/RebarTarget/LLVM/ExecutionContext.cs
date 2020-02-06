@@ -241,87 +241,12 @@ namespace Rebar.RebarTarget.LLVM
 
             if (!_wroteModule)
             {
-                Module globalClone = _globalModule.Clone();
-                // NOTE: required for wasm-ld to work
-                globalClone.SetTarget("wasm32-unknown-unknown-wasm");
-                globalClone.SetDataLayout("e-m:e-p:32:32-i64:64-n32:64-S128");
-
-                LLVMTypeRef startFunctionType = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new LLVMTypeRef[0], false);
-                LLVMValueRef startFunction = globalClone.AddFunction("_start", startFunctionType);
-                var builder = new IRBuilder();
-                builder.PositionBuilderAtEnd(startFunction.AppendBasicBlock("entry"));
-                LLVMValueRef cloneFuncValue = globalClone.GetNamedFunction(functionName);
-                builder.CreateCall(
-                    cloneFuncValue,
-                    new LLVMValueRef[]
-                    {
-                        // TODO: this would need to be a real waker function
-                        LLVMSharp.LLVM.ConstNull(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u)),
-                        LLVMSharp.LLVM.ConstNull(LLVMExtensions.VoidPointerType)
-                    },
-                    string.Empty);
-                builder.CreateRetVoid();
-
-                // Create a WASI-specific output_bool implementation
-                // TODO: it would be much nicer to have a single output_slice function (which is what output_string basically already is)
-                // and have output_bool, output_i32, etc. construct strings on-stack and call output_slice.
-
-                // size_t __wasi_fd_write(__wasi_fd_t fd, const __wasi_ciovec_t *iovs, size_t iovs_len)
-                // typedef uint32 __wasi_fd_t;
-                // typedef struct { const void *buf, size_t buf_len } __wasi_ciovec_t;
-                LLVMTypeRef sizeType = LLVMTypeRef.Int32Type();
-                LLVMTypeRef iovecType = LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMExtensions.VoidPointerType, sizeType }, false);
-                LLVMTypeRef fdwriteType = LLVMTypeRef.FunctionType(
-                    sizeType,
-                    new LLVMTypeRef[] { LLVMTypeRef.Int32Type(), LLVMTypeRef.PointerType(iovecType, 0u), sizeType },
-                    false);
-                LLVMValueRef fdwriteFunction = globalClone.AddFunction("wasi_fd_write", fdwriteType);
-                fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-module", "wasi_unstable");
-                fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-name", "fd_write");
-                fdwriteFunction.SetDLLStorageClass(LLVMDLLStorageClass.LLVMDLLImportStorageClass);
-
-                // TODO: move this to WasiExternsModule
-                LLVMValueRef outputStringFunction = globalClone.GetNamedFunction("output_string");
-                builder.PositionBuilderAtEnd(outputStringFunction.AppendBasicBlock("entry"));
-                LLVMValueRef iovecPtr = builder.CreateAlloca(iovecType, "localIovec"),
-                    iovec = builder.BuildStructValue(
-                        iovecType,
-                        new LLVMValueRef[] { outputStringFunction.GetParam(0u), outputStringFunction.GetParam(1) });
-                builder.CreateStore(iovec, iovecPtr);
-                builder.CreateCall(
-                    fdwriteFunction,
-                    new LLVMValueRef[]
-                    {
-                        1.AsLLVMValue(),    // STDOUT
-                        iovecPtr,           // iovs
-                        1.AsLLVMValue()     // iovs_len
-                    },
-                    "bytesWritten");
-                builder.CreateRetVoid();
-
-                // TODO: this will move to CommonModules.OutputModule
-                LLVMValueRef trueConstantPtr = globalClone.DefineStringGlobalInModule("trueString", "true"),
-                    falseConstantPtr = globalClone.DefineStringGlobalInModule("falseString", "false");
-
-                LLVMValueRef outputBoolFunction = globalClone.GetNamedFunction("output_bool");
-                builder.PositionBuilderAtEnd(outputBoolFunction.AppendBasicBlock("entry"));
-                LLVMValueRef trueConstantCast = builder.CreateBitCast(trueConstantPtr, LLVMExtensions.BytePointerType, "trueConstantCast"),
-                    falseConstantCast = builder.CreateBitCast(falseConstantPtr, LLVMExtensions.BytePointerType, "falseConstantCast"),
-                    selectedConstantPtr = builder.CreateSelect(outputBoolFunction.GetParam(0u), trueConstantCast, falseConstantCast, "selectedConstantPtr"),
-                    selectedConstantSize = builder.CreateSelect(outputBoolFunction.GetParam(0u), 4.AsLLVMValue(), 5.AsLLVMValue(), "selectedConstantSize");
-                builder.CreateCall(
-                    outputStringFunction,
-                    new LLVMValueRef[] { selectedConstantPtr, selectedConstantSize },
-                    string.Empty);
-                builder.CreateRetVoid();
-
-                globalClone.VerifyAndThrowIfInvalid();
-                // string filePath = Path.Combine("C:\\temp\\llvm", Path.ChangeExtension(Path.GetRandomFileName(), ".bc"));
+                Module wasiExecutableModule = WasiModuleBuilder.CreateWasiExecutableModule(_globalModule, functionName);
                 // NOTE: all parts of the directory path need to exist for this to work
                 string filePath = Path.Combine("C:\\temp\\llvm\\foo.bc");
-                int ret = globalClone.WriteBitcodeToFile(filePath);
+                int ret = wasiExecutableModule.WriteBitcodeToFile(filePath);
                 _wroteModule = true;
-                globalClone.DisposeModule();
+                wasiExecutableModule.DisposeModule();
             }
 
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
