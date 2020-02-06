@@ -242,6 +242,10 @@ namespace Rebar.RebarTarget.LLVM
             if (!_wroteModule)
             {
                 Module globalClone = _globalModule.Clone();
+                // NOTE: required for wasm-ld to work
+                globalClone.SetTarget("wasm32-unknown-unknown-wasm");
+                globalClone.SetDataLayout("e-m:e-p:32:32-i64:64-n32:64-S128");
+
                 LLVMTypeRef startFunctionType = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new LLVMTypeRef[0], false);
                 LLVMValueRef startFunction = globalClone.AddFunction("_start", startFunctionType);
                 var builder = new IRBuilder();
@@ -271,7 +275,9 @@ namespace Rebar.RebarTarget.LLVM
                     sizeType,
                     new LLVMTypeRef[] { LLVMTypeRef.Int32Type(), LLVMTypeRef.PointerType(iovecType, 0u), sizeType },
                     false);
-                LLVMValueRef fdwriteFunction = globalClone.AddFunction("rb_fd_write", fdwriteType);
+                LLVMValueRef fdwriteFunction = globalClone.AddFunction("wasi_fd_write", fdwriteType);
+                fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-module", "wasi_unstable");
+                fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-name", "fd_write");
 
                 LLVMValueRef trueConstantPtr = globalClone.DefineStringGlobalInModule("trueString", "true"),
                     falseConstantPtr = globalClone.DefineStringGlobalInModule("falseString", "false");
@@ -297,10 +303,6 @@ namespace Rebar.RebarTarget.LLVM
                 builder.CreateRetVoid();
 
                 globalClone.VerifyAndThrowIfInvalid();
-                // NOTE: required for wasm-ld to work
-                globalClone.SetTarget("wasm32-unknown-unknown");
-                globalClone.SetDataLayout("E-m:e-p:32:32-i64:64-n32");
-
                 // string filePath = Path.Combine("C:\\temp\\llvm", Path.ChangeExtension(Path.GetRandomFileName(), ".bc"));
                 // NOTE: all parts of the directory path need to exist for this to work
                 string filePath = Path.Combine("C:\\temp\\llvm\\foo.bc");
