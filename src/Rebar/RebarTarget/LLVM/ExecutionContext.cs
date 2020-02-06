@@ -278,18 +278,15 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef fdwriteFunction = globalClone.AddFunction("wasi_fd_write", fdwriteType);
                 fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-module", "wasi_unstable");
                 fdwriteFunction.AddTargetDependentFunctionAttr("wasm-import-name", "fd_write");
+                fdwriteFunction.SetDLLStorageClass(LLVMDLLStorageClass.LLVMDLLImportStorageClass);
 
-                LLVMValueRef trueConstantPtr = globalClone.DefineStringGlobalInModule("trueString", "true"),
-                    falseConstantPtr = globalClone.DefineStringGlobalInModule("falseString", "false");
-
-                LLVMValueRef outputBoolFunction = globalClone.GetNamedFunction("output_bool");
-                builder.PositionBuilderAtEnd(outputBoolFunction.AppendBasicBlock("entry"));
+                // TODO: move this to WasiExternsModule
+                LLVMValueRef outputStringFunction = globalClone.GetNamedFunction("output_string");
+                builder.PositionBuilderAtEnd(outputStringFunction.AppendBasicBlock("entry"));
                 LLVMValueRef iovecPtr = builder.CreateAlloca(iovecType, "localIovec"),
-                    trueConstantCast = builder.CreateBitCast(trueConstantPtr, LLVMExtensions.BytePointerType, "trueConstantCast"),
-                    falseConstantCast = builder.CreateBitCast(falseConstantPtr, LLVMExtensions.BytePointerType, "falseConstantCast"),
-                    selectedConstantPtr = builder.CreateSelect(outputBoolFunction.GetParam(0u), trueConstantCast, falseConstantCast, "selectedConstantPtr"),
-                    selectedConstantSize = builder.CreateSelect(outputBoolFunction.GetParam(0u), 4.AsLLVMValue(), 5.AsLLVMValue(), "selectedConstantSize"),
-                    iovec = builder.BuildStructValue(iovecType, new LLVMValueRef[] { selectedConstantPtr, selectedConstantSize });
+                    iovec = builder.BuildStructValue(
+                        iovecType,
+                        new LLVMValueRef[] { outputStringFunction.GetParam(0u), outputStringFunction.GetParam(1) });
                 builder.CreateStore(iovec, iovecPtr);
                 builder.CreateCall(
                     fdwriteFunction,
@@ -300,6 +297,22 @@ namespace Rebar.RebarTarget.LLVM
                         1.AsLLVMValue()     // iovs_len
                     },
                     "bytesWritten");
+                builder.CreateRetVoid();
+
+                // TODO: this will move to CommonModules.OutputModule
+                LLVMValueRef trueConstantPtr = globalClone.DefineStringGlobalInModule("trueString", "true"),
+                    falseConstantPtr = globalClone.DefineStringGlobalInModule("falseString", "false");
+
+                LLVMValueRef outputBoolFunction = globalClone.GetNamedFunction("output_bool");
+                builder.PositionBuilderAtEnd(outputBoolFunction.AppendBasicBlock("entry"));
+                LLVMValueRef trueConstantCast = builder.CreateBitCast(trueConstantPtr, LLVMExtensions.BytePointerType, "trueConstantCast"),
+                    falseConstantCast = builder.CreateBitCast(falseConstantPtr, LLVMExtensions.BytePointerType, "falseConstantCast"),
+                    selectedConstantPtr = builder.CreateSelect(outputBoolFunction.GetParam(0u), trueConstantCast, falseConstantCast, "selectedConstantPtr"),
+                    selectedConstantSize = builder.CreateSelect(outputBoolFunction.GetParam(0u), 4.AsLLVMValue(), 5.AsLLVMValue(), "selectedConstantSize");
+                builder.CreateCall(
+                    outputStringFunction,
+                    new LLVMValueRef[] { selectedConstantPtr, selectedConstantSize },
+                    string.Empty);
                 builder.CreateRetVoid();
 
                 globalClone.VerifyAndThrowIfInvalid();
