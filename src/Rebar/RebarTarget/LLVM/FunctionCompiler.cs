@@ -123,7 +123,7 @@ namespace Rebar.RebarTarget.LLVM
             if (referentType.IsBoolean())
             {
                 LLVMValueRef value = inputValueSource.GetDereferencedValue(compiler.Builder);
-                compiler.Builder.CreateCall(compiler._commonExternalFunctions.OutputBoolFunction, new LLVMValueRef[] { value }, string.Empty);
+                compiler.Builder.CreateCall(compiler.GetImportedCommonFunction(CommonModules.OutputBoolName), new LLVMValueRef[] { value }, string.Empty);
                 return;
             }
             if (referentType.IsInteger())
@@ -132,28 +132,28 @@ namespace Rebar.RebarTarget.LLVM
                 switch (referentType.GetKind())
                 {
                     case NITypeKind.Int8:
-                        outputFunction = compiler._commonExternalFunctions.OutputInt8Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputInt8Name);
                         break;
                     case NITypeKind.UInt8:
-                        outputFunction = compiler._commonExternalFunctions.OutputUInt8Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputUInt8Name);
                         break;
                     case NITypeKind.Int16:
-                        outputFunction = compiler._commonExternalFunctions.OutputInt16Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputInt16Name);
                         break;
                     case NITypeKind.UInt16:
-                        outputFunction = compiler._commonExternalFunctions.OutputUInt16Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputUInt16Name);
                         break;
                     case NITypeKind.Int32:
-                        outputFunction = compiler._commonExternalFunctions.OutputInt32Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputInt32Name);
                         break;
                     case NITypeKind.UInt32:
-                        outputFunction = compiler._commonExternalFunctions.OutputUInt32Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputUInt32Name);
                         break;
                     case NITypeKind.Int64:
-                        outputFunction = compiler._commonExternalFunctions.OutputInt64Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputInt64Name);
                         break;
                     case NITypeKind.UInt64:
-                        outputFunction = compiler._commonExternalFunctions.OutputUInt64Function;
+                        outputFunction = compiler.GetImportedCommonFunction(CommonModules.OutputUInt64Name);
                         break;
                     default:
                         throw new NotImplementedException($"Don't know how to display type {referentType} yet.");
