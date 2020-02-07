@@ -29,22 +29,6 @@ namespace Rebar.RebarTarget.LLVM
                 string.Empty);
             builder.CreateRetVoid();
 
-            // TODO: this will move to CommonModules.OutputModule
-            LLVMValueRef outputStringFunction = wasiExecutableModule.GetNamedFunction("output_string");
-            LLVMValueRef trueConstantPtr = wasiExecutableModule.DefineStringGlobalInModule("trueString", "true"),
-                falseConstantPtr = wasiExecutableModule.DefineStringGlobalInModule("falseString", "false");
-            LLVMValueRef outputBoolFunction = wasiExecutableModule.GetNamedFunction("output_bool");
-            builder.PositionBuilderAtEnd(outputBoolFunction.AppendBasicBlock("entry"));
-            LLVMValueRef trueConstantCast = builder.CreateBitCast(trueConstantPtr, LLVMExtensions.BytePointerType, "trueConstantCast"),
-                falseConstantCast = builder.CreateBitCast(falseConstantPtr, LLVMExtensions.BytePointerType, "falseConstantCast"),
-                selectedConstantPtr = builder.CreateSelect(outputBoolFunction.GetParam(0u), trueConstantCast, falseConstantCast, "selectedConstantPtr"),
-                selectedConstantSize = builder.CreateSelect(outputBoolFunction.GetParam(0u), 4.AsLLVMValue(), 5.AsLLVMValue(), "selectedConstantSize");
-            builder.CreateCall(
-                outputStringFunction,
-                new LLVMValueRef[] { selectedConstantPtr, selectedConstantSize },
-                string.Empty);
-            builder.CreateRetVoid();
-
             wasiExecutableModule.VerifyAndThrowIfInvalid();
             return wasiExecutableModule;
         }
