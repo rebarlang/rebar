@@ -692,43 +692,43 @@ namespace Rebar.RebarTarget.LLVM
         {
             CommonExternalFunctions externalFunctions = new CommonExternalFunctions(fileModule);
 
-            CommonModuleSignatures[OpenFileHandleName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(OpenFileHandleName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMExtensions.StringSliceReferenceType,
                     LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType.CreateLLVMOptionType(), 0),
                 },
-                false);
+                false));
             BuildOpenFileHandleFunction(fileModule, externalFunctions);
 
-            CommonModuleSignatures[ReadLineFromFileHandleName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(ReadLineFromFileHandleName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType, 0),
                     LLVMTypeRef.PointerType(LLVMExtensions.StringType.CreateLLVMOptionType(), 0),
                 },
-                false);
+                false));
             BuildReadLineFromFileHandleFunction(fileModule, externalFunctions);
 
-            CommonModuleSignatures[WriteStringToFileHandleName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(WriteStringToFileHandleName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType, 0),
                     LLVMExtensions.StringSliceReferenceType,
                 },
-                false);
+                false));
             BuildWriteStringToFileHandleFunction(fileModule, externalFunctions);
 
-            CommonModuleSignatures[DropFileHandleName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(DropFileHandleName, FileModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(LLVMExtensions.FileHandleType, 0),
                 },
-                false);
+                false));
             BuildDropFileHandleFunction(fileModule, externalFunctions);
         }
 
