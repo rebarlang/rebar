@@ -145,8 +145,8 @@ namespace Rebar.RebarTarget
                 asyncStateGroups);
             functionCompiler.CompileFunction(dfirRoot);
 
-            string[] commonModuleDependencies = new string[] { "fakedrop", "scheduler", "string", "range", "file" };
-            return new LLVM.FunctionCompileResult(module, commonModuleDependencies);
+            IEnumerable<string> commonModuleDependencies = functionCompiler.CommonModuleDependencies;
+            return new LLVM.FunctionCompileResult(module, commonModuleDependencies.ToArray());
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)

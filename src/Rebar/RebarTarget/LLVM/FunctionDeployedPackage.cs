@@ -12,7 +12,7 @@ namespace Rebar.RebarTarget.LLVM
             ExecutionTarget target,
             ExecutionContext context)
         {
-            context.LoadFunction(builtPackage.Module);
+            context.LoadFunction(builtPackage.Module, builtPackage.CommonModuleDependencies);
             return new FunctionDeployedPackage(builtPackage.RuntimeEntityIdentity, target, context);
         }
 

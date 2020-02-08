@@ -22,13 +22,13 @@ namespace Tests.Rebar.Unit.Execution
         {
             const string compiledFunctionName = "test";
             FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName);
-            _context.LoadFunction(compileResult.Module);
+            _context.LoadFunction(compileResult.Module, compileResult.CommonModuleDependencies);
             foreach (DfirRoot otherFunction in otherFunctions)
             {
                 FunctionCompileResult otherCompileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(
                     otherFunction,
                     FunctionCompileHandler.FunctionLLVMName(otherFunction.SpecAndQName));
-                _context.LoadFunction(otherCompileResult.Module);
+                _context.LoadFunction(otherCompileResult.Module, otherCompileResult.CommonModuleDependencies);
             }
             _context.ExecuteFunctionTopLevel(compiledFunctionName);
         }

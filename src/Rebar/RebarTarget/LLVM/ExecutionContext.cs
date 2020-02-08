@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using LLVMSharp;
-using NationalInstruments;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -202,13 +201,12 @@ namespace Rebar.RebarTarget.LLVM
         private readonly LLVMExecutionEngineRef _engine;
         private readonly Module _globalModule;
         private readonly LLVMTargetDataRef _targetData;
+        private readonly HashSet<string> _linkedCommonModules = new HashSet<string>();
 
         public ExecutionContext(IRebarTargetRuntimeServices runtimeServices)
         {
             _runtimeServices = runtimeServices;
             _globalModule = new Module("global");
-            string[] modules = new string[] { "fakedrop", "scheduler", "string", "range", "file" };
-            modules.ForEach(m => _globalModule.LinkInModule(CommonModules.GetModule(m).Clone()));
 
             string error;
             LLVMBool Success = new LLVMBool(0);
@@ -223,10 +221,18 @@ namespace Rebar.RebarTarget.LLVM
             _targetData = LLVMSharp.LLVM.GetExecutionEngineTargetData(_engine);
         }
 
-        public void LoadFunction(Module functionModule)
+        public void LoadFunction(Module functionModule, IEnumerable<string> commonModuleDependencies)
         {
             functionModule.VerifyAndThrowIfInvalid();
             _globalModule.LinkInModule(functionModule.Clone());
+            foreach (string commonModuleName in commonModuleDependencies)
+            {
+                if (!_linkedCommonModules.Contains(commonModuleName))
+                {
+                    _globalModule.LinkInModule(CommonModules.GetModule(commonModuleName).Clone());
+                    _linkedCommonModules.Add(commonModuleName);
+                }
+            }
         }
 
         public void ExecuteFunctionTopLevel(string functionName)

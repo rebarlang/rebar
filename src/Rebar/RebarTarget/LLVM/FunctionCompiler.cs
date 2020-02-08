@@ -588,7 +588,16 @@ namespace Rebar.RebarTarget.LLVM
         {
             return GetCachedFunction(functionName, () =>
             {
-                LLVMValueRef function = Module.AddFunction(functionName, CommonModules.CommonModuleSignatures[functionName]);
+                var commonFunctionTuple = CommonModules.GetCommonFunction(functionName);
+                LLVMTypeRef functionType = commonFunctionTuple.Item1;
+                string functionModuleName = commonFunctionTuple.Item2;
+                LLVMValueRef function = Module.AddFunction(functionName, functionType);
+                _commonModuleDependencies.Add(functionModuleName);
+                // TODO: need a better way to capture transitive dependencies
+                if (functionModuleName == CommonModules.FileModuleName)
+                {
+                    _commonModuleDependencies.Add(CommonModules.StringModuleName);
+                }
                 function.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
                 return function;
             });
