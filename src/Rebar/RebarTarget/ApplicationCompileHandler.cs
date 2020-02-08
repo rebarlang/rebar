@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using LLVMSharp;
 using NationalInstruments.Compiler;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
+using NationalInstruments.Core.IO;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.MocCommon.Components.Compiler;
+using Rebar.RebarTarget.LLVM;
 
 namespace Rebar.RebarTarget
 {
@@ -38,14 +41,83 @@ namespace Rebar.RebarTarget
         /// <inheritdoc />
         protected override IEnumerable<IFileBuilder> CreateFileBuilders(DfirRoot targetDfir, ComponentBuildResult componentBuildResult)
         {
-            return Enumerable.Empty<IFileBuilder>();
+            var moduleCombiner = new ModuleCombiner(componentBuildResult.GetComponentMemberBuiltPackagesBottomUp().Cast<FunctionBuiltPackage>());
+            var topLevelFunction = componentBuildResult.TopLevelMemberNames.First();
+            var wasmModuleBuilder = new WasmApplicationModuleBuilder(moduleCombiner, FunctionCompileHandler.FunctionLLVMName(topLevelFunction));
+            return new List<IFileBuilder>() { wasmModuleBuilder };
+        }
+
+        private class ModuleCombiner
+        {
+            private readonly IEnumerable<FunctionBuiltPackage> _builtPackages;
+
+            public ModuleCombiner(IEnumerable<FunctionBuiltPackage> builtPackages)
+            {
+                _builtPackages = builtPackages;
+            }
+
+            public Module CreateCombinedModule()
+            {
+                var module = new Module("combined");
+                foreach (FunctionBuiltPackage builtPackage in _builtPackages)
+                {
+                    module.LinkInModule(builtPackage.Module.Clone());
+                }
+
+                module.LinkInModule(CommonModules.FakeDropModule.Clone());
+                module.LinkInModule(CommonModules.SchedulerModule.Clone());
+                module.LinkInModule(CommonModules.StringModule.Clone());
+                module.LinkInModule(CommonModules.OutputModule.Clone());
+                module.LinkInModule(CommonModules.RangeModule.Clone());
+                module.LinkInModule(CommonModules.FileModule.Clone());
+                return module;
+            }
+        }
+
+        private class WasmApplicationModuleBuilder : FileBuilder
+        {
+            private readonly ModuleCombiner _moduleCombiner;
+            private readonly string _topLevelFunctionName;
+
+            public WasmApplicationModuleBuilder(ModuleCombiner moduleCombiner, string topLevelFunctionName)
+            {
+                _moduleCombiner = moduleCombiner;
+                _topLevelFunctionName = topLevelFunctionName;
+            }
+
+            public override string OutputRelativeFilePath
+            {
+                get
+                {
+                    return "module.wasm";
+                }
+            }
+
+            protected override Task BuildInternalAsync(string outputFolderPath, CompileCancellationToken cancellationToken)
+            {
+                Module wasiExecutableModule = WasiModuleBuilder.CreateWasiExecutableModule(_moduleCombiner.CreateCombinedModule(), _topLevelFunctionName);
+                string bitcodeFilePath = LongPath.Combine(outputFolderPath, LongPath.ChangeExtension(OutputRelativeFilePath, ".bc"));
+                int ret = wasiExecutableModule.WriteBitcodeToFile(bitcodeFilePath);
+                wasiExecutableModule.DisposeModule();
+
+                const string wasmLinkerPath = @"G:\Program Files\LLVM\bin\wasm-ld.exe";
+                string wasmModuleFilePath = LongPath.Combine(outputFolderPath, OutputRelativeFilePath);
+                // TODO: create a file for allowed undefined symbols
+                string wasmLinkerCommandArguments = $"\"{bitcodeFilePath}\" -o \"{wasmModuleFilePath}\" --allow-undefined";
+                var process = Process.Start(new ProcessStartInfo(wasmLinkerPath, wasmLinkerCommandArguments));
+                process.WaitForExit();
+                return AsyncHelpers.CompletedTask;
+            }
         }
 
         /// <inheritdoc />
-        protected override IBuiltPackage CreateExecutionBuiltPackage(SpecAndQName specAndQName, string absoluteDirectoryForComponent,
-            IEnumerable<IFileBuilder> builders, ComponentBuildResult componentBuildResult)
+        protected override IBuiltPackage CreateExecutionBuiltPackage(
+            SpecAndQName specAndQName,
+            string absoluteDirectoryForComponent,
+            IEnumerable<IFileBuilder> builders,
+            ComponentBuildResult componentBuildResult)
         {
-            throw new NotImplementedException();
+            return new EmptyBuiltPackage(specAndQName, Compiler.TargetName, componentBuildResult.AllDependencies);
         }
 
         /// <inheritdoc />
