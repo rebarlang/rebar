@@ -12,7 +12,7 @@ namespace Rebar.RebarTarget.LLVM
         private static readonly Dictionary<string, string> _functionModuleNames = new Dictionary<string, string>();
 
         public const string FakeDropModuleName = "fakedrop";
-        public const string SchedulerModuleName = "schduler";
+        public const string SchedulerModuleName = "scheduler";
         public const string StringModuleName = "string";
         public const string RangeModuleName = "range";
         public const string FileModuleName = "file";
@@ -158,10 +158,10 @@ namespace Rebar.RebarTarget.LLVM
                 false));
             BuildPartialScheduleFunction(schedulerModule, externalFunctions);
 
-            CommonModuleSignatures[InvokeName] = LLVMSharp.LLVM.FunctionType(
+            AddFunction(InvokeName, SchedulerModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMSharp.LLVM.VoidType(),
                 new LLVMTypeRef[] { LLVMExtensions.WakerType },
-                false);
+                false));
             BuildInvokeFunction(schedulerModule);
         }
 
@@ -622,7 +622,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CreateRangeModule(Module rangeModule)
         {
-            AddFunction(RangeIteratorNextName, FileModuleName, LLVMSharp.LLVM.FunctionType(
+            AddFunction(RangeIteratorNextName, RangeModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMTypeRef.VoidType(),
                 new LLVMTypeRef[]
                 {
@@ -632,7 +632,7 @@ namespace Rebar.RebarTarget.LLVM
                 false));
             BuildRangeIteratorNextFunction(rangeModule);
 
-            AddFunction(CreateRangeIteratorName, FileModuleName, LLVMSharp.LLVM.FunctionType(
+            AddFunction(CreateRangeIteratorName, RangeModuleName, LLVMSharp.LLVM.FunctionType(
                 LLVMTypeRef.Int32Type().CreateLLVMOptionType(),
                 new LLVMTypeRef[]
                 {
