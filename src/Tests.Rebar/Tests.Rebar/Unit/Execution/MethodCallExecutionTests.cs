@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using LLVMSharp;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
@@ -6,6 +8,7 @@ using NationalInstruments.Dfir;
 using NationalInstruments.Linking;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
+using Rebar.RebarTarget.LLVM;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -120,6 +123,16 @@ namespace Tests.Rebar.Unit.Execution
             return functionBuilder.CreateType();
         }
 
+        private NIType DefineFunctionSignatureWithTwoInAndOutParameters(string functionName)
+        {
+            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
+            functionBuilder.IsStatic = true;
+            functionBuilder.DefineParameter(PFTypes.Int32, "in0", NIParameterPassingRule.Required, NIParameterPassingRule.NotAllowed, "in0");
+            functionBuilder.DefineParameter(PFTypes.Int32, "in1", NIParameterPassingRule.Required, NIParameterPassingRule.NotAllowed, "in1");
+            functionBuilder.DefineParameter(PFTypes.Int32, "out", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out");
+            return functionBuilder.CreateType();
+        }
+
         private NIType DefineFunctionSignatureWithTwoOutParameters(string functionName)
         {
             NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
@@ -144,6 +157,26 @@ namespace Tests.Rebar.Unit.Execution
                     connectorPaneIndex++);
             }
             return function;
+        }
+
+        [TestMethod]
+        public void FunctionWithCallToFunctionWithInAndOutParameters_CreateWasmModule()
+        {
+            string calleeName = "entry";
+            NIType calleeType = DefineFunctionSignatureWithTwoInAndOutParameters(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DataAccessor input0DataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
+            DataAccessor input1DataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Output);
+            DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[2], Direction.Input);
+            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            Wire.Create(calleeFunction.BlockDiagram, input0DataAccessor.Terminal, add.InputTerminals[0]);
+            Wire.Create(calleeFunction.BlockDiagram, input1DataAccessor.Terminal, add.InputTerminals[1]);
+            Wire.Create(calleeFunction.BlockDiagram, add.OutputTerminals[2], outputDataAccessor.Terminal);
+
+            FunctionCompileResult compileResult = this.RunSemanticAnalysisUpToLLVMCodeGeneration(calleeFunction, calleeName, new Dictionary<ExtendedQualifiedName, bool>());
+            Module wasmModule = WasiModuleBuilder.CreateWasiLibraryModule(compileResult.Module, calleeName);
+            WasiModuleBuilder.LinkWasmModule(wasmModule, @"C:\temp\llvm\entry.wasm", false);
         }
     }
 }

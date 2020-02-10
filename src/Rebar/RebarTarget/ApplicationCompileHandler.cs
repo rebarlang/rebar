@@ -96,16 +96,9 @@ namespace Rebar.RebarTarget
             protected override Task BuildInternalAsync(string outputFolderPath, CompileCancellationToken cancellationToken)
             {
                 Module wasiExecutableModule = WasiModuleBuilder.CreateWasiExecutableModule(_moduleCombiner.CreateCombinedModule(), _topLevelFunctionName);
-                string bitcodeFilePath = LongPath.Combine(outputFolderPath, LongPath.ChangeExtension(OutputRelativeFilePath, ".bc"));
-                int ret = wasiExecutableModule.WriteBitcodeToFile(bitcodeFilePath);
+                string wasiModulePath = LongPath.Combine(outputFolderPath, OutputRelativeFilePath);
+                WasiModuleBuilder.LinkWasmModule(wasiExecutableModule, wasiModulePath, containsEntryPoint: true);
                 wasiExecutableModule.DisposeModule();
-
-                const string wasmLinkerPath = @"G:\Program Files\LLVM\bin\wasm-ld.exe";
-                string wasmModuleFilePath = LongPath.Combine(outputFolderPath, OutputRelativeFilePath);
-                // TODO: create a file for allowed undefined symbols
-                string wasmLinkerCommandArguments = $"\"{bitcodeFilePath}\" -o \"{wasmModuleFilePath}\" --allow-undefined";
-                var process = Process.Start(new ProcessStartInfo(wasmLinkerPath, wasmLinkerCommandArguments));
-                process.WaitForExit();
                 return AsyncHelpers.CompletedTask;
             }
         }
