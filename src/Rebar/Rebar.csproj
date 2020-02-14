@@ -345,6 +345,7 @@
     <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
     <Compile Include="RebarTarget\SharedLibraryCompileHandler.cs" />
+    <Compile Include="RebarTarget\SharedLibraryEntryPointCompileHandler.cs" />
     <Compile Include="RebarTarget\TargetCompiler.cs" />
     <Compile Include="RebarTarget\TargetCompilerServices.cs" />
     <Compile Include="RebarTarget\TargetCompilerServicesInitialization.cs" />
