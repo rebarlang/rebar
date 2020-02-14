@@ -1,4 +1,5 @@
 ﻿using NationalInstruments.Core;
+using NationalInstruments.ExternalCode.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.SourceModel;
 using Rebar.SourceModel.TypeDiagram;
@@ -39,6 +40,7 @@ namespace Rebar.RebarTarget.SystemModel
 
             return modelDefinitionType == Function.FunctionDefinitionType
                 || modelDefinitionType == TypeDiagramDefinition.TypeDiagramDefinitionType
+                || modelDefinitionType == SharedLibraryDefinition.ModelDefinitionTypeKeyword
                 // || modelDefinitionType == ComponentDefinition.ModelDefinitionTypeString
                 // || modelDefinitionType == GTypeDefinition.ModelDefinitionTypeString
                 // || modelDefinitionType == PaletteDocumentType.PaletteDocumentTypeString
