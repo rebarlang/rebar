@@ -67,6 +67,11 @@
       <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
     </Reference>
+    <Reference Include="NationalInstruments.ExternalCode, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+      <HintPath>$(InstallLocation)\NationalInstruments.ExternalCode.dll</HintPath>
+    </Reference>
     <Reference Include="NationalInstruments.MocCommon">
       <Private>False</Private>
       <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
