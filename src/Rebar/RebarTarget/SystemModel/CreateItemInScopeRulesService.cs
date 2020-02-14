@@ -28,20 +28,9 @@ namespace Rebar.RebarTarget.SystemModel
         private static bool CanHandleType(BindingKeyword modelDefinitionType, BindingKeyword overridingModelDefinitionType)
         {
             modelDefinitionType = overridingModelDefinitionType.IsEmpty() ? modelDefinitionType : overridingModelDefinitionType;
-
-#if FALSE
-            if (CodeReadinessSupport.AllowReadiness(CodeReadiness.Incomplete))
-            {
-                if (modelDefinitionType == ExternalCode.SourceModel.SharedLibraryDefinition.ModelDefinitionTypeKeyword)
-                {
-                    return true;
-                }
-            }
-#endif
-
             return modelDefinitionType == Function.FunctionDefinitionType
                 || modelDefinitionType == TypeDiagramDefinition.TypeDiagramDefinitionType
-                || modelDefinitionType == SharedLibraryDefinition.ModelDefinitionTypeKeyword
+                || (modelDefinitionType == SharedLibraryDefinition.ModelDefinitionTypeKeyword && RebarFeatureToggles.IsRebarTargetSharedLibraryInterfaceEnabled)
                 || modelDefinitionType == ComponentDefinition.ModelDefinitionTypeKeyword
                 // || modelDefinitionType == GTypeDefinition.ModelDefinitionTypeString
                 // || modelDefinitionType == PaletteDocumentType.PaletteDocumentTypeString

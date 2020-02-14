@@ -141,12 +141,6 @@
   <data name="FeatureToggle_FileHandleDataType_Description" xml:space="preserve">
     <value>Enable File Handle data type and related nodes</value>
   </data>
-  <data name="FeatureToggle_LLVMCompiler_Category" xml:space="preserve">
-    <value>Rebar</value>
-  </data>
-  <data name="FeatureToggle_LLVMCompiler_Description" xml:space="preserve">
-    <value>Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target)</value>
-  </data>
   <data name="FeatureToggle_NotifierType_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>
@@ -170,6 +164,12 @@
   </data>
   <data name="FeatureToggle_ParametersAndCalls_Description" xml:space="preserve">
     <value>Enable adding parameters to function diagrams and function calls</value>
+  </data>
+  <data name="FeatureToggle_RebarTargetSharedLibraryInterface_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_RebarTargetSharedLibraryInterface_Description" xml:space="preserve">
+    <value>Enable the SLI (Shared Library Interface) document on the Rebar target.</value>
   </data>
   <data name="FeatureToggle_RebarTarget_Category" xml:space="preserve">
     <value>Rebar</value>

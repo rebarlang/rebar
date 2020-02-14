@@ -19,7 +19,7 @@ namespace Rebar.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class LocalizedStrings {
@@ -135,24 +135,6 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
-        internal static string FeatureToggle_LLVMCompiler_Category {
-            get {
-                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Category", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Enable LLVM-based compiler for Rebar execution target (requires enabling Rebar execution target).
-        /// </summary>
-        internal static string FeatureToggle_LLVMCompiler_Description {
-            get {
-                return ResourceManager.GetString("FeatureToggle_LLVMCompiler_Description", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Rebar.
-        /// </summary>
         internal static string FeatureToggle_NotifierType_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_NotifierType_Category", resourceCulture);
@@ -237,6 +219,24 @@ namespace Rebar.Resources {
         internal static string FeatureToggle_RebarTarget_Description {
             get {
                 return ResourceManager.GetString("FeatureToggle_RebarTarget_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
+        internal static string FeatureToggle_RebarTargetSharedLibraryInterface_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_RebarTargetSharedLibraryInterface_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable the SLI (Shared Library Interface) document on the Rebar target..
+        /// </summary>
+        internal static string FeatureToggle_RebarTargetSharedLibraryInterface_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_RebarTargetSharedLibraryInterface_Description", resourceCulture);
             }
         }
         
