@@ -6,6 +6,7 @@ using NationalInstruments.ComponentEditor.SourceModel;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir.Component;
+using NationalInstruments.ExternalCode.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
@@ -40,6 +41,7 @@ namespace Rebar.RebarTarget
         {
             Function.FunctionDefinitionType,
             TypeDiagramDefinition.TypeDiagramDefinitionType,
+            SharedLibraryDefinition.ModelDefinitionTypeKeyword
         };
 
         #region ComponentSubtype Members
