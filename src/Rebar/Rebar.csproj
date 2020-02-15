@@ -291,6 +291,7 @@
     <Compile Include="Compiler\TypeDiagram\UnifyTypesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\TypeDiagram\ValidateTypeUsagesTransform.cs" />
     <Compile Include="Compiler\TypeUnificationExtensions.cs" />
+    <Compile Include="Design\ExternalLibraryEntryPointMergeScriptDataServiceFactory.cs" />
     <Compile Include="Design\StructFieldAccessorTerminalViewModel.cs" />
     <Compile Include="Design\StructFieldAccessorViewModel.cs" />
     <Compile Include="Design\ConstructorViewModel.cs" />
