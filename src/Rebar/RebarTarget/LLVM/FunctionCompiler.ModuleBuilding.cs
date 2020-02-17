@@ -103,7 +103,7 @@ namespace Rebar.RebarTarget.LLVM
             BuildOuterFunction(parameterTypes, initializeStateFunction, pollFunction);
         }
 
-        private List<LLVMTypeRef> GetParameterLLVMTypes()
+        internal List<LLVMTypeRef> GetParameterLLVMTypes()
         {
             var parameterTypes = new List<LLVMTypeRef>();
             foreach (var dataItem in _parameterDataItems.OrderBy(d => d.ConnectorPaneIndex))
@@ -287,7 +287,7 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateCall(GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { callerWaker }, string.Empty);
         }
 
-        private string GetSynchronousFunctionName(string functionName)
+        internal static string GetSynchronousFunctionName(string functionName)
         {
             return $"{functionName}::sync";
         }
@@ -401,7 +401,8 @@ namespace Rebar.RebarTarget.LLVM
             }
             else
             {
-                Builder.CreateCall(_syncFunction, outerFunction.GetParams().Skip(2).ToArray(), string.Empty);
+                var syncFunction = ((SynchronousFunctionModuleBuilder)_moduleBuilder).SyncFunction;
+                Builder.CreateCall(syncFunction, outerFunction.GetParams().Skip(2).ToArray(), string.Empty);
                 // activate the caller waker
                 // TODO: invoke caller waker directly, or schedule?
                 Builder.CreateCall(outerFunction.GetParam(0u), new LLVMValueRef[] { outerFunction.GetParam(1u) }, string.Empty);
@@ -409,16 +410,17 @@ namespace Rebar.RebarTarget.LLVM
 
                 var syncBuilder = new IRBuilder();
 
-                syncBuilder.PositionBuilderAtEnd(_syncFunctionEntryBlock);
+                var syncFunctionEntryBlock = ((SynchronousFunctionModuleBuilder)_moduleBuilder).SyncFunctionEntryBlock;
+                syncBuilder.PositionBuilderAtEnd(syncFunctionEntryBlock);
                 string singleFunctionName = _asyncStateGroups.First().FunctionId;
                 _allocationSet.InitializeFunctionLocalAllocations(singleFunctionName, syncBuilder);
-                InitializeParameterAllocations(_syncFunction, syncBuilder);
+                InitializeParameterAllocations(syncFunction, syncBuilder);
                 syncBuilder.CreateBr(AsyncStateGroups[_asyncStateGroups.First()].InitialBasicBlock);
 
                 foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
                 {
                     AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
-                    CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(_syncFunction, syncBuilder));
+                    CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(syncFunction, syncBuilder));
                 }
             }
         }

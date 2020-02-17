@@ -505,8 +505,6 @@ namespace Rebar.RebarTarget.LLVM
         private readonly DataItem[] _parameterDataItems;
         private readonly bool _singleFunction;
         private readonly FunctionModuleBuilder _moduleBuilder;
-        private readonly LLVMValueRef _syncFunction;
-        private readonly LLVMValueRef _syncFunctionEntryBlock;
 
         public FunctionCompiler(
             Module module,
@@ -528,16 +526,8 @@ namespace Rebar.RebarTarget.LLVM
             bool singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
             _singleFunction = singleFunction;
             _moduleBuilder = singleFunction
-                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder()
-                : new AsynchronousFunctionModuleBuilder();
-
-            if (_singleFunction)
-            {
-                var parameterTypes = GetParameterLLVMTypes();
-                LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes.ToArray(), false);
-                _syncFunction = Module.AddFunction(GetSynchronousFunctionName(_functionName), syncFunctionType);
-                _syncFunctionEntryBlock = _syncFunction.AppendBasicBlock("entry");
-            }
+                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName)
+                : new AsynchronousFunctionModuleBuilder(module);
 
             LLVMTypeRef groupFunctionType = default(LLVMTypeRef);
             var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
@@ -565,7 +555,7 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef groupFunction;
                 if (_singleFunction)
                 {
-                    groupFunction = _syncFunction;
+                    groupFunction = ((SynchronousFunctionModuleBuilder)_moduleBuilder).SyncFunction;
                 }
                 else
                 {
