@@ -525,54 +525,10 @@ namespace Rebar.RebarTarget.LLVM
 
             bool singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
             _singleFunction = singleFunction;
-            _moduleBuilder = singleFunction
-                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName)
-                : new AsynchronousFunctionModuleBuilder(module);
-
-            LLVMTypeRef groupFunctionType = default(LLVMTypeRef);
-            var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
-            if (!_singleFunction)
-            {
-                foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
-                {
-                    string groupName = asyncStateGroup.Label;
-                    if (asyncStateGroup.MaxFireCount > 1)
-                    {
-                        fireCountFields[asyncStateGroup] = _allocationSet.CreateStateField($"{groupName}FireCount", PFTypes.Int32);
-                    }
-                }
-                _allocationSet.InitializeStateType(module, functionName);
-                groupFunctionType = LLVMTypeRef.FunctionType(
-                    LLVMTypeRef.VoidType(),
-                    new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
-                    false);
-            }
-
-            var functions = new Dictionary<string, LLVMValueRef>();
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
-            foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
-            {
-                LLVMValueRef groupFunction;
-                if (_singleFunction)
-                {
-                    groupFunction = ((SynchronousFunctionModuleBuilder)_moduleBuilder).SyncFunction;
-                }
-                else
-                {
-                    if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
-                    {
-                        string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
-                        groupFunction = Module.AddFunction(groupFunctionName, groupFunctionType);
-                        functions[asyncStateGroup.FunctionId] = groupFunction;
-                    }
-                }
-
-                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
-                StateFieldValueSource fireCountStateField;
-                fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
-            }
-
+            _moduleBuilder = singleFunction
+                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups)
+                : new AsynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups, _allocationSet);
             _commonExternalFunctions = new CommonExternalFunctions(module);
         }
 

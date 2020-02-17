@@ -11,7 +11,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private class AsyncStateGroupData
+        internal class AsyncStateGroupData
         {
             public AsyncStateGroupData(
                 AsyncStateGroup asyncStateGroup,
@@ -81,7 +81,7 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
-        private Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
+        internal Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
 
         public void CompileFunction(DfirRoot dfirRoot)
         {
