@@ -540,10 +540,6 @@ namespace Rebar.RebarTarget.LLVM
 
         internal IRBuilder Builder => CurrentState.Builder;
 
-        internal AsyncStateGroup CurrentGroup { get; set; }
-
-        private AsyncStateGroupData CurrentGroupData => _moduleBuilder.AsyncStateGroups[CurrentGroup];
-
         private DfirRoot TargetDfir { get; set; }
 
         internal FunctionAllocationSet AllocationSet { get; }
@@ -1098,7 +1094,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef pollResultPtr = Builder.CreateAlloca(valueType.CreateOption().AsLLVMType(), "pollResultPtr");
 
             LLVMValueRef bitCastCurrentGroupFunction = Builder.CreateBitCast(
-                    CurrentGroupData.Function,
+                    _moduleBuilder.CurrentGroupData.Function,
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
                     "bitCastCurrentGroupFunction"),
                 bitCastStatePtr = Builder.CreateBitCast(AllocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
@@ -1295,7 +1291,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
+                _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
             }
         }
 
@@ -1365,7 +1361,7 @@ namespace Rebar.RebarTarget.LLVM
         private void VisitLoopAfterLeftBorderNodes(Compiler.Nodes.Loop loop)
         {
             LLVMValueRef condition = GetConditionAllocationSource(loop).GetValue(Builder);
-            CurrentGroupData.CreateContinuationStateChange(Builder, condition);
+            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, condition);
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
@@ -1447,7 +1443,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder);
             LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
-            CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
+            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
         }
 
         private void VisitOptionPatternStructureBeforeDiagram(OptionPatternStructure optionPatternStructure, Diagram diagram)

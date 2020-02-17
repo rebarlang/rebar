@@ -21,6 +21,10 @@ namespace Rebar.RebarTarget.LLVM
 
         internal Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
 
+        internal AsyncStateGroupData CurrentGroupData => AsyncStateGroups[CurrentGroup];
+
+        protected AsyncStateGroup CurrentGroup { get; set; }
+
         public abstract void CompileFunction();
 
         protected LLVMValueRef InitializeOuterFunction(string functionName, List<LLVMTypeRef> parameterTypes)
@@ -37,7 +41,7 @@ namespace Rebar.RebarTarget.LLVM
         protected void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup, FunctionCompilerState compilerState)
         {
             FunctionCompilerState previousState = FunctionCompiler.CurrentState;
-            FunctionCompiler.CurrentGroup = asyncStateGroup;
+            CurrentGroup = asyncStateGroup;
             FunctionCompiler.CurrentState = compilerState;
             AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
             LLVMValueRef groupFunction = groupData.Function;
@@ -129,7 +133,7 @@ namespace Rebar.RebarTarget.LLVM
                 FunctionCompiler.Builder.CreateRetVoid();
             }
 
-            FunctionCompiler.CurrentGroup = null;
+            CurrentGroup = null;
             FunctionCompiler.CurrentState = previousState;
         }
 
