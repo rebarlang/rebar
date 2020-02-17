@@ -323,6 +323,7 @@
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\AsynchronousFunctionModuleBuilder.cs" />
+    <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionAllocationSet.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompileResult.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionModuleBuilder.cs" />

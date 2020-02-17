@@ -36,7 +36,7 @@ namespace Rebar.RebarTarget.LLVM
             FunctionCompilerState previousState = FunctionCompiler.CurrentState;
             FunctionCompiler.CurrentGroup = asyncStateGroup;
             FunctionCompiler.CurrentState = compilerState;
-            FunctionCompiler.AsyncStateGroupData groupData = FunctionCompiler.AsyncStateGroups[asyncStateGroup];
+            AsyncStateGroupData groupData = FunctionCompiler.AsyncStateGroups[asyncStateGroup];
             LLVMValueRef groupFunction = groupData.Function;
 
             FunctionCompiler.Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
@@ -159,7 +159,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr");
             foreach (AsyncStateGroup successor in asyncStateGroups)
             {
-                FunctionCompiler.AsyncStateGroupData successorData = FunctionCompiler.AsyncStateGroups[successor];
+                AsyncStateGroupData successorData = FunctionCompiler.AsyncStateGroups[successor];
                 LLVMValueRef bitCastSuccessorFunction = builder.CreateBitCast(
                     successorData.Function,
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),

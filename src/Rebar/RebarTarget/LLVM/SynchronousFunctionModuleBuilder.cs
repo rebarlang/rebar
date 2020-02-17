@@ -31,7 +31,7 @@ namespace Rebar.RebarTarget.LLVM
             foreach (AsyncStateGroup asyncStateGroup in asyncStateGroups)
             {
                 LLVMBasicBlockRef groupBasicBlock = SyncFunction.AppendBasicBlock(asyncStateGroup.Label);
-                functionCompiler.AsyncStateGroups[asyncStateGroup] = new FunctionCompiler.AsyncStateGroupData(asyncStateGroup, SyncFunction, groupBasicBlock, null);
+                functionCompiler.AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, SyncFunction, groupBasicBlock, null);
             }
         }
 
@@ -63,7 +63,7 @@ namespace Rebar.RebarTarget.LLVM
 
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
-                FunctionCompiler.AsyncStateGroupData groupData = _functionCompiler.AsyncStateGroups[asyncStateGroup];
+                AsyncStateGroupData groupData = _functionCompiler.AsyncStateGroups[asyncStateGroup];
                 CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(SyncFunction, syncBuilder));
             }
         }
