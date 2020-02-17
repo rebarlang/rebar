@@ -503,8 +503,8 @@ namespace Rebar.RebarTarget.LLVM
         private readonly CommonExternalFunctions _commonExternalFunctions;
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
         private readonly DataItem[] _parameterDataItems;
-        private readonly LLVMTypeRef _groupFunctionType;
         private readonly bool _singleFunction;
+        private readonly FunctionModuleBuilder _moduleBuilder;
         private readonly LLVMValueRef _syncFunction;
         private readonly LLVMValueRef _syncFunctionEntryBlock;
 
@@ -524,7 +524,12 @@ namespace Rebar.RebarTarget.LLVM
             _additionalValues = additionalValues;
             _allocationSet = allocationSet;
             _asyncStateGroups = asyncStateGroups;
-            _singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
+
+            bool singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
+            _singleFunction = singleFunction;
+            _moduleBuilder = singleFunction
+                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder()
+                : new AsynchronousFunctionModuleBuilder();
 
             if (_singleFunction)
             {
@@ -534,6 +539,7 @@ namespace Rebar.RebarTarget.LLVM
                 _syncFunctionEntryBlock = _syncFunction.AppendBasicBlock("entry");
             }
 
+            LLVMTypeRef groupFunctionType = default(LLVMTypeRef);
             var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
             if (!_singleFunction)
             {
@@ -546,7 +552,7 @@ namespace Rebar.RebarTarget.LLVM
                     }
                 }
                 _allocationSet.InitializeStateType(module, functionName);
-                _groupFunctionType = LLVMTypeRef.FunctionType(
+                groupFunctionType = LLVMTypeRef.FunctionType(
                     LLVMTypeRef.VoidType(),
                     new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
                     false);
@@ -566,7 +572,7 @@ namespace Rebar.RebarTarget.LLVM
                     if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
                     {
                         string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
-                        groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
+                        groupFunction = Module.AddFunction(groupFunctionName, groupFunctionType);
                         functions[asyncStateGroup.FunctionId] = groupFunction;
                     }
                 }
