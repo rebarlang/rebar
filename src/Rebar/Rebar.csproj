@@ -322,6 +322,7 @@
     <Compile Include="RebarTarget\ApplicationRoot.cs" />
     <Compile Include="RebarTarget\AsyncStateGrouper.cs" />
     <Compile Include="RebarTarget\DataHelpers.cs" />
+    <Compile Include="RebarTarget\DefaultRebarTargetCompileHandler.cs" />
     <Compile Include="RebarTarget\ExecutableFunction.cs" />
     <Compile Include="RebarTarget\ExecutionTarget.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandler.cs" />

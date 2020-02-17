@@ -1,6 +1,7 @@
 ﻿using NationalInstruments.ComponentEditor.SourceModel;
 using NationalInstruments.Core;
 using NationalInstruments.ExternalCode.SourceModel;
+using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.SourceModel;
 using Rebar.SourceModel.TypeDiagram;
@@ -32,7 +33,8 @@ namespace Rebar.RebarTarget.SystemModel
                 || modelDefinitionType == TypeDiagramDefinition.TypeDiagramDefinitionType
                 || (modelDefinitionType == SharedLibraryDefinition.ModelDefinitionTypeKeyword && RebarFeatureToggles.IsRebarTargetSharedLibraryInterfaceEnabled)
                 || modelDefinitionType == ComponentDefinition.ModelDefinitionTypeKeyword
-                // || modelDefinitionType == GTypeDefinition.ModelDefinitionTypeString
+                // To allow Error.gtype
+                || modelDefinitionType == GTypeDefinition.ModelDefinitionTypeString
                 // || modelDefinitionType == PaletteDocumentType.PaletteDocumentTypeString
                 || modelDefinitionType == string.Empty; // Model definition type is empty when adding an item to a component under a target
         }

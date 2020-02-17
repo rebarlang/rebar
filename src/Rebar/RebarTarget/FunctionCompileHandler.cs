@@ -35,9 +35,7 @@ namespace Rebar.RebarTarget
         /// <inheritdoc />
         public override bool CanHandleThis(DfirRootRuntimeType runtimeType)
         {
-            return runtimeType == FunctionMocPlugin.FunctionRuntimeType ||
-             runtimeType == DfirRootRuntimeType.TypeType;
-             // runtimeType == SharedLibraryMocPlugin.SharedLibraryType;
+            return runtimeType == FunctionMocPlugin.FunctionRuntimeType;
         }
 
         /// <inheritdoc />
