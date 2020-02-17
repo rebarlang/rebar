@@ -84,6 +84,7 @@ namespace Rebar.SourceModel
             rules.Add(new OptionPatternStructureBatchRule());
             rules.Add(new PairedTunnelBatchRule());
             rules.Add(new DataItemBatchRule());
+            rules.Add(new MethodCallBatchRule());
         }
 
         /// <inheritdoc />

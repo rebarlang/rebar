@@ -415,6 +415,7 @@
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
+    <Compile Include="SourceModel\MethodCallBatchRule.cs" />
     <Compile Include="SourceModel\StructFieldAccessor.cs" />
     <Compile Include="SourceModel\TypeDiagram\PrimitiveType.cs" />
     <Compile Include="SourceModel\TypeDiagram\SelfType.cs" />
