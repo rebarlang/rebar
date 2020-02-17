@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using LLVMSharp;
 
 namespace Rebar.RebarTarget.LLVM
@@ -14,6 +15,7 @@ namespace Rebar.RebarTarget.LLVM
         public const string FakeDropModuleName = "fakedrop";
         public const string SchedulerModuleName = "scheduler";
         public const string StringModuleName = "string";
+        public const string OutputModuleName = "output";
         public const string RangeModuleName = "range";
         public const string FileModuleName = "file";
 
@@ -45,6 +47,16 @@ namespace Rebar.RebarTarget.LLVM
         public const string StringSliceToStringSplitIteratorName = "string_slice_to_string_split_iterator";
         public const string StringSplitIteratorNextName = "string_split_iterator_next";
 
+        public const string OutputBoolName = "output_bool";
+        public const string OutputInt8Name = "output_int8";
+        public const string OutputUInt8Name = "output_uint8";
+        public const string OutputInt16Name = "output_int16";
+        public const string OutputUInt16Name = "output_uint16";
+        public const string OutputInt32Name = "output_int32";
+        public const string OutputUInt32Name = "output_uint32";
+        public const string OutputInt64Name = "output_int64";
+        public const string OutputUInt64Name = "output_uint64";
+
         public const string RangeIteratorNextName = "range_iterator_next";
         public const string CreateRangeIteratorName = "create_range_iterator";
 
@@ -62,6 +74,29 @@ namespace Rebar.RebarTarget.LLVM
             CreateModule(StringModuleName, CreateStringModule);
             CreateModule(RangeModuleName, CreateRangeModule);
             CreateModule(FileModuleName, CreateFileModule);
+
+            string assemblyDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string llvmResourcesPath = Path.Combine(assemblyDirectory, "RebarTarget", "LLVM", "Resources");
+
+            string outputModulePath = Path.Combine(llvmResourcesPath, "output.bc");
+            Module outputModule = File.ReadAllBytes(outputModulePath).DeserializeModuleAsBitcode();
+            _modules[OutputModuleName] = outputModule;
+            var outputNames = new string[]
+            {
+                OutputBoolName,
+                OutputInt8Name,
+                OutputUInt8Name,
+                OutputInt16Name,
+                OutputUInt16Name,
+                OutputInt32Name,
+                OutputUInt32Name,
+                OutputInt64Name,
+                OutputUInt64Name,
+            };
+            foreach (string name in outputNames)
+            {
+                AddFunction(name, OutputModuleName, outputModule.GetNamedFunction(name).TypeOf().GetElementType());
+            }
         }
 
         private static Module CreateModule(string name, Action<Module> moduleCreator)
@@ -923,16 +958,6 @@ namespace Rebar.RebarTarget.LLVM
             ScheduleFunction = addTo.AddFunction("schedule", scheduleFunctionType);
             ScheduleFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
 
-            OutputBoolFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int1Type(), "output_bool");
-            OutputInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_int8");
-            OutputUInt8Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int8Type(), "output_uint8");
-            OutputInt16Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int16Type(), "output_int16");
-            OutputUInt16Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int16Type(), "output_uint16");
-            OutputInt32Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "output_int32");
-            OutputUInt32Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "output_uint32");
-            OutputInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_int64");
-            OutputUInt64Function = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int64Type(), "output_uint64");
-
             FakeDropFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "fake_drop");
 
             LLVMTypeRef outputStringFunctionType = LLVMSharp.LLVM.FunctionType(
@@ -1001,24 +1026,6 @@ namespace Rebar.RebarTarget.LLVM
         public LLVMValueRef CopyMemoryFunction { get; }
 
         public LLVMValueRef ScheduleFunction { get; }
-
-        public LLVMValueRef OutputBoolFunction { get; }
-
-        public LLVMValueRef OutputInt8Function { get; }
-
-        public LLVMValueRef OutputUInt8Function { get; }
-
-        public LLVMValueRef OutputInt16Function { get; }
-
-        public LLVMValueRef OutputUInt16Function { get; }
-
-        public LLVMValueRef OutputInt32Function { get; }
-
-        public LLVMValueRef OutputUInt32Function { get; }
-
-        public LLVMValueRef OutputInt64Function { get; }
-
-        public LLVMValueRef OutputUInt64Function { get; }
 
         public LLVMValueRef OutputStringFunction { get; }
 
