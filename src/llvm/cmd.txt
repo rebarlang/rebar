@@ -1,0 +1,1 @@
+clang -emit-llvm -c -o output.bc output.c
