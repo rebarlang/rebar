@@ -285,7 +285,7 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         private static void CompileUnaryOperation(
-            FunctionCompiler compiler, 
+            FunctionCompiler compiler,
             FunctionalNode operationNode,
             Func<FunctionCompiler, LLVMValueRef, LLVMValueRef> generateOperation,
             bool mutating)
@@ -381,81 +381,81 @@ namespace Rebar.RebarTarget.LLVM
                 case NITypeKind.String:
                     return "string";
                 default:
-                {
-                    if (type.IsRebarReferenceType())
                     {
-                        NIType referentType = type.GetReferentType();
-                        if (referentType == DataTypes.StringSliceType)
+                        if (type.IsRebarReferenceType())
                         {
-                            return "str";
+                            NIType referentType = type.GetReferentType();
+                            if (referentType == DataTypes.StringSliceType)
+                            {
+                                return "str";
+                            }
+                            NIType sliceElementType;
+                            if (referentType.TryDestructureSliceType(out sliceElementType))
+                            {
+                                return $"slice[{StringifyType(sliceElementType)}]";
+                            }
+                            return $"ref[{StringifyType(referentType)}]";
                         }
-                        NIType sliceElementType;
-                        if (referentType.TryDestructureSliceType(out sliceElementType))
+                        if (type.IsCluster())
                         {
-                            return $"slice[{StringifyType(sliceElementType)}]";
+                            string fieldStrings = string.Join(",", type.GetFields().Select(t => StringifyType(t.GetDataType())));
+                            return $"{{{fieldStrings}}}";
                         }
-                        return $"ref[{StringifyType(referentType)}]";
+                        if (type == DataTypes.FileHandleType)
+                        {
+                            return "filehandle";
+                        }
+                        if (type == DataTypes.FakeDropType)
+                        {
+                            return "fakedrop";
+                        }
+                        NIType innerType;
+                        if (type.TryDestructureOptionType(out innerType))
+                        {
+                            return $"option[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureVectorType(out innerType))
+                        {
+                            return $"vec[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureSharedType(out innerType))
+                        {
+                            return $"shared[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureYieldPromiseType(out innerType))
+                        {
+                            return $"yieldPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureMethodCallPromiseType(out innerType))
+                        {
+                            return $"methodCallPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierReaderType(out innerType))
+                        {
+                            return $"notifierReader[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierWriterType(out innerType))
+                        {
+                            return $"notifierWriter[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+                        {
+                            return $"notifierReaderPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type == DataTypes.RangeIteratorType)
+                        {
+                            return "rangeiterator";
+                        }
+                        if (type == DataTypes.WakerType)
+                        {
+                            return "waker";
+                        }
+                        if (type.IsValueClass())
+                        {
+                            return type.GetTypeDefinitionQualifiedName().ToString("::");
+                        }
+                        throw new NotSupportedException("Unsupported type: " + type);
                     }
-                    if (type.IsCluster())
-                    {
-                        string fieldStrings = string.Join(",", type.GetFields().Select(t => StringifyType(t.GetDataType())));
-                        return $"{{{fieldStrings}}}";
-                    }
-                    if (type == DataTypes.FileHandleType)
-                    {
-                        return "filehandle";
-                    }
-                    if (type == DataTypes.FakeDropType)
-                    {
-                        return "fakedrop";
-                    }
-                    NIType innerType;
-                    if (type.TryDestructureOptionType(out innerType))
-                    {
-                        return $"option[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureVectorType(out innerType))
-                    {
-                        return $"vec[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureSharedType(out innerType))
-                    {
-                        return $"shared[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureYieldPromiseType(out innerType))
-                    {
-                        return $"yieldPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureMethodCallPromiseType(out innerType))
-                    {
-                        return $"methodCallPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierReaderType(out innerType))
-                    {
-                        return $"notifierReader[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierWriterType(out innerType))
-                    {
-                        return $"notifierWriter[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierReaderPromiseType(out innerType))
-                    {
-                        return $"notifierReaderPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type == DataTypes.RangeIteratorType)
-                    {
-                        return "rangeiterator";
-                    }
-                    if (type == DataTypes.WakerType)
-                    {
-                        return "waker";
-                    }
-                    if (type.IsValueClass())
-                    {
-                        return type.GetTypeDefinitionQualifiedName().ToString("::");
-                    }
-                    throw new NotSupportedException("Unsupported type: " + type);
-                }
             }
         }
 
@@ -495,15 +495,11 @@ namespace Rebar.RebarTarget.LLVM
         #endregion
 
         private FunctionCompilerState _currentState;
-        private readonly string _functionName;
         private readonly Dictionary<VariableReference, ValueSource> _variableValues;
         private readonly Dictionary<object, ValueSource> _additionalValues;
-        private readonly FunctionAllocationSet _allocationSet;
-        private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
         private readonly CommonExternalFunctions _commonExternalFunctions;
         private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
         private readonly DataItem[] _parameterDataItems;
-        private readonly bool _singleFunction;
         private readonly FunctionModuleBuilder _moduleBuilder;
 
         public FunctionCompiler(
@@ -516,19 +512,16 @@ namespace Rebar.RebarTarget.LLVM
             IEnumerable<AsyncStateGroup> asyncStateGroups)
         {
             Module = module;
-            _functionName = functionName;
             _parameterDataItems = parameterDataItems;
             _variableValues = variableValues;
             _additionalValues = additionalValues;
-            _allocationSet = allocationSet;
-            _asyncStateGroups = asyncStateGroups;
+            AllocationSet = allocationSet;
 
-            bool singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
-            _singleFunction = singleFunction;
+            bool singleFunction = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             _moduleBuilder = singleFunction
                 ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups)
-                : new AsynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups, _allocationSet);
+                : new AsynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups);
             _commonExternalFunctions = new CommonExternalFunctions(module);
         }
 
@@ -537,22 +530,26 @@ namespace Rebar.RebarTarget.LLVM
         public FunctionCompilerState CurrentState
         {
             get { return _currentState; }
-            private set
+            set
             {
                 _currentState = value;
-                _allocationSet.CompilerState = _currentState;
+                AllocationSet.CompilerState = _currentState;
             }
         }
 
         private LLVMValueRef CurrentFunction => CurrentState.Function;
 
-        private IRBuilder Builder => CurrentState.Builder;
+        internal IRBuilder Builder => CurrentState.Builder;
 
-        private AsyncStateGroup CurrentGroup { get; set; }
+        internal AsyncStateGroup CurrentGroup { get; set; }
 
         private AsyncStateGroupData CurrentGroupData => AsyncStateGroups[CurrentGroup];
 
         private DfirRoot TargetDfir { get; set; }
+
+        internal FunctionAllocationSet AllocationSet { get; }
+
+        internal CommonExternalFunctions CommonExternalFunctions => _commonExternalFunctions;
 
         internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
@@ -750,7 +747,7 @@ namespace Rebar.RebarTarget.LLVM
             updateable.UpdateValue(Builder, value);
         }
 
-        private LLVMValueRef GetAddress(ValueSource valueSource, IRBuilder builder)
+        internal LLVMValueRef GetAddress(ValueSource valueSource, IRBuilder builder)
         {
             var addressable = valueSource as IAddressableValueSource;
             if (addressable == null)
@@ -1105,7 +1102,7 @@ namespace Rebar.RebarTarget.LLVM
                     CurrentGroupData.Function,
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
                     "bitCastCurrentGroupFunction"),
-                bitCastStatePtr = Builder.CreateBitCast(_allocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
+                bitCastStatePtr = Builder.CreateBitCast(AllocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
                 waker = Builder.BuildStructValue(
                     DataTypes.WakerType.AsLLVMType(),
                     new LLVMValueRef[] { bitCastCurrentGroupFunction, bitCastStatePtr },
