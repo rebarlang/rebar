@@ -12,11 +12,14 @@ namespace Rebar.RebarTarget.LLVM
         {
             Module = module;
             FunctionCompiler = functionCompiler;
+            AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
         }
 
         public Module Module { get; }
 
         protected FunctionCompiler FunctionCompiler { get; }
+
+        internal Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
 
         public abstract void CompileFunction();
 
@@ -36,7 +39,7 @@ namespace Rebar.RebarTarget.LLVM
             FunctionCompilerState previousState = FunctionCompiler.CurrentState;
             FunctionCompiler.CurrentGroup = asyncStateGroup;
             FunctionCompiler.CurrentState = compilerState;
-            AsyncStateGroupData groupData = FunctionCompiler.AsyncStateGroups[asyncStateGroup];
+            AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
             LLVMValueRef groupFunction = groupData.Function;
 
             FunctionCompiler.Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
@@ -73,7 +76,7 @@ namespace Rebar.RebarTarget.LLVM
                     AsyncStateGroup singleSuccessor;
                     if (unconditionalContinuation.Successors.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId)
                     {
-                        FunctionCompiler.Builder.CreateBr(FunctionCompiler.AsyncStateGroups[singleSuccessor].InitialBasicBlock);
+                        FunctionCompiler.Builder.CreateBr(AsyncStateGroups[singleSuccessor].InitialBasicBlock);
                         returnAfterGroup = false;
                     }
                     else
@@ -98,8 +101,8 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     FunctionCompiler.Builder.CreateCondBr(
                         condition,
-                        FunctionCompiler.AsyncStateGroups[singleTrueSuccessor].InitialBasicBlock,
-                        FunctionCompiler.AsyncStateGroups[singleFalseSuccessor].InitialBasicBlock);
+                        AsyncStateGroups[singleTrueSuccessor].InitialBasicBlock,
+                        AsyncStateGroups[singleFalseSuccessor].InitialBasicBlock);
                     returnAfterGroup = false;
                 }
                 else
@@ -145,7 +148,7 @@ namespace Rebar.RebarTarget.LLVM
                 && singleSuccessor.Predecessors.HasExactly(1))
             {
                 // our single successor only has us as a predecessor, so we can tail call it directly
-                FunctionCompiler.Builder.CreateCall(FunctionCompiler.AsyncStateGroups[singleSuccessor].Function, new LLVMValueRef[] { FunctionCompiler.CurrentState.StatePointer }, string.Empty);
+                FunctionCompiler.Builder.CreateCall(AsyncStateGroups[singleSuccessor].Function, new LLVMValueRef[] { FunctionCompiler.CurrentState.StatePointer }, string.Empty);
             }
             else
             {
@@ -159,7 +162,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr");
             foreach (AsyncStateGroup successor in asyncStateGroups)
             {
-                AsyncStateGroupData successorData = FunctionCompiler.AsyncStateGroups[successor];
+                AsyncStateGroupData successorData = AsyncStateGroups[successor];
                 LLVMValueRef bitCastSuccessorFunction = builder.CreateBitCast(
                     successorData.Function,
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),

@@ -53,7 +53,7 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                functionCompiler.AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Rebar.RebarTarget.LLVM
             List<LLVMTypeRef> parameterTypes = _functionCompiler.GetParameterLLVMTypes();
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
             {
-                AsyncStateGroupData groupData = _functionCompiler.AsyncStateGroups[asyncStateGroup];
+                AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
                 CompileAsyncStateGroup(asyncStateGroup, new AsyncStateGroupCompilerState(groupData.Function, new IRBuilder()));
             }
 
@@ -137,7 +137,7 @@ namespace Rebar.RebarTarget.LLVM
             outerFunctionCompilerState.StateMalloc = statePtr;
 
             // set initial fire counts
-            foreach (AsyncStateGroupData groupData in _functionCompiler.AsyncStateGroups.Values)
+            foreach (AsyncStateGroupData groupData in AsyncStateGroups.Values)
             {
                 groupData.CreateFireCountReset(builder);
             }
@@ -146,7 +146,7 @@ namespace Rebar.RebarTarget.LLVM
             CreateScheduleCallsForAsyncStateGroups(
                 builder,
                 statePtr,
-                _functionCompiler.AsyncStateGroups.Keys.Where(group => !group.Predecessors.Any()));
+                AsyncStateGroups.Keys.Where(group => !group.Predecessors.Any()));
 
             builder.CreateRetVoid();
             return pollFunction;

@@ -10,8 +10,6 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        internal Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
-
         public void CompileFunction(DfirRoot dfirRoot)
         {
             TargetDfir = dfirRoot;

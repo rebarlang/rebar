@@ -518,7 +518,6 @@ namespace Rebar.RebarTarget.LLVM
             AllocationSet = allocationSet;
 
             bool singleFunction = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
-            AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
             _moduleBuilder = singleFunction
                 ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups)
                 : new AsynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups);
@@ -543,7 +542,7 @@ namespace Rebar.RebarTarget.LLVM
 
         internal AsyncStateGroup CurrentGroup { get; set; }
 
-        private AsyncStateGroupData CurrentGroupData => AsyncStateGroups[CurrentGroup];
+        private AsyncStateGroupData CurrentGroupData => _moduleBuilder.AsyncStateGroups[CurrentGroup];
 
         private DfirRoot TargetDfir { get; set; }
 
