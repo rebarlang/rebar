@@ -22,11 +22,11 @@ namespace Tests.Rebar.Unit.Compiler
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
             Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, 5, false);
 
-            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
+            FunctionVariableStorage valueStorage = RunAllocator(function);
 
-            ValueSource integerValueSource = valueSources[constant.OutputTerminal.GetTrueVariable()];
+            ValueSource integerValueSource = valueStorage.GetValueSourceForVariable(constant.OutputTerminal.GetTrueVariable());
             Assert.IsInstanceOfType(integerValueSource, typeof(ConstantValueSource));
-            ValueSource inspectInputValueSource = valueSources[inspect.InputTerminals[0].GetTrueVariable()];
+            ValueSource inspectInputValueSource = valueStorage.GetValueSourceForVariable(inspect.InputTerminals[0].GetTrueVariable());
             Assert.IsInstanceOfType(inspectInputValueSource, typeof(ReferenceToSingleValueSource));
         }
 
@@ -38,9 +38,9 @@ namespace Tests.Rebar.Unit.Compiler
             ConnectConstantToInputTerminal(add.InputTerminals[0], PFTypes.Int32, false);
             ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
 
-            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
+            FunctionVariableStorage valueStorage = RunAllocator(function);
 
-            ValueSource sumSource = valueSources[add.OutputTerminals[2].GetTrueVariable()];
+            ValueSource sumSource = valueStorage.GetValueSourceForVariable(add.OutputTerminals[2].GetTrueVariable());
             Assert.IsInstanceOfType(sumSource, typeof(ImmutableValueSource));
         }
 
@@ -53,9 +53,10 @@ namespace Tests.Rebar.Unit.Compiler
             ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
             Wire.Create(function.BlockDiagram, add.OutputTerminals[2], yieldNode.InputTerminals[0]);
-            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
 
-            ValueSource sumSource = valueSources[add.OutputTerminals[2].GetTrueVariable()];
+            FunctionVariableStorage valueStorage = RunAllocator(function);
+
+            ValueSource sumSource = valueStorage.GetValueSourceForVariable(add.OutputTerminals[2].GetTrueVariable());
             Assert.IsInstanceOfType(sumSource, typeof(LocalAllocationValueSource));
         }
 
@@ -68,13 +69,14 @@ namespace Tests.Rebar.Unit.Compiler
             ConnectConstantToInputTerminal(concat.InputTerminals[1], DataTypes.StringSliceType.CreateImmutableReference(), false);
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
             Wire.Create(function.BlockDiagram, concat.OutputTerminals[2], yieldNode.InputTerminals[0]);
-            Dictionary<VariableReference, ValueSource> valueSources = RunAllocator(function);
 
-            ValueSource sumSource = valueSources[concat.OutputTerminals[2].GetTrueVariable()];
+            FunctionVariableStorage valueStorage = RunAllocator(function);
+
+            ValueSource sumSource = valueStorage.GetValueSourceForVariable(concat.OutputTerminals[2].GetTrueVariable());
             Assert.IsInstanceOfType(sumSource, typeof(StateFieldValueSource));
         }
 
-        private Dictionary<VariableReference, ValueSource> RunAllocator(DfirRoot function)
+        private FunctionVariableStorage RunAllocator(DfirRoot function)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAsyncNodeDecomposition(function, cancellationToken);
@@ -84,11 +86,10 @@ namespace Tests.Rebar.Unit.Compiler
             asyncStateGrouper.Execute(function, cancellationToken);
             IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
 
-            Dictionary<VariableReference, ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<ValueSource>();
-            var additionalSources = new Dictionary<object, ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
+            var variableStorage = new FunctionVariableStorage();
+            var allocator = new Allocator(variableStorage, asyncStateGroups);
             allocator.Execute(function, cancellationToken);
-            return valueSources;
+            return variableStorage;
         }
     }
 }

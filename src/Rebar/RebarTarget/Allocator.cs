@@ -24,20 +24,17 @@ namespace Rebar.RebarTarget
     /// allocated in the frame</remarks>
     internal class Allocator : VisitorTransformBase, IVisitationHandler<bool>, IInternalDfirNodeVisitor<bool>
     {
-        private readonly Dictionary<VariableReference, ValueSource> _variableAllocations;
-        private readonly Dictionary<object, ValueSource> _additionalAllocations;
+        private readonly FunctionVariableStorage _variableStorage;
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
         private readonly Dictionary<VariableReference, VariableUsage> _variableUsages;
         private AsyncStateGroup _currentGroup;
         private readonly string _singleFunctionName;
 
         public Allocator(
-            Dictionary<VariableReference, ValueSource> variableAllocations,
-            Dictionary<object, ValueSource> additionalAllocations,
+            FunctionVariableStorage variableStorage,
             IEnumerable<AsyncStateGroup> asyncStateGroups)
         {
-            _variableAllocations = variableAllocations;
-            _additionalAllocations = additionalAllocations;
+            _variableStorage = variableStorage;
             _asyncStateGroups = asyncStateGroups;
             _asyncStateGroups.Select(g => g.FunctionId).Distinct().TryGetSingleElement(out _singleFunctionName);
             _variableUsages = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableUsage>();
@@ -83,7 +80,7 @@ namespace Rebar.RebarTarget
                 VariableReference variable = pair.Key;
                 VariableUsage usage = pair.Value;
 
-                _variableAllocations[variable] = GetValueSourceForUsage(variable, usage, valueSources);
+                _variableStorage.AddValueSourceForVariable(variable, GetValueSourceForUsage(variable, usage, valueSources));
             }
         }
 
@@ -169,18 +166,20 @@ namespace Rebar.RebarTarget
         private void VisitDataItem(DataItem dataItem)
         {
             VariableReference dataItemVariable = dataItem.GetVariable();
+            ValueSource valueSource;
             if (_singleFunctionName != null)
             {
-                _variableAllocations[dataItemVariable] = dataItem.IsInput
+                valueSource = dataItem.IsInput
                     ? AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type)
                     : AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type);
             }
             else
             {
-                _variableAllocations[dataItemVariable] = dataItem.IsInput
+                valueSource = dataItem.IsInput
                     ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
                     : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
             }
+            _variableStorage.AddValueSourceForVariable(dataItemVariable, valueSource);
         }
 
         #endregion
@@ -292,8 +291,9 @@ namespace Rebar.RebarTarget
             WillGetValue(iterateTunnel.InputTerminals[0]);
 
             Terminal outputTerminal = iterateTunnel.OutputTerminals[0];
-            _additionalAllocations[iterateTunnel.IntermediateValueName] =
-                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputTerminal.GetTrueVariable().Type.CreateOption());
+            _variableStorage.AddAdditionalValueSource(
+                iterateTunnel.IntermediateValueName,
+                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputTerminal.GetTrueVariable().Type.CreateOption()));
             WillInitializeWithValue(outputTerminal);
 
             LoopConditionTunnel conditionTunnel = ((Compiler.Nodes.Loop)iterateTunnel.ParentStructure).BorderNodes.OfType<LoopConditionTunnel>().First();

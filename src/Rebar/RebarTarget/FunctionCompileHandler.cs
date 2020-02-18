@@ -146,16 +146,14 @@ namespace Rebar.RebarTarget
 #endif
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
 
-            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
+            var variableStorage = new LLVM.FunctionVariableStorage();
+            var allocator = new Allocator(variableStorage, asyncStateGroups);
             allocator.Execute(dfirRoot, cancellationToken);
 
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
 
             var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
-            var variableStorage = new LLVM.FunctionVariableStorage(valueSources, additionalSources);
             var functionImporter = new LLVM.FunctionImporter(module);
             var sharedData = new LLVM.FunctionCompilerSharedData(
                 parameterInfos,
