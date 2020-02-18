@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.Linking;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -59,15 +61,25 @@ namespace Tests.Rebar.Unit.Compiler
                 .Execute(dfirRoot, cancellationToken);
             new InsertDropTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory)
                 .Execute(dfirRoot, cancellationToken);
-            new AsyncNodeDecompositionTransform(nodeInsertionTypeUnificationResultFactory)
+        }
+
+        protected void RunCompilationUpToAsyncNodeDecomposition(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
+        {
+            cancellationToken = cancellationToken ?? new CompileCancellationToken();
+            RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
+            var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
+            new AsyncNodeDecompositionTransform(new Dictionary<ExtendedQualifiedName, bool>(), nodeInsertionTypeUnificationResultFactory)
                 .Execute(dfirRoot, cancellationToken);
         }
 
-        internal FunctionCompileResult RunSemanticAnalysisUpToLLVMCodeGeneration(DfirRoot dfirRoot, string compiledFunctionName)
+        internal FunctionCompileResult RunSemanticAnalysisUpToLLVMCodeGeneration(
+            DfirRoot dfirRoot,
+            string compiledFunctionName,
+            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
-            return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, compiledFunctionName);
+            return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, calleesIsYielding, compiledFunctionName);
         }
 
         protected NIType DefineGenericOutputFunctionSignature()

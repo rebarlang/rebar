@@ -55,6 +55,32 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void FunctionWithCallToYieldingFunctionWithInAndOutParameters_Execute_CalleeFunctionExecutesAndReturnsCorrectResult()
+        {
+            string calleeName = "callee";
+            NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
+            DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
+            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            Wire.Create(calleeFunction.BlockDiagram, inputDataAccessor.Terminal, add.InputTerminals[0]);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, 1, false);
+            var yieldNode = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.YieldType);
+            Wire.Create(calleeFunction.BlockDiagram, add.OutputTerminals[2], yieldNode.InputTerminals[0]);
+            Wire.Create(calleeFunction.BlockDiagram, yieldNode.OutputTerminals[0], outputDataAccessor.Terminal);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            ConnectConstantToInputTerminal(methodCall.InputTerminals[0], PFTypes.Int32, 5, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 6);
+        }
+
+        [TestMethod]
         public void FunctionWithCallToFunctionWithTwoOutParameters_Execute_CalleeFunctionExecutesAndReturnsCorrectResults()
         {
             string calleeName = "callee";

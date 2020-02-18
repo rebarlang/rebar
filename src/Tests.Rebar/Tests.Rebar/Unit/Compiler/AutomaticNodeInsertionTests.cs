@@ -306,7 +306,7 @@ namespace Tests.Rebar.Unit.Compiler
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
             Constant constant = ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], PFTypes.Int32, false);
 
-            RunCompilationUpToAutomaticNodeInsertion(function);
+            RunCompilationUpToAsyncNodeDecomposition(function);
 
             ExplicitBorrowNode borrowNode = AssertDiagramContainsNodeWithSources<ExplicitBorrowNode>(function.BlockDiagram, constant.OutputTerminal);
             FunctionalNode createYieldPromise = AssertDiagramContainsNodeWithSources<FunctionalNode>(

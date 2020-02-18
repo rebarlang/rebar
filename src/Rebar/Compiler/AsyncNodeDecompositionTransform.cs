@@ -5,6 +5,7 @@ using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.Linking;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -22,23 +23,26 @@ namespace Rebar.Compiler
         }
 
         private readonly ITypeUnificationResultFactory _unificationResultFactory;
+        private readonly Dictionary<ExtendedQualifiedName, bool> _isYielding;
 
-        public AsyncNodeDecompositionTransform(ITypeUnificationResultFactory unificationResultFactory)
+        public AsyncNodeDecompositionTransform(Dictionary<ExtendedQualifiedName, bool> isYielding, ITypeUnificationResultFactory unificationResultFactory)
         {
+            _isYielding = isYielding;
             _unificationResultFactory = unificationResultFactory;
         }
 
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
-            var methodCallNodes = dfirRoot.GetAllNodesIncludingSelf().Where(CanDecompose).ToList();
-            methodCallNodes.ForEach(Decompose);
+            var nodesToDecompose = dfirRoot.GetAllNodesIncludingSelf().Where(CanDecompose).ToList();
+            nodesToDecompose.ForEach(Decompose);
         }
 
-        private static bool CanDecompose(Node node)
+        private bool CanDecompose(Node node)
         {
-            if (node is MethodCallNode)
+            var methodCallNode = node as MethodCallNode;
+            if (methodCallNode != null)
             {
-                return true;
+                return _isYielding[methodCallNode.TargetName];
             }
             var functionalNode = node as FunctionalNode;
             return functionalNode != null && _createPromiseSignatures.ContainsKey(functionalNode.Signature.GetName());
