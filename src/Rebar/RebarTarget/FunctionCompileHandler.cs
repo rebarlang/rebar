@@ -13,6 +13,7 @@ using Rebar.Compiler;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using NationalInstruments;
+using NationalInstruments.DataTypes;
 
 namespace Rebar.RebarTarget
 {
@@ -145,22 +146,27 @@ namespace Rebar.RebarTarget
 #endif
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
 
-            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
+            var variableStorage = new LLVM.FunctionVariableStorage();
+            var allocator = new Allocator(variableStorage, asyncStateGroups);
             allocator.Execute(dfirRoot, cancellationToken);
 
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
-            var functionCompiler = new LLVM.FunctionCompiler(
-                module,
-                compiledFunctionName,
-                dfirRoot.DataItems.ToArray(),
-                valueSources,
-                additionalSources,
+
+            var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
+            var functionImporter = new LLVM.FunctionImporter(module);
+            var sharedData = new LLVM.FunctionCompilerSharedData(
+                parameterInfos,
                 allocator.AllocationSet,
-                asyncStateGroups);
-            functionCompiler.CompileFunction(dfirRoot);
+                variableStorage,
+                new LLVM.CommonExternalFunctions(module),
+                functionImporter);
+            var moduleBuilder = isYielding
+                ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
+                : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
+            sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
+
+            moduleBuilder.CompileFunction();
             return new LLVM.FunctionCompileResult(module, isYielding);
         }
 
@@ -173,6 +179,26 @@ namespace Rebar.RebarTarget
         {
             QualifiedName relativeQualifiedName = functionExtendedQualifiedName.Name.AbsoluteQualifiedNameToQualifiedName();
             return string.Join("::", relativeQualifiedName.Identifiers);
+        }
+
+        private static LLVM.ParameterInfo ToParameterInfo(DataItem dataItem)
+        {
+            Direction direction;
+            if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.Required
+                && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.NotAllowed)
+            {
+                direction = Direction.Input;
+            }
+            else if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.NotAllowed
+                && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.Optional)
+            {
+                direction = Direction.Output;
+            }
+            else
+            {
+                throw new NotImplementedException("Can only handle in and out parameters");
+            }
+            return new LLVM.ParameterInfo(dataItem.GetVariable(), direction);
         }
 
         #endregion

@@ -102,7 +102,8 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CompileInspect(FunctionCompiler compiler, FunctionalNode inspectNode)
         {
-            VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
+            Terminal inputTerminal = inspectNode.InputTerminals[0];
+            VariableReference input = inputTerminal.GetTrueVariable();
 
             // define global data in module for inspected value
             LLVMTypeRef globalType = input.Type.GetReferentType().AsLLVMType();
@@ -112,7 +113,7 @@ namespace Rebar.RebarTarget.LLVM
             globalAddress.SetInitializer(LLVMSharp.LLVM.ConstNull(globalType));
 
             // load the input dereference value and store it in the global
-            compiler.Builder.CreateStore(compiler._variableValues[input].GetDereferencedValue(compiler.Builder), globalAddress);
+            compiler.Builder.CreateStore(compiler.GetTerminalValueSource(inputTerminal).GetDereferencedValue(compiler.Builder), globalAddress);
         }
 
         private static void CompileOutput(FunctionCompiler compiler, FunctionalNode outputNode)
@@ -285,7 +286,7 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         private static void CompileUnaryOperation(
-            FunctionCompiler compiler, 
+            FunctionCompiler compiler,
             FunctionalNode operationNode,
             Func<FunctionCompiler, LLVMValueRef, LLVMValueRef> generateOperation,
             bool mutating)
@@ -381,81 +382,81 @@ namespace Rebar.RebarTarget.LLVM
                 case NITypeKind.String:
                     return "string";
                 default:
-                {
-                    if (type.IsRebarReferenceType())
                     {
-                        NIType referentType = type.GetReferentType();
-                        if (referentType == DataTypes.StringSliceType)
+                        if (type.IsRebarReferenceType())
                         {
-                            return "str";
+                            NIType referentType = type.GetReferentType();
+                            if (referentType == DataTypes.StringSliceType)
+                            {
+                                return "str";
+                            }
+                            NIType sliceElementType;
+                            if (referentType.TryDestructureSliceType(out sliceElementType))
+                            {
+                                return $"slice[{StringifyType(sliceElementType)}]";
+                            }
+                            return $"ref[{StringifyType(referentType)}]";
                         }
-                        NIType sliceElementType;
-                        if (referentType.TryDestructureSliceType(out sliceElementType))
+                        if (type.IsCluster())
                         {
-                            return $"slice[{StringifyType(sliceElementType)}]";
+                            string fieldStrings = string.Join(",", type.GetFields().Select(t => StringifyType(t.GetDataType())));
+                            return $"{{{fieldStrings}}}";
                         }
-                        return $"ref[{StringifyType(referentType)}]";
+                        if (type == DataTypes.FileHandleType)
+                        {
+                            return "filehandle";
+                        }
+                        if (type == DataTypes.FakeDropType)
+                        {
+                            return "fakedrop";
+                        }
+                        NIType innerType;
+                        if (type.TryDestructureOptionType(out innerType))
+                        {
+                            return $"option[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureVectorType(out innerType))
+                        {
+                            return $"vec[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureSharedType(out innerType))
+                        {
+                            return $"shared[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureYieldPromiseType(out innerType))
+                        {
+                            return $"yieldPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureMethodCallPromiseType(out innerType))
+                        {
+                            return $"methodCallPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierReaderType(out innerType))
+                        {
+                            return $"notifierReader[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierWriterType(out innerType))
+                        {
+                            return $"notifierWriter[{StringifyType(innerType)}]";
+                        }
+                        if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+                        {
+                            return $"notifierReaderPromise[{StringifyType(innerType)}]";
+                        }
+                        if (type == DataTypes.RangeIteratorType)
+                        {
+                            return "rangeiterator";
+                        }
+                        if (type == DataTypes.WakerType)
+                        {
+                            return "waker";
+                        }
+                        if (type.IsValueClass())
+                        {
+                            return type.GetTypeDefinitionQualifiedName().ToString("::");
+                        }
+                        throw new NotSupportedException("Unsupported type: " + type);
                     }
-                    if (type.IsCluster())
-                    {
-                        string fieldStrings = string.Join(",", type.GetFields().Select(t => StringifyType(t.GetDataType())));
-                        return $"{{{fieldStrings}}}";
-                    }
-                    if (type == DataTypes.FileHandleType)
-                    {
-                        return "filehandle";
-                    }
-                    if (type == DataTypes.FakeDropType)
-                    {
-                        return "fakedrop";
-                    }
-                    NIType innerType;
-                    if (type.TryDestructureOptionType(out innerType))
-                    {
-                        return $"option[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureVectorType(out innerType))
-                    {
-                        return $"vec[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureSharedType(out innerType))
-                    {
-                        return $"shared[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureYieldPromiseType(out innerType))
-                    {
-                        return $"yieldPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureMethodCallPromiseType(out innerType))
-                    {
-                        return $"methodCallPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierReaderType(out innerType))
-                    {
-                        return $"notifierReader[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierWriterType(out innerType))
-                    {
-                        return $"notifierWriter[{StringifyType(innerType)}]";
-                    }
-                    if (type.TryDestructureNotifierReaderPromiseType(out innerType))
-                    {
-                        return $"notifierReaderPromise[{StringifyType(innerType)}]";
-                    }
-                    if (type == DataTypes.RangeIteratorType)
-                    {
-                        return "rangeiterator";
-                    }
-                    if (type == DataTypes.WakerType)
-                    {
-                        return "waker";
-                    }
-                    if (type.IsValueClass())
-                    {
-                        return type.GetTypeDefinitionQualifiedName().ToString("::");
-                    }
-                    throw new NotSupportedException("Unsupported type: " + type);
-                }
             }
         }
 
@@ -494,129 +495,43 @@ namespace Rebar.RebarTarget.LLVM
 
         #endregion
 
-        private FunctionCompilerState _currentState;
-        private readonly string _functionName;
-        private readonly Dictionary<VariableReference, ValueSource> _variableValues;
-        private readonly Dictionary<object, ValueSource> _additionalValues;
-        private readonly FunctionAllocationSet _allocationSet;
-        private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
-        private readonly CommonExternalFunctions _commonExternalFunctions;
-        private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
-        private readonly DataItem[] _parameterDataItems;
-        private readonly LLVMTypeRef _groupFunctionType;
-        private readonly bool _singleFunction;
-        private readonly LLVMValueRef _syncFunction;
-        private readonly LLVMValueRef _syncFunctionEntryBlock;
+        private readonly FunctionCompilerSharedData _sharedData;
+        private readonly FunctionModuleBuilder _moduleBuilder;
 
         public FunctionCompiler(
-            Module module,
-            string functionName,
-            DataItem[] parameterDataItems,
-            Dictionary<VariableReference, ValueSource> variableValues,
-            Dictionary<object, ValueSource> additionalValues,
-            FunctionAllocationSet allocationSet,
-            IEnumerable<AsyncStateGroup> asyncStateGroups)
+            DfirRoot targetDfir,
+            FunctionModuleBuilder moduleBuilder,
+            FunctionCompilerSharedData sharedData)
         {
-            Module = module;
-            _functionName = functionName;
-            _parameterDataItems = parameterDataItems;
-            _variableValues = variableValues;
-            _additionalValues = additionalValues;
-            _allocationSet = allocationSet;
-            _asyncStateGroups = asyncStateGroups;
-            _singleFunction = _asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
-
-            if (_singleFunction)
-            {
-                var parameterTypes = GetParameterLLVMTypes();
-                LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes.ToArray(), false);
-                _syncFunction = Module.AddFunction(GetSynchronousFunctionName(_functionName), syncFunctionType);
-                _syncFunctionEntryBlock = _syncFunction.AppendBasicBlock("entry");
-            }
-
-            var fireCountFields = new Dictionary<AsyncStateGroup, StateFieldValueSource>();
-            if (!_singleFunction)
-            {
-                foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
-                {
-                    string groupName = asyncStateGroup.Label;
-                    if (asyncStateGroup.MaxFireCount > 1)
-                    {
-                        fireCountFields[asyncStateGroup] = _allocationSet.CreateStateField($"{groupName}FireCount", PFTypes.Int32);
-                    }
-                }
-                _allocationSet.InitializeStateType(module, functionName);
-                _groupFunctionType = LLVMTypeRef.FunctionType(
-                    LLVMTypeRef.VoidType(),
-                    new LLVMTypeRef[] { LLVMTypeRef.PointerType(_allocationSet.StateType, 0u) },
-                    false);
-            }
-
-            var functions = new Dictionary<string, LLVMValueRef>();
-            AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
-            foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)
-            {
-                LLVMValueRef groupFunction;
-                if (_singleFunction)
-                {
-                    groupFunction = _syncFunction;
-                }
-                else
-                {
-                    if (!functions.TryGetValue(asyncStateGroup.FunctionId, out groupFunction))
-                    {
-                        string groupFunctionName = $"{_functionName}::{asyncStateGroup.FunctionId}";
-                        groupFunction = Module.AddFunction(groupFunctionName, _groupFunctionType);
-                        functions[asyncStateGroup.FunctionId] = groupFunction;
-                    }
-                }
-
-                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
-                StateFieldValueSource fireCountStateField;
-                fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
-            }
-
-            _commonExternalFunctions = new CommonExternalFunctions(module);
+            TargetDfir = targetDfir;
+            _moduleBuilder = moduleBuilder;
+            _sharedData = sharedData;
         }
 
-        public Module Module { get; }
+        private Module Module => _moduleBuilder.Module;
 
-        public FunctionCompilerState CurrentState
-        {
-            get { return _currentState; }
-            private set
-            {
-                _currentState = value;
-                _allocationSet.CompilerState = _currentState;
-            }
-        }
+        private FunctionCompilerState CurrentState => _sharedData.CurrentState;
 
         private LLVMValueRef CurrentFunction => CurrentState.Function;
 
         private IRBuilder Builder => CurrentState.Builder;
 
-        private AsyncStateGroup CurrentGroup { get; set; }
+        private DfirRoot TargetDfir { get; }
 
-        private AsyncStateGroupData CurrentGroupData => AsyncStateGroups[CurrentGroup];
+        private FunctionAllocationSet AllocationSet => _sharedData.AllocationSet;
 
-        private DfirRoot TargetDfir { get; set; }
+        private CommonExternalFunctions CommonExternalFunctions => _sharedData.CommonExternalFunctions;
 
         internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
-            return GetCachedFunction(functionName, () =>
-            {
-                LLVMValueRef function = Module.AddFunction(functionName, CommonModules.CommonModuleSignatures[functionName]);
-                function.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-                return function;
-            });
+            return _sharedData.FunctionImporter.GetImportedCommonFunction(functionName);
         }
 
         private LLVMValueRef GetImportedSynchronousFunction(MethodCallNode methodCallNode)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
             return GetImportedFunction(
-                GetSynchronousFunctionName(targetFunctionName),
+                FunctionNames.GetSynchronousFunctionName(targetFunctionName),
                 () => TranslateFunctionType(methodCallNode.Signature));
         }
 
@@ -624,19 +539,19 @@ namespace Rebar.RebarTarget.LLVM
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
             return GetImportedFunction(
-                GetInitializeStateFunctionName(targetFunctionName),
+                FunctionNames.GetInitializeStateFunctionName(targetFunctionName),
                 () => TranslateInitializeFunctionType(createMethodCallPromise.Signature));
         }
 
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
-            return GetImportedFunction(GetPollFunctionName(targetFunctionName), () => LLVMExtensions.ScheduledTaskFunctionType);
+            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => LLVMExtensions.ScheduledTaskFunctionType);
         }
 
         private LLVMValueRef GetImportedFunction(string functionName, Func<LLVMTypeRef> getFunctionType)
         {
-            return GetCachedFunction(functionName, () => Module.AddFunction(functionName, getFunctionType()));
+            return _sharedData.FunctionImporter.GetCachedFunction(functionName, () => Module.AddFunction(functionName, getFunctionType()));
         }
 
         private LLVMValueRef GetSpecializedFunctionWithSignature(FunctionalNode functionalNode, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
@@ -647,23 +562,12 @@ namespace Rebar.RebarTarget.LLVM
         internal LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
         {
             string specializedFunctionName = MonomorphizeFunctionName(specializedSignature);
-            return GetCachedFunction(specializedFunctionName, () =>
+            return _sharedData.FunctionImporter.GetCachedFunction(specializedFunctionName, () =>
             {
                 LLVMValueRef function = Module.AddFunction(specializedFunctionName, TranslateFunctionType(specializedSignature));
                 createFunction(this, specializedSignature, function);
                 return function;
             });
-        }
-
-        private LLVMValueRef GetCachedFunction(string specializedFunctionName, Func<LLVMValueRef> createFunction)
-        {
-            LLVMValueRef function;
-            if (!_importedFunctions.TryGetValue(specializedFunctionName, out function))
-            {
-                function = createFunction();
-                _importedFunctions[specializedFunctionName] = function;
-            }
-            return function;
         }
 
         private static Action<FunctionCompiler, FunctionalNode> CreateSpecializedFunctionCallCompiler(Action<FunctionCompiler, NIType, LLVMValueRef> functionCreator)
@@ -731,11 +635,10 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (wire.SinkTerminals.HasMoreThan(1))
             {
-                VariableReference[] sinkVariables = wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable).ToArray();
                 Func<IRBuilder, LLVMValueRef> valueGetter = GetTerminalValueSource(wire.SourceTerminal).GetValue;
-                foreach (var sinkVariable in sinkVariables)
+                foreach (var sinkTerminal in wire.SinkTerminals.Skip(1))
                 {
-                    InitializeIfNecessary(_variableValues[sinkVariable], valueGetter);
+                    InitializeIfNecessary(GetTerminalValueSource(sinkTerminal), valueGetter);
                 }
             }
         }
@@ -759,14 +662,19 @@ namespace Rebar.RebarTarget.LLVM
 
 #region Private helpers
 
+        private ValueSource GetValueSource(VariableReference variable)
+        {
+            return _sharedData.VariableStorage.GetValueSourceForVariable(variable);
+        }
+
         private ValueSource GetTerminalValueSource(Terminal terminal)
         {
-            return _variableValues[terminal.GetTrueVariable()];
+            return _sharedData.VariableStorage.GetValueSourceForVariable(terminal.GetTrueVariable());
         }
 
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
         {
-            InitializeIfNecessary(_variableValues[into], builder => GetAddress(_variableValues[from], builder));
+            InitializeIfNecessary(GetValueSource(into), builder => GetAddress(GetValueSource(from), builder));
         }
 
         private void Initialize(ValueSource toInitialize, LLVMValueRef value)
@@ -798,7 +706,7 @@ namespace Rebar.RebarTarget.LLVM
             updateable.UpdateValue(Builder, value);
         }
 
-        private LLVMValueRef GetAddress(ValueSource valueSource, IRBuilder builder)
+        internal LLVMValueRef GetAddress(ValueSource valueSource, IRBuilder builder)
         {
             var addressable = valueSource as IAddressableValueSource;
             if (addressable == null)
@@ -899,18 +807,18 @@ namespace Rebar.RebarTarget.LLVM
         public bool VisitDataAccessor(DataAccessor dataAccessor)
         {
             ValueSource terminalValueSource = GetTerminalValueSource(dataAccessor.Terminal);
-            VariableReference dataItemVariable = dataAccessor.DataItem.GetVariable();
+            ValueSource dataItemValueSource = GetValueSource(dataAccessor.DataItem.GetVariable());
             if (dataAccessor.Terminal.Direction == Direction.Output)
             {
                 // TODO: distinguish inout from in parameters?
-                LLVMValueRef parameterValue = _variableValues[dataItemVariable].GetValue(Builder);
+                LLVMValueRef parameterValue = dataItemValueSource.GetValue(Builder);
                 Initialize(terminalValueSource, parameterValue);
             }
             else if (dataAccessor.Terminal.Direction == Direction.Input)
             {
                 // assume that the function parameter is a pointer to where we need to store the value
                 LLVMValueRef value = terminalValueSource.GetValue(Builder);
-                Update(_variableValues[dataItemVariable], value);
+                Update(dataItemValueSource, value);
             }
             return true;
         }
@@ -935,8 +843,9 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
-            var inputValueSource = _variableValues[input];
+            Terminal inputTerminal = dropNode.InputTerminals[0];
+            VariableReference input = inputTerminal.GetTrueVariable();
+            var inputValueSource = GetTerminalValueSource(inputTerminal);
             CreateDropCallIfDropFunctionExists(Builder, input.Type, builder => GetAddress(inputValueSource, builder));
             return true;
         }
@@ -955,8 +864,8 @@ namespace Rebar.RebarTarget.LLVM
         {
             VariableReference input = explicitBorrowNode.InputTerminals[0].GetTrueVariable(),
                 output = explicitBorrowNode.OutputTerminals[0].GetTrueVariable();
-            ValueSource inputSource = _variableValues[input],
-                outputSource = _variableValues[output];
+            ValueSource inputSource = GetValueSource(input),
+                outputSource = GetValueSource(output);
             if (inputSource != outputSource)
             {
                 BorrowFromVariableIntoVariable(input, output);
@@ -1088,8 +997,8 @@ namespace Rebar.RebarTarget.LLVM
             {
                 VariableReference input = tunnel.InputTerminals[0].GetTrueVariable(),
                     output = tunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource inputValueSource = _variableValues[input],
-                    outputValueSource = _variableValues[output];
+                ValueSource inputValueSource = GetValueSource(input),
+                    outputValueSource = GetValueSource(output);
                 if (output.Type == input.Type.CreateOption())
                 {
                     LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
@@ -1148,10 +1057,10 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef pollResultPtr = Builder.CreateAlloca(valueType.CreateOption().AsLLVMType(), "pollResultPtr");
 
             LLVMValueRef bitCastCurrentGroupFunction = Builder.CreateBitCast(
-                    CurrentGroupData.Function,
+                    _moduleBuilder.CurrentGroupData.Function,
                     LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
                     "bitCastCurrentGroupFunction"),
-                bitCastStatePtr = Builder.CreateBitCast(_allocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
+                bitCastStatePtr = Builder.CreateBitCast(AllocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
                 waker = Builder.BuildStructValue(
                     DataTypes.WakerType.AsLLVMType(),
                     new LLVMValueRef[] { bitCastCurrentGroupFunction, bitCastStatePtr },
@@ -1334,7 +1243,7 @@ namespace Rebar.RebarTarget.LLVM
                     // initialized by values from different predecessor blocks, but may not change
                     // after initialization.
                     VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
-                    ValueSource outputSource = _variableValues[outputVariable];
+                    ValueSource outputSource = GetValueSource(outputVariable);
                     LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
                     Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
                 }
@@ -1345,7 +1254,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
+                _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
             }
         }
 
@@ -1406,7 +1315,7 @@ namespace Rebar.RebarTarget.LLVM
                 // As with output tunnels of conditionally-executing Frames, it would be nice
                 // to treat these as Phi ValueSources.
                 VariableReference tunnelOutputVariable = outputTunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource tunnelOutputSource = _variableValues[tunnelOutputVariable];
+                ValueSource tunnelOutputSource = GetValueSource(tunnelOutputVariable);
                 LLVMTypeRef tunnelOutputType = tunnelOutputVariable.Type.AsLLVMType();
                 Update(tunnelOutputSource, LLVMSharp.LLVM.ConstNull(tunnelOutputType));
             }
@@ -1415,7 +1324,7 @@ namespace Rebar.RebarTarget.LLVM
         private void VisitLoopAfterLeftBorderNodes(Compiler.Nodes.Loop loop)
         {
             LLVMValueRef condition = GetConditionAllocationSource(loop).GetValue(Builder);
-            CurrentGroupData.CreateContinuationStateChange(Builder, condition);
+            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, condition);
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
@@ -1427,7 +1336,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]);
             ValueSource itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
-            var intermediateOptionSource = _additionalValues[iterateTunnel.IntermediateValueName];
+            var intermediateOptionSource = _sharedData.VariableStorage.GetAdditionalValueSource(iterateTunnel.IntermediateValueName);
             Terminal inputTerminal = iterateTunnel.InputTerminals[0];
 
             NIType iteratorType = inputTerminal.GetTrueVariable().Type.GetReferentType();
@@ -1497,7 +1406,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder);
             LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
-            CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
+            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
         }
 
         private void VisitOptionPatternStructureBeforeDiagram(OptionPatternStructure optionPatternStructure, Diagram diagram)
