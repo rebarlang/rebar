@@ -155,6 +155,26 @@ namespace Rebar.RebarTarget.LLVM
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetLocalAllocationPointer(_functionName, _allocationIndex);
     }
 
+    internal class OutputParameterLocalAllocationValueSource : LocalAllocationValueSource, IAddressableValueSource
+    {
+        public OutputParameterLocalAllocationValueSource(string allocationName, FunctionAllocationSet allocationSet, string functionName, int allocationIndex)
+            : base(allocationName, allocationSet, functionName, allocationIndex)
+        {
+        }
+
+        LLVMValueRef IAddressableValueSource.GetAddress(IRBuilder builder)
+        {
+            return base.GetAllocationPointer(builder);
+        }
+
+        protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)
+        {
+            LLVMValueRef localAllocationPtr = base.GetAllocationPointer(builder),
+                outputParameterAllocationPtr = builder.CreateLoad(localAllocationPtr, AllocationName + "Load");
+            return outputParameterAllocationPtr;
+        }
+    }
+
     internal class StateFieldValueSource : AllocationValueSource
     {
         private readonly FunctionAllocationSet _allocationSet;
@@ -170,11 +190,16 @@ namespace Rebar.RebarTarget.LLVM
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder) => _allocationSet.GetStateFieldPointer(builder, _fieldIndex);
     }
 
-    internal class OutputParameterValueSource : StateFieldValueSource
+    internal class OutputParameterStateFieldValueSource : StateFieldValueSource, IAddressableValueSource
     {
-        public OutputParameterValueSource(string allocationName, FunctionAllocationSet allocationSet, int fieldIndex)
+        public OutputParameterStateFieldValueSource(string allocationName, FunctionAllocationSet allocationSet, int fieldIndex)
             : base(allocationName, allocationSet, fieldIndex)
         {
+        }
+
+        LLVMValueRef IAddressableValueSource.GetAddress(IRBuilder builder)
+        {
+            return base.GetAllocationPointer(builder);
         }
 
         protected override LLVMValueRef GetAllocationPointer(IRBuilder builder)

@@ -83,7 +83,7 @@ namespace Rebar.RebarTarget.LLVM
         private LLVMValueRef GetDecrementRefCountFunction(NIType valueType)
         {
             string specializedName = MonomorphizeFunctionName("decrementRefCount", valueType.ToEnumerable());
-            return GetCachedFunction(
+            return _sharedData.FunctionImporter.GetCachedFunction(
                 specializedName,
                 () => BuildDecrementRefCountFunction(this, specializedName, valueType));
         }

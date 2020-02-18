@@ -4,13 +4,16 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LLVMSharp;
+using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using Rebar.Compiler;
 using Rebar.Common;
+using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget
 {
@@ -67,19 +70,6 @@ namespace Rebar.RebarTarget
                 compileSignatureParameters.Add(compileSignatureParameter);
             }
 
-            CompileSignature topSignature = new CompileSignature(
-                targetDfir.Name,
-                compileSignatureParameters, // GenerateParameters(targetDfir),
-                targetDfir.GetDeclaringType(),
-                targetDfir.Reentrancy,
-                true,
-                true,
-                ThreadAffinity.Standard,
-                false,
-                true,
-                ExecutionPriority.Normal,
-                CallingConvention.StdCall);
-
             var compileSignatures = new Dictionary<ExtendedQualifiedName, CompileSignature>();
             var dependencyIdentities = new HashSet<SpecAndQName>();
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
@@ -95,7 +85,14 @@ namespace Rebar.RebarTarget
                 }
             }
 
-            LLVM.FunctionCompileResult compileResult = CompileFunctionForLLVM(targetDfir, cancellationToken);
+            var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
+            foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
+            {
+                CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
+                calleesIsYielding[methodCallNode.TargetName] = calleeSignature.IsYielding;
+            }
+
+            LLVM.FunctionCompileResult compileResult = CompileFunctionForLLVM(targetDfir, cancellationToken, calleesIsYielding);
             var builtPackage = new LLVM.FunctionBuiltPackage(
                 specAndQName,
                 Compiler.TargetName,
@@ -114,11 +111,32 @@ namespace Rebar.RebarTarget
                 compileThreadState,
                 false);
 
+            CompileSignature topSignature = new CompileSignature(
+                functionName: targetDfir.Name,
+                parameters: compileSignatureParameters, // GenerateParameters(targetDfir),
+                declaringType: targetDfir.GetDeclaringType(),
+                reentrancy: targetDfir.Reentrancy,
+                isYielding: compileResult.IsYielding,
+                isFunctional: true,
+                threadAffinity: ThreadAffinity.Standard,
+                shouldAlwaysInline: false,
+                mayWantToInline: true,
+                priority: ExecutionPriority.Normal,
+                callingConvention: CallingConvention.StdCall);
+
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }
 
-        internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(DfirRoot dfirRoot, CompileCancellationToken cancellationToken, string compiledFunctionName = "")
+        internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(
+            DfirRoot dfirRoot,
+            CompileCancellationToken cancellationToken,
+            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
+            string compiledFunctionName = "")
         {
+            // TODO: running this here because it needs to know which callee Functions are yielding.
+            new AsyncNodeDecompositionTransform(calleesIsYielding, new NodeInsertionTypeUnificationResultFactory())
+                .Execute(dfirRoot, cancellationToken);
+
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
 
             var asyncStateGrouper = new AsyncStateGrouper();
@@ -127,32 +145,57 @@ namespace Rebar.RebarTarget
 #if DEBUG
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
+            bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
 
-            Dictionary<VariableReference, LLVM.ValueSource> valueSources = VariableReference.CreateDictionaryWithUniqueVariableKeys<LLVM.ValueSource>();
-            var additionalSources = new Dictionary<object, LLVM.ValueSource>();
-            var allocator = new Allocator(valueSources, additionalSources, asyncStateGroups);
+            var variableStorage = new LLVM.FunctionVariableStorage();
+            var allocator = new Allocator(variableStorage, asyncStateGroups);
             allocator.Execute(dfirRoot, cancellationToken);
 
             var module = new Module("module");
             compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
-            var functionCompiler = new LLVM.FunctionCompiler(
-                module,
-                compiledFunctionName,
-                dfirRoot.DataItems.ToArray(),
-                valueSources,
-                additionalSources,
-                allocator.AllocationSet,
-                asyncStateGroups);
-            functionCompiler.CompileFunction(dfirRoot);
 
-            IEnumerable<string> commonModuleDependencies = functionCompiler.CommonModuleDependencies;
-            return new LLVM.FunctionCompileResult(module, commonModuleDependencies.ToArray());
+            var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
+            var functionImporter = new LLVM.FunctionImporter(module);
+            var sharedData = new LLVM.FunctionCompilerSharedData(
+                parameterInfos,
+                allocator.AllocationSet,
+                variableStorage,
+                new LLVM.CommonExternalFunctions(module),
+                functionImporter);
+            var moduleBuilder = isYielding
+                ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
+                : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
+            sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
+
+            moduleBuilder.CompileFunction();
+            IEnumerable<string> commonModuleDependencies = functionImporter.CommonModuleDependencies;
+            return new LLVM.FunctionCompileResult(module, isYielding, commonModuleDependencies.ToArray());
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
         {
             QualifiedName relativeQualifiedName = functionSpecAndQName.QualifiedName.Name.AbsoluteQualifiedNameToQualifiedName();
             return string.Join("::", relativeQualifiedName.Identifiers);
+        }
+
+        private static LLVM.ParameterInfo ToParameterInfo(DataItem dataItem)
+        {
+            Direction direction;
+            if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.Required
+                && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.NotAllowed)
+            {
+                direction = Direction.Input;
+            }
+            else if (dataItem.ConnectorPaneInputPassingRule == NIParameterPassingRule.NotAllowed
+                && dataItem.ConnectorPaneOutputPassingRule == NIParameterPassingRule.Optional)
+            {
+                direction = Direction.Output;
+            }
+            else
+            {
+                throw new NotImplementedException("Can only handle in and out parameters");
+            }
+            return new LLVM.ParameterInfo(dataItem.GetVariable(), direction);
         }
 
         #endregion
