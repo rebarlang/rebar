@@ -6,26 +6,22 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal class SynchronousFunctionModuleBuilder : FunctionModuleBuilder
     {
-        private readonly FunctionCompiler _functionCompiler;
         private readonly string _functionName;
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
-        private readonly FunctionAllocationSet _allocationSet;
 
         public SynchronousFunctionModuleBuilder(
             Module module,
-            FunctionCompiler functionCompiler,
+            FunctionCompilerSharedData sharedData,
             string functionName,
             IEnumerable<AsyncStateGroup> asyncStateGroups)
-            : base(module, functionCompiler)
+            : base(module, sharedData)
         {
-            _functionCompiler = functionCompiler;
             _functionName = functionName;
             _asyncStateGroups = asyncStateGroups;
-            _allocationSet = functionCompiler.AllocationSet;
 
-            var parameterTypes = functionCompiler.GetParameterLLVMTypes();
+            var parameterTypes = GetParameterLLVMTypes();
             LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes.ToArray(), false);
-            SyncFunction = Module.AddFunction(FunctionCompiler.GetSynchronousFunctionName(functionName), syncFunctionType);
+            SyncFunction = Module.AddFunction(FunctionNames.GetSynchronousFunctionName(functionName), syncFunctionType);
             SyncFunctionEntryBlock = SyncFunction.AppendBasicBlock("entry");
 
             foreach (AsyncStateGroup asyncStateGroup in asyncStateGroups)
@@ -41,10 +37,10 @@ namespace Rebar.RebarTarget.LLVM
 
         public override void CompileFunction()
         {
-            LLVMValueRef outerFunction = InitializeOuterFunction(_functionName, _functionCompiler.GetParameterLLVMTypes());
+            LLVMValueRef outerFunction = InitializeOuterFunction(_functionName, GetParameterLLVMTypes());
             var builder = new IRBuilder();
             var outerFunctionCompilerState = new OuterFunctionCompilerState(outerFunction, builder);
-            _functionCompiler.CurrentState = outerFunctionCompilerState;
+            CurrentState = outerFunctionCompilerState;
             LLVMBasicBlockRef outerEntryBlock = outerFunction.AppendBasicBlock("entry");
             builder.PositionBuilderAtEnd(outerEntryBlock);
 
@@ -57,8 +53,8 @@ namespace Rebar.RebarTarget.LLVM
             var syncBuilder = new IRBuilder();
             syncBuilder.PositionBuilderAtEnd(SyncFunctionEntryBlock);
             string singleFunctionName = _asyncStateGroups.First().FunctionId;
-            _allocationSet.InitializeFunctionLocalAllocations(singleFunctionName, syncBuilder);
-            _functionCompiler.InitializeParameterAllocations(SyncFunction, syncBuilder);
+            SharedData.AllocationSet.InitializeFunctionLocalAllocations(singleFunctionName, syncBuilder);
+            InitializeParameterAllocations(SyncFunction, syncBuilder);
             syncBuilder.CreateBr(AsyncStateGroups[_asyncStateGroups.First()].InitialBasicBlock);
 
             foreach (AsyncStateGroup asyncStateGroup in _asyncStateGroups)

@@ -102,7 +102,8 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void CompileInspect(FunctionCompiler compiler, FunctionalNode inspectNode)
         {
-            VariableReference input = inspectNode.InputTerminals[0].GetTrueVariable();
+            Terminal inputTerminal = inspectNode.InputTerminals[0];
+            VariableReference input = inputTerminal.GetTrueVariable();
 
             // define global data in module for inspected value
             LLVMTypeRef globalType = input.Type.GetReferentType().AsLLVMType();
@@ -112,7 +113,7 @@ namespace Rebar.RebarTarget.LLVM
             globalAddress.SetInitializer(LLVMSharp.LLVM.ConstNull(globalType));
 
             // load the input dereference value and store it in the global
-            compiler.Builder.CreateStore(compiler._variableValues[input].GetDereferencedValue(compiler.Builder), globalAddress);
+            compiler.Builder.CreateStore(compiler.GetTerminalValueSource(inputTerminal).GetDereferencedValue(compiler.Builder), globalAddress);
         }
 
         private static void CompileOutput(FunctionCompiler compiler, FunctionalNode outputNode)
@@ -494,73 +495,43 @@ namespace Rebar.RebarTarget.LLVM
 
         #endregion
 
-        private FunctionCompilerState _currentState;
-        private readonly Dictionary<VariableReference, ValueSource> _variableValues;
-        private readonly Dictionary<object, ValueSource> _additionalValues;
-        private readonly CommonExternalFunctions _commonExternalFunctions;
-        private readonly Dictionary<string, LLVMValueRef> _importedFunctions = new Dictionary<string, LLVMValueRef>();
-        private readonly DataItem[] _parameterDataItems;
+        private readonly FunctionCompilerSharedData _sharedData;
         private readonly FunctionModuleBuilder _moduleBuilder;
 
         public FunctionCompiler(
-            Module module,
-            string functionName,
-            DataItem[] parameterDataItems,
-            Dictionary<VariableReference, ValueSource> variableValues,
-            Dictionary<object, ValueSource> additionalValues,
-            FunctionAllocationSet allocationSet,
-            IEnumerable<AsyncStateGroup> asyncStateGroups)
+            DfirRoot targetDfir,
+            FunctionModuleBuilder moduleBuilder,
+            FunctionCompilerSharedData sharedData)
         {
-            Module = module;
-            _parameterDataItems = parameterDataItems;
-            _variableValues = variableValues;
-            _additionalValues = additionalValues;
-            AllocationSet = allocationSet;
-
-            bool singleFunction = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasExactly(1);
-            _moduleBuilder = singleFunction
-                ? (FunctionModuleBuilder)new SynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups)
-                : new AsynchronousFunctionModuleBuilder(module, this, functionName, asyncStateGroups);
-            _commonExternalFunctions = new CommonExternalFunctions(module);
+            TargetDfir = targetDfir;
+            _moduleBuilder = moduleBuilder;
+            _sharedData = sharedData;
         }
 
-        public Module Module { get; }
+        private Module Module => _moduleBuilder.Module;
 
-        public FunctionCompilerState CurrentState
-        {
-            get { return _currentState; }
-            set
-            {
-                _currentState = value;
-                AllocationSet.CompilerState = _currentState;
-            }
-        }
+        private FunctionCompilerState CurrentState => _sharedData.CurrentState;
 
         private LLVMValueRef CurrentFunction => CurrentState.Function;
 
-        internal IRBuilder Builder => CurrentState.Builder;
+        private IRBuilder Builder => CurrentState.Builder;
 
-        private DfirRoot TargetDfir { get; set; }
+        private DfirRoot TargetDfir { get; }
 
-        internal FunctionAllocationSet AllocationSet { get; }
+        private FunctionAllocationSet AllocationSet => _sharedData.AllocationSet;
 
-        internal CommonExternalFunctions CommonExternalFunctions => _commonExternalFunctions;
+        private CommonExternalFunctions CommonExternalFunctions => _sharedData.CommonExternalFunctions;
 
         internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
-            return GetCachedFunction(functionName, () =>
-            {
-                LLVMValueRef function = Module.AddFunction(functionName, CommonModules.CommonModuleSignatures[functionName]);
-                function.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-                return function;
-            });
+            return _sharedData.FunctionImporter.GetImportedCommonFunction(functionName);
         }
 
         private LLVMValueRef GetImportedSynchronousFunction(MethodCallNode methodCallNode)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
             return GetImportedFunction(
-                GetSynchronousFunctionName(targetFunctionName),
+                FunctionNames.GetSynchronousFunctionName(targetFunctionName),
                 () => TranslateFunctionType(methodCallNode.Signature));
         }
 
@@ -568,19 +539,19 @@ namespace Rebar.RebarTarget.LLVM
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
             return GetImportedFunction(
-                GetInitializeStateFunctionName(targetFunctionName),
+                FunctionNames.GetInitializeStateFunctionName(targetFunctionName),
                 () => TranslateInitializeFunctionType(createMethodCallPromise.Signature));
         }
 
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
-            return GetImportedFunction(GetPollFunctionName(targetFunctionName), () => LLVMExtensions.ScheduledTaskFunctionType);
+            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => LLVMExtensions.ScheduledTaskFunctionType);
         }
 
         private LLVMValueRef GetImportedFunction(string functionName, Func<LLVMTypeRef> getFunctionType)
         {
-            return GetCachedFunction(functionName, () => Module.AddFunction(functionName, getFunctionType()));
+            return _sharedData.FunctionImporter.GetCachedFunction(functionName, () => Module.AddFunction(functionName, getFunctionType()));
         }
 
         private LLVMValueRef GetSpecializedFunctionWithSignature(FunctionalNode functionalNode, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
@@ -591,23 +562,12 @@ namespace Rebar.RebarTarget.LLVM
         internal LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
         {
             string specializedFunctionName = MonomorphizeFunctionName(specializedSignature);
-            return GetCachedFunction(specializedFunctionName, () =>
+            return _sharedData.FunctionImporter.GetCachedFunction(specializedFunctionName, () =>
             {
                 LLVMValueRef function = Module.AddFunction(specializedFunctionName, TranslateFunctionType(specializedSignature));
                 createFunction(this, specializedSignature, function);
                 return function;
             });
-        }
-
-        private LLVMValueRef GetCachedFunction(string specializedFunctionName, Func<LLVMValueRef> createFunction)
-        {
-            LLVMValueRef function;
-            if (!_importedFunctions.TryGetValue(specializedFunctionName, out function))
-            {
-                function = createFunction();
-                _importedFunctions[specializedFunctionName] = function;
-            }
-            return function;
         }
 
         private static Action<FunctionCompiler, FunctionalNode> CreateSpecializedFunctionCallCompiler(Action<FunctionCompiler, NIType, LLVMValueRef> functionCreator)
@@ -675,11 +635,10 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (wire.SinkTerminals.HasMoreThan(1))
             {
-                VariableReference[] sinkVariables = wire.SinkTerminals.Skip(1).Select(VariableExtensions.GetTrueVariable).ToArray();
                 Func<IRBuilder, LLVMValueRef> valueGetter = GetTerminalValueSource(wire.SourceTerminal).GetValue;
-                foreach (var sinkVariable in sinkVariables)
+                foreach (var sinkTerminal in wire.SinkTerminals.Skip(1))
                 {
-                    InitializeIfNecessary(_variableValues[sinkVariable], valueGetter);
+                    InitializeIfNecessary(GetTerminalValueSource(sinkTerminal), valueGetter);
                 }
             }
         }
@@ -703,14 +662,19 @@ namespace Rebar.RebarTarget.LLVM
 
 #region Private helpers
 
+        private ValueSource GetValueSource(VariableReference variable)
+        {
+            return _sharedData.VariableStorage.GetValueSourceForVariable(variable);
+        }
+
         private ValueSource GetTerminalValueSource(Terminal terminal)
         {
-            return _variableValues[terminal.GetTrueVariable()];
+            return _sharedData.VariableStorage.GetValueSourceForVariable(terminal.GetTrueVariable());
         }
 
         private void BorrowFromVariableIntoVariable(VariableReference from, VariableReference into)
         {
-            InitializeIfNecessary(_variableValues[into], builder => GetAddress(_variableValues[from], builder));
+            InitializeIfNecessary(GetValueSource(into), builder => GetAddress(GetValueSource(from), builder));
         }
 
         private void Initialize(ValueSource toInitialize, LLVMValueRef value)
@@ -845,18 +809,18 @@ namespace Rebar.RebarTarget.LLVM
         public bool VisitDataAccessor(DataAccessor dataAccessor)
         {
             ValueSource terminalValueSource = GetTerminalValueSource(dataAccessor.Terminal);
-            VariableReference dataItemVariable = dataAccessor.DataItem.GetVariable();
+            ValueSource dataItemValueSource = GetValueSource(dataAccessor.DataItem.GetVariable());
             if (dataAccessor.Terminal.Direction == Direction.Output)
             {
                 // TODO: distinguish inout from in parameters?
-                LLVMValueRef parameterValue = _variableValues[dataItemVariable].GetValue(Builder);
+                LLVMValueRef parameterValue = dataItemValueSource.GetValue(Builder);
                 Initialize(terminalValueSource, parameterValue);
             }
             else if (dataAccessor.Terminal.Direction == Direction.Input)
             {
                 // assume that the function parameter is a pointer to where we need to store the value
                 LLVMValueRef value = terminalValueSource.GetValue(Builder);
-                Update(_variableValues[dataItemVariable], value);
+                Update(dataItemValueSource, value);
             }
             return true;
         }
@@ -881,8 +845,9 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitDropNode(DropNode dropNode)
         {
-            VariableReference input = dropNode.InputTerminals[0].GetTrueVariable();
-            var inputValueSource = _variableValues[input];
+            Terminal inputTerminal = dropNode.InputTerminals[0];
+            VariableReference input = inputTerminal.GetTrueVariable();
+            var inputValueSource = GetTerminalValueSource(inputTerminal);
             CreateDropCallIfDropFunctionExists(Builder, input.Type, builder => GetAddress(inputValueSource, builder));
             return true;
         }
@@ -901,8 +866,8 @@ namespace Rebar.RebarTarget.LLVM
         {
             VariableReference input = explicitBorrowNode.InputTerminals[0].GetTrueVariable(),
                 output = explicitBorrowNode.OutputTerminals[0].GetTrueVariable();
-            ValueSource inputSource = _variableValues[input],
-                outputSource = _variableValues[output];
+            ValueSource inputSource = GetValueSource(input),
+                outputSource = GetValueSource(output);
             if (inputSource != outputSource)
             {
                 BorrowFromVariableIntoVariable(input, output);
@@ -1034,8 +999,8 @@ namespace Rebar.RebarTarget.LLVM
             {
                 VariableReference input = tunnel.InputTerminals[0].GetTrueVariable(),
                     output = tunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource inputValueSource = _variableValues[input],
-                    outputValueSource = _variableValues[output];
+                ValueSource inputValueSource = GetValueSource(input),
+                    outputValueSource = GetValueSource(output);
                 if (output.Type == input.Type.CreateOption())
                 {
                     LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
@@ -1280,7 +1245,7 @@ namespace Rebar.RebarTarget.LLVM
                     // initialized by values from different predecessor blocks, but may not change
                     // after initialization.
                     VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
-                    ValueSource outputSource = _variableValues[outputVariable];
+                    ValueSource outputSource = GetValueSource(outputVariable);
                     LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
                     Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
                 }
@@ -1352,7 +1317,7 @@ namespace Rebar.RebarTarget.LLVM
                 // As with output tunnels of conditionally-executing Frames, it would be nice
                 // to treat these as Phi ValueSources.
                 VariableReference tunnelOutputVariable = outputTunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource tunnelOutputSource = _variableValues[tunnelOutputVariable];
+                ValueSource tunnelOutputSource = GetValueSource(tunnelOutputVariable);
                 LLVMTypeRef tunnelOutputType = tunnelOutputVariable.Type.AsLLVMType();
                 Update(tunnelOutputSource, LLVMSharp.LLVM.ConstNull(tunnelOutputType));
             }
@@ -1373,7 +1338,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource iteratorSource = GetTerminalValueSource(iterateTunnel.InputTerminals[0]);
             ValueSource itemSource = GetTerminalValueSource(iterateTunnel.OutputTerminals[0]);
-            var intermediateOptionSource = _additionalValues[iterateTunnel.IntermediateValueName];
+            var intermediateOptionSource = _sharedData.VariableStorage.GetAdditionalValueSource(iterateTunnel.IntermediateValueName);
             Terminal inputTerminal = iterateTunnel.InputTerminals[0];
 
             NIType iteratorType = inputTerminal.GetTrueVariable().Type.GetReferentType();

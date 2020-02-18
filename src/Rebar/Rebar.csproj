@@ -326,7 +326,12 @@
     <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionAllocationSet.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompileResult.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionCompilerSharedData.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionImporter.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionModuleBuilder.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionNames.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionVariableStorage.cs" />
+    <Compile Include="RebarTarget\LLVM\ParameterInfo.cs" />
     <Compile Include="RebarTarget\LLVM\SynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\TraitHelpers.cs" />
     <Compile Include="RebarTarget\LLVM\ValueSource.cs" />
@@ -334,7 +339,6 @@
     <Compile Include="RebarTarget\LLVM\ExecutionContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionBuiltPackage.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.cs" />
-    <Compile Include="RebarTarget\LLVM\FunctionCompiler.ModuleBuilding.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.NotifierTypes.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.OptionType.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompiler.SharedType.cs" />

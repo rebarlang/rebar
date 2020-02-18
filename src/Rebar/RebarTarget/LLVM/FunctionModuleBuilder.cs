@@ -3,21 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using LLVMSharp;
 using NationalInstruments;
+using NationalInstruments.DataTypes;
+using NationalInstruments.Dfir;
 
 namespace Rebar.RebarTarget.LLVM
 {
     internal abstract class FunctionModuleBuilder
     {
-        protected FunctionModuleBuilder(Module module, FunctionCompiler functionCompiler)
+        protected FunctionModuleBuilder(Module module, FunctionCompilerSharedData sharedData)
         {
             Module = module;
-            FunctionCompiler = functionCompiler;
+            SharedData = sharedData;
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
         }
 
         public Module Module { get; }
 
-        protected FunctionCompiler FunctionCompiler { get; }
+        protected FunctionCompilerSharedData SharedData { get; }
 
         internal Dictionary<AsyncStateGroup, AsyncStateGroupData> AsyncStateGroups { get; }
 
@@ -25,9 +27,50 @@ namespace Rebar.RebarTarget.LLVM
 
         protected AsyncStateGroup CurrentGroup { get; set; }
 
+        protected FunctionCompilerState CurrentState
+        {
+            get { return SharedData.CurrentState; }
+            set { SharedData.CurrentState = value; }
+        }
+
+        protected IRBuilder Builder => CurrentState.Builder;
+
+        protected FunctionAllocationSet AllocationSet => SharedData.AllocationSet;
+
         public abstract void CompileFunction();
 
-        protected LLVMValueRef InitializeOuterFunction(string functionName, List<LLVMTypeRef> parameterTypes)
+        protected void InitializeParameterAllocations(LLVMValueRef function, IRBuilder builder)
+        {
+            uint parameterIndex = 0u;
+            foreach (ParameterInfo parameter in SharedData.OrderedParameters)
+            {
+                ValueSource parameterValueSource = SharedData.VariableStorage.GetValueSourceForVariable(parameter.ParameterVariable);
+                LLVMValueRef parameterAllocationPtr = ((IAddressableValueSource)parameterValueSource).GetAddress(builder);
+                builder.CreateStore(function.GetParam(parameterIndex), parameterAllocationPtr);
+                ++parameterIndex;
+            }
+        }
+
+        protected IEnumerable<LLVMTypeRef> GetParameterLLVMTypes()
+        {
+            foreach (var parameter in SharedData.OrderedParameters)
+            {
+                NIType parameterType = parameter.ParameterVariable.Type;
+                switch (parameter.Direction)
+                {
+                    case Direction.Input:
+                        yield return parameterType.AsLLVMType();
+                        break;
+                    case Direction.Output:
+                        yield return LLVMTypeRef.PointerType(parameterType.AsLLVMType(), 0u);
+                        break;
+                    default:
+                        throw new NotImplementedException("Can only handle in and out parameters");
+                }
+            }
+        }
+
+        protected LLVMValueRef InitializeOuterFunction(string functionName, IEnumerable<LLVMTypeRef> parameterTypes)
         {
             var outerFunctionParameters = new List<LLVMTypeRef>();
             outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
@@ -40,18 +83,18 @@ namespace Rebar.RebarTarget.LLVM
 
         protected void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup, FunctionCompilerState compilerState)
         {
-            FunctionCompilerState previousState = FunctionCompiler.CurrentState;
+            FunctionCompilerState previousState = CurrentState;
             CurrentGroup = asyncStateGroup;
-            FunctionCompiler.CurrentState = compilerState;
+            CurrentState = compilerState;
             AsyncStateGroupData groupData = AsyncStateGroups[asyncStateGroup];
             LLVMValueRef groupFunction = groupData.Function;
 
-            FunctionCompiler.Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
+            Builder.PositionBuilderAtEnd(groupData.InitialBasicBlock);
 
             // Here we are assuming that the group whose label matches the function name is also the entry group.
             if (asyncStateGroup.FunctionId == asyncStateGroup.Label && this is AsynchronousFunctionModuleBuilder)
             {
-                FunctionCompiler.AllocationSet.InitializeFunctionLocalAllocations(asyncStateGroup.FunctionId, FunctionCompiler.Builder);
+                AllocationSet.InitializeFunctionLocalAllocations(asyncStateGroup.FunctionId, Builder);
             }
 
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
@@ -61,14 +104,14 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     throw new NotSupportedException("Only boolean conditions supported for continuations");
                 }
-                groupData.ContinuationConditionVariable = FunctionCompiler.Builder.CreateAlloca(LLVMTypeRef.Int1Type(), "continuationStatePtr");
+                groupData.ContinuationConditionVariable = Builder.CreateAlloca(LLVMTypeRef.Int1Type(), "continuationStatePtr");
             }
 
-            groupData.CreateFireCountReset(FunctionCompiler.Builder);
+            groupData.CreateFireCountReset(Builder);
 
             foreach (Visitation visitation in asyncStateGroup.Visitations)
             {
-                visitation.Visit(FunctionCompiler);
+                visitation.Visit(SharedData.VisitationHandler);
             }
 
             bool returnAfterGroup = true;
@@ -80,7 +123,7 @@ namespace Rebar.RebarTarget.LLVM
                     AsyncStateGroup singleSuccessor;
                     if (unconditionalContinuation.Successors.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId)
                     {
-                        FunctionCompiler.Builder.CreateBr(AsyncStateGroups[singleSuccessor].InitialBasicBlock);
+                        Builder.CreateBr(AsyncStateGroups[singleSuccessor].InitialBasicBlock);
                         returnAfterGroup = false;
                     }
                     else
@@ -95,7 +138,7 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (conditionalContinuation != null)
             {
-                LLVMValueRef condition = FunctionCompiler.Builder.CreateLoad(groupData.ContinuationConditionVariable, "condition");
+                LLVMValueRef condition = Builder.CreateLoad(groupData.ContinuationConditionVariable, "condition");
 
                 AsyncStateGroup singleTrueSuccessor, singleFalseSuccessor;
                 if (conditionalContinuation.SuccessorConditionGroups[0].TryGetSingleElement(out singleFalseSuccessor)
@@ -103,7 +146,7 @@ namespace Rebar.RebarTarget.LLVM
                     && singleFalseSuccessor.FunctionId == asyncStateGroup.FunctionId
                     && singleTrueSuccessor.FunctionId == asyncStateGroup.FunctionId)
                 {
-                    FunctionCompiler.Builder.CreateCondBr(
+                    Builder.CreateCondBr(
                         condition,
                         AsyncStateGroups[singleTrueSuccessor].InitialBasicBlock,
                         AsyncStateGroups[singleFalseSuccessor].InitialBasicBlock);
@@ -114,27 +157,27 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMBasicBlockRef continuationConditionFalseBlock = groupFunction.AppendBasicBlock("continuationConditionFalse"),
                         continuationConditionTrueBlock = groupFunction.AppendBasicBlock("continuationConditionTrue"),
                         exitBlock = groupFunction.AppendBasicBlock("exit");
-                    FunctionCompiler.Builder.CreateCondBr(condition, continuationConditionTrueBlock, continuationConditionFalseBlock);
+                    Builder.CreateCondBr(condition, continuationConditionTrueBlock, continuationConditionFalseBlock);
 
-                    FunctionCompiler.Builder.PositionBuilderAtEnd(continuationConditionFalseBlock);
+                    Builder.PositionBuilderAtEnd(continuationConditionFalseBlock);
                     CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[0]);
-                    FunctionCompiler.Builder.CreateBr(exitBlock);
+                    Builder.CreateBr(exitBlock);
 
-                    FunctionCompiler.Builder.PositionBuilderAtEnd(continuationConditionTrueBlock);
+                    Builder.PositionBuilderAtEnd(continuationConditionTrueBlock);
                     CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[1]);
-                    FunctionCompiler.Builder.CreateBr(exitBlock);
+                    Builder.CreateBr(exitBlock);
 
-                    FunctionCompiler.Builder.PositionBuilderAtEnd(exitBlock);
+                    Builder.PositionBuilderAtEnd(exitBlock);
                 }
             }
 
             if (returnAfterGroup)
             {
-                FunctionCompiler.Builder.CreateRetVoid();
+                Builder.CreateRetVoid();
             }
 
             CurrentGroup = null;
-            FunctionCompiler.CurrentState = previousState;
+            CurrentState = previousState;
         }
 
         /// <summary>
@@ -152,11 +195,11 @@ namespace Rebar.RebarTarget.LLVM
                 && singleSuccessor.Predecessors.HasExactly(1))
             {
                 // our single successor only has us as a predecessor, so we can tail call it directly
-                FunctionCompiler.Builder.CreateCall(AsyncStateGroups[singleSuccessor].Function, new LLVMValueRef[] { FunctionCompiler.CurrentState.StatePointer }, string.Empty);
+                Builder.CreateCall(AsyncStateGroups[singleSuccessor].Function, new LLVMValueRef[] { CurrentState.StatePointer }, string.Empty);
             }
             else
             {
-                CreateScheduleCallsForAsyncStateGroups(FunctionCompiler.Builder, FunctionCompiler.CurrentState.StatePointer, successors);
+                CreateScheduleCallsForAsyncStateGroups(Builder, CurrentState.StatePointer, successors);
             }
         }
 
@@ -173,16 +216,16 @@ namespace Rebar.RebarTarget.LLVM
                     "bitCastFunction");
                 if (!successor.SignaledConditionally && successor.Predecessors.HasMoreThan(1))
                 {
-                    LLVMValueRef fireCountPtr = FunctionCompiler.GetAddress(successorData.FireCountStateField, builder);
+                    LLVMValueRef fireCountPtr = ((IAddressableValueSource)successorData.FireCountStateField).GetAddress(builder);
                     builder.CreateCall(
-                        FunctionCompiler.GetImportedCommonFunction(CommonModules.PartialScheduleName),
+                        SharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.PartialScheduleName),
                         new LLVMValueRef[] { bitCastStatePtr, fireCountPtr, bitCastSuccessorFunction },
                         string.Empty);
                 }
                 else
                 {
                     builder.CreateCall(
-                        FunctionCompiler.CommonExternalFunctions.ScheduleFunction,
+                        SharedData.CommonExternalFunctions.ScheduleFunction,
                         new LLVMValueRef[] { bitCastSuccessorFunction, bitCastStatePtr },
                         string.Empty);
                 }
@@ -191,15 +234,15 @@ namespace Rebar.RebarTarget.LLVM
 
         private void GenerateFunctionTerminator()
         {
-            LLVMValueRef donePtr = FunctionCompiler.AllocationSet.GetStateDonePointer(FunctionCompiler.Builder);
-            FunctionCompiler.Builder.CreateStore(true.AsLLVMValue(), donePtr);
+            LLVMValueRef donePtr = AllocationSet.GetStateDonePointer(Builder);
+            Builder.CreateStore(true.AsLLVMValue(), donePtr);
 
-            LLVMValueRef callerWakerPtr = FunctionCompiler.AllocationSet.GetStateCallerWakerPointer(FunctionCompiler.Builder),
-                callerWaker = FunctionCompiler.Builder.CreateLoad(callerWakerPtr, "callerWaker");
+            LLVMValueRef callerWakerPtr = AllocationSet.GetStateCallerWakerPointer(Builder),
+                callerWaker = Builder.CreateLoad(callerWakerPtr, "callerWaker");
 
             // activate the caller waker
             // TODO: invoke caller waker directly, or schedule?
-            FunctionCompiler.Builder.CreateCall(FunctionCompiler.GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { callerWaker }, string.Empty);
+            Builder.CreateCall(SharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { callerWaker }, string.Empty);
         }
     }
 }
