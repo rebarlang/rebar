@@ -1,1 +1,3 @@
 clang -emit-llvm -c -o output.bc output.c
+
+llvm-as fakedrop.ll
