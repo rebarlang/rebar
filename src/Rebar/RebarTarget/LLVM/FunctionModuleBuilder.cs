@@ -225,7 +225,7 @@ namespace Rebar.RebarTarget.LLVM
                 else
                 {
                     builder.CreateCall(
-                        SharedData.CommonExternalFunctions.ScheduleFunction,
+                        SharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.ScheduleName),
                         new LLVMValueRef[] { bitCastSuccessorFunction, bitCastStatePtr },
                         string.Empty);
                 }

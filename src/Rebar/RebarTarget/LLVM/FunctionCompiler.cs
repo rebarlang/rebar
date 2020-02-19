@@ -520,8 +520,6 @@ namespace Rebar.RebarTarget.LLVM
 
         private FunctionAllocationSet AllocationSet => _sharedData.AllocationSet;
 
-        private CommonExternalFunctions CommonExternalFunctions => _sharedData.CommonExternalFunctions;
-
         internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
             return _sharedData.FunctionImporter.GetImportedCommonFunction(functionName);
@@ -604,7 +602,18 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateCall(function, arguments.ToArray(), string.Empty);
         }
 
-#region VisitorTransformBase overrides
+        private void CreateCallToCopyMemory(IRBuilder builder, LLVMValueRef destinationPtr, LLVMValueRef sourcePtr, LLVMValueRef bytesToCopy)
+        {
+            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, LLVMTypeRef.Int64Type(), "bytesToCopyExtend"),
+                sourcePtrCast = builder.CreateBitCast(sourcePtr, LLVMExtensions.BytePointerType, "sourcePtrCast"),
+                destinationPtrCast = builder.CreateBitCast(destinationPtr, LLVMExtensions.BytePointerType, "destinationPtrCast");
+            builder.CreateCall(
+                _sharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.CopyMemoryName),
+                new LLVMValueRef[] { destinationPtrCast, sourcePtrCast, bytesToCopyExtend },
+                string.Empty);
+        }
+
+        #region VisitorTransformBase overrides
 
         protected override void PostVisitDiagram(Diagram diagram)
         {
