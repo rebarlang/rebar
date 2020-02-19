@@ -118,7 +118,7 @@ namespace Rebar.RebarTarget.LLVM
             {
                 LLVMValueRef existingVectorSizeExtend = builder.CreateSExt(existingVectorSize, LLVMTypeRef.Int64Type(), "existingVectorSizeExtend"),
                     bytesToCopy = builder.CreateMul(existingVectorSizeExtend, elementLLVMType.SizeOf(), "bytesToCopy");
-                builder.CreateCallToCopyMemory(compiler.CommonExternalFunctions, newVectorAllocationPtr, existingVectorAllocationPtr, bytesToCopy);
+                compiler.CreateCallToCopyMemory(builder, newVectorAllocationPtr, existingVectorAllocationPtr, bytesToCopy);
             }
 
             LLVMValueRef newVector = builder.CreateInsertValue(existingVector, newVectorAllocationPtr, 0u, "newVector"),
@@ -254,7 +254,7 @@ namespace Rebar.RebarTarget.LLVM
                 newAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, newVectorCapacity, "newAllocationPtr"),
                 oldVectorCapacityExtend = builder.CreateSExt(oldVectorCapacity, LLVMTypeRef.Int64Type(), "oldVectorCapacityExtend"),
                 bytesToCopy = builder.CreateMul(oldVectorCapacityExtend, elementLLVMType.SizeOf(), "bytesToCopy");
-            builder.CreateCallToCopyMemory(compiler.CommonExternalFunctions, newAllocationPtr, oldAllocationPtr, bytesToCopy);
+            compiler.CreateCallToCopyMemory(builder, newAllocationPtr, oldAllocationPtr, bytesToCopy);
             LLVMValueRef newVector0 = builder.CreateInsertValue(vector, newAllocationPtr, 0u, "newVector0"),
                 newVector = builder.CreateInsertValue(newVector0, newVectorCapacity, 2u, "newVector");
             builder.CreateStore(newVector, vectorPtr);

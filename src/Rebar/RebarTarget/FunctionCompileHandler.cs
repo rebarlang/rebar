@@ -159,7 +159,6 @@ namespace Rebar.RebarTarget
                 parameterInfos,
                 allocator.AllocationSet,
                 variableStorage,
-                new LLVM.CommonExternalFunctions(module),
                 functionImporter);
             var moduleBuilder = isYielding
                 ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)

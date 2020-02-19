@@ -6,6 +6,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal static class CommonModules
     {
+        public static Module ExternsModule { get; }
         public static Module FakeDropModule { get; }
         public static Module SchedulerModule { get; }
         public static Module StringModule { get; }
@@ -15,13 +16,9 @@ namespace Rebar.RebarTarget.LLVM
 
         public static Dictionary<string, LLVMTypeRef> CommonModuleSignatures { get; }
 
-        private static LLVMValueRef _copySliceToPointerFunction;
-        private static LLVMValueRef _createEmptyStringFunction;
-        private static LLVMValueRef _createNullTerminatedStringFromSliceFunction;
-        private static LLVMValueRef _dropStringFunction;
-        private static LLVMValueRef _stringAppendFunction;
-        private static LLVMValueRef _stringFromSliceFunction;
-        private static LLVMValueRef _stringToSliceRetFunction;
+        // NB: this will get resolved to the Win32 RtlCopyMemory function.
+        public const string CopyMemoryName = "CopyMemory";
+        public const string ScheduleName = "schedule";
 
         public const string FakeDropCreateName = "fakedrop_create";
         public const string FakeDropDropName = "fakedrop_drop";
@@ -66,6 +63,13 @@ namespace Rebar.RebarTarget.LLVM
             CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
             string assemblyDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string llvmResourcesPath = Path.Combine(assemblyDirectory, "RebarTarget", "LLVM", "Resources");
+
+            var externsNames = new string[]
+            {
+                CopyMemoryName,
+                ScheduleName
+            };
+            ExternsModule = LoadModuleAndRegisterFunctionNames(Path.Combine(llvmResourcesPath, "externs.bc"), externsNames);
 
             var fakeDropNames = new string[]
             {
@@ -139,114 +143,5 @@ namespace Rebar.RebarTarget.LLVM
             }
             return module;
         }
-
-        public static void CreateCallToCopyMemory(this IRBuilder builder, CommonExternalFunctions externalFunctions, LLVMValueRef destinationPtr, LLVMValueRef sourcePtr, LLVMValueRef bytesToCopy)
-        {
-            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, LLVMTypeRef.Int64Type(), "bytesToCopyExtend"),
-                sourcePtrCast = builder.CreateBitCast(sourcePtr, LLVMExtensions.BytePointerType, "sourcePtrCast"),
-                destinationPtrCast = builder.CreateBitCast(destinationPtr, LLVMExtensions.BytePointerType, "destinationPtrCast");
-            builder.CreateCall(externalFunctions.CopyMemoryFunction, new LLVMValueRef[] { destinationPtrCast, sourcePtrCast, bytesToCopyExtend }, string.Empty);
-        }
-    }
-
-    public class CommonExternalFunctions
-    {
-        public CommonExternalFunctions(Module addTo)
-        {
-            // NB: this will get resolved to the Win32 RtlCopyMemory function.
-            LLVMTypeRef copyMemoryFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[] { LLVMExtensions.BytePointerType, LLVMExtensions.BytePointerType, LLVMTypeRef.Int64Type() },
-                false);
-            CopyMemoryFunction = addTo.AddFunction("CopyMemory", copyMemoryFunctionType);
-            CopyMemoryFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-
-            LLVMTypeRef scheduleFunctionType = LLVMTypeRef.FunctionType(
-                LLVMTypeRef.VoidType(),
-                new LLVMTypeRef[] { LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u), LLVMExtensions.VoidPointerType },
-                false);
-            ScheduleFunction = addTo.AddFunction("schedule", scheduleFunctionType);
-            ScheduleFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-
-            FakeDropFunction = CreateSingleParameterVoidFunction(addTo, LLVMTypeRef.Int32Type(), "fake_drop");
-
-            LLVMTypeRef outputStringFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMSharp.LLVM.VoidType(),
-                new LLVMTypeRef[] { LLVMExtensions.BytePointerType, LLVMTypeRef.Int32Type() },
-                false);
-            OutputStringFunction = addTo.AddFunction("output_string", outputStringFunctionType);
-            OutputStringFunction.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-
-            LLVMTypeRef closeHandleFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMTypeRef.Int32Type(),    // bool
-                new LLVMTypeRef[] { LLVMExtensions.VoidPointerType },
-                false);
-            CloseHandleFunction = addTo.AddFunction("CloseHandle", closeHandleFunctionType);
-
-            LLVMTypeRef createFileAFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMExtensions.VoidPointerType,
-                new LLVMTypeRef[]
-                {
-                    LLVMExtensions.BytePointerType,    // filename
-                    LLVMTypeRef.Int32Type(),    // access
-                    LLVMTypeRef.Int32Type(),    // share
-                    LLVMExtensions.VoidPointerType,    // securityAttributes
-                    LLVMTypeRef.Int32Type(),    // creationDisposition
-                    LLVMTypeRef.Int32Type(),    // flagsAndAttributes
-                    LLVMExtensions.VoidPointerType,    // templateFile
-                },
-                false);
-            CreateFileAFunction = addTo.AddFunction("CreateFileA", createFileAFunctionType);
-
-            LLVMTypeRef readFileFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMTypeRef.Int32Type(),    // bool
-                new LLVMTypeRef[]
-                {
-                    LLVMExtensions.VoidPointerType,     // hFile
-                    LLVMExtensions.VoidPointerType,     // lpBuffer
-                    LLVMTypeRef.Int32Type(),            // nNumberOfBytesToRead
-                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0),   // lpNumberOfBytesRead
-                    LLVMExtensions.VoidPointerType,     // lpOverlapped
-                },
-                false);
-            ReadFileFunction = addTo.AddFunction("ReadFile", readFileFunctionType);
-
-            LLVMTypeRef writeFileFunctionType = LLVMSharp.LLVM.FunctionType(
-                LLVMTypeRef.Int32Type(),    // bool
-                new LLVMTypeRef[]
-                {
-                    LLVMExtensions.VoidPointerType,    // hFile
-                    LLVMExtensions.VoidPointerType,    // lpBuffer
-                    LLVMTypeRef.Int32Type(),           // nNumberOfBytesToWrite,
-                    LLVMTypeRef.PointerType(LLVMTypeRef.Int32Type(), 0),    // lpNumberOfBytesWritten
-                    LLVMExtensions.VoidPointerType,    // lpOverlapped
-                },
-                false);
-            WriteFileFunction = addTo.AddFunction("WriteFile", writeFileFunctionType);
-        }
-
-        private LLVMValueRef CreateSingleParameterVoidFunction(Module module, LLVMTypeRef parameterType, string name)
-        {
-            LLVMTypeRef functionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), new LLVMTypeRef[] { parameterType }, false);
-            LLVMValueRef function = module.AddFunction(name, functionType);
-            function.SetLinkage(LLVMLinkage.LLVMExternalLinkage);
-            return function;
-        }
-
-        public LLVMValueRef CopyMemoryFunction { get; }
-
-        public LLVMValueRef ScheduleFunction { get; }
-
-        public LLVMValueRef OutputStringFunction { get; }
-
-        public LLVMValueRef FakeDropFunction { get; }
-
-        public LLVMValueRef CloseHandleFunction { get; }
-
-        public LLVMValueRef CreateFileAFunction { get; }
-
-        public LLVMValueRef ReadFileFunction { get; }
-
-        public LLVMValueRef WriteFileFunction { get; }
     }
 }

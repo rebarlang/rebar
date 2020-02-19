@@ -13,13 +13,11 @@ namespace Rebar.RebarTarget.LLVM
             IReadOnlyList<ParameterInfo> orderedParameters,
             FunctionAllocationSet allocationSet,
             FunctionVariableStorage variableStorage,
-            CommonExternalFunctions commonExternalFunctions,
             FunctionImporter functionImporter)
         {
             OrderedParameters = orderedParameters;
             AllocationSet = allocationSet;
             VariableStorage = variableStorage;
-            CommonExternalFunctions = commonExternalFunctions;
             FunctionImporter = functionImporter;
         }
 
@@ -40,8 +38,6 @@ namespace Rebar.RebarTarget.LLVM
                 AllocationSet.CompilerState = value;
             }
         }
-
-        public CommonExternalFunctions CommonExternalFunctions { get; }
 
         public FunctionImporter FunctionImporter { get; }
     }
