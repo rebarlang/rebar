@@ -226,6 +226,18 @@ namespace Rebar.Common
                 "option");
             NoneConstructorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("UnwrapOption");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateOption(),
+                "option");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter,
+                "value");
+            UnwrapOptionType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("StringFromSlice");
             AddInputOutputParameter(
                 functionTypeBuilder,
@@ -561,6 +573,8 @@ namespace Rebar.Common
         public static NIType SomeConstructorType { get; }
 
         public static NIType NoneConstructorType { get; }
+
+        public static NIType UnwrapOptionType { get; }
 
         public static NIType StringFromSliceType { get; }
 

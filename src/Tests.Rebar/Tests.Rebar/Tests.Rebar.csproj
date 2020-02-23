@@ -201,6 +201,7 @@
     <Compile Include="Unit\Execution\NumericExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionPatternStructureExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />
+    <Compile Include="Unit\Execution\PanicExecutionTests.cs" />
     <Compile Include="Unit\Execution\PrimitiveOpExecutionTest.cs" />
     <Compile Include="Unit\Execution\StringExecutionTests.cs" />
     <Compile Include="Unit\Execution\StructExecutionTests.cs" />
