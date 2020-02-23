@@ -238,6 +238,18 @@ namespace Rebar.Common
                 "value");
             UnwrapOptionType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = PFTypes.Factory.DefineFunction("OptionToPanicResult");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
+            AddInputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreateOption(),
+                "option");
+            AddOutputParameter(
+                functionTypeBuilder,
+                tDataParameter.CreatePanicResult(),
+                "panicResult");
+            OptionToPanicResultType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = PFTypes.Factory.DefineFunction("StringFromSlice");
             AddInputOutputParameter(
                 functionTypeBuilder,
@@ -575,6 +587,8 @@ namespace Rebar.Common
         public static NIType NoneConstructorType { get; }
 
         public static NIType UnwrapOptionType { get; }
+
+        public static NIType OptionToPanicResultType { get; }
 
         public static NIType StringFromSliceType { get; }
 

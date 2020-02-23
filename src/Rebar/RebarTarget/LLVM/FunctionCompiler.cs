@@ -1209,6 +1209,11 @@ namespace Rebar.RebarTarget.LLVM
             }
             return true;
         }
+        
+        bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
+        {
+            return true;
+        }
 
 #endregion
 

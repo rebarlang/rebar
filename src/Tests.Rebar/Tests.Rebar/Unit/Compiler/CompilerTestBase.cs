@@ -163,10 +163,11 @@ namespace Tests.Rebar.Unit.Compiler
             return patternStructure;
         }
 
-        internal FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal)
+        internal FunctionalNode ConnectSomeConstructorToInputTerminal(Terminal inputTerminal, bool mutableOutput = false)
         {
             var someConstructor = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.SomeConstructorType);
-            Wire.Create(inputTerminal.ParentDiagram, someConstructor.OutputTerminals[0], inputTerminal);
+            Wire.Create(inputTerminal.ParentDiagram, someConstructor.OutputTerminals[0], inputTerminal)
+                .SetWireBeginsMutableVariable(mutableOutput);
             return someConstructor;
         }
 

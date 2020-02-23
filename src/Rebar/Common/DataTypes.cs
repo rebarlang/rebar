@@ -57,6 +57,8 @@ namespace Rebar.Common
 
         internal static NIType NotifierReaderPromiseGenericType { get; }
 
+        internal static NIType PanicResultGenericType { get; }
+
         static DataTypes()
         {
             var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
@@ -185,6 +187,11 @@ namespace Rebar.Common
             notifierReaderPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
             notifierReaderPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             NotifierReaderPromiseGenericType = notifierReaderPromiseGenericTypeBuilder.CreateType();
+
+            var panicResultGenericTypeBuilder = PFTypes.Factory.DefineValueClass("PanicResult");
+            var panicResultParameters = panicResultGenericTypeBuilder.MakeGenericParameters("T");
+            panicResultGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            PanicResultGenericType = panicResultGenericTypeBuilder.CreateType();
         }
 
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
@@ -545,6 +552,11 @@ namespace Rebar.Common
             clusterBuilder.DefineField(valueType, "value");
             clusterBuilder.DefineField(PFTypes.Int32, "state");
             return clusterBuilder.CreateType();
+        }
+
+        internal static NIType CreatePanicResult(this NIType type)
+        {
+            return SpecializeGenericType(PanicResultGenericType, type);
         }
 
         internal static bool WireTypeMayFork(this NIType wireType)

@@ -2,7 +2,6 @@
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
-using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Execution
@@ -42,12 +41,10 @@ namespace Tests.Rebar.Unit.Execution
 
         private FunctionalNode CreateNoneOfOptionIntegerType(Diagram parentDiagram)
         {
-            var someConstructor = new FunctionalNode(parentDiagram, Signatures.SomeConstructorType);
+            var assign = new FunctionalNode(parentDiagram, Signatures.AssignType);
+            var someConstructor = ConnectSomeConstructorToInputTerminal(assign.InputTerminals[0], true);
             ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
             var noneConstructor = new FunctionalNode(parentDiagram, Signatures.NoneConstructorType);
-            var assign = new FunctionalNode(parentDiagram, Signatures.AssignType);
-            Wire.Create(parentDiagram, someConstructor.OutputTerminals[0], assign.InputTerminals[0])
-                .SetWireBeginsMutableVariable(true);
             Wire.Create(parentDiagram, noneConstructor.OutputTerminals[0], assign.InputTerminals[1]);
             return assign;
         }
