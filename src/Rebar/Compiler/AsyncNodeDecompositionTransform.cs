@@ -14,12 +14,16 @@ namespace Rebar.Compiler
     internal class AsyncNodeDecompositionTransform : IDfirTransform
     {
         private static readonly Dictionary<string, NIType> _createPromiseSignatures;
+        private static readonly Dictionary<string, NIType> _createPanicResultSignatures;
 
         static AsyncNodeDecompositionTransform()
         {
             _createPromiseSignatures = new Dictionary<string, NIType>();
             _createPromiseSignatures["Yield"] = Signatures.CreateYieldPromiseType;
             _createPromiseSignatures["GetNotifierValue"] = Signatures.GetReaderPromiseType;
+
+            _createPanicResultSignatures = new Dictionary<string, NIType>();
+            _createPanicResultSignatures["UnwrapOption"] = Signatures.OptionToPanicResultType;
         }
 
         private readonly ITypeUnificationResultFactory _unificationResultFactory;
@@ -45,7 +49,18 @@ namespace Rebar.Compiler
                 return _isYielding[methodCallNode.TargetName];
             }
             var functionalNode = node as FunctionalNode;
-            return functionalNode != null && _createPromiseSignatures.ContainsKey(functionalNode.Signature.GetName());
+            if (functionalNode != null)
+            {
+                string signatureName = functionalNode.Signature.GetName();
+                bool isYielding = _createPromiseSignatures.ContainsKey(signatureName),
+                    isPanicking = _createPanicResultSignatures.ContainsKey(signatureName);
+                if (isYielding && isPanicking)
+                {
+                    throw new NotImplementedException("Cannot handle a non-MethodCallNode that yields and panics");
+                }
+                return isYielding || isPanicking;
+            }
+            return false;
         }
 
         private void Decompose(Node node)
@@ -59,7 +74,14 @@ namespace Rebar.Compiler
             var functionalNode = node as FunctionalNode;
             if (functionalNode != null)
             {
-                DecomposeAsyncFunctionalNode(functionalNode, _createPromiseSignatures[functionalNode.Signature.GetName()]);
+                string signatureName = functionalNode.Signature.GetName();
+                NIType signature;
+                if (_createPanicResultSignatures.TryGetValue(signatureName, out signature))
+                {
+                    DecomposePanickingFunctionalNode(functionalNode, signature);
+                    return;
+                }
+                DecomposeAsyncFunctionalNode(functionalNode, _createPromiseSignatures[signatureName]);
             }
         }
 
@@ -97,7 +119,7 @@ namespace Rebar.Compiler
                 promiseTerminal,
                 createMethodCallPromise.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(promiseType));
 
-            AwaitNode awaitNode = ConnectAwaitNodeToPromiseTerminal(createMethodCallPromise, promiseType);
+            AwaitNode awaitNode = ConnectNewNodeToOutputTerminal(createMethodCallPromise, diagram => new AwaitNode(diagram));
 
             CreateDefaultFacadeForAwaitOutputTerminal(awaitNode, outputType);
             switch (methodCallNode.OutputTerminals.Count)
@@ -136,11 +158,33 @@ namespace Rebar.Compiler
                 throw new NotSupportedException("Decomposing FunctionalNodes with multiple output parameters not supported yet.");
             }
 
-            var createPromiseNode = new FunctionalNode(functionalNode.ParentDiagram, createPromiseSignature);
-            createPromiseNode.CreateFacadesForFunctionSignatureNode(createPromiseSignature);
-            AutoBorrowNodeFacade nodeToReplaceFacade = AutoBorrowNodeFacade.GetNodeFacade(functionalNode);
+            FunctionalNode createPromiseNode = CreateInputReplacementNode(functionalNode, diagram => CreateFunctionalNodeWithFacade(diagram, createPromiseSignature));
+            AwaitNode awaitNode = ConnectNewNodeToOutputTerminal(createPromiseNode, diagram => new AwaitNode(diagram));
+            ConnectOutputTerminal(functionalNode.OutputTerminals[0], awaitNode.OutputTerminal);
+
+            functionalNode.RemoveFromGraph();
+        }
+
+        private void DecomposePanickingFunctionalNode(FunctionalNode functionalNode, NIType createPanicResultSignature)
+        {
+            if (functionalNode.OutputTerminals.HasMoreThan(1))
+            {
+                throw new NotSupportedException("Decomposing FunctionalNodes with multiple output parameters not supported yet.");
+            }
+
+            FunctionalNode createPanicResultNode = CreateInputReplacementNode(functionalNode, diagram => CreateFunctionalNodeWithFacade(diagram, createPanicResultSignature));
+            PanicOrContinueNode panicOrContinueNode = ConnectNewNodeToOutputTerminal(createPanicResultNode, diagram => new PanicOrContinueNode(diagram));
+            ConnectOutputTerminal(functionalNode.OutputTerminals[0], panicOrContinueNode.OutputTerminal);
+
+            functionalNode.RemoveFromGraph();
+        }
+
+        private FunctionalNode CreateInputReplacementNode(FunctionalNode toReplace, Func<Diagram, FunctionalNode> createNode)
+        {
+            var createPromiseNode = createNode(toReplace.ParentDiagram);
+            AutoBorrowNodeFacade nodeToReplaceFacade = AutoBorrowNodeFacade.GetNodeFacade(toReplace);
             AutoBorrowNodeFacade replacementFacade = AutoBorrowNodeFacade.GetNodeFacade(createPromiseNode);
-            foreach (var terminalPair in functionalNode.InputTerminals.Zip(createPromiseNode.InputTerminals))
+            foreach (var terminalPair in toReplace.InputTerminals.Zip(createPromiseNode.InputTerminals))
             {
                 Terminal methodCallTerminal = terminalPair.Key, createMethodCallPromiseTerminal = terminalPair.Value;
                 Wire wire = (Wire)methodCallTerminal.ConnectedTerminal.ParentNode;
@@ -153,28 +197,28 @@ namespace Rebar.Compiler
             // automatic node insertion, and in that case do not have correct facades or variables.
             // createPromiseNode.UnifyNodeInputTerminalTypes(_unificationResultFactory);
             replacementFacade.FinalizeAutoBorrows();
-
-            Terminal createPromiseNodeOutputTerminal = createPromiseNode.OutputTerminals[0];
-            NIType promiseType = createPromiseNodeOutputTerminal.GetTrueVariable().Type;
-
-            AwaitNode awaitNode = ConnectAwaitNodeToPromiseTerminal(createPromiseNode, promiseType);
-
-            ConnectOutputTerminal(functionalNode.OutputTerminals[0], awaitNode.OutputTerminal);
-
-            functionalNode.RemoveFromGraph();
+            return createPromiseNode;
         }
 
-        private AwaitNode ConnectAwaitNodeToPromiseTerminal(Node replacement, NIType promiseType)
+        private static FunctionalNode CreateFunctionalNodeWithFacade(Diagram parentDiagram, NIType signature)
         {
-            var awaitNode = new AwaitNode(replacement.ParentDiagram);
-            AutoBorrowNodeFacade awaitNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(awaitNode);
-            awaitNodeFacade[awaitNode.InputTerminal] = new SimpleTerminalFacade(
-                awaitNode.InputTerminal,
+            var node = new FunctionalNode(parentDiagram, signature);
+            node.CreateFacadesForFunctionSignatureNode(signature);
+            return node;
+        }
+
+        private T ConnectNewNodeToOutputTerminal<T>(Node replacement, Func<Diagram, T> createNode) where T : Node
+        {
+            var nodeToConnect = createNode(replacement.ParentDiagram);
+            AutoBorrowNodeFacade nodeToConnectFacade = AutoBorrowNodeFacade.GetNodeFacade(nodeToConnect);
+            Terminal inputTerminal = nodeToConnect.InputTerminals[0];
+            nodeToConnectFacade[inputTerminal] = new SimpleTerminalFacade(
+                inputTerminal,
                 replacement.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
-            Terminal promiseTerminal = replacement.OutputTerminals[0];
-            new LiveVariable(promiseTerminal.GetTrueVariable(), promiseTerminal)
-                .ConnectToTerminalAsInputAndUnifyVariables(awaitNode.InputTerminal, _unificationResultFactory);
-            return awaitNode;
+            Terminal outputTerminal = replacement.OutputTerminals[0];
+            new LiveVariable(outputTerminal.GetTrueVariable(), outputTerminal)
+                .ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, _unificationResultFactory);
+            return nodeToConnect;
         }
 
         private void ConnectOutputTerminal(Terminal outputTerminal, Terminal newOutputTerminal)
