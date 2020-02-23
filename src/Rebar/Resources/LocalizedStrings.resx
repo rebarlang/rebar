@@ -165,6 +165,12 @@
   <data name="FeatureToggle_OutputNode_Description" xml:space="preserve">
     <value>Enable the Output node</value>
   </data>
+  <data name="FeatureToggle_Panics_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_Panics_Description" xml:space="preserve">
+    <value>Enable nodes and functions that can panic</value>
+  </data>
   <data name="FeatureToggle_ParametersAndCalls_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>

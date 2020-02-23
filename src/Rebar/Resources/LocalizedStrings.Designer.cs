@@ -207,6 +207,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_Panics_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_Panics_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable nodes and functions that can panic.
+        /// </summary>
+        internal static string FeatureToggle_Panics_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_Panics_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_ParametersAndCalls_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_ParametersAndCalls_Category", resourceCulture);

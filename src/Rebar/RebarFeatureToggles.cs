@@ -15,6 +15,7 @@ namespace Rebar
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), OptionPatternStructure, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), ParametersAndCalls, CodeReadiness.Release)]
     [ExposeFeatureToggle(typeof(RebarFeatureToggles), NotifierType, CodeReadiness.Release)]
+    [ExposeFeatureToggle(typeof(RebarFeatureToggles), Panics, CodeReadiness.Release)]
     public sealed class RebarFeatureToggles : FeatureTogglesProvider<RebarFeatureToggles>
     {
         private const string RebarFeatureCategory = "Rebar";
@@ -31,6 +32,7 @@ namespace Rebar
         public const string OptionPatternStructure = FeaturePrefix + nameof(OptionPatternStructure);
         public const string ParametersAndCalls = FeaturePrefix + nameof(ParametersAndCalls);
         public const string NotifierType = FeaturePrefix + nameof(NotifierType);
+        public const string Panics = FeaturePrefix + nameof(Panics);
 
         public static bool IsCellDataTypeEnabled => _cellDataType.IsEnabled;
         public static bool IsRebarTargetEnabled => _rebarTarget.IsEnabled;
@@ -43,6 +45,7 @@ namespace Rebar
         public static bool IsOptionPatternStructureEnabled => _optionPatternStructure.IsEnabled;
         public static bool IsParametersAndCallsEnabled => _parametersAndCalls.IsEnabled;
         public static bool IsNotifierTypeEnabled => _notifierType.IsEnabled;
+        public static bool IsPanicsEnabled => _panics.IsEnabled;
 
         private static readonly FeatureToggleValueCache _cellDataType = CreateFeatureToggleValueCache(CellDataType);
         private static readonly FeatureToggleValueCache _rebarTarget = CreateFeatureToggleValueCache(RebarTarget);
@@ -55,5 +58,6 @@ namespace Rebar
         private static readonly FeatureToggleValueCache _optionPatternStructure = CreateFeatureToggleValueCache(OptionPatternStructure);
         private static readonly FeatureToggleValueCache _parametersAndCalls = CreateFeatureToggleValueCache(ParametersAndCalls);
         private static readonly FeatureToggleValueCache _notifierType = CreateFeatureToggleValueCache(NotifierType);
+        private static readonly FeatureToggleValueCache _panics = CreateFeatureToggleValueCache(Panics);
     }
 }
