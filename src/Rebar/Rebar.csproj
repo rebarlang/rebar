@@ -321,6 +321,7 @@
     <Compile Include="RebarTarget\FunctionCompileHandler.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\FunctionCompileHandlerFactoryFactory.cs" />
+    <Compile Include="RebarTarget\FunctionCompileSignature.cs" />
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\AsynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />

@@ -89,6 +89,8 @@ namespace Rebar.RebarTarget
             foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
             {
                 CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
+                var functionCompileSignature = calleeSignature as FunctionCompileSignature;
+                bool mayPanic = functionCompileSignature?.MayPanic ?? false;
                 calleesIsYielding[methodCallNode.TargetName] = calleeSignature.IsYielding;
             }
 
@@ -111,18 +113,11 @@ namespace Rebar.RebarTarget
                 compileThreadState,
                 false);
 
-            CompileSignature topSignature = new CompileSignature(
+            var topSignature = new FunctionCompileSignature(
                 functionName: targetDfir.Name,
-                parameters: compileSignatureParameters, // GenerateParameters(targetDfir),
-                declaringType: targetDfir.GetDeclaringType(),
-                reentrancy: targetDfir.Reentrancy,
+                compileSignatureParameters: compileSignatureParameters,
                 isYielding: compileResult.IsYielding,
-                isFunctional: true,
-                threadAffinity: ThreadAffinity.Standard,
-                shouldAlwaysInline: false,
-                mayWantToInline: true,
-                priority: ExecutionPriority.Normal,
-                callingConvention: CallingConvention.StdCall);
+                mayPanic: compileResult.MayPanic);
 
             return new Tuple<CompileCacheEntry, CompileSignature>(entry, topSignature);
         }

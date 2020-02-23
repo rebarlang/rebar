@@ -8,12 +8,15 @@ namespace Rebar.RebarTarget.LLVM
         {
             Module = module;
             IsYielding = isYielding;
+            MayPanic = false;
             CommonModuleDependencies = commonModuleDependencies;
         }
 
         public Module Module { get; }
 
         public bool IsYielding { get; }
+
+        public bool MayPanic { get; }
 
         public string[] CommonModuleDependencies { get; }
     }

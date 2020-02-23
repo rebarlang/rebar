@@ -12,8 +12,37 @@ namespace Rebar.RebarTarget.LLVM
     [Serializable]
     public class FunctionBuiltPackage : IBuiltPackage, ISerializable
     {
-        private static readonly Version CurrentVersion = new Version(0, 1, 1, 0);
-        private static readonly Version CommonModuleDependenciesVersion = new Version(0, 1, 1, 0);
+        /// <remarks>
+        /// This value should never change; it represents the version that built packages that did not serialize a version
+        /// are considered to have.
+        /// 
+        /// In the _untracked version, the properties RuntimeEntityIdentity, TargetIdentity, DependencyIdentities, Token,
+        /// and Module are assumed to exist.
+        /// </remarks>
+        private static readonly Version _untrackedVersion = new Version(0, 1, 0, 0);
+
+        /// <summary>
+        /// The current/latest version of the built package, given to all newly created built packages.
+        /// </summary>
+        /// <remarks>This should change whenever the built package format changes; it should always be the value
+        /// of another readonly Version property that describes what changed at that version.</remarks>
+        internal static readonly Version CurrentVersion = CommonModuleDependenciesVersion;
+
+        /// <summary>
+        /// Minimum version that is considered loadable and/or valid.
+        /// </summary>
+        internal static readonly Version MinimumLoadableVersion = _untrackedVersion;
+
+        /// <summary>
+        /// Version at which FunctionCompileSignature replaced CompileSignature for Functions and when
+        /// the MayPanic flag was added to FunctionCompileSignature.
+        /// </summary>
+        internal static readonly Version FunctionMayPanicVersion = new Version(0, 1, 1, 0);
+
+        /// <summary>
+        /// Version at which CommonModuleDependencies was added to built package.
+        /// </summary>
+        internal static readonly Version CommonModuleDependenciesVersion = new Version(0, 1, 2, 0);
 
         public FunctionBuiltPackage(
             SpecAndQName identity,
@@ -22,6 +51,7 @@ namespace Rebar.RebarTarget.LLVM
             Module module,
             string[] commonModuleDependencies)
         {
+            Version = CurrentVersion;
             RuntimeEntityIdentity = identity;
             TargetIdentity = targetIdentity;
             DependencyIdentities = dependencyIdentities;
@@ -31,7 +61,22 @@ namespace Rebar.RebarTarget.LLVM
 
         protected FunctionBuiltPackage(SerializationInfo info, StreamingContext context)
         {
-            Version version = new Version(0, 1, 0, 0);
+            Version = DeserializeVersion(info);
+
+            // if (Version >= _untrackedVersion) // always true
+            RuntimeEntityIdentity = (SpecAndQName)info.GetValue(nameof(RuntimeEntityIdentity), typeof(SpecAndQName));
+            TargetIdentity = (QualifiedName)info.GetValue(nameof(TargetIdentity), typeof(QualifiedName));
+            DependencyIdentities = (SpecAndQName[])info.GetValue(nameof(DependencyIdentities), typeof(SpecAndQName[]));
+            Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
+            byte[] moduleBytes = (byte[])info.GetValue(nameof(Module), typeof(byte[]));
+            Module = moduleBytes.DeserializeModuleAsBitcode();
+
+            CommonModuleDependencies = DeserializeCommonModuleDependencies(Version, info);
+        }
+
+        private static Version DeserializeVersion(SerializationInfo info)
+        {
+            Version version = _untrackedVersion;
             foreach (SerializationEntry entry in info)
             {
                 if (entry.Name == nameof(Version))
@@ -40,28 +85,24 @@ namespace Rebar.RebarTarget.LLVM
                     break;
                 }
             }
+            return version;
+        }
 
-            RuntimeEntityIdentity = (SpecAndQName)info.GetValue(nameof(RuntimeEntityIdentity), typeof(SpecAndQName));
-            TargetIdentity = (QualifiedName)info.GetValue(nameof(TargetIdentity), typeof(QualifiedName));
-            DependencyIdentities = (SpecAndQName[])info.GetValue(nameof(DependencyIdentities), typeof(SpecAndQName[]));
-            Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
-            byte[] moduleBytes = (byte[])info.GetValue(nameof(Module), typeof(byte[]));
-            Module = moduleBytes.DeserializeModuleAsBitcode();
-
+        private static string[] DeserializeCommonModuleDependencies(Version version, SerializationInfo info)
+        {
             if (version >= CommonModuleDependenciesVersion)
             {
-                CommonModuleDependencies = (string[])info.GetValue(nameof(CommonModuleDependencies), typeof(string[]));
+                return (string[])info.GetValue(nameof(CommonModuleDependencies), typeof(string[]));
             }
-            else
-            {
-                // Assume all common modules that existed before CommonModuleDependenciesVersion are needed
-                CommonModuleDependencies = new string[] { "fakedrop", "scheduler", "string", "range", "file" };
-            }
+            // Assume all common modules that existed before CommonModuleDependenciesVersion are needed
+            return new string[] { "fakedrop", "scheduler", "string", "range", "file" };
         }
+
+        public Version Version { get; }
 
         public Module Module { get; }
 
-        public bool IsPackageValid => true;
+        public bool IsPackageValid => Version >= MinimumLoadableVersion;
 
         public IRuntimeEntityIdentity RuntimeEntityIdentity { get; }
 
@@ -83,11 +124,13 @@ namespace Rebar.RebarTarget.LLVM
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
+            info.AddValue(nameof(Version), Version);
             info.AddValue(nameof(RuntimeEntityIdentity), RuntimeEntityIdentity);
             info.AddValue(nameof(TargetIdentity), TargetIdentity);
             info.AddValue(nameof(DependencyIdentities), DependencyIdentities);
             info.AddValue(nameof(Token), Token);
             info.AddValue(nameof(Module), Module.SerializeModuleAsBitcode());
+            info.AddValue(nameof(CommonModuleDependencies), CommonModuleDependencies);
         }
     }
 }
