@@ -559,6 +559,11 @@ namespace Rebar.Common
             return SpecializeGenericType(PanicResultGenericType, type);
         }
 
+        internal static bool TryDestructurePanicResultType(this NIType type, out NIType resultType)
+        {
+            return type.TryGetGenericParameterOfSpecialization(PanicResultGenericType, 0, out resultType);
+        }
+
         internal static bool WireTypeMayFork(this NIType wireType)
         {
             if (wireType.IsImmutableReferenceType())
