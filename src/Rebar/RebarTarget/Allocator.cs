@@ -570,6 +570,8 @@ namespace Rebar.RebarTarget
 
         bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
         {
+            WillGetValue(panicOrContinueNode.InputTerminal);
+            WillInitializeWithValue(panicOrContinueNode.OutputTerminal);
             return true;
         }
 

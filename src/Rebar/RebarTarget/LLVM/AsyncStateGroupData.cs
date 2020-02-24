@@ -9,11 +9,13 @@ namespace Rebar.RebarTarget.LLVM
             AsyncStateGroup asyncStateGroup,
             LLVMValueRef function,
             LLVMBasicBlockRef initialBasicBlock,
+            LLVMBasicBlockRef skipBasicBlock,
             StateFieldValueSource fireCountStateField)
         {
             AsyncStateGroup = asyncStateGroup;
             Function = function;
             InitialBasicBlock = initialBasicBlock;
+            SkipBasicBlock = skipBasicBlock;
             FireCountStateField = fireCountStateField;
         }
 
@@ -31,6 +33,11 @@ namespace Rebar.RebarTarget.LLVM
         /// The initial basic block created for the <see cref="AsyncStateGroup"/>.
         /// </summary>
         public LLVMBasicBlockRef InitialBasicBlock { get; }
+
+        /// <summary>
+        /// The basic block to skip to if the block needs to be skipped due to a panic.
+        /// </summary>
+        public LLVMBasicBlockRef SkipBasicBlock { get; }
 
         /// <summary>
         /// If the <see cref="AsyncStateGroup"/> needs to be scheduled by multiple predecessors, this

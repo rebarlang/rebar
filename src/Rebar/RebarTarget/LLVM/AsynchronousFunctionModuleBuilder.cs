@@ -46,10 +46,11 @@ namespace Rebar.RebarTarget.LLVM
                     functions[asyncStateGroup.FunctionId] = groupFunction;
                 }
 
-                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
+                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label),
+                    endBasicBlock = groupFunction.AppendBasicBlock($"{asyncStateGroup.Label}_end");
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, endBasicBlock, fireCountStateField);
             }
         }
 

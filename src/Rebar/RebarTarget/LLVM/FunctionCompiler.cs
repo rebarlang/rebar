@@ -61,6 +61,7 @@ namespace Rebar.RebarTarget.LLVM
 
             _functionalNodeCompilers["Some"] = CompileSomeConstructor;
             _functionalNodeCompilers["None"] = CompileNoneConstructor;
+            _functionalNodeCompilers["OptionToPanicResult"] = CreateSpecializedFunctionCallCompiler(BuildOptionToPanicResultFunction);
 
             _functionalNodeCompilers["Range"] = CreateImportedCommonFunctionCompiler(CommonModules.CreateRangeIteratorName);
 
@@ -1212,6 +1213,14 @@ namespace Rebar.RebarTarget.LLVM
         
         bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
         {
+            LLVMValueRef panicResult = GetTerminalValueSource(panicOrContinueNode.InputTerminal).GetValue(Builder),
+                shouldContinue = Builder.CreateExtractValue(panicResult, 0u, "shouldContinue");
+            LLVMBasicBlockRef continueBlock = CurrentFunction.AppendBasicBlock($"continue_{panicOrContinueNode.UniqueId}");
+            Builder.CreateCondBr(shouldContinue, continueBlock, _moduleBuilder.CurrentGroupData.SkipBasicBlock);
+
+            Builder.PositionBuilderAtEnd(continueBlock);
+            LLVMValueRef result = Builder.CreateExtractValue(panicResult, 1u, "result");
+            Initialize(GetTerminalValueSource(panicOrContinueNode.OutputTerminal), result);
             return true;
         }
 

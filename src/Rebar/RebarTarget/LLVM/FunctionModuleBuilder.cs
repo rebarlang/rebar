@@ -114,6 +114,9 @@ namespace Rebar.RebarTarget.LLVM
                 visitation.Visit(SharedData.VisitationHandler);
             }
 
+            Builder.CreateBr(groupData.SkipBasicBlock);
+            Builder.PositionBuilderAtEnd(groupData.SkipBasicBlock);
+
             bool returnAfterGroup = true;
             var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
             if (unconditionalContinuation != null)
