@@ -138,6 +138,18 @@ namespace Rebar.RebarTarget
                 CreateNewGroupFromNode(node, nodePredecessors);
                 return;
             }
+            if (node is PanicOrContinueNode)
+            {
+                AsyncStateGroup group = CreateNewGroupFromNode(node, nodePredecessors);
+#if FALSE
+                AsyncStateGroup singlePredecessor;
+                if (nodePredecessors.TryGetSingleElement(out singlePredecessor))
+                {
+                    group.FunctionId = singlePredecessor.FunctionId;
+                }
+#endif
+                return;
+            }
 
             AsyncStateGroup nodeGroup = GetGroupJoinOfPredecessorGroups(
                 $"node{node.UniqueId}",
@@ -470,10 +482,11 @@ namespace Rebar.RebarTarget
             _nodeGroups[node] = group;
         }
 
-        private void CreateNewGroupFromNode(Node node, IEnumerable<AsyncStateGroup> nodePredecessors)
+        private AsyncStateGroup CreateNewGroupFromNode(Node node, IEnumerable<AsyncStateGroup> nodePredecessors)
         {
-            AsyncStateGroup groupBuilder = CreateNewGroupWithPredecessors($"node{node.UniqueId}", node.ParentDiagram, nodePredecessors);
-            AddNode(groupBuilder, node);
+            AsyncStateGroup group = CreateNewGroupWithPredecessors($"node{node.UniqueId}", node.ParentDiagram, nodePredecessors);
+            AddNode(group, node);
+            return group;
         }
 
         private AsyncStateGroup CreateNewGroupWithPredecessors(string label, Diagram diagram, IEnumerable<AsyncStateGroup> nodePredecessors)
