@@ -114,11 +114,18 @@ namespace Rebar.RebarTarget.LLVM
                 visitation.Visit(SharedData.VisitationHandler);
             }
 
+            var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
+            if (unconditionalContinuation != null 
+                && !unconditionalContinuation.Successors.Any()
+                && this is AsynchronousFunctionModuleBuilder)
+            {
+                GenerateStoreCompletionState(1);
+            }
+
             Builder.CreateBr(groupData.SkipBasicBlock);
             Builder.PositionBuilderAtEnd(groupData.SkipBasicBlock);
 
             bool returnAfterGroup = true;
-            var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
             if (unconditionalContinuation != null)
             {
                 if (unconditionalContinuation.Successors.Any())
@@ -235,11 +242,13 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
+        public void GenerateStoreCompletionState(byte completionState)
+        {
+            Builder.CreateStore(completionState.AsLLVMValue(), AllocationSet.GetStateDonePointer(Builder));
+        }
+
         private void GenerateFunctionTerminator()
         {
-            LLVMValueRef donePtr = AllocationSet.GetStateDonePointer(Builder);
-            Builder.CreateStore(((byte)1).AsLLVMValue(), donePtr);
-
             LLVMValueRef callerWakerPtr = AllocationSet.GetStateCallerWakerPointer(Builder),
                 callerWaker = Builder.CreateLoad(callerWakerPtr, "callerWaker");
 

@@ -1216,8 +1216,13 @@ namespace Rebar.RebarTarget.LLVM
         {
             LLVMValueRef panicResult = GetTerminalValueSource(panicOrContinueNode.InputTerminal).GetValue(Builder),
                 shouldContinue = Builder.CreateExtractValue(panicResult, 0u, "shouldContinue");
-            LLVMBasicBlockRef continueBlock = CurrentFunction.AppendBasicBlock($"continue_{panicOrContinueNode.UniqueId}");
-            Builder.CreateCondBr(shouldContinue, continueBlock, _moduleBuilder.CurrentGroupData.SkipBasicBlock);
+            LLVMBasicBlockRef continueBlock = CurrentFunction.AppendBasicBlock($"continue_{panicOrContinueNode.UniqueId}"),
+                panicBlock = CurrentFunction.AppendBasicBlock($"panic_{panicOrContinueNode.UniqueId}");
+            Builder.CreateCondBr(shouldContinue, continueBlock, panicBlock);
+
+            Builder.PositionBuilderAtEnd(panicBlock);
+            _moduleBuilder.GenerateStoreCompletionState(2);
+            Builder.CreateBr(_moduleBuilder.CurrentGroupData.SkipBasicBlock);
 
             Builder.PositionBuilderAtEnd(continueBlock);
             LLVMValueRef result = Builder.CreateExtractValue(panicResult, 1u, "result");
