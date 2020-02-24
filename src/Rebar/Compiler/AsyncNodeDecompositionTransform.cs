@@ -181,23 +181,23 @@ namespace Rebar.Compiler
 
         private FunctionalNode CreateInputReplacementNode(FunctionalNode toReplace, Func<Diagram, FunctionalNode> createNode)
         {
-            var createPromiseNode = createNode(toReplace.ParentDiagram);
+            var replacementNode = createNode(toReplace.ParentDiagram);
             AutoBorrowNodeFacade nodeToReplaceFacade = AutoBorrowNodeFacade.GetNodeFacade(toReplace);
-            AutoBorrowNodeFacade replacementFacade = AutoBorrowNodeFacade.GetNodeFacade(createPromiseNode);
-            foreach (var terminalPair in toReplace.InputTerminals.Zip(createPromiseNode.InputTerminals))
+            AutoBorrowNodeFacade replacementFacade = AutoBorrowNodeFacade.GetNodeFacade(replacementNode);
+            foreach (var terminalPair in toReplace.InputTerminals.Zip(replacementNode.InputTerminals))
             {
-                Terminal methodCallTerminal = terminalPair.Key, createMethodCallPromiseTerminal = terminalPair.Value;
-                Wire wire = (Wire)methodCallTerminal.ConnectedTerminal.ParentNode;
-                methodCallTerminal.ConnectedTerminal.ConnectTo(createMethodCallPromiseTerminal);
+                Terminal toReplaceTerminal = terminalPair.Key, replacementTerminal = terminalPair.Value;
+                Wire wire = (Wire)toReplaceTerminal.ConnectedTerminal.ParentNode;
+                toReplaceTerminal.ConnectedTerminal.ConnectTo(replacementTerminal);
                 VariableReference sourceVariable = wire.SourceTerminal.ConnectedTerminal.GetTrueVariable();
-                replacementFacade[createMethodCallPromiseTerminal]
+                replacementFacade[replacementTerminal]
                     .UnifyWithConnectedWireTypeAsNodeInput(sourceVariable, _unificationResultFactory);
             }
             // TODO: this doesn't work because the Wires connected to createPromiseNode's inputs may have been created during
             // automatic node insertion, and in that case do not have correct facades or variables.
             // createPromiseNode.UnifyNodeInputTerminalTypes(_unificationResultFactory);
             replacementFacade.FinalizeAutoBorrows();
-            return createPromiseNode;
+            return replacementNode;
         }
 
         private static FunctionalNode CreateFunctionalNodeWithFacade(Diagram parentDiagram, NIType signature)
