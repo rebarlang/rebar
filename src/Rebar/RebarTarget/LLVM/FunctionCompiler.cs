@@ -1162,7 +1162,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMTypeRef stateType = LLVMTypeRef.StructType(new[]
             {
-                LLVMTypeRef.Int1Type(),
+                FunctionAllocationSet.FunctionCompletionStatusType,
                 LLVMExtensions.WakerType,
             },
             false);
@@ -1174,7 +1174,8 @@ namespace Rebar.RebarTarget.LLVM
                 stateVoidPtr = builder.CreateExtractValue(invokable, 1u, "stateVoidPtr"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
-                isDone = builder.CreateExtractValue(state, 0u, "isDone");
+                functionCompletionState = builder.CreateExtractValue(state, 0u, "functionCompletionState"),
+                isDone = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, functionCompletionState, ((byte)0).AsLLVMValue(), "isDone");
             builder.CreateCondBr(isDone, targetDoneBlock, targetNotDoneBlock);
 
             builder.PositionBuilderAtEnd(targetDoneBlock);

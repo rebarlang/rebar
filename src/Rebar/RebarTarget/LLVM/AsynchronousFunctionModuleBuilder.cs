@@ -111,7 +111,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef statePtr = builder.CreateMalloc(SharedData.AllocationSet.StateType, "statePtr");
             CurrentState = new OuterFunctionCompilerState(initializeStateFunction, builder) { StateMalloc = statePtr };
-            builder.CreateStore(false.AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
+            builder.CreateStore(((byte)0).AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
 
             InitializeParameterAllocations(initializeStateFunction, builder);
             LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePtr, LLVMExtensions.VoidPointerType, "bitCastStatePtr");

@@ -238,7 +238,7 @@ namespace Rebar.RebarTarget.LLVM
         private void GenerateFunctionTerminator()
         {
             LLVMValueRef donePtr = AllocationSet.GetStateDonePointer(Builder);
-            Builder.CreateStore(true.AsLLVMValue(), donePtr);
+            Builder.CreateStore(((byte)1).AsLLVMValue(), donePtr);
 
             LLVMValueRef callerWakerPtr = AllocationSet.GetStateCallerWakerPointer(Builder),
                 callerWaker = Builder.CreateLoad(callerWakerPtr, "callerWaker");
