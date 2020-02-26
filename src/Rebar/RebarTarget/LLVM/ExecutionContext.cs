@@ -144,6 +144,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public void ExecuteFunctionTopLevel(string functionName, bool isAsync)
         {
+            byte completionStatus = 0;
             if (isAsync)
             {
                 ParameterlessInitializeStateFunc initializeFunc = GetNamedFunctionDelegate<ParameterlessInitializeStateFunc>(
@@ -159,6 +160,12 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     throw new InvalidOperationException("Execution queue is empty, but top-level waker was not called.");
                 }
+
+                unsafe
+                {
+                    completionStatus = *((byte*)statePtr);
+                }
+                // TODO: deallocate statePtr
             }
             else
             {
@@ -166,8 +173,12 @@ namespace Rebar.RebarTarget.LLVM
                     FunctionNames.GetSynchronousFunctionName(functionName));
 
                 _executing = true;
-                func();
+                /* completionStatus = */func();
                 _executing = false;
+            }
+            if (completionStatus == RuntimeConstants.PanicStatus)
+            {
+                _runtimeServices.PanicOccurred = true;
             }
         }
 
