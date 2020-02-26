@@ -1220,7 +1220,7 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateCondBr(shouldContinue, continueBlock, panicBlock);
 
             Builder.PositionBuilderAtEnd(panicBlock);
-            _moduleBuilder.GenerateStoreCompletionState(2);
+            _moduleBuilder.GenerateStoreCompletionState(RuntimeConstants.PanicStatus);
             Builder.CreateBr(_moduleBuilder.CurrentGroupData.SkipBasicBlock);
 
             Builder.PositionBuilderAtEnd(continueBlock);
