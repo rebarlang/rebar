@@ -37,19 +37,6 @@ namespace Rebar.RebarTarget.LLVM
 
         public override void CompileFunction()
         {
-            LLVMValueRef outerFunction = InitializeOuterFunction(_functionName, GetParameterLLVMTypes());
-            var builder = new IRBuilder();
-            var outerFunctionCompilerState = new OuterFunctionCompilerState(outerFunction, builder);
-            CurrentState = outerFunctionCompilerState;
-            LLVMBasicBlockRef outerEntryBlock = outerFunction.AppendBasicBlock("entry");
-            builder.PositionBuilderAtEnd(outerEntryBlock);
-
-            builder.CreateCall(SyncFunction, outerFunction.GetParams().Skip(2).ToArray(), string.Empty);
-            // activate the caller waker
-            // TODO: invoke caller waker directly, or schedule?
-            builder.CreateCall(outerFunction.GetParam(0u), new LLVMValueRef[] { outerFunction.GetParam(1u) }, string.Empty);
-            builder.CreateRetVoid();
-
             var syncBuilder = new IRBuilder();
             syncBuilder.PositionBuilderAtEnd(SyncFunctionEntryBlock);
             string singleFunctionName = _asyncStateGroups.First().FunctionId;

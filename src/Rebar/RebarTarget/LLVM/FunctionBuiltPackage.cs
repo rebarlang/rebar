@@ -24,7 +24,7 @@ namespace Rebar.RebarTarget.LLVM
         /// <summary>
         /// Minimum version that is considered loadable and/or valid.
         /// </summary>
-        internal static readonly Version MinimumLoadableVersion = _untrackedVersion;
+        internal static Version MinimumLoadableVersion => AddIsYieldingVersion;
 
         /// <summary>
         /// Version at which FunctionCompileSignature replaced CompileSignature for Functions and when
@@ -33,23 +33,32 @@ namespace Rebar.RebarTarget.LLVM
         internal static readonly Version FunctionMayPanicVersion = new Version(0, 1, 1, 0);
 
         /// <summary>
+        /// Version at which the value of IsYielding is stored in the FunctionBuiltPackage; compiled Functions no longer
+        /// have an outer function, and the ::Poll function for async Functions takes the caller waker function and state
+        /// pointers.
+        /// </summary>
+        internal static readonly Version AddIsYieldingVersion = new Version(0, 1, 2, 0);
+
+        /// <summary>
         /// The current/latest version of the built package, given to all newly created built packages.
         /// </summary>
         /// <remarks>This should change whenever the built package format changes; it should always be the value
         /// of another readonly Version property that describes what changed at that version.</remarks>
-        internal static Version CurrentVersion => FunctionMayPanicVersion;
+        internal static Version CurrentVersion => AddIsYieldingVersion;
 
         public FunctionBuiltPackage(
             SpecAndQName identity,
             QualifiedName targetIdentity,
             SpecAndQName[] dependencyIdentities,
-            Module module)
+            Module module,
+            bool isYielding)
         {
             Version = CurrentVersion;
             RuntimeEntityIdentity = identity;
             TargetIdentity = targetIdentity;
             DependencyIdentities = dependencyIdentities;
             Module = module;
+            IsYielding = isYielding;
         }
 
         protected FunctionBuiltPackage(SerializationInfo info, StreamingContext context)
@@ -63,6 +72,11 @@ namespace Rebar.RebarTarget.LLVM
             Token = (BuiltPackageToken)info.GetValue(nameof(Token), typeof(BuiltPackageToken));
             byte[] moduleBytes = (byte[])info.GetValue(nameof(Module), typeof(byte[]));
             Module = moduleBytes.DeserializeModuleAsBitcode();
+
+            if (Version >= AddIsYieldingVersion)
+            {
+                IsYielding = info.GetBoolean(nameof(IsYielding));
+            }
         }
 
         private static Version DeserializeVersion(SerializationInfo info)
@@ -82,6 +96,8 @@ namespace Rebar.RebarTarget.LLVM
         public Version Version { get; }
 
         public Module Module { get; }
+
+        public bool IsYielding { get; }
 
         public bool IsPackageValid => Version >= MinimumLoadableVersion;
 
@@ -109,6 +125,7 @@ namespace Rebar.RebarTarget.LLVM
             info.AddValue(nameof(DependencyIdentities), DependencyIdentities);
             info.AddValue(nameof(Token), Token);
             info.AddValue(nameof(Module), Module.SerializeModuleAsBitcode());
+            info.AddValue(nameof(IsYielding), IsYielding);
         }
     }
 }

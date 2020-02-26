@@ -70,17 +70,6 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
-        protected LLVMValueRef InitializeOuterFunction(string functionName, IEnumerable<LLVMTypeRef> parameterTypes)
-        {
-            var outerFunctionParameters = new List<LLVMTypeRef>();
-            outerFunctionParameters.Add(LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u));
-            outerFunctionParameters.Add(LLVMExtensions.VoidPointerType);
-            outerFunctionParameters.AddRange(parameterTypes);
-
-            LLVMTypeRef outerFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), outerFunctionParameters.ToArray(), false);
-            return Module.AddFunction(functionName, outerFunctionType);
-        }
-
         protected void CompileAsyncStateGroup(AsyncStateGroup asyncStateGroup, FunctionCompilerState compilerState)
         {
             FunctionCompilerState previousState = CurrentState;

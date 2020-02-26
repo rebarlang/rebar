@@ -10,6 +10,16 @@ namespace Rebar.RebarTarget.LLVM
         private readonly string _functionName;
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
 
+        public static readonly LLVMTypeRef PollFunctionType = LLVMTypeRef.FunctionType(
+            LLVMTypeRef.VoidType(),
+            new LLVMTypeRef[]
+            {
+                LLVMExtensions.VoidPointerType,
+                LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
+                LLVMExtensions.VoidPointerType
+            },
+            false);
+
         public AsynchronousFunctionModuleBuilder(
             Module module,
             FunctionCompilerSharedData sharedData,
@@ -63,38 +73,6 @@ namespace Rebar.RebarTarget.LLVM
 
             LLVMValueRef initializeStateFunction = BuildInitializeStateFunction(GetParameterLLVMTypes());
             LLVMValueRef pollFunction = BuildPollFunction();
-
-            BuildOuterFunction(GetParameterLLVMTypes(), initializeStateFunction, pollFunction);
-        }
-
-        private void BuildOuterFunction(IEnumerable<LLVMTypeRef> parameterTypes, LLVMValueRef initializeStateFunction, LLVMValueRef pollFunction)
-        {
-            LLVMValueRef outerFunction = InitializeOuterFunction(_functionName, parameterTypes);
-            var builder = new IRBuilder();
-            var outerFunctionCompilerState = new OuterFunctionCompilerState(outerFunction, builder);
-            CurrentState = outerFunctionCompilerState;
-            LLVMBasicBlockRef outerEntryBlock = outerFunction.AppendBasicBlock("entry");
-            builder.PositionBuilderAtEnd(outerEntryBlock);
-
-            // TODO: deallocate state block for the top-level case!
-            LLVMValueRef voidStatePtr = builder.CreateCall(
-                initializeStateFunction,
-                outerFunction.GetParams().Skip(2).ToArray(),
-                "voidStatePtr"),
-                statePtr = builder.CreateBitCast(voidStatePtr, LLVMTypeRef.PointerType(SharedData.AllocationSet.StateType, 0u), "statePtr");
-            outerFunctionCompilerState.StateMalloc = statePtr;
-            // TODO: create constants for these positions
-            LLVMValueRef waker = builder.BuildStructValue(
-                LLVMExtensions.WakerType,
-                new LLVMValueRef[] { outerFunction.GetParam(0u), outerFunction.GetParam(1u) },
-                "callerWaker");
-            builder.CreateStore(waker, builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
-
-            builder.CreateCall(
-                pollFunction,
-                new LLVMValueRef[] { voidStatePtr },
-                string.Empty);
-            builder.CreateRetVoid();
         }
 
         private LLVMValueRef BuildInitializeStateFunction(IEnumerable<LLVMTypeRef> parameterTypes)
@@ -121,7 +99,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef BuildPollFunction()
         {
-            LLVMValueRef pollFunction = Module.AddFunction(FunctionNames.GetPollFunctionName(_functionName), LLVMExtensions.ScheduledTaskFunctionType);
+            LLVMValueRef pollFunction = Module.AddFunction(FunctionNames.GetPollFunctionName(_functionName), PollFunctionType);
             LLVMBasicBlockRef entryBlock = pollFunction.AppendBasicBlock("entry");
             var builder = new IRBuilder();
 
@@ -131,6 +109,14 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef stateVoidPtr = pollFunction.GetParam(0u),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(SharedData.AllocationSet.StateType, 0u), "statePtr");
             outerFunctionCompilerState.StateMalloc = statePtr;
+
+            // store the caller waker in the state
+            // TODO: create constants for these positions
+            LLVMValueRef waker = builder.BuildStructValue(
+                LLVMExtensions.WakerType,
+                new LLVMValueRef[] { pollFunction.GetParam(1u), pollFunction.GetParam(2u) },
+                "callerWaker");
+            builder.CreateStore(waker, builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
 
             // set initial fire counts
             foreach (AsyncStateGroupData groupData in AsyncStateGroups.Values)

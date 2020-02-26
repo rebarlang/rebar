@@ -21,14 +21,21 @@ namespace Rebar.RebarTarget
         private ISimpleExecutionState _currentSimpleExecutionState = DefaultExecutionState.Idle;
         private readonly LLVM.ExecutionContext _llvmContext;
 
-        public ExecutableFunction(ExecutionTarget target, LLVM.ExecutionContext context, IRuntimeEntityIdentity runtimeIdentity)
+        public ExecutableFunction(
+            ExecutionTarget target,
+            LLVM.ExecutionContext context,
+            IRuntimeEntityIdentity runtimeIdentity,
+            bool isAsync)
         {
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;
             CompiledName = runtimeIdentity.EditorName;
             RuntimeName = FunctionCompileHandler.FunctionLLVMName((SpecAndQName)runtimeIdentity);
             _llvmContext = context;
+            IsAsync = isAsync;
         }
+
+        public bool IsAsync { get; }
 
         /// <inheritdoc />
         public string CompiledComponentName => RuntimeNameHelper.GetComponentNameFromRuntimeString(RuntimeName);
@@ -109,7 +116,7 @@ namespace Rebar.RebarTarget
         public void StartRun()
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
-            _llvmContext.ExecuteFunctionTopLevel(RuntimeName);
+            _llvmContext.ExecuteFunctionTopLevel(RuntimeName, IsAsync);
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;
         }
