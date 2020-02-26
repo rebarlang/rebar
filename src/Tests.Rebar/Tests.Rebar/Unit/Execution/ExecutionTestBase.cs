@@ -136,6 +136,6 @@ namespace Tests.Rebar.Unit.Execution
 
         public HashSet<int> DroppedFakeDropIds { get; } = new HashSet<int>();
 
-        public bool PanicOccurred { get; } = false;
+        public bool PanicOccurred { get; set; } = false;
     }
 }

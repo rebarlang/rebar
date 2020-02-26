@@ -88,5 +88,7 @@ namespace Rebar.RebarTarget
         {
             throw new NotImplementedException("FakeDrop not supported");
         }
+
+        public bool PanicOccurred { get; set; } = false;
     }
 }
