@@ -20,11 +20,13 @@ namespace Rebar.Compiler
             _typeVariableSet = dfirRoot.GetTypeVariableSet();
             var variableSet = new VariableSet(_typeVariableSet);
             dfirRoot.SetVariableSet(variableSet);
+
+            int rootDiagramLifetimeId = 0;
             foreach (DataItem dataItem in dfirRoot.DataItems)
             {
                 // TODO: eventually we want to reuse each DataItem's variable for its DataAccessors' terminals.
                 TypeVariableReference dataTypeVariable = _typeVariableSet.CreateTypeVariableReferenceFromNIType(dataItem.DataType);
-                dataItem.SetVariable(variableSet.CreateNewVariable(dfirRoot.BlockDiagram.UniqueId, dataTypeVariable, true));
+                dataItem.SetVariable(variableSet.CreateNewVariable(rootDiagramLifetimeId, dataTypeVariable, true));
             }
         }
 
