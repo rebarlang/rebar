@@ -139,6 +139,11 @@ namespace Rebar.RebarTarget
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
+            bool mayPanic = asyncStateGroups.Any(g =>
+            {
+                var firstVisitation = g.Visitations.FirstOrDefault() as NodeVisitation;
+                return firstVisitation != null && firstVisitation.Node is PanicOrContinueNode;
+            });
 
             var variableStorage = new LLVM.FunctionVariableStorage();
             var allocator = new Allocator(variableStorage, asyncStateGroups);
@@ -160,7 +165,7 @@ namespace Rebar.RebarTarget
             sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
 
             moduleBuilder.CompileFunction();
-            return new LLVM.FunctionCompileResult(module, isYielding);
+            return new LLVM.FunctionCompileResult(module, isYielding, mayPanic);
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
