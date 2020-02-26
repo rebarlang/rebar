@@ -36,7 +36,7 @@ namespace Tests.Rebar.Unit.Execution
             const string compiledFunctionName = "test";
             FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName, calleesIsYielding);
             _context.LoadFunction(compileResult.Module);
-            _context.ExecuteFunctionTopLevel(compiledFunctionName);
+            _context.ExecuteFunctionTopLevel(compiledFunctionName, compileResult.IsYielding);
         }
 
         public byte[] GetLastValueFromInspectNode(FunctionalNode inspectNode)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LLVMSharp;
 using NationalInstruments;
@@ -12,7 +11,6 @@ using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using NationalInstruments.Linking;
 using Rebar.Compiler;
-using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget
@@ -99,7 +97,8 @@ namespace Rebar.RebarTarget
                 specAndQName,
                 Compiler.TargetName,
                 dependencyIdentities.ToArray(),
-                functionCompileResult.Module);
+                functionCompileResult.Module,
+                functionCompileResult.IsYielding);
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(

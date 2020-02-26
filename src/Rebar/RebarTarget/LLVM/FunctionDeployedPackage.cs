@@ -13,13 +13,17 @@ namespace Rebar.RebarTarget.LLVM
             ExecutionContext context)
         {
             context.LoadFunction(builtPackage.Module);
-            return new FunctionDeployedPackage(builtPackage.RuntimeEntityIdentity, target, context);
+            return new FunctionDeployedPackage(builtPackage.RuntimeEntityIdentity, target, context, builtPackage.IsYielding);
         }
 
-        private FunctionDeployedPackage(IRuntimeEntityIdentity identity, ExecutionTarget executionTarget, ExecutionContext context)
+        private FunctionDeployedPackage(
+            IRuntimeEntityIdentity identity,
+            ExecutionTarget executionTarget,
+            ExecutionContext context,
+            bool isAsync)
         {
             DeployedPackageIdentity = identity;
-            Executable = new ExecutableFunction(executionTarget, context, identity);
+            Executable = new ExecutableFunction(executionTarget, context, identity, isAsync);
         }
 
         /// <inheritdoc />

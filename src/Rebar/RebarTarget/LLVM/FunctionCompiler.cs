@@ -545,7 +545,7 @@ namespace Rebar.RebarTarget.LLVM
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
-            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => LLVMExtensions.ScheduledTaskFunctionType);
+            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => AsynchronousFunctionModuleBuilder.PollFunctionType);
         }
 
         private LLVMValueRef GetImportedFunction(string functionName, Func<LLVMTypeRef> getFunctionType)
@@ -1109,8 +1109,9 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-        private const uint MethodCallPromiseInvokableFieldIndex = 0u,
-            MethodCallPromiseOutputFieldIndex = 1u;
+        private const uint MethodCallPromisePollFunctionPtrFieldIndex = 0u,
+            MethodCallPromiseStatePtrFieldIndex = 1u,
+            MethodCallPromiseOutputFieldIndex = 2u;
 
         bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
         {
@@ -1145,10 +1146,10 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef initializeStateFunction = GetImportedInitializeStateFunction(createMethodCallPromise),
                 statePtr = Builder.CreateCall(initializeStateFunction, initializeParameters.ToArray(), "statePtr"),
                 pollFunction = GetImportedPollFunction(createMethodCallPromise),
-                invokable = Builder.BuildStructValue(LLVMExtensions.WakerType, new LLVMValueRef[] { pollFunction, statePtr }, "invokable"),
-                promiseInvokablePtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promisePollFunctionPtr");
-            Builder.CreateStore(invokable, promiseInvokablePtr);
-
+                promisePollStatePtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseStatePtrFieldIndex, "promisePollStatePtr"),
+                promisePollFunctionPtr = Builder.CreateStructGEP(promisePtr, MethodCallPromisePollFunctionPtrFieldIndex, "promisePollFunctionPtr");
+            Builder.CreateStore(pollFunction, promisePollFunctionPtr);
+            Builder.CreateStore(statePtr, promisePollStatePtr);
             return true;
         }
 
@@ -1168,10 +1169,8 @@ namespace Rebar.RebarTarget.LLVM
             false);
 
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
-                promiseResultPtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "promiseResultPtr"),
-                promiseInvokablePtr = builder.CreateStructGEP(promisePtr, MethodCallPromiseInvokableFieldIndex, "promiseInvokablePtr"),
-                invokable = builder.CreateLoad(promiseInvokablePtr, "invokable"),
-                stateVoidPtr = builder.CreateExtractValue(invokable, 1u, "stateVoidPtr"),
+                promise = builder.CreateLoad(promisePtr, "promise"),
+                stateVoidPtr = builder.CreateExtractValue(promise, MethodCallPromiseStatePtrFieldIndex, "stateVoidPtr"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
                 functionCompletionState = builder.CreateExtractValue(state, 0u, "functionCompletionState"),
@@ -1180,7 +1179,7 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(targetDoneBlock);
             builder.CreateFree(stateVoidPtr);
-            LLVMValueRef result = builder.CreateLoad(promiseResultPtr, "result"),
+            LLVMValueRef result = builder.CreateExtractValue(promise, MethodCallPromiseOutputFieldIndex, "result"),
                 optionResultOutputPtr = methodCallPromisePollFunction.GetParam(2u);
             LLVMTypeRef optionResultOutputType = optionResultOutputPtr.TypeOf().GetElementType();
             LLVMValueRef someResult = builder.BuildOptionValue(optionResultOutputType, result);
@@ -1188,11 +1187,11 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
 
             builder.PositionBuilderAtEnd(targetNotDoneBlock);
-            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u);
-            // TODO: create constants for these positions
-            builder.CreateStore(waker, builder.CreateStructGEP(statePtr, 1u, "callerWakerPtr"));
-
-            builder.CreateCall(compiler.GetImportedCommonFunction(CommonModules.InvokeName), new LLVMValueRef[] { invokable }, string.Empty);
+            LLVMValueRef waker = methodCallPromisePollFunction.GetParam(1u),
+                wakerFunctionPtr = builder.CreateExtractValue(waker, 0u, "wakerFunctionPtr"),
+                wakerStatePtr = builder.CreateExtractValue(waker, 1u, "wakerStatePtr"),
+                pollFunctionPtr = builder.CreateExtractValue(promise, MethodCallPromisePollFunctionPtrFieldIndex, "pollFunctionPtr");
+            builder.CreateCall(pollFunctionPtr, new LLVMValueRef[] { stateVoidPtr, wakerFunctionPtr, wakerStatePtr }, string.Empty);
             LLVMValueRef noneResult = builder.BuildOptionValue(optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();

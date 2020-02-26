@@ -77,7 +77,10 @@ namespace Rebar.RebarTarget.LLVM
         private delegate void FakeDropDelegate(int v);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void ExecFunc(IntPtr callerWakerFunctionPtr, IntPtr callerWakerStatePtr);
+        private delegate IntPtr ParameterlessInitializeStateFunc();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate void PollFunc(IntPtr statePtr, IntPtr callerWakerFunctionPtr, IntPtr callerWakerStatePtr);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ScheduledTaskFunction(IntPtr statePtr);
@@ -139,20 +142,41 @@ namespace Rebar.RebarTarget.LLVM
             _globalModule.LinkInModule(functionModule.Clone());
         }
 
-        public void ExecuteFunctionTopLevel(string functionName)
+        public void ExecuteFunctionTopLevel(string functionName, bool isAsync)
+        {
+            if (isAsync)
+            {
+                ParameterlessInitializeStateFunc initializeFunc = GetNamedFunctionDelegate<ParameterlessInitializeStateFunc>(
+                    FunctionNames.GetInitializeStateFunctionName(functionName));
+                PollFunc pollFunc = GetNamedFunctionDelegate<PollFunc>(
+                    FunctionNames.GetPollFunctionName(functionName));
+
+                _executing = true;
+                IntPtr statePtr = initializeFunc();
+                pollFunc(statePtr, _topLevelCallerWakerFunctionPtr, IntPtr.Zero);
+                ExecuteTasksUntilDone();
+                if (_executing)
+                {
+                    throw new InvalidOperationException("Execution queue is empty, but top-level waker was not called.");
+                }
+            }
+            else
+            {
+                Action func = GetNamedFunctionDelegate<Action>(
+                    FunctionNames.GetSynchronousFunctionName(functionName));
+
+                _executing = true;
+                func();
+                _executing = false;
+            }
+        }
+
+        private T GetNamedFunctionDelegate<T>(string functionName)
         {
             LLVMValueRef funcValue = _globalModule.GetNamedFunction(functionName);
             funcValue.ThrowIfNull();
             IntPtr pointerToFunc = LLVMSharp.LLVM.GetPointerToGlobal(_engine, funcValue);
-            ExecFunc func = Marshal.GetDelegateForFunctionPointer<ExecFunc>(pointerToFunc);
-
-            _executing = true;
-            func(_topLevelCallerWakerFunctionPtr, IntPtr.Zero);
-            ExecuteTasksUntilDone();
-            if (_executing)
-            {
-                throw new InvalidOperationException("Execution queue is empty, but top-level waker was not called.");
-            }
+            return Marshal.GetDelegateForFunctionPointer<T>(pointerToFunc);
         }
 
         private void ExecuteTasksUntilDone()

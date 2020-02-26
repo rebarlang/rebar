@@ -401,11 +401,22 @@ namespace Rebar.RebarTarget.LLVM
             return LLVMTypeRef.StructType(new LLVMTypeRef[] { innerType }, false);
         }
 
+        private static readonly LLVMTypeRef MethodPollFunctionType = LLVMTypeRef.FunctionType(
+            LLVMTypeRef.VoidType(),
+            new LLVMTypeRef[]
+            {
+                VoidPointerType,
+                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                VoidPointerType
+            },
+            false);
+
         internal static LLVMTypeRef CreateLLVMMethodCallPromiseType(this LLVMTypeRef innerType)
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[]
             {
-                WakerType,
+                LLVMTypeRef.PointerType(MethodPollFunctionType, 0u),
+                VoidPointerType,
                 innerType,
             },
             false);

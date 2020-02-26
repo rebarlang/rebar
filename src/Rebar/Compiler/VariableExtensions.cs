@@ -26,7 +26,7 @@ namespace Rebar.Compiler
 
         public static LifetimeGraphIdentifier GetLifetimeGraphIdentifier(this Diagram diagram)
         {
-            var token = diagram.DfirRoot.GetOrCreateNamedSparseAttributeToken<LifetimeGraphIdentifier>(_lifetimeGraphIdentifierTokenName);
+            var token = diagram.DfirRoot.GetNamedSparseAttributeToken<LifetimeGraphIdentifier>(_lifetimeGraphIdentifierTokenName);
             return token.GetAttribute(diagram);
         }
 
@@ -115,13 +115,15 @@ namespace Rebar.Compiler
 
         public static VariableReference CreateNewVariable(this Terminal terminal, TypeVariableReference typeVariableReference = default(TypeVariableReference), bool mutable = false)
         {
-            return terminal.GetVariableSet().CreateNewVariable(terminal.ParentDiagram.UniqueId, typeVariableReference, mutable);
+            int diagramLifetimeId = terminal.ParentDiagram.GetLifetimeGraphIdentifier().Id;
+            return terminal.GetVariableSet().CreateNewVariable(diagramLifetimeId, typeVariableReference, mutable);
         }
 
         public static VariableReference CreateNewVariableForUnwiredTerminal(this Terminal terminal)
         {
             VariableSet variableSet = terminal.GetVariableSet();
-            return variableSet.CreateNewVariable(terminal.ParentDiagram.UniqueId, variableSet.TypeVariableSet.CreateReferenceToNewTypeVariable());
+            int diagramLifetimeId = terminal.ParentDiagram.GetLifetimeGraphIdentifier().Id;
+            return variableSet.CreateNewVariable(diagramLifetimeId, variableSet.TypeVariableSet.CreateReferenceToNewTypeVariable());
         }
 
         public static VariableUsageValidator GetValidator(this Terminal terminal)
