@@ -39,6 +39,21 @@ namespace Tests.Rebar.Unit.Execution
             Assert.IsNull(executionInstance.RuntimeServices.LastOutputValue);
         }
 
+        [TestMethod]
+        public void NonPanickingUnwrapOptionIntoInspect_Execute_CorrectValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var unwrapOption = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
+            FunctionalNode some = ConnectSomeConstructorToInputTerminal(unwrapOption.InputTerminals[0]);
+            ConnectConstantToInputTerminal(some.InputTerminals[0], PFTypes.Int32, 5, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(unwrapOption.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 5);
+        }
+
         private FunctionalNode CreateNoneOfOptionIntegerType(Diagram parentDiagram)
         {
             var assign = new FunctionalNode(parentDiagram, Signatures.AssignType);
