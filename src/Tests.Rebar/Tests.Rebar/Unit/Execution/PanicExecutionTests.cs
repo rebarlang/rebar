@@ -54,6 +54,27 @@ namespace Tests.Rebar.Unit.Execution
             AssertByteArrayIsInt32(inspectValue, 5);
         }
 
+        [TestMethod]
+        public void PanickingAndNonpanickingUnwrapOptionIntoAddAndOutput_Execute_NoOutputValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode createNoneInteger = CreateNoneOfOptionIntegerType(function.BlockDiagram);
+            var unwrapNone = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
+            Wire.Create(function.BlockDiagram, createNoneInteger.OutputTerminals[0], unwrapNone.InputTerminals[0]);
+            var unwrapSome = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
+            FunctionalNode some = ConnectSomeConstructorToInputTerminal(unwrapSome.InputTerminals[0]);
+            ConnectConstantToInputTerminal(some.InputTerminals[0], PFTypes.Int32, 5, false);
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            Wire.Create(function.BlockDiagram, unwrapNone.OutputTerminals[0], add.InputTerminals[0]);
+            Wire.Create(function.BlockDiagram, unwrapSome.OutputTerminals[0], add.InputTerminals[1]);
+            var output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+            Wire.Create(function.BlockDiagram, add.OutputTerminals[2], output.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsNull(executionInstance.RuntimeServices.LastOutputValue);
+        }
+
         private FunctionalNode CreateNoneOfOptionIntegerType(Diagram parentDiagram)
         {
             var assign = new FunctionalNode(parentDiagram, Signatures.AssignType);
