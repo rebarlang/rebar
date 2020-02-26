@@ -22,13 +22,6 @@ namespace Rebar.RebarTarget.LLVM
         private static readonly Version _untrackedVersion = new Version(0, 1, 0, 0);
 
         /// <summary>
-        /// The current/latest version of the built package, given to all newly created built packages.
-        /// </summary>
-        /// <remarks>This should change whenever the built package format changes; it should always be the value
-        /// of another readonly Version property that describes what changed at that version.</remarks>
-        internal static readonly Version CurrentVersion = FunctionMayPanicVersion;
-
-        /// <summary>
         /// Minimum version that is considered loadable and/or valid.
         /// </summary>
         internal static readonly Version MinimumLoadableVersion = _untrackedVersion;
@@ -38,6 +31,13 @@ namespace Rebar.RebarTarget.LLVM
         /// the MayPanic flag was added to FunctionCompileSignature.
         /// </summary>
         internal static readonly Version FunctionMayPanicVersion = new Version(0, 1, 1, 0);
+
+        /// <summary>
+        /// The current/latest version of the built package, given to all newly created built packages.
+        /// </summary>
+        /// <remarks>This should change whenever the built package format changes; it should always be the value
+        /// of another readonly Version property that describes what changed at that version.</remarks>
+        internal static Version CurrentVersion => FunctionMayPanicVersion;
 
         public FunctionBuiltPackage(
             SpecAndQName identity,
