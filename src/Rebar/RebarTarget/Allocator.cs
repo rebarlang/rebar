@@ -365,6 +365,7 @@ namespace Rebar.RebarTarget
 
         public bool VisitTunnel(Tunnel tunnel)
         {
+            tunnel.InputTerminals.ForEach(WillGetValue);
             if (tunnel.Terminals.HasExactly(2))
             {
                 VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
