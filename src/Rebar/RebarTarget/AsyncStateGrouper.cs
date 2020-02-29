@@ -85,12 +85,17 @@ namespace Rebar.RebarTarget
 
         public IEnumerable<AsyncStateGroup> GetAsyncStateGroups()
         {
-            // add a final group if necessary
-            var groupsWithoutSuccessors = _groups.Where(group => !group.Continuation.HasSuccessors).ToList();
-            AsyncStateGroup finalGroup;
+            AddFinalGroupIfNecessary();
+            SetSkippableGroups();
+            return _groups;
+        }
+
+        private void AddFinalGroupIfNecessary()
+        {
+            var groupsWithoutSuccessors = _groups.Where(group => !group.Continuation.Successors.Any()).ToList();
             if (groupsWithoutSuccessors.HasMoreThan(1))
             {
-                finalGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
+                AsyncStateGroup finalGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
                     "terminalGroup",
                     _dfirRoot.BlockDiagram);
                 foreach (AsyncStateGroup predecessor in groupsWithoutSuccessors)
@@ -98,11 +103,38 @@ namespace Rebar.RebarTarget
                     AddUnconditionalSuccessorGroup(predecessor, finalGroup);
                 }
             }
-            else
+        }
+
+        private enum GroupTraversalState { NotVisited, VisitedAndNotSkippable, Skippable };
+
+        private void SetSkippableGroups()
+        {
+            AsyncStateGroup rootInitialGroup = _diagramInitialGroups[_dfirRoot.BlockDiagram];
+            var groupTraversalStates = new Dictionary<AsyncStateGroup, GroupTraversalState>();
+            _groups.ForEach(g => groupTraversalStates[g] = GroupTraversalState.NotVisited);
+            Queue<AsyncStateGroup> groupQueue = new Queue<AsyncStateGroup>();
+            groupQueue.Enqueue(rootInitialGroup);
+
+            while (groupQueue.Any())
             {
-                finalGroup = groupsWithoutSuccessors.Single();
+                AsyncStateGroup group = groupQueue.Dequeue();
+                if (groupTraversalStates[group] == GroupTraversalState.Skippable)
+                {
+                    continue;
+                }
+
+                bool startsWithPanicOrContinue = group.GroupStartsWithPanicOrContinue();
+                bool hasSkippablePredecessor = group.Predecessors.Any(g => g.IsSkippable);
+                bool isDiagramInitialGroup = _diagramInitialGroups.Values.Contains(group);
+                bool isSkippable = !isDiagramInitialGroup && (startsWithPanicOrContinue || hasSkippablePredecessor);
+                group.IsSkippable = isSkippable;
+                bool traverseSuccessors = isSkippable || groupTraversalStates[group] == GroupTraversalState.NotVisited;
+                if (traverseSuccessors)
+                {
+                    group.Continuation.Successors.ForEach(groupQueue.Enqueue);
+                }
+                groupTraversalStates[group] = isSkippable ? GroupTraversalState.Skippable : GroupTraversalState.VisitedAndNotSkippable;
             }
-            return _groups;
         }
 
         protected override void VisitDfirRoot(DfirRoot dfirRoot)
@@ -462,7 +494,7 @@ namespace Rebar.RebarTarget
 
         private void AddUnconditionalSuccessorGroup(AsyncStateGroup predecessor, AsyncStateGroup successor)
         {
-            ((UnconditionallySchduleGroupsContinuation)predecessor.Continuation).Successors.Add(successor);
+            ((UnconditionallySchduleGroupsContinuation)predecessor.Continuation).UnconditionalSuccessors.Add(successor);
             ((HashSet<AsyncStateGroup>)successor.Predecessors).Add(predecessor);
         }
 
@@ -572,25 +604,27 @@ namespace Rebar.RebarTarget
         public int MaxFireCount => SignaledConditionally ? 1 : Predecessors.Count();
 
         public Continuation Continuation { get; }
+
+        public bool IsSkippable { get; set; }
     }
 
     internal abstract class Continuation
     {
-        public abstract bool HasSuccessors { get; }
+        public abstract IEnumerable<AsyncStateGroup> Successors { get; }
     }
 
     internal class UnconditionallySchduleGroupsContinuation : Continuation
     {
-        public HashSet<AsyncStateGroup> Successors { get; } = new HashSet<AsyncStateGroup>();
+        public HashSet<AsyncStateGroup> UnconditionalSuccessors { get; } = new HashSet<AsyncStateGroup>();
 
-        public override bool HasSuccessors => Successors.Any();
+        public override IEnumerable<AsyncStateGroup> Successors => UnconditionalSuccessors;
     }
 
     internal class ConditionallyScheduleGroupsContinuation : Continuation
     {
         public List<HashSet<AsyncStateGroup>> SuccessorConditionGroups = new List<HashSet<AsyncStateGroup>>();
 
-        public override bool HasSuccessors => SuccessorConditionGroups.Any();
+        public override IEnumerable<AsyncStateGroup> Successors => SuccessorConditionGroups.SelectMany(set => set);
     }
 
     internal abstract class Visitation
@@ -640,6 +674,12 @@ namespace Rebar.RebarTarget
                         && structureVisitation.Diagram == diagram
                         && structureVisitation.TraversalPoint == traversalPoint;
                 });
+        }
+
+        public static bool GroupStartsWithPanicOrContinue(this AsyncStateGroup group)
+        {
+            var firstVisitation = group.Visitations.FirstOrDefault() as NodeVisitation;
+            return firstVisitation != null && firstVisitation.Node is PanicOrContinueNode;
         }
     }
 
@@ -703,7 +743,7 @@ namespace Rebar.RebarTarget
             var conditionalContinuation = continuation as ConditionallyScheduleGroupsContinuation;
             if (unconditionalContinuation != null)
             {
-                return $"Successors: {string.Join(" ", unconditionalContinuation.Successors.Select(g => g.Label))}";
+                return $"Successors: {string.Join(" ", unconditionalContinuation.UnconditionalSuccessors.Select(g => g.Label))}";
             }
             if (conditionalContinuation != null)
             {

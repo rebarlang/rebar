@@ -114,7 +114,9 @@ namespace Rebar.RebarTarget
                     {
                         return new ConstantValueSource(constantValue);
                     }
-                    if (!usage.LiveInMultipleFunctions)
+
+                    bool initializedInSkippableGroup = usage.InitializingGroup.IsSkippable;
+                    if (!usage.LiveInMultipleFunctions && !initializedInSkippableGroup)
                     {
                         return new ImmutableValueSource();
                     }
@@ -686,6 +688,8 @@ namespace Rebar.RebarTarget
 
             public VariableReference ReferencedVariable { get; private set; }
 
+            public AsyncStateGroup InitializingGroup { get; private set; }
+
             public bool GetsValue { get; private set; }
 
             public bool TakesAddress { get; private set; }
@@ -719,6 +723,7 @@ namespace Rebar.RebarTarget
             public void WillInitializeWithValue(AsyncStateGroup inGroup)
             {
                 _liveFunctionNames.Add(inGroup.FunctionId);
+                InitializingGroup = inGroup;
             }
 
             public void WillGetValue(AsyncStateGroup inGroup)

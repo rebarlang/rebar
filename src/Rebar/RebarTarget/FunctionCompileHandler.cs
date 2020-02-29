@@ -139,11 +139,7 @@ namespace Rebar.RebarTarget
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
-            bool mayPanic = asyncStateGroups.Any(g =>
-            {
-                var firstVisitation = g.Visitations.FirstOrDefault() as NodeVisitation;
-                return firstVisitation != null && firstVisitation.Node is PanicOrContinueNode;
-            });
+            bool mayPanic = asyncStateGroups.Any(VisitationExtensions.GroupStartsWithPanicOrContinue);
 
             var variableStorage = new LLVM.FunctionVariableStorage();
             var allocator = new Allocator(variableStorage, asyncStateGroups);
