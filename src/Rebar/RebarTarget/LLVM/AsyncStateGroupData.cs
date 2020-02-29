@@ -54,13 +54,6 @@ namespace Rebar.RebarTarget.LLVM
         public StateFieldValueSource FireCountStateField { get; }
 
         /// <summary>
-        /// If the <see cref="AsyncStateGroup"/> may schedule different sets of successors conditionally, this
-        /// contains an alloca pointer for the condition variable that will determine which successors to
-        /// schedule.
-        /// </summary>
-        public LLVMValueRef ContinuationConditionVariable { get; set; }
-
-        /// <summary>
         /// Generates code that will reset the fire count variable for this <see cref="AsyncStateGroup"/>
         /// in the state block to its maximum value.
         /// </summary>
@@ -71,20 +64,6 @@ namespace Rebar.RebarTarget.LLVM
             {
                 ((IUpdateableValueSource)FireCountStateField).UpdateValue(builder, AsyncStateGroup.MaxFireCount.AsLLVMValue());
             }
-        }
-
-        /// <summary>
-        /// Generates code that will set the value of the local variable that determines which successors to schedule.
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <param name="value">A value corresponding to a particular set of successors.</param>
-        public void CreateContinuationStateChange(IRBuilder builder, LLVMValueRef stateValue)
-        {
-            if (stateValue.TypeOf().GetIntTypeWidth() != 1)
-            {
-                throw new ArgumentException("Expected a boolean value.");
-            }
-            builder.CreateStore(stateValue, ContinuationConditionVariable);
         }
     }
 }

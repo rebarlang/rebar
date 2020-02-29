@@ -71,6 +71,7 @@ namespace Rebar.RebarTarget
                 {
                     visitation.Visit(this);
                 }
+                CreateAllocationsForAsyncStateGroup(group);
             }
 
             // Finally, take all of the VariableUsages collected and create appropriate ValueSources from them
@@ -128,6 +129,21 @@ namespace Rebar.RebarTarget
                 return AllocationSet.CreateLocalAllocation(usage.ContainingFunctionName, VariableAllocationName(variable), variable.Type);
             }
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
+        }
+
+        private void CreateAllocationsForAsyncStateGroup(AsyncStateGroup asyncStateGroup)
+        {
+            var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
+            if (conditionalContinuation != null)
+            {
+                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
+                {
+                    throw new NotSupportedException("Only boolean conditions supported for continuations");
+                }
+                _variableStorage.AddContinuationConditionVariable(
+                    asyncStateGroup,
+                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", PFTypes.Boolean));
+            }
         }
 
         #region VisitorTransformBase overrides

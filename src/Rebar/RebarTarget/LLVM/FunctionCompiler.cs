@@ -1284,7 +1284,9 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
+                Update(
+                    _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                    _frameData[frame].ConditionValue);
             }
         }
 
@@ -1354,7 +1356,9 @@ namespace Rebar.RebarTarget.LLVM
         private void VisitLoopAfterLeftBorderNodes(Compiler.Nodes.Loop loop)
         {
             LLVMValueRef condition = GetConditionAllocationSource(loop).GetValue(Builder);
-            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, condition);
+            Update(
+                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                condition);
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
@@ -1436,7 +1440,9 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder);
             LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
-            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
+            Update(
+                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                isNone);
         }
 
         private void VisitOptionPatternStructureBeforeDiagram(OptionPatternStructure optionPatternStructure, Diagram diagram)

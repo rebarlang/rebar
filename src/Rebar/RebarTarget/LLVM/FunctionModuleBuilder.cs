@@ -89,15 +89,6 @@ namespace Rebar.RebarTarget.LLVM
             }
 
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
-            if (conditionalContinuation != null)
-            {
-                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
-                {
-                    throw new NotSupportedException("Only boolean conditions supported for continuations");
-                }
-                groupData.ContinuationConditionVariable = Builder.CreateAlloca(LLVMTypeRef.Int1Type(), "continuationStatePtr");
-            }
-
             if (asyncStateGroup.IsSkippable)
             {
                 if (asyncStateGroup.FunctionId == asyncStateGroup.Label && this is SynchronousFunctionModuleBuilder)
@@ -157,7 +148,7 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (conditionalContinuation != null)
             {
-                LLVMValueRef condition = Builder.CreateLoad(groupData.ContinuationConditionVariable, "condition");
+                LLVMValueRef condition = SharedData.VariableStorage.GetContinuationConditionVariable(asyncStateGroup).GetValue(Builder);
 
                 AsyncStateGroup singleTrueSuccessor, singleFalseSuccessor;
                 if (conditionalContinuation.SuccessorConditionGroups[0].TryGetSingleElement(out singleFalseSuccessor)
