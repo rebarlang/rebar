@@ -10,6 +10,8 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal abstract class FunctionModuleBuilder
     {
+        private LLVMValueRef _localDoneAllocationPtr;
+
         protected FunctionModuleBuilder(Module module, FunctionCompilerSharedData sharedData)
         {
             Module = module;
@@ -96,6 +98,21 @@ namespace Rebar.RebarTarget.LLVM
                 groupData.ContinuationConditionVariable = Builder.CreateAlloca(LLVMTypeRef.Int1Type(), "continuationStatePtr");
             }
 
+            if (asyncStateGroup.IsSkippable)
+            {
+                if (asyncStateGroup.FunctionId == asyncStateGroup.Label && this is SynchronousFunctionModuleBuilder)
+                {
+                    _localDoneAllocationPtr = Builder.CreateAlloca(FunctionAllocationSet.FunctionCompletionStatusType, "donePtr");
+                    Builder.CreateBr(groupData.ContinueBasicBlock);
+                }
+                else
+                {
+                    LLVMValueRef shouldContinue = GenerateContinueStateCheck();
+                    Builder.CreateCondBr(shouldContinue, groupData.ContinueBasicBlock, groupData.ExitBasicBlock);
+                }
+                Builder.PositionBuilderAtEnd(groupData.ContinueBasicBlock);
+            }
+
             groupData.CreateFireCountReset(Builder);
 
             foreach (Visitation visitation in asyncStateGroup.Visitations)
@@ -105,29 +122,32 @@ namespace Rebar.RebarTarget.LLVM
 
             var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
             if (unconditionalContinuation != null 
-                && !unconditionalContinuation.Successors.Any()
+                && !unconditionalContinuation.UnconditionalSuccessors.Any()
                 && this is AsynchronousFunctionModuleBuilder)
             {
                 GenerateStoreCompletionState(1);
             }
 
-            Builder.CreateBr(groupData.SkipBasicBlock);
-            Builder.PositionBuilderAtEnd(groupData.SkipBasicBlock);
+            if (asyncStateGroup.IsSkippable)
+            {
+                Builder.CreateBr(groupData.ExitBasicBlock);
+                Builder.PositionBuilderAtEnd(groupData.ExitBasicBlock);
+            }
 
             bool returnAfterGroup = true;
             if (unconditionalContinuation != null)
             {
-                if (unconditionalContinuation.Successors.Any())
+                if (unconditionalContinuation.UnconditionalSuccessors.Any())
                 {
                     AsyncStateGroup singleSuccessor;
-                    if (unconditionalContinuation.Successors.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId)
+                    if (unconditionalContinuation.UnconditionalSuccessors.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId)
                     {
                         Builder.CreateBr(AsyncStateGroups[singleSuccessor].InitialBasicBlock);
                         returnAfterGroup = false;
                     }
                     else
                     {
-                        CreateInvokeOrScheduleOfSuccessors(unconditionalContinuation.Successors);
+                        CreateInvokeOrScheduleOfSuccessors(unconditionalContinuation.UnconditionalSuccessors);
                     }
                 }
                 else if (this is AsynchronousFunctionModuleBuilder)
@@ -231,9 +251,23 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
+        private LLVMValueRef GetStateDonePointer()
+        {
+            return this is SynchronousFunctionModuleBuilder
+                ? _localDoneAllocationPtr
+                : AllocationSet.GetStateDonePointer(Builder);
+        }
+
+        private LLVMValueRef GenerateContinueStateCheck()
+        {
+            LLVMValueRef done = Builder.CreateLoad(GetStateDonePointer(), "done"),
+                shouldContinue = Builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, done, ((byte)0).AsLLVMValue(), "shouldContinue");
+            return shouldContinue;
+        }
+
         public void GenerateStoreCompletionState(byte completionState)
         {
-            Builder.CreateStore(completionState.AsLLVMValue(), AllocationSet.GetStateDonePointer(Builder));
+            Builder.CreateStore(completionState.AsLLVMValue(), GetStateDonePointer());
         }
 
         private void GenerateFunctionTerminator()

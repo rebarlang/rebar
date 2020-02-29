@@ -1221,7 +1221,7 @@ namespace Rebar.RebarTarget.LLVM
 
             Builder.PositionBuilderAtEnd(panicBlock);
             _moduleBuilder.GenerateStoreCompletionState(RuntimeConstants.PanicStatus);
-            Builder.CreateBr(_moduleBuilder.CurrentGroupData.SkipBasicBlock);
+            Builder.CreateBr(_moduleBuilder.CurrentGroupData.ExitBasicBlock);
 
             Builder.PositionBuilderAtEnd(continueBlock);
             LLVMValueRef result = Builder.CreateExtractValue(panicResult, 1u, "result");
