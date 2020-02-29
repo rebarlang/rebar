@@ -97,7 +97,7 @@ namespace Rebar.Design
             AddSupportedModel<LockTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\Lock.png"));
             AddSupportedModel<FlatSequenceTerminateLifetimeTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\TerminateLifetime.png"));
             AddSupportedModel<FlatSequenceSimpleTunnel>(t => new FlatSequenceTunnelViewModel(t));
-            AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\UnwrapOption.png"));
+            AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\UnwrapOptionTunnel.png"));
             AddSupportedModel<SourceModel.Loop>(l => new LoopViewModel(l));
             AddSupportedModel<SourceModel.LoopTunnel>(t => new BorderNodeViewModel(t));
             AddSupportedModel<LoopBorrowTunnel>(t => new LoopBorrowTunnelViewModel(t));
