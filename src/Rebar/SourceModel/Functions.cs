@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Linq;
-using NationalInstruments.Core;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using Rebar.Common;
@@ -677,6 +676,37 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+    }
+
+
+    /// <summary>
+    /// Node that constructs a None value; the output type is Option&lt;T&gt; for some T determined by the downstream usage.
+    /// </summary>
+    public class UnwrapOption : FunctionalNode
+    {
+        private const string ElementName = "UnwrapOption";
+
+        protected UnwrapOption()
+            : base(Signatures.UnwrapOptionType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static UnwrapOption CreateUnwrapOption(IElementCreateInfo elementCreateInfo)
+        {
+            var unwrapOption = new UnwrapOption();
+            unwrapOption.Init(elementCreateInfo);
+            return unwrapOption;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[] { RebarFeatureToggles.Panics };
     }
 
     #endregion

@@ -33,6 +33,7 @@ namespace Rebar.Design
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow", @"Resources\Diagram\Nodes\ImmutableBorrowNode.png"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some", @"Resources\Diagram\Nodes\Some.png"));
             AddSupportedModel<NoneConstructorNode>(n => new BasicNodeViewModel(n, "None", @"Resources\Diagram\Nodes\None.png"));
+            AddSupportedModel<UnwrapOption>(n => new BasicNodeViewModel(n, "Unwrap Option"));
             AddSupportedModel<Range>(n => new BasicNodeViewModel(n, "Range", @"Resources\Diagram\Nodes\Range.png"));
             AddSupportedModel<Output>(n => new BasicNodeViewModel(n, "Output", @"Resources\Diagram\Nodes\Output.png"));
             AddSupportedModel<TypePassthrough>(n => new BasicNodeViewModel(n, "Type Passthrough"));

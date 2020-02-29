@@ -1128,4 +1128,16 @@
   <data name="StructFieldAccessor_valueRef_Name" xml:space="preserve">
     <value>struct value reference</value>
   </data>
+  <data name="UnwrapOption_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="UnwrapOption_Name" xml:space="preserve">
+    <value>Unwrap Option</value>
+  </data>
+  <data name="UnwrapOption_option_Name" xml:space="preserve">
+    <value>option</value>
+  </data>
+  <data name="UnwrapOption_value_Name" xml:space="preserve">
+    <value>value</value>
+  </data>
 </root>
