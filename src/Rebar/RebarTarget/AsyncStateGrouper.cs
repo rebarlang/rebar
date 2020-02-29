@@ -125,7 +125,7 @@ namespace Rebar.RebarTarget
 
                 bool startsWithPanicOrContinue = group.GroupStartsWithPanicOrContinue();
                 bool hasSkippablePredecessor = group.Predecessors.Any(g => g.IsSkippable);
-                bool isDiagramInitialGroup = _diagramInitialGroups.Values.Contains(group);
+                bool isDiagramInitialGroup = group.BeginsAsDiagramInitialGroup;
                 bool isSkippable = !isDiagramInitialGroup && (startsWithPanicOrContinue || hasSkippablePredecessor);
                 group.IsSkippable = isSkippable;
                 bool traverseSuccessors = isSkippable || groupTraversalStates[group] == GroupTraversalState.NotVisited;
@@ -144,6 +144,7 @@ namespace Rebar.RebarTarget
                 "initialGroup",
                 dfirRoot.BlockDiagram);
             _diagramInitialGroups[dfirRoot.BlockDiagram] = rootInitialGroup;
+            rootInitialGroup.BeginsAsDiagramInitialGroup = true;
             base.VisitDfirRoot(dfirRoot);
         }
 
@@ -279,6 +280,7 @@ namespace Rebar.RebarTarget
                             AsyncStateGroup diagramInitialGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
                                 $"frame{frame.UniqueId}_diagramInitialGroup",
                                 frame.Diagram);
+                            diagramInitialGroup.BeginsAsDiagramInitialGroup = true;
                             _diagramInitialGroups[frame.Diagram] = diagramInitialGroup;
                             AsyncStateGroup frameTerminalGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
                                 $"frame{frame.UniqueId}_terminalGroup",
@@ -380,6 +382,7 @@ namespace Rebar.RebarTarget
                                 $"loop{loop.UniqueId}_terminalGroup",
                                 loop.ParentDiagram),
                             loopInputBorderNodeGroup = _structureInputBorderNodeGroups[loop];
+                        diagramInitialGroup.BeginsAsDiagramInitialGroup = true;
                         currentGroup = loopInputBorderNodeGroup;
                         _diagramInitialGroups[loop.Diagram] = diagramInitialGroup;
                         _nodeGroups[loop] = loopTerminalGroup;
@@ -458,6 +461,7 @@ namespace Rebar.RebarTarget
                         AsyncStateGroup diagramInitialGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
                             $"diagram{diagram.UniqueId}_initialGroup",
                             diagram);
+                        diagramInitialGroup.BeginsAsDiagramInitialGroup = true;
                         _diagramInitialGroups[diagram] = diagramInitialGroup;
                         AddConditionalSuccessorGroups(structureInputBorderNodeGroup, new HashSet<AsyncStateGroup>() { diagramInitialGroup });
                         AddVisitationToGroup(
@@ -606,6 +610,8 @@ namespace Rebar.RebarTarget
         public Continuation Continuation { get; }
 
         public bool IsSkippable { get; set; }
+
+        public bool BeginsAsDiagramInitialGroup { get; set; }
     }
 
     internal abstract class Continuation
