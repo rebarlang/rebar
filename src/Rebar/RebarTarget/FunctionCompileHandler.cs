@@ -84,15 +84,21 @@ namespace Rebar.RebarTarget
             }
 
             var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
+            var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
             foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
             {
                 CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
                 var functionCompileSignature = calleeSignature as FunctionCompileSignature;
                 bool mayPanic = functionCompileSignature?.MayPanic ?? false;
                 calleesIsYielding[methodCallNode.TargetName] = calleeSignature.IsYielding;
+                calleesMayPanic[methodCallNode.TargetName] = mayPanic;
             }
 
-            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(targetDfir, cancellationToken, calleesIsYielding);
+            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(
+                targetDfir,
+                cancellationToken,
+                calleesIsYielding,
+                calleesMayPanic);
             var builtPackage = new LLVM.FunctionBuiltPackage(
                 specAndQName,
                 Compiler.TargetName,
@@ -124,10 +130,11 @@ namespace Rebar.RebarTarget
             DfirRoot dfirRoot,
             CompileCancellationToken cancellationToken,
             Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
+            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic,
             string compiledFunctionName = "")
         {
-            // TODO: running this here because it needs to know which callee Functions are yielding.
-            new AsyncNodeDecompositionTransform(calleesIsYielding, new NodeInsertionTypeUnificationResultFactory())
+            // TODO: running this here because it needs to know which callee Functions are yielding/panicking.
+            new AsyncNodeDecompositionTransform(calleesIsYielding, calleesMayPanic, new NodeInsertionTypeUnificationResultFactory())
                 .Execute(dfirRoot, cancellationToken);
 
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);

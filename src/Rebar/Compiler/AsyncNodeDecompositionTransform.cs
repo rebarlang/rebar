@@ -28,10 +28,15 @@ namespace Rebar.Compiler
 
         private readonly ITypeUnificationResultFactory _unificationResultFactory;
         private readonly Dictionary<ExtendedQualifiedName, bool> _isYielding;
+        private readonly Dictionary<ExtendedQualifiedName, bool> _mayPanic;
 
-        public AsyncNodeDecompositionTransform(Dictionary<ExtendedQualifiedName, bool> isYielding, ITypeUnificationResultFactory unificationResultFactory)
+        public AsyncNodeDecompositionTransform(
+            Dictionary<ExtendedQualifiedName, bool> isYielding,
+            Dictionary<ExtendedQualifiedName, bool> mayPanic,
+            ITypeUnificationResultFactory unificationResultFactory)
         {
             _isYielding = isYielding;
+            _mayPanic = mayPanic;
             _unificationResultFactory = unificationResultFactory;
         }
 
@@ -68,6 +73,10 @@ namespace Rebar.Compiler
             var methodCallNode = node as MethodCallNode;
             if (methodCallNode != null)
             {
+                if (_mayPanic[methodCallNode.TargetName])
+                {
+                    throw new NotImplementedException("Decomposing calls to panicking Functions not implemented yet.");
+                }
                 DecomposeMethodCall(methodCallNode);
                 return;
             }

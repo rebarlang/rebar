@@ -23,18 +23,21 @@ namespace Tests.Rebar.Unit.Execution
         public void CompileAndExecuteFunction(CompilerTestBase test, DfirRoot function, DfirRoot[] otherFunctions)
         {
             var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
+            var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
             foreach (DfirRoot otherFunction in otherFunctions)
             {
                 FunctionCompileResult otherCompileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(
                     otherFunction,
                     FunctionCompileHandler.FunctionLLVMName(otherFunction.SpecAndQName),
-                    calleesIsYielding);
+                    calleesIsYielding,
+                    calleesMayPanic);
                 calleesIsYielding[otherFunction.SpecAndQName.QualifiedName] = otherCompileResult.IsYielding;
+                calleesMayPanic[otherFunction.SpecAndQName.QualifiedName] = otherCompileResult.MayPanic;
                 _context.LoadFunction(otherCompileResult.Module);
             }
 
             const string compiledFunctionName = "test";
-            FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName, calleesIsYielding);
+            FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName, calleesIsYielding, calleesMayPanic);
             _context.LoadFunction(compileResult.Module);
             _context.ExecuteFunctionTopLevel(compiledFunctionName, compileResult.IsYielding);
         }

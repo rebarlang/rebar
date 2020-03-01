@@ -68,18 +68,20 @@ namespace Tests.Rebar.Unit.Compiler
             cancellationToken = cancellationToken ?? new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
             var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
-            new AsyncNodeDecompositionTransform(new Dictionary<ExtendedQualifiedName, bool>(), nodeInsertionTypeUnificationResultFactory)
+            var emptyDictionary = new Dictionary<ExtendedQualifiedName, bool>();
+            new AsyncNodeDecompositionTransform(emptyDictionary, emptyDictionary, nodeInsertionTypeUnificationResultFactory)
                 .Execute(dfirRoot, cancellationToken);
         }
 
         internal FunctionCompileResult RunSemanticAnalysisUpToLLVMCodeGeneration(
             DfirRoot dfirRoot,
             string compiledFunctionName,
-            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding)
+            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
+            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
-            return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, calleesIsYielding, compiledFunctionName);
+            return FunctionCompileHandler.CompileFunctionForLLVM(dfirRoot, cancellationToken, calleesIsYielding, calleesMayPanic, compiledFunctionName);
         }
 
         protected NIType DefineGenericOutputFunctionSignature()
