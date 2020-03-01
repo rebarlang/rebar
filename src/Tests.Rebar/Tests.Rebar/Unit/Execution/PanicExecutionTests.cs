@@ -192,8 +192,6 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel condition = CreateLoopConditionTunnel(loop);
-            // TODO: remove this once panicking works inside loops.
-            AssignFalseToLoopConditionOutputTerminal(condition);
             FunctionalNode unwrap = CreatePanickingUnwrapOption(loop.Diagram);
             ConnectOutputToOutputTerminal(condition.TerminateLifetimeTunnel.OutputTerminals[0]);
 

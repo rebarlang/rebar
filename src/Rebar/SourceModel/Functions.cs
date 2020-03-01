@@ -680,7 +680,7 @@ namespace Rebar.SourceModel
 
 
     /// <summary>
-    /// Node that constructs a None value; the output type is Option&lt;T&gt; for some T determined by the downstream usage.
+    /// Node that unwraps a Some(x) into x and panics on None.
     /// </summary>
     public class UnwrapOption : FunctionalNode
     {

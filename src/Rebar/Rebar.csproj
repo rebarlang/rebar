@@ -526,6 +526,7 @@
     <Resource Include="Resources\Diagram\Nodes\Some.png" />
     <Resource Include="Resources\Diagram\Nodes\Subtract.png" />
     <Resource Include="Resources\Diagram\Nodes\TerminateLifetime.png" />
+    <Resource Include="Resources\Diagram\Nodes\UnwrapOption.png" />
     <Resource Include="Resources\Diagram\Nodes\UnwrapOptionTunnel.png" />
     <Resource Include="Resources\Diagram\Nodes\Xor.png" />
   </ItemGroup>
@@ -555,7 +556,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Diagram\Nodes\UnwrapOption.png" />
     <None Include="app.config" />
     <None Include="packages.config" />
     <Content Include="RebarTarget\LLVM\Resources\output.bc">
