@@ -25,6 +25,13 @@
           </pf:MergeItem>
         </pf:MergeScript>
       </Leaf>
+      <Leaf Display="Unwrap Option" UniqueId="Rebar:UnwrapOption" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+        <pf:MergeScript>
+          <pf:MergeItem>
+            <rb:UnwrapOption />
+          </pf:MergeItem>
+        </pf:MergeScript>
+      </Leaf>
     </Category>
   </Category>
 </PaletteControls>

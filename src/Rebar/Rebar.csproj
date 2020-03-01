@@ -221,6 +221,7 @@
     <Compile Include="Compiler\Nodes\CreateMethodCallPromise.cs" />
     <Compile Include="Compiler\Nodes\DecomposeStructNode.cs" />
     <Compile Include="Compiler\Nodes\IInternalDfirNodeVisitor.cs" />
+    <Compile Include="Compiler\Nodes\PanicOrContinueNode.cs" />
     <Compile Include="Compiler\Nodes\StructConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\StructFieldAccessorNode.cs" />
     <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
@@ -333,6 +334,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionNames.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionVariableStorage.cs" />
     <Compile Include="RebarTarget\LLVM\ParameterInfo.cs" />
+    <Compile Include="RebarTarget\LLVM\RuntimeConstants.cs" />
     <Compile Include="RebarTarget\LLVM\SynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\TraitHelpers.cs" />
     <Compile Include="RebarTarget\LLVM\ValueSource.cs" />
@@ -525,6 +527,7 @@
     <Resource Include="Resources\Diagram\Nodes\Subtract.png" />
     <Resource Include="Resources\Diagram\Nodes\TerminateLifetime.png" />
     <Resource Include="Resources\Diagram\Nodes\UnwrapOption.png" />
+    <Resource Include="Resources\Diagram\Nodes\UnwrapOptionTunnel.png" />
     <Resource Include="Resources\Diagram\Nodes\Xor.png" />
   </ItemGroup>
   <ItemGroup>

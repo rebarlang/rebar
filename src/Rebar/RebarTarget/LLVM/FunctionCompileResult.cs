@@ -4,11 +4,11 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal class FunctionCompileResult
     {
-        public FunctionCompileResult(Module module, bool isYielding)
+        public FunctionCompileResult(Module module, bool isYielding, bool mayPanic)
         {
             Module = module;
             IsYielding = isYielding;
-            MayPanic = false;
+            MayPanic = mayPanic;
         }
 
         public Module Module { get; }

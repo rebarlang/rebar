@@ -344,7 +344,11 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return CreateLLVMNotifierWriterType(innerType.AsLLVMType());
                     }
-                    if (niType.IsValueClass())
+                    if (niType.TryDestructurePanicResultType(out innerType))
+                    {
+                        return CreateLLVMPanicResultType(innerType.AsLLVMType());
+                    }
+                    if (niType.IsValueClass() && niType.GetFields().Any())
                     {
                         LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => f.GetDataType().AsLLVMType()).ToArray();
                         return LLVMTypeRef.StructType(fieldTypes, false);
@@ -355,6 +359,11 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         internal static LLVMTypeRef CreateLLVMOptionType(this LLVMTypeRef innerType)
+        {
+            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int1Type(), innerType }, false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMPanicResultType(this LLVMTypeRef innerType)
         {
             return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int1Type(), innerType }, false);
         }

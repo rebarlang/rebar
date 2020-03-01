@@ -135,5 +135,7 @@ namespace Tests.Rebar.Unit.Execution
         public string LastOutputValue { get; private set; }
 
         public HashSet<int> DroppedFakeDropIds { get; } = new HashSet<int>();
+
+        public bool PanicOccurred { get; set; } = false;
     }
 }

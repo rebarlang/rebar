@@ -84,15 +84,21 @@ namespace Rebar.RebarTarget
             }
 
             var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
+            var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
             foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
             {
                 CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
                 var functionCompileSignature = calleeSignature as FunctionCompileSignature;
                 bool mayPanic = functionCompileSignature?.MayPanic ?? false;
                 calleesIsYielding[methodCallNode.TargetName] = calleeSignature.IsYielding;
+                calleesMayPanic[methodCallNode.TargetName] = mayPanic;
             }
 
-            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(targetDfir, cancellationToken, calleesIsYielding);
+            LLVM.FunctionCompileResult functionCompileResult = CompileFunctionForLLVM(
+                targetDfir,
+                cancellationToken,
+                calleesIsYielding,
+                calleesMayPanic);
             var builtPackage = new LLVM.FunctionBuiltPackage(
                 specAndQName,
                 Compiler.TargetName,
@@ -124,10 +130,11 @@ namespace Rebar.RebarTarget
             DfirRoot dfirRoot,
             CompileCancellationToken cancellationToken,
             Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
+            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic,
             string compiledFunctionName = "")
         {
-            // TODO: running this here because it needs to know which callee Functions are yielding.
-            new AsyncNodeDecompositionTransform(calleesIsYielding, new NodeInsertionTypeUnificationResultFactory())
+            // TODO: running this here because it needs to know which callee Functions are yielding/panicking.
+            new AsyncNodeDecompositionTransform(calleesIsYielding, calleesMayPanic, new NodeInsertionTypeUnificationResultFactory())
                 .Execute(dfirRoot, cancellationToken);
 
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
@@ -139,6 +146,7 @@ namespace Rebar.RebarTarget
             string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
 #endif
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
+            bool mayPanic = asyncStateGroups.Any(VisitationExtensions.GroupStartsWithPanicOrContinue);
 
             var variableStorage = new LLVM.FunctionVariableStorage();
             var allocator = new Allocator(variableStorage, asyncStateGroups);
@@ -160,7 +168,7 @@ namespace Rebar.RebarTarget
             sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
 
             moduleBuilder.CompileFunction();
-            return new LLVM.FunctionCompileResult(module, isYielding);
+            return new LLVM.FunctionCompileResult(module, isYielding, mayPanic);
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)

@@ -2664,6 +2664,42 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string UnwrapOption_Description {
+            get {
+                return ResourceManager.GetString("UnwrapOption_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unwrap Option.
+        /// </summary>
+        internal static string UnwrapOption_Name {
+            get {
+                return ResourceManager.GetString("UnwrapOption_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to option.
+        /// </summary>
+        internal static string UnwrapOption_option_Name {
+            get {
+                return ResourceManager.GetString("UnwrapOption_option_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value.
+        /// </summary>
+        internal static string UnwrapOption_value_Name {
+            get {
+                return ResourceManager.GetString("UnwrapOption_value_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string UnwrapOptionTunnel_Description {
             get {
                 return ResourceManager.GetString("UnwrapOptionTunnel_Description", resourceCulture);

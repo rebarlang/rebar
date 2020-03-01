@@ -37,6 +37,8 @@ namespace Rebar.RebarTarget.LLVM
             public NIType Type { get; }
         }
 
+        public static LLVMTypeRef FunctionCompletionStatusType => LLVMTypeRef.Int8Type();
+
         private readonly Dictionary<string, List<LocalAllocation>> _functionLocalAllocations = new Dictionary<string, List<LocalAllocation>>();
         private readonly List<StateFieldAllocation> _stateFields = new List<StateFieldAllocation>();
 
@@ -89,7 +91,7 @@ namespace Rebar.RebarTarget.LLVM
 
             var stateFieldTypes = new List<LLVMTypeRef>();
             // fixed fields
-            stateFieldTypes.Add(LLVMTypeRef.Int1Type());    // function done?
+            stateFieldTypes.Add(FunctionCompletionStatusType);    // function completion status: 0 = not done, 1 = completed successfully, 2 = panic
             stateFieldTypes.Add(LLVMExtensions.WakerType);  // caller waker
             // end fixed fields
             stateFieldTypes.AddRange(_stateFields.Select(a => a.Type.AsLLVMType()));

@@ -61,6 +61,7 @@ namespace Rebar.RebarTarget.LLVM
 
             _functionalNodeCompilers["Some"] = CompileSomeConstructor;
             _functionalNodeCompilers["None"] = CompileNoneConstructor;
+            _functionalNodeCompilers["OptionToPanicResult"] = CreateSpecializedFunctionCallCompiler(BuildOptionToPanicResultFunction);
 
             _functionalNodeCompilers["Range"] = CreateImportedCommonFunctionCompiler(CommonModules.CreateRangeIteratorName);
 
@@ -1162,7 +1163,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMTypeRef stateType = LLVMTypeRef.StructType(new[]
             {
-                LLVMTypeRef.Int1Type(),
+                FunctionAllocationSet.FunctionCompletionStatusType,
                 LLVMExtensions.WakerType,
             },
             false);
@@ -1172,7 +1173,8 @@ namespace Rebar.RebarTarget.LLVM
                 stateVoidPtr = builder.CreateExtractValue(promise, MethodCallPromiseStatePtrFieldIndex, "stateVoidPtr"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
-                isDone = builder.CreateExtractValue(state, 0u, "isDone");
+                functionCompletionState = builder.CreateExtractValue(state, 0u, "functionCompletionState"),
+                isDone = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, functionCompletionState, ((byte)0).AsLLVMValue(), "isDone");
             builder.CreateCondBr(isDone, targetDoneBlock, targetNotDoneBlock);
 
             builder.PositionBuilderAtEnd(targetDoneBlock);
@@ -1206,6 +1208,24 @@ namespace Rebar.RebarTarget.LLVM
                 Initialize(GetTerminalValueSource(outputTerminal), structFieldValue);
                 ++fieldIndex;
             }
+            return true;
+        }
+        
+        bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
+        {
+            LLVMValueRef panicResult = GetTerminalValueSource(panicOrContinueNode.InputTerminal).GetValue(Builder),
+                shouldContinue = Builder.CreateExtractValue(panicResult, 0u, "shouldContinue");
+            LLVMBasicBlockRef continueBlock = CurrentFunction.AppendBasicBlock($"continue_{panicOrContinueNode.UniqueId}"),
+                panicBlock = CurrentFunction.AppendBasicBlock($"panic_{panicOrContinueNode.UniqueId}");
+            Builder.CreateCondBr(shouldContinue, continueBlock, panicBlock);
+
+            Builder.PositionBuilderAtEnd(panicBlock);
+            _moduleBuilder.GenerateStoreCompletionState(RuntimeConstants.PanicStatus);
+            Builder.CreateBr(_moduleBuilder.CurrentGroupData.ExitBasicBlock);
+
+            Builder.PositionBuilderAtEnd(continueBlock);
+            LLVMValueRef result = Builder.CreateExtractValue(panicResult, 1u, "result");
+            Initialize(GetTerminalValueSource(panicOrContinueNode.OutputTerminal), result);
             return true;
         }
 
@@ -1264,7 +1284,9 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, _frameData[frame].ConditionValue);
+                Update(
+                    _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                    _frameData[frame].ConditionValue);
             }
         }
 
@@ -1334,7 +1356,9 @@ namespace Rebar.RebarTarget.LLVM
         private void VisitLoopAfterLeftBorderNodes(Compiler.Nodes.Loop loop)
         {
             LLVMValueRef condition = GetConditionAllocationSource(loop).GetValue(Builder);
-            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, condition);
+            Update(
+                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                condition);
         }
 
         public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
@@ -1416,7 +1440,9 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef option = selectorInputAllocationSource.GetValue(Builder);
             LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
-            _moduleBuilder.CurrentGroupData.CreateContinuationStateChange(Builder, isNone);
+            Update(
+                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                isNone);
         }
 
         private void VisitOptionPatternStructureBeforeDiagram(OptionPatternStructure optionPatternStructure, Diagram diagram)

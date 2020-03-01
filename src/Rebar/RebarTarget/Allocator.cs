@@ -71,6 +71,7 @@ namespace Rebar.RebarTarget
                 {
                     visitation.Visit(this);
                 }
+                CreateAllocationsForAsyncStateGroup(group);
             }
 
             // Finally, take all of the VariableUsages collected and create appropriate ValueSources from them
@@ -114,7 +115,9 @@ namespace Rebar.RebarTarget
                     {
                         return new ConstantValueSource(constantValue);
                     }
-                    if (!usage.LiveInMultipleFunctions)
+
+                    bool initializedInSkippableGroup = usage.InitializingGroup.IsSkippable;
+                    if (!usage.LiveInMultipleFunctions && !initializedInSkippableGroup)
                     {
                         return new ImmutableValueSource();
                     }
@@ -126,6 +129,21 @@ namespace Rebar.RebarTarget
                 return AllocationSet.CreateLocalAllocation(usage.ContainingFunctionName, VariableAllocationName(variable), variable.Type);
             }
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
+        }
+
+        private void CreateAllocationsForAsyncStateGroup(AsyncStateGroup asyncStateGroup)
+        {
+            var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
+            if (conditionalContinuation != null)
+            {
+                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
+                {
+                    throw new NotSupportedException("Only boolean conditions supported for continuations");
+                }
+                _variableStorage.AddContinuationConditionVariable(
+                    asyncStateGroup,
+                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", PFTypes.Boolean));
+            }
         }
 
         #region VisitorTransformBase overrides
@@ -365,6 +383,7 @@ namespace Rebar.RebarTarget
 
         public bool VisitTunnel(Tunnel tunnel)
         {
+            tunnel.InputTerminals.ForEach(WillGetValue);
             if (tunnel.Terminals.HasExactly(2))
             {
                 VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
@@ -568,6 +587,13 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
+        {
+            WillGetValue(panicOrContinueNode.InputTerminal);
+            WillInitializeWithValue(panicOrContinueNode.OutputTerminal);
+            return true;
+        }
+
         #endregion
 
         #region IDfirStructureVisitor implementation
@@ -678,6 +704,8 @@ namespace Rebar.RebarTarget
 
             public VariableReference ReferencedVariable { get; private set; }
 
+            public AsyncStateGroup InitializingGroup { get; private set; }
+
             public bool GetsValue { get; private set; }
 
             public bool TakesAddress { get; private set; }
@@ -711,6 +739,7 @@ namespace Rebar.RebarTarget
             public void WillInitializeWithValue(AsyncStateGroup inGroup)
             {
                 _liveFunctionNames.Add(inGroup.FunctionId);
+                InitializingGroup = inGroup;
             }
 
             public void WillGetValue(AsyncStateGroup inGroup)

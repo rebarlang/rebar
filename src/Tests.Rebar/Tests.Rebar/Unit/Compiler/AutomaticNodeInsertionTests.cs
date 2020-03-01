@@ -297,7 +297,7 @@ namespace Tests.Rebar.Unit.Compiler
 
         #endregion
 
-        #region Async node decomposition
+        #region Async/panicking node decomposition
 
         [TestMethod]
         public void Yield_AutomaticNodeInsertion_YieldReplacedWithCreateYieldPromiseAndAwaitNode()
@@ -315,6 +315,24 @@ namespace Tests.Rebar.Unit.Compiler
                 borrowNode.OutputTerminals[0]);
             var awaitNode = AssertDiagramContainsNodeWithSources<AwaitNode>(function.BlockDiagram, createYieldPromise.OutputTerminals[0]);
             Assert.IsNull(yieldNode.ParentDiagram);
+        }
+
+        [TestMethod]
+        public void UnwrapOption_AutomaticNodeInsertion_UnwrapOptionReplacedWithOptionToPanicResultAndPanicOrContinue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var unwrapOption = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
+            var someConstructor = ConnectSomeConstructorToInputTerminal(unwrapOption.InputTerminals[0]);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+
+            RunCompilationUpToAsyncNodeDecomposition(function);
+
+            FunctionalNode optionToPanicResult = AssertDiagramContainsNodeWithSources<FunctionalNode>(
+                function.BlockDiagram,
+                f => f.Signature == Signatures.OptionToPanicResultType,
+                someConstructor.OutputTerminals[0]);
+            var panicOrContinue = AssertDiagramContainsNodeWithSources<PanicOrContinueNode>(function.BlockDiagram, optionToPanicResult.OutputTerminals[0]);
+            Assert.IsNull(unwrapOption.ParentDiagram);
         }
 
         #endregion

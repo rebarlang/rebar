@@ -46,7 +46,8 @@ namespace Rebar.Common
             public override string ToString()
             {
                 string mut = Mutable ? "mut" : string.Empty;
-                return $"v_{Id} : {mut} Type";
+                string type = TypeVariableReference.DebuggerDisplay;
+                return $"v_{Id} : {mut} {type}";
             }
         }
 

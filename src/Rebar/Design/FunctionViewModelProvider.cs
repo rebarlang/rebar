@@ -33,6 +33,7 @@ namespace Rebar.Design
             AddSupportedModel<ImmutableBorrowNode>(n => new BasicNodeViewModel(n, "Immutable Borrow", @"Resources\Diagram\Nodes\ImmutableBorrowNode.png"));
             AddSupportedModel<SomeConstructorNode>(n => new BasicNodeViewModel(n, "Some", @"Resources\Diagram\Nodes\Some.png"));
             AddSupportedModel<NoneConstructorNode>(n => new BasicNodeViewModel(n, "None", @"Resources\Diagram\Nodes\None.png"));
+            AddSupportedModel<UnwrapOption>(n => new BasicNodeViewModel(n, "Unwrap Option", @"Resources\Diagram\Nodes\UnwrapOption.png"));
             AddSupportedModel<Range>(n => new BasicNodeViewModel(n, "Range", @"Resources\Diagram\Nodes\Range.png"));
             AddSupportedModel<Output>(n => new BasicNodeViewModel(n, "Output", @"Resources\Diagram\Nodes\Output.png"));
             AddSupportedModel<TypePassthrough>(n => new BasicNodeViewModel(n, "Type Passthrough"));
@@ -96,7 +97,7 @@ namespace Rebar.Design
             AddSupportedModel<LockTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\Lock.png"));
             AddSupportedModel<FlatSequenceTerminateLifetimeTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\TerminateLifetime.png"));
             AddSupportedModel<FlatSequenceSimpleTunnel>(t => new FlatSequenceTunnelViewModel(t));
-            AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\UnwrapOption.png"));
+            AddSupportedModel<UnwrapOptionTunnel>(t => new FlatSequenceSimpleBorderNodeViewModel(t, @"Resources\Diagram\Nodes\UnwrapOptionTunnel.png"));
             AddSupportedModel<SourceModel.Loop>(l => new LoopViewModel(l));
             AddSupportedModel<SourceModel.LoopTunnel>(t => new BorderNodeViewModel(t));
             AddSupportedModel<LoopBorrowTunnel>(t => new LoopBorrowTunnelViewModel(t));

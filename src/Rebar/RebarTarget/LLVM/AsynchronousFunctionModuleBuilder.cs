@@ -56,10 +56,16 @@ namespace Rebar.RebarTarget.LLVM
                     functions[asyncStateGroup.FunctionId] = groupFunction;
                 }
 
-                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock(asyncStateGroup.Label);
+                LLVMBasicBlockRef groupBasicBlock = groupFunction.AppendBasicBlock($"{asyncStateGroup.Label}_begin");
+                LLVMBasicBlockRef continueBasicBlock = asyncStateGroup.IsSkippable
+                    ? groupFunction.AppendBasicBlock($"{asyncStateGroup.Label}_continue")
+                    : default(LLVMBasicBlockRef);
+                LLVMBasicBlockRef endBasicBlock = asyncStateGroup.IsSkippable
+                    ? groupFunction.AppendBasicBlock($"{asyncStateGroup.Label}_end")
+                    : default(LLVMBasicBlockRef);
                 StateFieldValueSource fireCountStateField;
                 fireCountFields.TryGetValue(asyncStateGroup, out fireCountStateField);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, fireCountStateField);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, groupFunction, groupBasicBlock, continueBasicBlock, endBasicBlock, fireCountStateField);
             }
         }
 
@@ -88,7 +94,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef statePtr = builder.CreateMalloc(SharedData.AllocationSet.StateType, "statePtr");
             CurrentState = new OuterFunctionCompilerState(initializeStateFunction, builder) { StateMalloc = statePtr };
-            builder.CreateStore(false.AsLLVMValue(), builder.CreateStructGEP(statePtr, 0u, "donePtr"));
+            GenerateStoreCompletionState(0);
 
             InitializeParameterAllocations(initializeStateFunction, builder);
             LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePtr, LLVMExtensions.VoidPointerType, "bitCastStatePtr");

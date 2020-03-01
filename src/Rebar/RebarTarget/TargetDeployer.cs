@@ -71,6 +71,7 @@ namespace Rebar.RebarTarget
     {
         private readonly ICompositionHost _host;
         private readonly IDebugHost _debugHost;
+        private bool _panicOccurred = false;
 
         public HostExecutionServices(ICompositionHost host)
         {
@@ -87,6 +88,19 @@ namespace Rebar.RebarTarget
         void IRebarTargetRuntimeServices.FakeDrop(int id)
         {
             throw new NotImplementedException("FakeDrop not supported");
+        }
+
+        public bool PanicOccurred
+        {
+            get { return _panicOccurred; }
+            set
+            {
+                _panicOccurred |= value;
+                if (value)
+                {
+                    _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, "Panic occurred!"));
+                }
+            }
         }
     }
 }
