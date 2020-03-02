@@ -587,6 +587,16 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        bool IInternalDfirNodeVisitor<bool>.VisitPanickingMethodCallNode(PanickingMethodCallNode panickingMethodCallNode)
+        {
+            foreach (Terminal inputTerminal in panickingMethodCallNode.InputTerminals)
+            {
+                WillGetValue(inputTerminal);
+            }
+            WillInitializeWithValue(panickingMethodCallNode.PanicResultTerminal);
+            return true;
+        }
+
         bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
         {
             WillGetValue(panicOrContinueNode.InputTerminal);

@@ -221,6 +221,7 @@
     <Compile Include="Compiler\Nodes\CreateMethodCallPromise.cs" />
     <Compile Include="Compiler\Nodes\DecomposeStructNode.cs" />
     <Compile Include="Compiler\Nodes\IInternalDfirNodeVisitor.cs" />
+    <Compile Include="Compiler\Nodes\PanickingMethodCallNode.cs" />
     <Compile Include="Compiler\Nodes\PanicOrContinueNode.cs" />
     <Compile Include="Compiler\Nodes\StructConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\StructFieldAccessorNode.cs" />

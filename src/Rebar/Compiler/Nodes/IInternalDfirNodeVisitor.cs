@@ -5,6 +5,7 @@
         T VisitAwaitNode(AwaitNode awaitNode);
         T VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise);
         T VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode);
+        T VisitPanickingMethodCallNode(PanickingMethodCallNode panickingMethodCallNode);
         T VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode);
     }
 }

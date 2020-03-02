@@ -1210,7 +1210,12 @@ namespace Rebar.RebarTarget.LLVM
             }
             return true;
         }
-        
+
+        bool IInternalDfirNodeVisitor<bool>.VisitPanickingMethodCallNode(PanickingMethodCallNode panickingMethodCallNode)
+        {
+            return true;
+        }
+
         bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
         {
             LLVMValueRef panicResult = GetTerminalValueSource(panicOrContinueNode.InputTerminal).GetValue(Builder),
