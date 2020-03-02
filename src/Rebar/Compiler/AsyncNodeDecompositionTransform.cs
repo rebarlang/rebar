@@ -51,7 +51,7 @@ namespace Rebar.Compiler
             var methodCallNode = node as MethodCallNode;
             if (methodCallNode != null)
             {
-                return _isYielding[methodCallNode.TargetName];
+                return _isYielding[methodCallNode.TargetName] || _mayPanic[methodCallNode.TargetName];
             }
             var functionalNode = node as FunctionalNode;
             if (functionalNode != null)
@@ -73,10 +73,6 @@ namespace Rebar.Compiler
             var methodCallNode = node as MethodCallNode;
             if (methodCallNode != null)
             {
-                if (_mayPanic[methodCallNode.TargetName])
-                {
-                    throw new NotImplementedException("Decomposing calls to panicking Functions not implemented yet.");
-                }
                 DecomposeMethodCall(methodCallNode);
                 return;
             }
@@ -96,14 +92,17 @@ namespace Rebar.Compiler
 
         private void DecomposeMethodCall(MethodCallNode methodCallNode)
         {
-            var createMethodCallPromise = new CreateMethodCallPromise(methodCallNode.ParentDiagram, methodCallNode.Signature, methodCallNode.TargetName);
+            bool isYielding = _isYielding[methodCallNode.TargetName], mayPanic = _mayPanic[methodCallNode.TargetName];
+            Node initialNode = isYielding
+                ? (Node)new CreateMethodCallPromise(methodCallNode.ParentDiagram, methodCallNode.Signature, methodCallNode.TargetName, mayPanic)
+                : (Node)new PanickingMethodCallNode(methodCallNode.ParentDiagram, methodCallNode.Signature, methodCallNode.TargetName);
             AutoBorrowNodeFacade methodCallNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(methodCallNode);
-            AutoBorrowNodeFacade createMethodCallPromiseFacade = AutoBorrowNodeFacade.GetNodeFacade(createMethodCallPromise);
-            foreach (var terminalPair in methodCallNode.InputTerminals.Zip(createMethodCallPromise.InputTerminals))
+            AutoBorrowNodeFacade initialNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(initialNode);
+            foreach (var terminalPair in methodCallNode.InputTerminals.Zip(initialNode.InputTerminals))
             {
                 Terminal methodCallTerminal = terminalPair.Key, createMethodCallPromiseTerminal = terminalPair.Value;
                 methodCallTerminal.ConnectedTerminal.ConnectTo(createMethodCallPromiseTerminal);
-                createMethodCallPromiseFacade[createMethodCallPromiseTerminal] = methodCallNodeFacade[methodCallTerminal];
+                initialNodeFacade[createMethodCallPromiseTerminal] = methodCallNodeFacade[methodCallTerminal];
             }
 
             NIType outputType;
@@ -122,23 +121,40 @@ namespace Rebar.Compiler
                     break;
             }
             Terminal methodCallOutputTerminal = methodCallNode.OutputTerminals.FirstOrDefault();
-            NIType promiseType = outputType.CreateMethodCallPromise();
-            Terminal promiseTerminal = createMethodCallPromise.OutputTerminals[0];
-            createMethodCallPromiseFacade[promiseTerminal] = new SimpleTerminalFacade(
-                promiseTerminal,
-                createMethodCallPromise.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(promiseType));
+            NIType initialNodeOutputType = outputType;
+            if (mayPanic)
+            {
+                initialNodeOutputType = initialNodeOutputType.CreatePanicResult();
+            }
+            if (isYielding)
+            {
+                initialNodeOutputType = initialNodeOutputType.CreateMethodCallPromise();
+            }
+            CreateDefaultFacadeForNodeOutputTerminal(initialNode, initialNodeOutputType);
 
-            AwaitNode awaitNode = ConnectNewNodeToOutputTerminal(createMethodCallPromise, diagram => new AwaitNode(diagram));
+            Node finalNodePredecessor = initialNode;
+            if (isYielding && mayPanic)
+            {
+                var awaitNode = ConnectNewNodeToOutputTerminal(initialNode, diagram => new AwaitNode(diagram));
+                NIType awaitNodeOutputType = outputType.CreatePanicResult();
+                CreateDefaultFacadeForNodeOutputTerminal(awaitNode, awaitNodeOutputType);
+                finalNodePredecessor = awaitNode;
+            }
 
-            CreateDefaultFacadeForAwaitOutputTerminal(awaitNode, outputType);
+            Node finalNode = !mayPanic
+                ? (Node)ConnectNewNodeToOutputTerminal(finalNodePredecessor, diagram => new AwaitNode(diagram))
+                : (Node)ConnectNewNodeToOutputTerminal(finalNodePredecessor, diagram => new PanicOrContinueNode(diagram));
+
+            CreateDefaultFacadeForNodeOutputTerminal(finalNode, outputType);
+            Terminal finalNodeOutputTerminal = finalNode.OutputTerminals[0];
             switch (methodCallNode.OutputTerminals.Count)
             {
                 case 0:
-                    // no method call output terminals; drop the result of the await
-                    InsertDropTransform.InsertDropForVariable(awaitNode.ParentDiagram, LiveVariable.FromTerminal(awaitNode.OutputTerminal), _unificationResultFactory);
+                    // no method call output terminals; drop the result of the final node
+                    InsertDropTransform.InsertDropForVariable(finalNode.ParentDiagram, LiveVariable.FromTerminal(finalNodeOutputTerminal), _unificationResultFactory);
                     break;
                 case 1:
-                    ConnectOutputTerminal(methodCallNode.OutputTerminals[0], awaitNode.OutputTerminal);
+                    ConnectOutputTerminal(methodCallNode.OutputTerminals[0], finalNodeOutputTerminal);
                     break;
                 default:
                     {
@@ -146,7 +162,7 @@ namespace Rebar.Compiler
                         // decomposed terminal to a method call terminal
                         DecomposeTupleNode decomposeTupleNode = InsertDropTransform.InsertDecompositionForTupleVariable(
                             methodCallNode.ParentDiagram,
-                            LiveVariable.FromTerminal(awaitNode.OutputTerminal),
+                            LiveVariable.FromTerminal(finalNodeOutputTerminal),
                             _unificationResultFactory);
                         foreach (var pair in methodCallNode.OutputTerminals.Zip(decomposeTupleNode.OutputTerminals))
                         {
@@ -245,12 +261,13 @@ namespace Rebar.Compiler
             }
         }
 
-        private void CreateDefaultFacadeForAwaitOutputTerminal(AwaitNode awaitNode, NIType awaitOutputType)
+        private void CreateDefaultFacadeForNodeOutputTerminal(Node node, NIType nodeOutputType)
         {
-            AutoBorrowNodeFacade awaitNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(awaitNode);
-            awaitNodeFacade[awaitNode.OutputTerminal] = new SimpleTerminalFacade(
-                awaitNode.OutputTerminal,
-                awaitNode.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(awaitOutputType));
+            AutoBorrowNodeFacade awaitNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(node);
+            Terminal outputTerminal = node.OutputTerminals[0];
+            awaitNodeFacade[outputTerminal] = new SimpleTerminalFacade(
+                outputTerminal,
+                node.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(nodeOutputType));
         }
     }
 }

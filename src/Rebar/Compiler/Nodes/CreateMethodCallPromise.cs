@@ -8,7 +8,7 @@ namespace Rebar.Compiler.Nodes
 {
     internal class CreateMethodCallPromise : DfirNode
     {
-        public CreateMethodCallPromise(Node parentNode, NIType signature, ExtendedQualifiedName targetName) : base(parentNode)
+        public CreateMethodCallPromise(Node parentNode, NIType signature, ExtendedQualifiedName targetName, bool mayPanic) : base(parentNode)
         {
             PromiseTerminal = CreateTerminal(Direction.Output, PFTypes.Void, "promise");
             foreach (NIType parameter in signature.GetParameters().Where(p => p.GetInputParameterPassingRule() == NIParameterPassingRule.Required))
@@ -17,6 +17,7 @@ namespace Rebar.Compiler.Nodes
             }
             Signature = signature;
             TargetName = targetName;
+            MayPanic = mayPanic;
         }
 
         private CreateMethodCallPromise(Node newParentNode, CreateMethodCallPromise nodeToCopy, NodeCopyInfo copyInfo)
@@ -25,6 +26,7 @@ namespace Rebar.Compiler.Nodes
             PromiseTerminal = copyInfo.GetMappingFor(nodeToCopy.PromiseTerminal);
             Signature = nodeToCopy.Signature;
             TargetName = nodeToCopy.TargetName;
+            MayPanic = nodeToCopy.MayPanic;
         }
 
         public Terminal PromiseTerminal { get; }
@@ -32,6 +34,8 @@ namespace Rebar.Compiler.Nodes
         public NIType Signature { get; }
 
         public ExtendedQualifiedName TargetName { get; }
+
+        public bool MayPanic { get; }
 
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {
