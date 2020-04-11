@@ -208,6 +208,21 @@ namespace Tests.Rebar.Unit.Execution
             AssertByteArrayIsNoneInteger(finalValue);
         }
 
+        [TestMethod]
+        public void UnwrapOptionTunnelWithSomeReferenceInputAndUnusedOutput_Execute_CompilesCorrectly()
+        {
+            DfirRoot function = DfirRoot.Create();
+            ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            var some = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            Wire.Create(function.BlockDiagram, borrow.OutputTerminals[0], some.InputTerminals[0]);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            var unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+
+            CompileAndExecuteFunction(function);
+        }
+
         private FunctionalNode CreateInt32SomeConstructor(Diagram diagram, int value)
         {
             FunctionalNode initialSome = new FunctionalNode(diagram, Signatures.SomeConstructorType);
