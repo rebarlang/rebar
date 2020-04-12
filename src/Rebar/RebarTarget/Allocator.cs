@@ -386,13 +386,19 @@ namespace Rebar.RebarTarget
             tunnel.InputTerminals.ForEach(WillGetValue);
             if (tunnel.Terminals.HasExactly(2))
             {
-                VariableReference inputVariable = tunnel.InputTerminals.ElementAt(0).GetTrueVariable(),
-                    outputVariable = tunnel.OutputTerminals.ElementAt(0).GetTrueVariable();
+                Terminal inputTerminal = tunnel.InputTerminals[0],
+                    outputTerminal = tunnel.OutputTerminals[0];
+                VariableReference inputVariable = inputTerminal.GetTrueVariable(),
+                    outputVariable = outputTerminal.GetTrueVariable();
                 if (outputVariable.Type != inputVariable.Type.CreateOption())
                 {
                     // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
                     // the ValueSource if they are close enough
                     _variableUsages[outputVariable] = _variableUsages[inputVariable];
+                }
+                else
+                {
+                    WillUpdateValue(outputTerminal);
                 }
             }
             else
