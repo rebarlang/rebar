@@ -61,10 +61,10 @@ namespace Rebar.RebarTarget.LLVM
                 switch (parameter.Direction)
                 {
                     case Direction.Input:
-                        yield return parameterType.AsLLVMType();
+                        yield return SharedData.Context.AsLLVMType(parameterType);
                         break;
                     case Direction.Output:
-                        yield return LLVMTypeRef.PointerType(parameterType.AsLLVMType(), 0u);
+                        yield return LLVMTypeRef.PointerType(SharedData.Context.AsLLVMType(parameterType), 0u);
                         break;
                     default:
                         throw new NotImplementedException("Can only handle in and out parameters");
@@ -93,7 +93,7 @@ namespace Rebar.RebarTarget.LLVM
             {
                 if (asyncStateGroup.FunctionId == asyncStateGroup.Label && this is SynchronousFunctionModuleBuilder)
                 {
-                    _localDoneAllocationPtr = Builder.CreateAlloca(FunctionAllocationSet.FunctionCompletionStatusType, "donePtr");
+                    _localDoneAllocationPtr = Builder.CreateAlloca(FunctionAllocationSet.FunctionCompletionStatusType(SharedData.Context), "donePtr");
                     Builder.CreateBr(groupData.ContinueBasicBlock);
                 }
                 else
@@ -215,14 +215,14 @@ namespace Rebar.RebarTarget.LLVM
 
         protected void CreateScheduleCallsForAsyncStateGroups(IRBuilder builder, LLVMValueRef statePointer, IEnumerable<AsyncStateGroup> asyncStateGroups)
         {
-            LLVMTypeRef scheduledTaskType = LLVMExtensions.GetScheduledTaskType(Module);
-            LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr");
+            LLVMTypeRef scheduledTaskType = SharedData.Context.GetScheduledTaskType();
+            LLVMValueRef bitCastStatePtr = builder.CreateBitCast(statePointer, SharedData.Context.VoidPointerType(), "bitCastStatePtr");
             foreach (AsyncStateGroup successor in asyncStateGroups)
             {
                 AsyncStateGroupData successorData = AsyncStateGroups[successor];
                 LLVMValueRef bitCastSuccessorFunction = builder.CreateBitCast(
                     successorData.Function,
-                    LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
+                    LLVMTypeRef.PointerType(SharedData.Context.ScheduledTaskFunctionType(), 0u),
                     "bitCastFunction");
                 if (!successor.SignaledConditionally && successor.Predecessors.HasMoreThan(1))
                 {
@@ -252,13 +252,13 @@ namespace Rebar.RebarTarget.LLVM
         private LLVMValueRef GenerateContinueStateCheck()
         {
             LLVMValueRef done = Builder.CreateLoad(GetStateDonePointer(), "done"),
-                shouldContinue = Builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, done, ((byte)0).AsLLVMValue(), "shouldContinue");
+                shouldContinue = Builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, done, SharedData.Context.AsLLVMValue((byte)0), "shouldContinue");
             return shouldContinue;
         }
 
         public void GenerateStoreCompletionState(byte completionState)
         {
-            Builder.CreateStore(completionState.AsLLVMValue(), GetStateDonePointer());
+            Builder.CreateStore(SharedData.Context.AsLLVMValue(completionState), GetStateDonePointer());
         }
 
         private void GenerateFunctionTerminator()

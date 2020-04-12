@@ -326,6 +326,8 @@
     <Compile Include="RebarTarget\IRebarTargetRuntimeServices.cs" />
     <Compile Include="RebarTarget\LLVM\AsynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />
+    <Compile Include="RebarTarget\LLVM\ContextFreeModule.cs" />
+    <Compile Include="RebarTarget\LLVM\ContextWrapper.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionAllocationSet.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompileResult.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionCompilerSharedData.cs" />

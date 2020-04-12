@@ -22,20 +22,20 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildCreateNotifierPairFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef createNotifierPairFunction)
         {
-            LLVMTypeRef valueType = signature.GetGenericParameters().First().AsLLVMType(),
-                notifierReaderType = valueType.CreateLLVMNotifierReaderType(),
-                notifierWriterType = valueType.CreateLLVMNotifierWriterType();
+            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First()),
+                notifierReaderType = compiler.Context.CreateLLVMNotifierReaderType(valueType),
+                notifierWriterType = compiler.Context.CreateLLVMNotifierWriterType(valueType);
 
             LLVMBasicBlockRef entryBlock = createNotifierPairFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMTypeRef sharedDataType = valueType.CreateLLVMNotifierSharedDataType();
-            LLVMTypeRef refCountType = sharedDataType.CreateLLVMRefCountType();
+            LLVMTypeRef sharedDataType = compiler.Context.CreateLLVMNotifierSharedDataType(valueType);
+            LLVMTypeRef refCountType = compiler.Context.CreateLLVMRefCountType(sharedDataType);
             LLVMValueRef refCountAllocationPtr = builder.CreateMalloc(refCountType, "refCountAllocationPtr"),
                 refCount = builder.BuildStructValue(
                     refCountType,
-                    new LLVMValueRef[] { 2.AsLLVMValue(), LLVMSharp.LLVM.ConstNull(sharedDataType) },
+                    new LLVMValueRef[] { compiler.Context.AsLLVMValue(2), LLVMSharp.LLVM.ConstNull(sharedDataType) },
                     "refCount");
             builder.CreateStore(refCount, refCountAllocationPtr);
 
@@ -48,12 +48,12 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildGetNotifierReaderPromiseFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef getNotifierReaderPromiseFunction)
         {
-            LLVMTypeRef valueType = signature.GetGenericParameters().First().AsLLVMType(),
-                notifierReaderType = valueType.CreateLLVMNotifierReaderType(),
-                notifierReaderPromiseType = valueType.CreateLLVMNotifierReaderPromiseType();
+            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First()),
+                notifierReaderType = compiler.Context.CreateLLVMNotifierReaderType(valueType),
+                notifierReaderPromiseType = compiler.Context.CreateLLVMNotifierReaderPromiseType(valueType);
 
             LLVMBasicBlockRef entryBlock = getNotifierReaderPromiseFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             // Transfer the refCount pointer from the reader to the promise
@@ -68,15 +68,15 @@ namespace Rebar.RebarTarget.LLVM
         {
             NIType notifierReaderPromiseType = signature.GetGenericParameters().ElementAt(0),
                 valueType = notifierReaderPromiseType.GetGenericParameters().ElementAt(0);
-            LLVMTypeRef optionValueLLVMType = valueType.CreateOption().AsLLVMType(),
-                optionOptionValueLLVMType = valueType.CreateOption().CreateOption().AsLLVMType();
+            LLVMTypeRef optionValueLLVMType = compiler.Context.AsLLVMType(valueType.CreateOption()),
+                optionOptionValueLLVMType = compiler.Context.AsLLVMType(valueType.CreateOption().CreateOption());
 
             LLVMBasicBlockRef entryBlock = notifierReaderPromisePollFunction.AppendBasicBlock("entry"),
                 writerReadyBlock = notifierReaderPromisePollFunction.AppendBasicBlock("writerReady"),
                 writerDroppedWithoutValueBlock = notifierReaderPromisePollFunction.AppendBasicBlock("writerDroppedWithoutValue"),
                 writerDroppedWithValueBlock = notifierReaderPromisePollFunction.AppendBasicBlock("writerDroppedWithValue"),
                 endBlock = notifierReaderPromisePollFunction.AppendBasicBlock("end");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef notifierReaderPromisePtr = notifierReaderPromisePollFunction.GetParam(0u),
@@ -93,13 +93,13 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef oldState = builder.CreateAtomicRMW(
                 LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpOr,
                 statePtr,
-                ReaderWaitingForValue.AsLLVMValue(),
+                compiler.Context.AsLLVMValue(ReaderWaitingForValue),
                 LLVMAtomicOrdering.LLVMAtomicOrderingAcquireRelease,
                 false),
-                oldWriterState = builder.CreateAnd(oldState, WriterStateMask.AsLLVMValue(), "oldWriterState");
+                oldWriterState = builder.CreateAnd(oldState, compiler.Context.AsLLVMValue(WriterStateMask), "oldWriterState");
             LLVMValueRef writerStateSwitch = builder.CreateSwitch(oldWriterState, writerReadyBlock, 2u);
-            writerStateSwitch.AddCase(WriterDroppedWithoutValue.AsLLVMValue(), writerDroppedWithoutValueBlock);
-            writerStateSwitch.AddCase(WriterDroppedWithValue.AsLLVMValue(), writerDroppedWithValueBlock);
+            writerStateSwitch.AddCase(compiler.Context.AsLLVMValue(WriterDroppedWithoutValue), writerDroppedWithoutValueBlock);
+            writerStateSwitch.AddCase(compiler.Context.AsLLVMValue(WriterDroppedWithValue), writerDroppedWithValueBlock);
 
             builder.PositionBuilderAtEnd(writerReadyBlock);
             // output None
@@ -108,14 +108,14 @@ namespace Rebar.RebarTarget.LLVM
 
             builder.PositionBuilderAtEnd(writerDroppedWithoutValueBlock);
             // output Some(None)
-            builder.CreateStore(builder.BuildOptionValue(optionOptionValueLLVMType, LLVMTypeRef.ConstNull(optionValueLLVMType)), pollResultPtr);
+            builder.CreateStore(compiler.Context.BuildOptionValue(builder, optionOptionValueLLVMType, LLVMTypeRef.ConstNull(optionValueLLVMType)), pollResultPtr);
             builder.CreateBr(endBlock);
 
             builder.PositionBuilderAtEnd(writerDroppedWithValueBlock);
             // output Some(Some(value))
             LLVMValueRef valuePtr = builder.CreateStructGEP(sharedDataPtr, SharedDataValueFieldIndex, "valuePtr"),
                 value = builder.CreateLoad(valuePtr, "value");
-            builder.CreateStore(builder.BuildOptionValue(optionOptionValueLLVMType, builder.BuildOptionValue(optionValueLLVMType, value)), pollResultPtr);
+            builder.CreateStore(compiler.Context.BuildOptionValue(builder, optionOptionValueLLVMType, compiler.Context.BuildOptionValue(builder, optionValueLLVMType, value)), pollResultPtr);
             builder.CreateBr(endBlock);
 
             builder.PositionBuilderAtEnd(endBlock);
@@ -132,7 +132,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef entryBlock = notifierReaderDropFunction.AppendBasicBlock("entry"),
                 writerWasDroppedWithValueBlock = notifierReaderDropFunction.AppendBasicBlock("writerWasDroppedWithValue"),
                 endBlock = notifierReaderDropFunction.AppendBasicBlock("end");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef notifierReaderPtr = notifierReaderDropFunction.GetParam(0u),
@@ -144,11 +144,11 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef oldState = builder.CreateAtomicRMW(
                 LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpOr,
                 statePtr,
-                ReaderDropped.AsLLVMValue(),
+                compiler.Context.AsLLVMValue(ReaderDropped),
                 LLVMAtomicOrdering.LLVMAtomicOrderingAcquire,
                 false),
-                oldWriterState = builder.CreateAnd(oldState, WriterStateMask.AsLLVMValue(), "oldWriterState"),
-                writerWasDroppedWithValue = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, oldWriterState, WriterDroppedWithValue.AsLLVMValue(), "writerWasDroppedWithValue");
+                oldWriterState = builder.CreateAnd(oldState, compiler.Context.AsLLVMValue(WriterStateMask), "oldWriterState"),
+                writerWasDroppedWithValue = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, oldWriterState, compiler.Context.AsLLVMValue(WriterDroppedWithValue), "writerWasDroppedWithValue");
             builder.CreateCondBr(writerWasDroppedWithValue, writerWasDroppedWithValueBlock, endBlock);
 
             builder.PositionBuilderAtEnd(writerWasDroppedWithValueBlock);
@@ -164,13 +164,13 @@ namespace Rebar.RebarTarget.LLVM
         private static void BuildSetNotifierValueFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef setNotifierValueFunction)
         {
             NIType valueType = signature.GetGenericParameters().First();
-            LLVMTypeRef valueLLVMType = valueType.AsLLVMType();
+            LLVMTypeRef valueLLVMType = compiler.Context.AsLLVMType(valueType);
 
             LLVMBasicBlockRef entryBlock = setNotifierValueFunction.AppendBasicBlock("entry"),
                 readerWasWaitingBlock = setNotifierValueFunction.AppendBasicBlock("readerWasWaiting"),
                 readerWasDroppedBlock = setNotifierValueFunction.AppendBasicBlock("readerWasDropped"),
                 exitBlock = setNotifierValueFunction.AppendBasicBlock("exit");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef notifierWriter = setNotifierValueFunction.GetParam(0u),
@@ -185,13 +185,13 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef oldState = builder.CreateAtomicRMW(
                     LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpOr,
                     statePtr,
-                    WriterDroppedWithValue.AsLLVMValue(),
+                    compiler.Context.AsLLVMValue(WriterDroppedWithValue),
                     LLVMAtomicOrdering.LLVMAtomicOrderingAcquireRelease,
                     false);
-            LLVMValueRef oldReaderState = builder.CreateAnd(oldState, ReaderStateMask.AsLLVMValue(), "oldReaderState"),
+            LLVMValueRef oldReaderState = builder.CreateAnd(oldState, compiler.Context.AsLLVMValue(ReaderStateMask), "oldReaderState"),
                 readerStateSwitch = builder.CreateSwitch(oldReaderState, exitBlock, 2u);
-            readerStateSwitch.AddCase(ReaderWaitingForValue.AsLLVMValue(), readerWasWaitingBlock);
-            readerStateSwitch.AddCase(ReaderDropped.AsLLVMValue(), readerWasDroppedBlock);
+            readerStateSwitch.AddCase(compiler.Context.AsLLVMValue(ReaderWaitingForValue), readerWasWaitingBlock);
+            readerStateSwitch.AddCase(compiler.Context.AsLLVMValue(ReaderDropped), readerWasDroppedBlock);
 
             builder.PositionBuilderAtEnd(readerWasWaitingBlock);
             LLVMValueRef wakerPtr = builder.CreateStructGEP(sharedDataPtr, SharedDataWakerFieldIndex, "wakerPtr"),
@@ -217,7 +217,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef entryBlock = notifierValueDropFunction.AppendBasicBlock("entry"),
                 readerWasWaitingBlock = notifierValueDropFunction.AppendBasicBlock("readerWasWaiting"),
                 exitBlock = notifierValueDropFunction.AppendBasicBlock("exit");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef notifierWriterPtr = notifierValueDropFunction.GetParam(0u),
@@ -230,11 +230,11 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef oldState = builder.CreateAtomicRMW(
                 LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpOr,
                 statePtr,
-                WriterDroppedWithoutValue.AsLLVMValue(),
+                compiler.Context.AsLLVMValue(WriterDroppedWithoutValue),
                 LLVMAtomicOrdering.LLVMAtomicOrderingAcquire,
                 false);
-            LLVMValueRef oldReaderState = builder.CreateAnd(oldState, ReaderStateMask.AsLLVMValue(), "oldReaderState"),
-                readerWasWaiting = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, oldReaderState, ReaderWaitingForValue.AsLLVMValue(), "readerWasWaiting");
+            LLVMValueRef oldReaderState = builder.CreateAnd(oldState, compiler.Context.AsLLVMValue(ReaderStateMask), "oldReaderState"),
+                readerWasWaiting = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, oldReaderState, compiler.Context.AsLLVMValue(ReaderWaitingForValue), "readerWasWaiting");
             builder.CreateCondBr(readerWasWaiting, readerWasWaitingBlock, exitBlock);
 
             builder.PositionBuilderAtEnd(readerWasWaitingBlock);

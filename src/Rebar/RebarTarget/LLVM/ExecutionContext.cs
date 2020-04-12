@@ -6,7 +6,7 @@ using LLVMSharp;
 
 namespace Rebar.RebarTarget.LLVM
 {
-    public class ExecutionContext
+    public class ExecutionContext : IDisposable
     {
         private static readonly LLVMMCJITCompilerOptions _options;
         private static IRebarTargetRuntimeServices _runtimeServices;
@@ -108,20 +108,28 @@ namespace Rebar.RebarTarget.LLVM
 
         private static FakeDropDelegate _fakeDrop = FakeDrop;
 
+        private readonly ContextWrapper _contextWrapper;
         private readonly LLVMExecutionEngineRef _engine;
         private readonly Module _globalModule;
         private readonly LLVMTargetDataRef _targetData;
 
         public ExecutionContext(IRebarTargetRuntimeServices runtimeServices)
         {
+            _contextWrapper = new ContextWrapper();
             _runtimeServices = runtimeServices;
-            _globalModule = new Module("global");
-            _globalModule.LinkInModule(CommonModules.FakeDropModule.Clone());
-            _globalModule.LinkInModule(CommonModules.SchedulerModule.Clone());
-            _globalModule.LinkInModule(CommonModules.StringModule.Clone());
-            _globalModule.LinkInModule(CommonModules.OutputModule.Clone());
-            _globalModule.LinkInModule(CommonModules.RangeModule.Clone());
-            _globalModule.LinkInModule(CommonModules.FileModule.Clone());
+            _globalModule = _contextWrapper.CreateModule("global");
+            foreach (ContextFreeModule module in new[]
+                {
+                    CommonModules.FakeDropModule,
+                    CommonModules.SchedulerModule,
+                    CommonModules.StringModule,
+                    CommonModules.OutputModule,
+                    CommonModules.RangeModule,
+                    CommonModules.FileModule
+                })
+            {
+                _globalModule.LinkInModule(_contextWrapper.LoadContextFreeModule(module));
+            }
 
             string error;
             LLVMBool Success = new LLVMBool(0);
@@ -136,8 +144,9 @@ namespace Rebar.RebarTarget.LLVM
             _targetData = LLVMSharp.LLVM.GetExecutionEngineTargetData(_engine);
         }
 
-        public void LoadFunction(Module functionModule)
+        public void LoadFunction(ContextFreeModule contextFreeModule)
         {
+            Module functionModule = _contextWrapper.LoadContextFreeModule(contextFreeModule);
             functionModule.VerifyAndThrowIfInvalid();
             _globalModule.LinkInModule(functionModule.Clone());
         }
@@ -225,6 +234,11 @@ namespace Rebar.RebarTarget.LLVM
             byte[] data = new byte[size];
             Marshal.Copy(globalAddress, data, 0, size);
             return data;
+        }
+
+        public void Dispose()
+        {
+            _contextWrapper.Dispose();
         }
     }
 }

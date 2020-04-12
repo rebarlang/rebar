@@ -13,18 +13,16 @@ namespace Rebar.RebarTarget.LLVM
         {
             ValueSource inputSource = compiler.GetTerminalValueSource(someConstructorNode.InputTerminals[0]),
                 outputSource = compiler.GetTerminalValueSource(someConstructorNode.OutputTerminals[0]);
-            LLVMTypeRef outputType = someConstructorNode.OutputTerminals[0].GetTrueVariable().Type.AsLLVMType();
+            LLVMTypeRef outputType = compiler.Context.AsLLVMType(someConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
             LLVMValueRef innerValue = inputSource.GetValue(compiler.Builder);
-            compiler.Initialize(outputSource, compiler.Builder.BuildOptionValue(outputType, innerValue));
+            compiler.Initialize(outputSource, compiler.Context.BuildOptionValue(compiler.Builder, outputType, innerValue));
         }
 
         private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
         {
             ValueSource outputSource = compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
-            LLVMTypeRef outputType = noneConstructorNode
-                .OutputTerminals[0].GetTrueVariable()
-                .Type.AsLLVMType();
-            compiler.InitializeIfNecessary(outputSource, builder => builder.BuildOptionValue(outputType, null));
+            LLVMTypeRef outputType = compiler.Context.AsLLVMType(noneConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
+            compiler.InitializeIfNecessary(outputSource, builder => compiler.Context.BuildOptionValue(builder, outputType, null));
         }
 
         internal static void BuildOptionDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionDropFunction)
@@ -35,7 +33,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef entryBlock = optionDropFunction.AppendBasicBlock("entry"),
                 isSomeBlock = optionDropFunction.AppendBasicBlock("isSome"),
                 endBlock = optionDropFunction.AppendBasicBlock("end");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef optionPtr = optionDropFunction.GetParam(0u),
@@ -53,14 +51,12 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildOptionToPanicResultFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef optionToPanicResultFunction)
         {
-            LLVMTypeRef elementLLVMType = signature.GetGenericParameters()
-                .First()
-                .AsLLVMType();
+            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First());
 
             LLVMBasicBlockRef entryBlock = optionToPanicResultFunction.AppendBasicBlock("entry"),
                 someBlock = optionToPanicResultFunction.AppendBasicBlock("some"),
                 noneBlock = optionToPanicResultFunction.AppendBasicBlock("none");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef option = optionToPanicResultFunction.GetParam(0u),
@@ -68,10 +64,10 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef branch = builder.CreateCondBr(isSome, someBlock, noneBlock);
             // TODO: if possible, set metadata that indicates the some branch is more likely to be taken
 
-            LLVMTypeRef panicResultType = elementLLVMType.CreateLLVMPanicResultType();
+            LLVMTypeRef panicResultType = compiler.Context.CreateLLVMPanicResultType(elementLLVMType);
             builder.PositionBuilderAtEnd(someBlock);
             LLVMValueRef innerValue = builder.CreateExtractValue(option, 1u, "innerValue");
-            LLVMValueRef panicContinueResult = builder.BuildStructValue(panicResultType, new LLVMValueRef[] { true.AsLLVMValue(), innerValue }, "panicContinueResult");
+            LLVMValueRef panicContinueResult = builder.BuildStructValue(panicResultType, new LLVMValueRef[] { compiler.Context.AsLLVMValue(true), innerValue }, "panicContinueResult");
             builder.CreateStore(panicContinueResult, optionToPanicResultFunction.GetParam(1u));
             builder.CreateRetVoid();
 

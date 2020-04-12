@@ -7,6 +7,7 @@ namespace Rebar.RebarTarget.LLVM
     {
         public AsyncStateGroupData(
             AsyncStateGroup asyncStateGroup,
+            ContextWrapper context,
             LLVMValueRef function,
             LLVMBasicBlockRef initialBasicBlock,
             LLVMBasicBlockRef continueBasicBlock,
@@ -14,6 +15,7 @@ namespace Rebar.RebarTarget.LLVM
             StateFieldValueSource fireCountStateField)
         {
             AsyncStateGroup = asyncStateGroup;
+            Context = context;
             Function = function;
             InitialBasicBlock = initialBasicBlock;
             ContinueBasicBlock = continueBasicBlock;
@@ -25,6 +27,8 @@ namespace Rebar.RebarTarget.LLVM
         /// The associated <see cref="AsyncStateGroup"/>.
         /// </summary>
         public AsyncStateGroup AsyncStateGroup { get; }
+
+        private ContextWrapper Context { get; }
 
         /// <summary>
         /// The LLVM function into which the <see cref="AsyncStateGroup"/> will be generated.
@@ -62,7 +66,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (FireCountStateField != null)
             {
-                ((IUpdateableValueSource)FireCountStateField).UpdateValue(builder, AsyncStateGroup.MaxFireCount.AsLLVMValue());
+                ((IUpdateableValueSource)FireCountStateField).UpdateValue(builder, Context.AsLLVMValue(AsyncStateGroup.MaxFireCount));
             }
         }
     }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using LLVMSharp;
 using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
@@ -148,27 +147,31 @@ namespace Rebar.RebarTarget
             bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
             bool mayPanic = asyncStateGroups.Any(VisitationExtensions.GroupStartsWithPanicOrContinue);
 
-            var variableStorage = new LLVM.FunctionVariableStorage();
-            var allocator = new Allocator(variableStorage, asyncStateGroups);
-            allocator.Execute(dfirRoot, cancellationToken);
+            using (var contextWrapper = new LLVM.ContextWrapper())
+            {
+                var variableStorage = new LLVM.FunctionVariableStorage();
+                var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
+                allocator.Execute(dfirRoot, cancellationToken);
 
-            var module = new Module("module");
-            compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
+                var module = contextWrapper.CreateModule("module");
+                compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
 
-            var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
-            var functionImporter = new LLVM.FunctionImporter(module);
-            var sharedData = new LLVM.FunctionCompilerSharedData(
-                parameterInfos,
-                allocator.AllocationSet,
-                variableStorage,
-                functionImporter);
-            var moduleBuilder = isYielding
-                ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
-                : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
-            sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
+                var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
+                var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
+                var sharedData = new LLVM.FunctionCompilerSharedData(
+                    contextWrapper,
+                    parameterInfos,
+                    allocator.AllocationSet,
+                    variableStorage,
+                    functionImporter);
+                var moduleBuilder = isYielding
+                    ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
+                    : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
+                sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
 
-            moduleBuilder.CompileFunction();
-            return new LLVM.FunctionCompileResult(module, isYielding, mayPanic);
+                moduleBuilder.CompileFunction();
+                return new LLVM.FunctionCompileResult(new LLVM.ContextFreeModule(module), isYielding, mayPanic);
+            }
         }
 
         internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)

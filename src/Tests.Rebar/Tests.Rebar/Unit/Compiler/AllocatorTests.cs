@@ -86,10 +86,13 @@ namespace Tests.Rebar.Unit.Compiler
             asyncStateGrouper.Execute(function, cancellationToken);
             IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
 
-            var variableStorage = new FunctionVariableStorage();
-            var allocator = new Allocator(variableStorage, asyncStateGroups);
-            allocator.Execute(function, cancellationToken);
-            return variableStorage;
+            using (var contextWrapper = new ContextWrapper())
+            {
+                var variableStorage = new FunctionVariableStorage();
+                var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
+                allocator.Execute(function, cancellationToken);
+                return variableStorage;
+            }
         }
     }
 }

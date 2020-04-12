@@ -34,146 +34,45 @@ namespace Rebar.RebarTarget.LLVM
             }
         }
 
-        public static LLVMValueRef AsLLVMValue(this bool booleanValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int1Type(), (booleanValue ? 1u : 0u), false);
-        }
+        public static LLVMTypeRef VoidPointerType(this ContextWrapper context) => LLVMTypeRef.PointerType(context.Int8Type, 0u);
 
-        public static LLVMValueRef AsLLVMValue(this sbyte intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int8Type(), (ulong)intValue, true);
-        }
+        public static LLVMValueRef NullVoidPointer(this ContextWrapper context) => LLVMSharp.LLVM.ConstPointerNull(context.VoidPointerType());
 
-        public static LLVMValueRef AsLLVMValue(this byte intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int8Type(), intValue, false);
-        }
+        public static LLVMTypeRef BytePointerType(this ContextWrapper context) => LLVMTypeRef.PointerType(context.Int8Type, 0u);
 
-        public static LLVMValueRef AsLLVMValue(this short intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int16Type(), (ulong)intValue, true);
-        }
-
-        public static LLVMValueRef AsLLVMValue(this ushort intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int16Type(), intValue, false);
-        }
-
-        public static LLVMValueRef AsLLVMValue(this int intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int32Type(), (ulong)intValue, true);
-        }
-
-        public static LLVMValueRef AsLLVMValue(this uint intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int32Type(), intValue, false);
-        }
-
-        public static LLVMValueRef AsLLVMValue(this long intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), (ulong)intValue, true);
-        }
-
-        public static LLVMValueRef AsLLVMValue(this ulong intValue)
-        {
-            return LLVMSharp.LLVM.ConstInt(LLVMTypeRef.Int64Type(), intValue, false);
-        }
-
-        public static LLVMValueRef GetIntegerValue(this object value, NIType type)
-        {
-            LLVMValueRef constantValueRef;
-            switch (type.GetKind())
-            {
-                case NITypeKind.Int8:
-                    constantValueRef = ((sbyte)value).AsLLVMValue();
-                    break;
-                case NITypeKind.UInt8:
-                    constantValueRef = ((byte)value).AsLLVMValue();
-                    break;
-                case NITypeKind.Int16:
-                    constantValueRef = ((short)value).AsLLVMValue();
-                    break;
-                case NITypeKind.UInt16:
-                    constantValueRef = ((ushort)value).AsLLVMValue();
-                    break;
-                case NITypeKind.Int32:
-                    constantValueRef = ((int)value).AsLLVMValue();
-                    break;
-                case NITypeKind.UInt32:
-                    constantValueRef = ((uint)value).AsLLVMValue();
-                    break;
-                case NITypeKind.Int64:
-                    constantValueRef = ((long)value).AsLLVMValue();
-                    break;
-                case NITypeKind.UInt64:
-                    constantValueRef = ((ulong)value).AsLLVMValue();
-                    break;
-                default:
-                    throw new NotSupportedException("Unsupported numeric constant type: " + type);
-            }
-            return constantValueRef;
-        }
-
-        public static LLVMTypeRef VoidPointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
-
-        public static LLVMValueRef NullVoidPointer { get; } = LLVMSharp.LLVM.ConstPointerNull(VoidPointerType);
-
-        public static LLVMTypeRef BytePointerType { get; } = LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0u);
-
-        public static LLVMTypeRef StringSliceReferenceType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef StringSliceReferenceType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                BytePointerType,
-                LLVMTypeRef.Int32Type()
+                context.BytePointerType(),
+                context.Int32Type
             },
             false);
 
-        private static LLVMTypeRef GetCachedStructType(Module module, string typeName, Func<LLVMTypeRef[]> fields)
+        public static LLVMTypeRef ScheduledTaskFunctionType(this ContextWrapper context) => LLVMTypeRef.FunctionType(context.VoidType, new[] { context.VoidPointerType() }, false);
+
+        public static LLVMTypeRef GetScheduledTaskType(this ContextWrapper context)
         {
-            LLVMContextRef context = module.GetModuleContext();
-            Dictionary<string, LLVMTypeRef> structTypeDictionary;
-            if (!_namedStructTypes.TryGetValue(context, out structTypeDictionary))
-            {
-                structTypeDictionary = new Dictionary<string, LLVMTypeRef>();
-                _namedStructTypes[context] = structTypeDictionary;
-            }
-
-            LLVMTypeRef structType;
-            if (!structTypeDictionary.TryGetValue(typeName, out structType))
-            {
-                structType = LLVMTypeRef.StructCreateNamed(module.GetModuleContext(), typeName);
-                structType.StructSetBody(fields(), false);
-                structTypeDictionary[typeName] = structType;
-            }
-
-            return structType;
-        }
-
-        public static LLVMTypeRef ScheduledTaskFunctionType { get; } = LLVMTypeRef.FunctionType(LLVMTypeRef.VoidType(), new[] { VoidPointerType }, false);
-
-        public static LLVMTypeRef GetScheduledTaskType(Module module)
-        {
-            return GetCachedStructType(module, "scheduled_task", () => new[]
+            return context.GetCachedStructType("scheduled_task", () => new[]
                 {
                     // task function pointer
-                    LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                    LLVMTypeRef.PointerType(context.ScheduledTaskFunctionType(), 0u),
                     // task state
-                    VoidPointerType
+                    context.VoidPointerType()
                 });
         }
 
-        public static LLVMTypeRef WakerType { get; } = LLVMTypeRef.StructType(new[]
+        public static LLVMTypeRef WakerType(this ContextWrapper context) => context.StructType(
+            new LLVMTypeRef[]
             {
                 // task function pointer
-                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
+                LLVMTypeRef.PointerType(context.ScheduledTaskFunctionType(), 0u),
                 // task state
-                VoidPointerType
-            },
-            false);
+                context.VoidPointerType()
+            });
 
-        public static LLVMValueRef BuildStringSliceReferenceValue(this IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
+        public static LLVMValueRef BuildStringSliceReferenceValue(this ContextWrapper context, IRBuilder builder, LLVMValueRef stringPtr, LLVMValueRef length)
         {
-            return builder.BuildSliceReferenceValue(StringSliceReferenceType, stringPtr, length);
+            return builder.BuildSliceReferenceValue(context.StringSliceReferenceType(), stringPtr, length);
         }
 
         public static LLVMValueRef BuildSliceReferenceValue(this IRBuilder builder, LLVMTypeRef sliceReferenceType, LLVMValueRef bufferPtr, LLVMValueRef length)
@@ -184,14 +83,14 @@ namespace Rebar.RebarTarget.LLVM
                 "slice");
         }
 
-        public static LLVMValueRef BuildOptionValue(this IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
+        public static LLVMValueRef BuildOptionValue(this ContextWrapper context, IRBuilder builder, LLVMTypeRef optionType, LLVMValueRef? someValue)
         {
             LLVMTypeRef innerType = optionType.GetSubtypes()[1];
             return someValue == null
                 ? LLVMSharp.LLVM.ConstNull(optionType)
                 : builder.BuildStructValue(
                     optionType,
-                    new LLVMValueRef[] { true.AsLLVMValue(), someValue.Value },
+                    new LLVMValueRef[] { context.AsLLVMValue(true), someValue.Value },
                     "option");
         }
 
@@ -210,66 +109,61 @@ namespace Rebar.RebarTarget.LLVM
             return currentValue;
         }
 
-        public static LLVMTypeRef StringType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef StringType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                BytePointerType,
-                LLVMTypeRef.Int32Type()
-            },
-            false);
+                context.BytePointerType(),
+                context.Int32Type
+            });
 
-        public static LLVMTypeRef StringSplitIteratorType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef StringSplitIteratorType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                StringSliceReferenceType,
-                BytePointerType
-            },
-            false);
+                context.StringSliceReferenceType(),
+                context.BytePointerType()
+            });
 
-        public static LLVMTypeRef RangeIteratorType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef RangeIteratorType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                LLVMTypeRef.Int32Type(),
-                LLVMTypeRef.Int32Type()
-            },
-            false);
+                context.Int32Type,
+                context.Int32Type
+            });
 
-        public static LLVMTypeRef FileHandleType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef FileHandleType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                VoidPointerType
-            },
-            false);
+                context.VoidPointerType()
+            });
 
-        public static LLVMTypeRef FakeDropType { get; } = LLVMTypeRef.StructType(
+        public static LLVMTypeRef FakeDropType(this ContextWrapper context) => context.StructType(
             new LLVMTypeRef[]
             {
-                LLVMTypeRef.Int32Type()
-            },
-            false);
+                context.Int32Type
+            });
 
-        // TechDebt: for some of the types below, it would be nicer to return named types, but this requires
+        // TechDebt: for some of the types below, it would be nicer to return named types, which we can do now that we're
         // passing around an LLVM context.
-        public static LLVMTypeRef AsLLVMType(this NIType niType)
+        public static LLVMTypeRef AsLLVMType(this ContextWrapper context, NIType niType)
         {
             switch (niType.GetKind())
             {
                 case NITypeKind.UInt8:
                 case NITypeKind.Int8:
-                    return LLVMTypeRef.Int8Type();
+                    return context.Int8Type;
                 case NITypeKind.UInt16:
                 case NITypeKind.Int16:
-                    return LLVMTypeRef.Int16Type();
+                    return context.Int16Type;
                 case NITypeKind.UInt32:
                 case NITypeKind.Int32:
-                    return LLVMTypeRef.Int32Type();
+                    return context.Int32Type;
                 case NITypeKind.UInt64:
                 case NITypeKind.Int64:
-                    return LLVMTypeRef.Int64Type();
+                    return context.Int64Type;
                 case NITypeKind.Boolean:
-                    return LLVMTypeRef.Int1Type();
+                    return context.Int1Type;
                 case NITypeKind.String:
-                    return StringType;
+                    return context.StringType();
                 default:
                 {
                     if (niType.IsRebarReferenceType())
@@ -277,189 +171,184 @@ namespace Rebar.RebarTarget.LLVM
                         NIType referentType = niType.GetReferentType();
                         if (referentType == DataTypes.StringSliceType)
                         {
-                            return StringSliceReferenceType;
+                            return context.StringSliceReferenceType();
                         }
                         NIType sliceElementType;
                         if (referentType.TryDestructureSliceType(out sliceElementType))
                         {
-                            return CreateLLVMSliceReferenceType(sliceElementType.AsLLVMType());
+                            return context.CreateLLVMSliceReferenceType(context.AsLLVMType(sliceElementType));
                         }
-                        return LLVMTypeRef.PointerType(referentType.AsLLVMType(), 0u);
+                        return LLVMTypeRef.PointerType(context.AsLLVMType(referentType), 0u);
                     }
                     if (niType.IsCluster())
                     {
-                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(field => field.GetDataType().AsLLVMType()).ToArray();
-                        return LLVMTypeRef.StructType(fieldTypes, false);
+                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(field => context.AsLLVMType(field.GetDataType())).ToArray();
+                        return context.StructType(fieldTypes);
                     }
                     if (niType == DataTypes.FileHandleType)
                     {
-                        return FileHandleType;
+                        return context.FileHandleType();
                     }
                     if (niType == DataTypes.FakeDropType)
                     {
-                        return FakeDropType;
+                        return context.FakeDropType();
                     }
                     if (niType == DataTypes.RangeIteratorType)
                     {
-                        return RangeIteratorType;
+                        return context.RangeIteratorType();
                     }
                     if (niType == DataTypes.WakerType)
                     {
-                        return WakerType;
+                        return context.WakerType();
                     }
                     NIType innerType;
                     if (niType.TryDestructureOptionType(out innerType))
                     {
-                        return CreateLLVMOptionType(innerType.AsLLVMType());
+                        return context.CreateLLVMOptionType(context.AsLLVMType(innerType));
                     }
                     if (niType.IsStringSplitIteratorType())
                     {
-                        return StringSplitIteratorType;
+                        return context.StringSplitIteratorType();
                     }
                     if (niType.TryDestructureVectorType(out innerType))
                     {
-                        return CreateLLVMVectorType(innerType.AsLLVMType());
+                        return context.CreateLLVMVectorType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureSharedType(out innerType))
                     {
-                        return CreateLLVMSharedType(innerType.AsLLVMType());
+                        return context.CreateLLVMSharedType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureYieldPromiseType(out innerType))
                     {
-                        return CreateLLVMYieldPromiseType(innerType.AsLLVMType());
+                        return context.CreateLLVMYieldPromiseType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureMethodCallPromiseType(out innerType))
                     {
-                        return CreateLLVMMethodCallPromiseType(innerType.AsLLVMType());
+                        return context.CreateLLVMMethodCallPromiseType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureNotifierReaderType(out innerType))
                     {
-                        return CreateLLVMNotifierReaderType(innerType.AsLLVMType());
+                        return context.CreateLLVMNotifierReaderType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureNotifierReaderPromiseType(out innerType))
                     {
-                        return CreateLLVMNotifierReaderPromiseType(innerType.AsLLVMType());
+                        return context.CreateLLVMNotifierReaderPromiseType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructureNotifierWriterType(out innerType))
                     {
-                        return CreateLLVMNotifierWriterType(innerType.AsLLVMType());
+                        return context.CreateLLVMNotifierWriterType(context.AsLLVMType(innerType));
                     }
                     if (niType.TryDestructurePanicResultType(out innerType))
                     {
-                        return CreateLLVMPanicResultType(innerType.AsLLVMType());
+                        return context.CreateLLVMPanicResultType(context.AsLLVMType(innerType));
                     }
                     if (niType.IsValueClass() && niType.GetFields().Any())
                     {
-                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => f.GetDataType().AsLLVMType()).ToArray();
-                        return LLVMTypeRef.StructType(fieldTypes, false);
+                        LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => context.AsLLVMType(f.GetDataType())).ToArray();
+                        return context.StructType(fieldTypes);
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }
             }
         }
 
-        internal static LLVMTypeRef CreateLLVMOptionType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMOptionType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int1Type(), innerType }, false);
+            return context.StructType(new LLVMTypeRef[] { context.Int1Type, innerType });
         }
 
-        internal static LLVMTypeRef CreateLLVMPanicResultType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMPanicResultType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int1Type(), innerType }, false);
+            return context.StructType(new LLVMTypeRef[] { context.Int1Type, innerType });
         }
 
-        internal static LLVMTypeRef CreateLLVMVectorType(this LLVMTypeRef elementType)
+        internal static LLVMTypeRef CreateLLVMVectorType(this ContextWrapper context, LLVMTypeRef elementType)
         {
-            return LLVMTypeRef.StructType(
+            return context.StructType(
                 // { allocationPtr, size, capacity }
                 new LLVMTypeRef[]
                 {
                     LLVMTypeRef.PointerType(elementType, 0u),
-                    LLVMTypeRef.Int32Type(),
-                    LLVMTypeRef.Int32Type()
+                    context.Int32Type,
+                    context.Int32Type
                 },
                 false);
         }
 
-        internal static LLVMTypeRef CreateLLVMSliceReferenceType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMSliceReferenceType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.PointerType(innerType, 0u), LLVMTypeRef.Int32Type() }, false);
+            return context.StructType(new LLVMTypeRef[] { LLVMTypeRef.PointerType(innerType, 0u), context.Int32Type });
         }
 
-        internal static LLVMTypeRef CreateLLVMSharedType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMSharedType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.PointerType(innerType.CreateLLVMRefCountType(), 0u);
+            return LLVMTypeRef.PointerType(context.CreateLLVMRefCountType(innerType), 0u);
         }
 
-        internal static LLVMTypeRef CreateLLVMRefCountType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMRefCountType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[] { LLVMTypeRef.Int32Type(), innerType }, false);
+            return context.StructType(new LLVMTypeRef[] { context.Int32Type, innerType });
         }
 
-        internal static LLVMTypeRef CreateLLVMYieldPromiseType(this LLVMTypeRef innerType)
-        {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[] { innerType }, false);
-        }
+        internal static LLVMTypeRef CreateLLVMYieldPromiseType(this ContextWrapper context, LLVMTypeRef innerType) => context.StructType(new LLVMTypeRef[] { innerType });
 
-        private static readonly LLVMTypeRef MethodPollFunctionType = LLVMTypeRef.FunctionType(
-            LLVMTypeRef.VoidType(),
+        private static LLVMTypeRef MethodPollFunctionType(this ContextWrapper context) => LLVMTypeRef.FunctionType(
+            context.VoidType,
             new LLVMTypeRef[]
             {
-                VoidPointerType,
-                LLVMTypeRef.PointerType(ScheduledTaskFunctionType, 0u),
-                VoidPointerType
+                context.VoidPointerType(),
+                LLVMTypeRef.PointerType(context.ScheduledTaskFunctionType(), 0u),
+                context.VoidPointerType()
             },
             false);
 
-        internal static LLVMTypeRef CreateLLVMMethodCallPromiseType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMMethodCallPromiseType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(new LLVMTypeRef[]
+            return context.StructType(new LLVMTypeRef[]
             {
-                LLVMTypeRef.PointerType(MethodPollFunctionType, 0u),
-                VoidPointerType,
+                LLVMTypeRef.PointerType(context.MethodPollFunctionType(), 0u),
+                context.VoidPointerType(),
                 innerType,
-            },
-            false);
+            });
         }
 
-        internal static LLVMTypeRef CreateLLVMNotifierSharedDataType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMNotifierSharedDataType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(
+            return context.StructType(
                 new LLVMTypeRef[]
                 {
-                    WakerType,
+                    context.WakerType(),
                     innerType,
-                    LLVMTypeRef.Int32Type(),
+                    context.Int32Type,
+                });
+        }
+
+        internal static LLVMTypeRef CreateLLVMNotifierReaderType(this ContextWrapper context, LLVMTypeRef innerType)
+        {
+            return context.StructType(
+                new LLVMTypeRef[]
+                {
+                    LLVMTypeRef.PointerType(context.CreateLLVMRefCountType(context.CreateLLVMNotifierSharedDataType(innerType)), 0u)
                 },
                 false);
         }
 
-        internal static LLVMTypeRef CreateLLVMNotifierReaderType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMNotifierReaderPromiseType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(
+            return context.StructType(
                 new LLVMTypeRef[]
                 {
-                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                    LLVMTypeRef.PointerType(context.CreateLLVMRefCountType(context.CreateLLVMNotifierSharedDataType(innerType)), 0u)
                 },
                 false);
         }
 
-        internal static LLVMTypeRef CreateLLVMNotifierReaderPromiseType(this LLVMTypeRef innerType)
+        internal static LLVMTypeRef CreateLLVMNotifierWriterType(this ContextWrapper context, LLVMTypeRef innerType)
         {
-            return LLVMTypeRef.StructType(
+            return context.StructType(
                 new LLVMTypeRef[]
                 {
-                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
-                },
-                false);
-        }
-
-        internal static LLVMTypeRef CreateLLVMNotifierWriterType(this LLVMTypeRef innerType)
-        {
-            return LLVMTypeRef.StructType(
-                new LLVMTypeRef[]
-                {
-                    LLVMTypeRef.PointerType(innerType.CreateLLVMNotifierSharedDataType().CreateLLVMRefCountType(), 0u)
+                    LLVMTypeRef.PointerType(context.CreateLLVMRefCountType(context.CreateLLVMNotifierSharedDataType(innerType)), 0u)
                 },
                 false);
         }
@@ -500,13 +389,13 @@ namespace Rebar.RebarTarget.LLVM
             return serialized;
         }
 
-        internal static Module DeserializeModuleAsBitcode(this byte[] moduleBytes)
+        internal static Module DeserializeModuleAsBitcode(this byte[] moduleBytes, LLVMContextRef contextRef)
         {
             LLVMMemoryBufferRef bufferRef = CreateMemoryBufferRefFromBytes(moduleBytes);
             LLVMModuleRef moduleRef;
             try
             {
-                if (LLVMSharp.LLVM.ParseBitcode2(bufferRef, out moduleRef) != false)
+                if (LLVMSharp.LLVM.ParseBitcodeInContext2(contextRef, bufferRef, out moduleRef) != false)
                 {
                     throw new ArgumentException("Failed to load bitcode module", nameof(moduleBytes));
                 }

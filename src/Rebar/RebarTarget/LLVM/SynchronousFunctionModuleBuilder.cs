@@ -20,7 +20,7 @@ namespace Rebar.RebarTarget.LLVM
             _asyncStateGroups = asyncStateGroups;
 
             var parameterTypes = GetParameterLLVMTypes();
-            LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes.ToArray(), false);
+            LLVMTypeRef syncFunctionType = LLVMSharp.LLVM.FunctionType(SharedData.Context.VoidType, parameterTypes.ToArray(), false);
             SyncFunction = Module.AddFunction(FunctionNames.GetSynchronousFunctionName(functionName), syncFunctionType);
             SyncFunctionEntryBlock = SyncFunction.AppendBasicBlock("entry");
 
@@ -33,7 +33,7 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMBasicBlockRef endBasicBlock = asyncStateGroup.IsSkippable
                     ? SyncFunction.AppendBasicBlock($"{asyncStateGroup.Label}_end")
                     : default(LLVMBasicBlockRef);
-                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, SyncFunction, groupBasicBlock, continueBasicBlock, endBasicBlock, null);
+                AsyncStateGroups[asyncStateGroup] = new AsyncStateGroupData(asyncStateGroup, SharedData.Context, SyncFunction, groupBasicBlock, continueBasicBlock, endBasicBlock, null);
             }
         }
 
@@ -43,7 +43,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public override void CompileFunction()
         {
-            var syncBuilder = new IRBuilder();
+            var syncBuilder = SharedData.Context.CreateIRBuilder();
             syncBuilder.PositionBuilderAtEnd(SyncFunctionEntryBlock);
             string singleFunctionName = _asyncStateGroups.First().FunctionId;
             SharedData.AllocationSet.InitializeFunctionLocalAllocations(singleFunctionName, syncBuilder);

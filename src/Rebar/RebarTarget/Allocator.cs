@@ -31,16 +31,21 @@ namespace Rebar.RebarTarget
         private readonly string _singleFunctionName;
 
         public Allocator(
+            ContextWrapper context,
             FunctionVariableStorage variableStorage,
             IEnumerable<AsyncStateGroup> asyncStateGroups)
         {
+            Context = context;
+            AllocationSet = new FunctionAllocationSet(Context);
             _variableStorage = variableStorage;
             _asyncStateGroups = asyncStateGroups;
             _asyncStateGroups.Select(g => g.FunctionId).Distinct().TryGetSingleElement(out _singleFunctionName);
             _variableUsages = VariableReference.CreateDictionaryWithUniqueVariableKeys<VariableUsage>();
         }
 
-        public FunctionAllocationSet AllocationSet { get; } = new FunctionAllocationSet();
+        private ContextWrapper Context { get; }
+
+        public FunctionAllocationSet AllocationSet { get; }
 
         private VariableUsage GetVariableUsageForVariable(VariableReference variable)
         {
@@ -229,13 +234,13 @@ namespace Rebar.RebarTarget
             {
                 GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
                     _currentGroup,
-                    constant.Value.GetIntegerValue(outputVariable.Type));
+                    Context.GetIntegerValue(constant.Value, outputVariable.Type));
             }
             else if (outputVariable.Type.IsBoolean())
             {
                 GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
                     _currentGroup,
-                    ((bool)constant.Value).AsLLVMValue());
+                    Context.AsLLVMValue((bool)constant.Value));
             }
             else
             {
@@ -335,7 +340,7 @@ namespace Rebar.RebarTarget
             {
                 var loop = (Compiler.Nodes.Loop)loopConditionTunnel.ParentStructure;
                 AsyncStateGroup loopInitialGroup = _asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(loop, loop.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes));
-                inputVariableUsage.WillInitializeWithCompileTimeConstant(loopInitialGroup, true.AsLLVMValue());
+                inputVariableUsage.WillInitializeWithCompileTimeConstant(loopInitialGroup, Context.AsLLVMValue(true));
             }
             WillGetValue(inputTerminal);
 
@@ -520,7 +525,7 @@ namespace Rebar.RebarTarget
                 case "NoneConstructor":
                     {
                         VariableReference outputVariable = node.OutputTerminals[0].GetTrueVariable();
-                        LLVMTypeRef optionType = outputVariable.Type.AsLLVMType();
+                        LLVMTypeRef optionType = Context.AsLLVMType(outputVariable.Type);
                         GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(_currentGroup, LLVMSharp.LLVM.ConstNull(optionType));
                     }
                     return;
