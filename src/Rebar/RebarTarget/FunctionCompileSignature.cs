@@ -9,6 +9,7 @@ using Rebar.RebarTarget.LLVM;
 
 namespace Rebar.RebarTarget
 {
+    [Serializable]
     internal class FunctionCompileSignature : CompileSignature
     {
         public FunctionCompileSignature(
