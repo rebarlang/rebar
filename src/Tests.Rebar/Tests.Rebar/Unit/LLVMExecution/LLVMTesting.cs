@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LLVMSharp;
+﻿using LLVMSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Rebar.RebarTarget.LLVM;
 
 namespace Tests.Rebar.Unit.LLVMExecution
 {
@@ -14,16 +10,18 @@ namespace Tests.Rebar.Unit.LLVMExecution
         [TestMethod]
         public void LLVMModuleTest()
         {
-            // interesting: keep in mind/look up LLVM.ContextCreate -- way of separating different module load contexts?
-            var module = new Module("test");
-            var functionType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { }, false);
-            var topLevelFunction = module.AddFunction("f", functionType);
-            LLVMBasicBlockRef entryBlock = topLevelFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
-            builder.PositionBuilderAtEnd(entryBlock);
-            builder.CreateRetVoid();
+            using (var contextWrapper = new ContextWrapper())
+            {
+                var module = contextWrapper.CreateModule("test");
+                var functionType = LLVM.FunctionType(contextWrapper.VoidType, new LLVMTypeRef[] { }, false);
+                var topLevelFunction = module.AddFunction("f", functionType);
+                LLVMBasicBlockRef entryBlock = topLevelFunction.AppendBasicBlock("entry");
+                var builder = contextWrapper.CreateIRBuilder();
+                builder.PositionBuilderAtEnd(entryBlock);
+                builder.CreateRetVoid();
 
-            string moduleDump = module.PrintModuleToString();
+                string moduleDump = module.PrintModuleToString();
+            }
         }
     }
 }

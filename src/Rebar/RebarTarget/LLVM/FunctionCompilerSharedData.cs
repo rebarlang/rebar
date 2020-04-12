@@ -10,16 +10,20 @@ namespace Rebar.RebarTarget.LLVM
         private FunctionCompilerState _currentState;
 
         public FunctionCompilerSharedData(
+            ContextWrapper context,
             IReadOnlyList<ParameterInfo> orderedParameters,
             FunctionAllocationSet allocationSet,
             FunctionVariableStorage variableStorage,
             FunctionImporter functionImporter)
         {
+            Context = context;
             OrderedParameters = orderedParameters;
             AllocationSet = allocationSet;
             VariableStorage = variableStorage;
             FunctionImporter = functionImporter;
         }
+
+        public ContextWrapper Context { get; }
 
         public IReadOnlyList<ParameterInfo> OrderedParameters { get; }
 

@@ -1,20 +1,21 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using LLVMSharp;
+using NationalInstruments;
 
 namespace Rebar.RebarTarget.LLVM
 {
-    internal static class CommonModules
+    internal class CommonModules
     {
-        public static Module ExternsModule { get; }
-        public static Module FakeDropModule { get; }
-        public static Module SchedulerModule { get; }
-        public static Module StringModule { get; }
-        public static Module OutputModule { get; }
-        public static Module RangeModule { get; }
-        public static Module FileModule { get; }
+        public static ContextFreeModule ExternsModule { get; }
+        public static ContextFreeModule FakeDropModule { get; }
+        public static ContextFreeModule SchedulerModule { get; }
+        public static ContextFreeModule StringModule { get; }
+        public static ContextFreeModule OutputModule { get; }
+        public static ContextFreeModule RangeModule { get; }
+        public static ContextFreeModule FileModule { get; }
 
-        public static Dictionary<string, LLVMTypeRef> CommonModuleSignatures { get; }
+        private static Dictionary<string, ContextFreeModule> FunctionOwners { get; }
 
         // NB: this will get resolved to the Win32 RtlCopyMemory function.
         public const string CopyMemoryName = "CopyMemory";
@@ -60,7 +61,7 @@ namespace Rebar.RebarTarget.LLVM
 
         static CommonModules()
         {
-            CommonModuleSignatures = new Dictionary<string, LLVMTypeRef>();
+            FunctionOwners = new Dictionary<string, ContextFreeModule>();
             string assemblyDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string llvmResourcesPath = Path.Combine(assemblyDirectory, "RebarTarget", "LLVM", "Resources");
 
@@ -126,22 +127,37 @@ namespace Rebar.RebarTarget.LLVM
 
             var fileNames = new string[]
             {
-                DropFileHandleName,
-                OpenFileHandleName,
-                ReadLineFromFileHandleName,
-                WriteStringToFileHandleName
+                    DropFileHandleName,
+                    OpenFileHandleName,
+                    ReadLineFromFileHandleName,
+                    WriteStringToFileHandleName
             };
             FileModule = LoadModuleAndRegisterFunctionNames(Path.Combine(llvmResourcesPath, "file.bc"), fileNames);
         }
 
-        private static Module LoadModuleAndRegisterFunctionNames(string modulePath, IEnumerable<string> functionNames)
+        private static ContextFreeModule LoadModuleAndRegisterFunctionNames(string modulePath, IEnumerable<string> functionNames)
         {
-            Module module = File.ReadAllBytes(modulePath).DeserializeModuleAsBitcode();
+            var contextFreeModule = new ContextFreeModule(File.ReadAllBytes(modulePath));
             foreach (string name in functionNames)
             {
-                CommonModuleSignatures[name] = module.GetNamedFunction(name).TypeOf().GetElementType();
+                FunctionOwners[name] = contextFreeModule;
             }
-            return module;
+            return contextFreeModule;
+        }
+
+        private readonly FuncMemo<ContextFreeModule, Module> _contextModules;
+
+        public CommonModules(ContextWrapper contextWrapper)
+        {
+            _contextModules = new FuncMemo<ContextFreeModule, Module>(contextWrapper.LoadContextFreeModule);
+        }
+
+        public LLVMTypeRef GetCommonFunctionType(string functionName)
+        {
+            return _contextModules[FunctionOwners[functionName]]
+                .GetNamedFunction(functionName)
+                .TypeOf()
+                .GetElementType();
         }
     }
 }

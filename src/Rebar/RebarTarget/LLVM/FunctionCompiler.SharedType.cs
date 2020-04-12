@@ -3,7 +3,6 @@ using LLVMSharp;
 using NationalInstruments;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
-using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -11,17 +10,17 @@ namespace Rebar.RebarTarget.LLVM
     {
         private static void BuildSharedCreateFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedCreateFunction)
         {
-            LLVMTypeRef valueType = signature.GetGenericParameters().First().AsLLVMType();
+            LLVMTypeRef valueType = functionCompiler.Context.AsLLVMType(signature.GetGenericParameters().First());
 
             LLVMBasicBlockRef entryBlock = sharedCreateFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = functionCompiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMTypeRef refCountType = valueType.CreateLLVMRefCountType();
+            LLVMTypeRef refCountType = functionCompiler.Context.CreateLLVMRefCountType(valueType);
             LLVMValueRef refCountAllocationPtr = builder.CreateMalloc(refCountType, "refCountAllocationPtr"),
                 refCount = builder.BuildStructValue(
                     refCountType,
-                    new LLVMValueRef[] { 1.AsLLVMValue(), sharedCreateFunction.GetParam(0u) },
+                    new LLVMValueRef[] { functionCompiler.Context.AsLLVMValue(1), sharedCreateFunction.GetParam(0u) },
                     "refCount");
             builder.CreateStore(refCount, refCountAllocationPtr);
             LLVMValueRef sharedPtr = sharedCreateFunction.GetParam(1u);
@@ -32,7 +31,7 @@ namespace Rebar.RebarTarget.LLVM
         private static void BuildSharedGetValueFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
         {
             LLVMBasicBlockRef entryBlock = sharedGetValueFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = functionCompiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef shared = builder.CreateLoad(sharedGetValueFunction.GetParam(0u), "shared"),
@@ -45,7 +44,7 @@ namespace Rebar.RebarTarget.LLVM
         private static void BuildSharedCloneFunction(FunctionCompiler functionCompiler, NIType signature, LLVMValueRef sharedCloneFunction)
         {
             LLVMBasicBlockRef entryBlock = sharedCloneFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = functionCompiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef shared = builder.CreateLoad(sharedCloneFunction.GetParam(0u), "shared"),
@@ -54,7 +53,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateAtomicRMW(
                 LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpAdd,
                 referenceCountPtr,
-                1.AsLLVMValue(),
+                functionCompiler.Context.AsLLVMValue(1),
                 // Since the increment to the reference count does not affect the store we're performing afterwards,
                 // we only need monotonic ordering.
                 // See the documentation about atomic orderings here: https://llvm.org/docs/LangRef.html#atomic-memory-ordering-constraints
@@ -71,7 +70,7 @@ namespace Rebar.RebarTarget.LLVM
             signature.GetGenericParameters().First().TryDestructureSharedType(out valueType);
 
             LLVMBasicBlockRef entryBlock = sharedDropFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef decrementRefCountFunction = compiler.GetDecrementRefCountFunction(valueType),
@@ -91,22 +90,22 @@ namespace Rebar.RebarTarget.LLVM
         private static LLVMValueRef BuildDecrementRefCountFunction(FunctionCompiler compiler, string functionName, NIType valueType)
         {
             LLVMTypeRef functionType = LLVMTypeRef.FunctionType(
-                LLVMTypeRef.VoidType(),
+                compiler.Context.VoidType,
                 new LLVMTypeRef[]
                 {
-                    LLVMTypeRef.PointerType(valueType.AsLLVMType().CreateLLVMRefCountType(), 0u)
+                    LLVMTypeRef.PointerType(compiler.Context.CreateLLVMRefCountType(compiler.Context.AsLLVMType(valueType)), 0u)
                 },
                 false);
             LLVMValueRef decrementRefCountFunction = compiler.Module.AddFunction(functionName, functionType);
             LLVMBasicBlockRef entryBlock = decrementRefCountFunction.AppendBasicBlock("entry"),
                 noRefsRemainingBlock = decrementRefCountFunction.AppendBasicBlock("noRefsRemaining"),
                 endBlock = decrementRefCountFunction.AppendBasicBlock("end");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef refCountObjectPtr = decrementRefCountFunction.GetParam(0u),
                 referenceCountPtr = builder.CreateStructGEP(refCountObjectPtr, 0u, "referenceCountPtr"),
-                one = 1.AsLLVMValue(),
+                one = compiler.Context.AsLLVMValue(1),
                 previousReferenceCount = builder.CreateAtomicRMW(
                     LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpSub,
                     referenceCountPtr,

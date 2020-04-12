@@ -33,6 +33,10 @@ namespace Rebar.RebarTarget
         private void HandleDeploymentStarting(IBuiltPackage topLevelPackage)
         {
             var executionServices = new HostExecutionServices(_executionTarget.Host);
+            if (_llvmExecutionContext != null)
+            {
+                _llvmExecutionContext.Dispose();
+            }
             _llvmExecutionContext = new LLVM.ExecutionContext(executionServices);
         }
 
@@ -54,7 +58,9 @@ namespace Rebar.RebarTarget
 
         public override Task UnloadAllAsync()
         {
-            throw new NotImplementedException();
+            _llvmExecutionContext.Dispose();
+            _llvmExecutionContext = null;
+            return Task.CompletedTask;
         }
 
         protected override void Dispose(bool disposing)

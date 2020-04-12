@@ -36,7 +36,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["Multiply"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateMul(left, right, "multiply"));
             _functionalNodeCompilers["Divide"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateSDiv(left, right, "divide"));
             _functionalNodeCompilers["Modulus"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateSRem(left, right, "modulus"));
-            _functionalNodeCompilers["Increment"] = CreatePureUnaryOperationCompiler((compiler, value) => compiler.Builder.CreateAdd(value, 1.AsLLVMValue(), "increment"));
+            _functionalNodeCompilers["Increment"] = CreatePureUnaryOperationCompiler((compiler, value) => compiler.Builder.CreateAdd(value, compiler.Context.AsLLVMValue(1), "increment"));
             _functionalNodeCompilers["And"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateAnd(left, right, "and"));
             _functionalNodeCompilers["Or"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateOr(left, right, "or"));
             _functionalNodeCompilers["Xor"] = CreatePureBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateXor(left, right, "xor"));
@@ -46,7 +46,7 @@ namespace Rebar.RebarTarget.LLVM
             _functionalNodeCompilers["AccumulateSubtract"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateSub(left, right, "subtract"));
             _functionalNodeCompilers["AccumulateMultiply"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateMul(left, right, "multiply"));
             _functionalNodeCompilers["AccumulateDivide"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateSDiv(left, right, "divide"));
-            _functionalNodeCompilers["AccumulateIncrement"] = CreateMutatingUnaryOperationCompiler((compiler, value) => compiler.Builder.CreateAdd(value, 1.AsLLVMValue(), "increment"));
+            _functionalNodeCompilers["AccumulateIncrement"] = CreateMutatingUnaryOperationCompiler((compiler, value) => compiler.Builder.CreateAdd(value, compiler.Context.AsLLVMValue(1), "increment"));
             _functionalNodeCompilers["AccumulateAnd"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateAnd(left, right, "and"));
             _functionalNodeCompilers["AccumulateOr"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateOr(left, right, "or"));
             _functionalNodeCompilers["AccumulateXor"] = CreateMutatingBinaryOperationCompiler((compiler, left, right) => compiler.Builder.CreateXor(left, right, "xor"));
@@ -107,7 +107,7 @@ namespace Rebar.RebarTarget.LLVM
             VariableReference input = inputTerminal.GetTrueVariable();
 
             // define global data in module for inspected value
-            LLVMTypeRef globalType = input.Type.GetReferentType().AsLLVMType();
+            LLVMTypeRef globalType = compiler.Context.AsLLVMType(input.Type.GetReferentType());
             string globalName = $"inspect_{inspectNode.UniqueId}";
             LLVMValueRef globalAddress = compiler.Module.AddGlobal(globalType, globalName);
             // Setting an initializer is necessary to distinguish this from an externally-defined global
@@ -463,12 +463,12 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildCreateYieldPromiseFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef createYieldPromiseFunction)
         {
-            LLVMTypeRef valueType = signature.GetGenericParameters().First().AsLLVMType(),
+            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First()),
                 valueReferenceType = LLVMTypeRef.PointerType(valueType, 0u),
-                yieldPromiseType = valueReferenceType.CreateLLVMYieldPromiseType();
+                yieldPromiseType = compiler.Context.CreateLLVMYieldPromiseType(valueReferenceType);
 
             LLVMBasicBlockRef entryBlock = createYieldPromiseFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef value = createYieldPromiseFunction.GetParam(0u),
@@ -479,17 +479,17 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildYieldPromisePollFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef yieldPromisePollFunction)
         {
-            LLVMTypeRef valueType = signature.GetGenericParameters().ElementAt(1).AsLLVMType(),
-                valueOptionType = valueType.CreateLLVMOptionType();
+            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().ElementAt(1)),
+                valueOptionType = compiler.Context.CreateLLVMOptionType(valueType);
 
             LLVMBasicBlockRef entryBlock = yieldPromisePollFunction.AppendBasicBlock("entry");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef yieldPromisePtr = yieldPromisePollFunction.GetParam(0u),
                 valuePtr = builder.CreateStructGEP(yieldPromisePtr, 0u, "valuePtr"),
                 value = builder.CreateLoad(valuePtr, "value"),
-                someValue = builder.BuildOptionValue(valueOptionType, value);
+                someValue = compiler.Context.BuildOptionValue(builder, valueOptionType, value);
             builder.CreateStore(someValue, yieldPromisePollFunction.GetParam(2u));
             builder.CreateRetVoid();
         }
@@ -508,6 +508,8 @@ namespace Rebar.RebarTarget.LLVM
             _moduleBuilder = moduleBuilder;
             _sharedData = sharedData;
         }
+
+        private ContextWrapper Context => _sharedData.Context;
 
         private Module Module => _moduleBuilder.Module;
 
@@ -545,7 +547,7 @@ namespace Rebar.RebarTarget.LLVM
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
         {
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
-            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => AsynchronousFunctionModuleBuilder.PollFunctionType);
+            return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => AsynchronousFunctionModuleBuilder.PollFunctionType(Context));
         }
 
         private LLVMValueRef GetImportedFunction(string functionName, Func<LLVMTypeRef> getFunctionType)
@@ -605,9 +607,9 @@ namespace Rebar.RebarTarget.LLVM
 
         private void CreateCallToCopyMemory(IRBuilder builder, LLVMValueRef destinationPtr, LLVMValueRef sourcePtr, LLVMValueRef bytesToCopy)
         {
-            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, LLVMTypeRef.Int64Type(), "bytesToCopyExtend"),
-                sourcePtrCast = builder.CreateBitCast(sourcePtr, LLVMExtensions.BytePointerType, "sourcePtrCast"),
-                destinationPtrCast = builder.CreateBitCast(destinationPtr, LLVMExtensions.BytePointerType, "destinationPtrCast");
+            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, Context.Int64Type, "bytesToCopyExtend"),
+                sourcePtrCast = builder.CreateBitCast(sourcePtr, Context.BytePointerType(), "sourcePtrCast"),
+                destinationPtrCast = builder.CreateBitCast(destinationPtr, Context.BytePointerType(), "destinationPtrCast");
             builder.CreateCall(
                 _sharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.CopyMemoryName),
                 new LLVMValueRef[] { destinationPtrCast, sourcePtrCast, bytesToCopyExtend },
@@ -765,7 +767,7 @@ namespace Rebar.RebarTarget.LLVM
                 .ToArray();
             Terminal outputTerminal = buildTupleNode.OutputTerminals[0];
             ValueSource outputAllocationSource = GetTerminalValueSource(outputTerminal);
-            LLVMTypeRef outputLLVMType = outputTerminal.GetTrueVariable().Type.AsLLVMType();
+            LLVMTypeRef outputLLVMType = Context.AsLLVMType(outputTerminal.GetTrueVariable().Type);
             LLVMValueRef tuple = Builder.BuildStructValue(
                 outputLLVMType,
                 fieldValues,
@@ -779,11 +781,11 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource outputValueSource = GetTerminalValueSource(constant.OutputTerminal);
             if (constant.DataType.IsInteger())
             {
-                InitializeIfNecessary(outputValueSource, builder => constant.Value.GetIntegerValue(constant.DataType));
+                InitializeIfNecessary(outputValueSource, builder => Context.GetIntegerValue(constant.Value, constant.DataType));
             }
             else if (constant.DataType.IsBoolean())
             {
-                InitializeIfNecessary(outputValueSource, builder => ((bool)constant.Value).AsLLVMValue());
+                InitializeIfNecessary(outputValueSource, builder => Context.AsLLVMValue((bool)constant.Value));
             }
             else if (constant.Value is string)
             {
@@ -798,12 +800,12 @@ namespace Rebar.RebarTarget.LLVM
 
                     LLVMValueRef castPointer = Builder.CreateBitCast(
                         stringConstantPtr,
-                        LLVMTypeRef.PointerType(LLVMTypeRef.Int8Type(), 0),
+                        Context.BytePointerType(),
                         "ptrCast");
                     LLVMValueRef[] stringSliceFields = new LLVMValueRef[]
                     {
                         castPointer,
-                        length.AsLLVMValue()
+                        Context.AsLLVMValue(length)
                     };
                     LLVMValueRef stringSliceValue = LLVMValueRef.ConstStruct(stringSliceFields, false);
                     Initialize(outputValueSource, stringSliceValue);
@@ -912,13 +914,13 @@ namespace Rebar.RebarTarget.LLVM
         private LLVMTypeRef TranslateFunctionType(NIType functionType)
         {
             LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
-            return LLVMSharp.LLVM.FunctionType(LLVMSharp.LLVM.VoidType(), parameterTypes, false);
+            return LLVMSharp.LLVM.FunctionType(Context.VoidType, parameterTypes, false);
         }
 
         private LLVMTypeRef TranslateInitializeFunctionType(NIType functionType)
         {
             LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
-            return LLVMSharp.LLVM.FunctionType(LLVMExtensions.VoidPointerType, parameterTypes, false);
+            return LLVMSharp.LLVM.FunctionType(Context.VoidPointerType(), parameterTypes, false);
         }
 
         private LLVMTypeRef TranslateParameterType(NIType parameterType)
@@ -926,7 +928,7 @@ namespace Rebar.RebarTarget.LLVM
             // TODO: this should probably share code with how we compute the top function LLVM type above
             bool isInput = parameterType.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
                 isOutput = parameterType.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
-            LLVMTypeRef parameterLLVMType = parameterType.GetDataType().AsLLVMType();
+            LLVMTypeRef parameterLLVMType = Context.AsLLVMType(parameterType.GetDataType());
             if (isInput)   // includes inout parameters
             {
                 if (isOutput && !parameterType.GetDataType().IsRebarReferenceType())
@@ -949,7 +951,7 @@ namespace Rebar.RebarTarget.LLVM
                 .ToArray();
             Terminal outputTerminal = structConstructorNode.OutputTerminals[0];
             LLVMValueRef structValue = Builder.BuildStructValue(
-                outputTerminal.GetTrueVariable().Type.AsLLVMType(),
+                Context.AsLLVMType(outputTerminal.GetTrueVariable().Type),
                 fieldValues,
                 "struct");
             Initialize(GetTerminalValueSource(outputTerminal), structValue);
@@ -1014,7 +1016,7 @@ namespace Rebar.RebarTarget.LLVM
                 if (output.Type == input.Type.CreateOption())
                 {
                     LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
-                    Initialize(outputValueSource, Builder.BuildOptionValue(output.Type.AsLLVMType(), innerValue));
+                    Initialize(outputValueSource, Context.BuildOptionValue(Builder, Context.AsLLVMType(output.Type), innerValue));
                     return true;
                 }
 
@@ -1066,15 +1068,15 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef promisePollFunction = GetPromisePollFunction(promiseType);
             var promiseValueSource = (IAddressableValueSource)GetTerminalValueSource(awaitNode.InputTerminal);
             // TODO: create an additional LocalAllocationValueSource for this
-            LLVMValueRef pollResultPtr = Builder.CreateAlloca(valueType.CreateOption().AsLLVMType(), "pollResultPtr");
+            LLVMValueRef pollResultPtr = Builder.CreateAlloca(Context.AsLLVMType(valueType.CreateOption()), "pollResultPtr");
 
             LLVMValueRef bitCastCurrentGroupFunction = Builder.CreateBitCast(
                     _moduleBuilder.CurrentGroupData.Function,
-                    LLVMTypeRef.PointerType(LLVMExtensions.ScheduledTaskFunctionType, 0u),
+                    LLVMTypeRef.PointerType(Context.ScheduledTaskFunctionType(), 0u),
                     "bitCastCurrentGroupFunction"),
-                bitCastStatePtr = Builder.CreateBitCast(AllocationSet.StatePointer, LLVMExtensions.VoidPointerType, "bitCastStatePtr"),
+                bitCastStatePtr = Builder.CreateBitCast(AllocationSet.StatePointer, Context.VoidPointerType(), "bitCastStatePtr"),
                 waker = Builder.BuildStructValue(
-                    DataTypes.WakerType.AsLLVMType(),
+                    Context.AsLLVMType(DataTypes.WakerType),
                     new LLVMValueRef[] { bitCastCurrentGroupFunction, bitCastStatePtr },
                     "waker");
             Builder.CreateCall(
@@ -1158,15 +1160,14 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef entryBlock = methodCallPromisePollFunction.AppendBasicBlock("entry"),
                 targetDoneBlock = methodCallPromisePollFunction.AppendBasicBlock("targetDone"),
                 targetNotDoneBlock = methodCallPromisePollFunction.AppendBasicBlock("targetNotDone");
-            var builder = new IRBuilder();
+            var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMTypeRef stateType = LLVMTypeRef.StructType(new[]
+            LLVMTypeRef stateType = compiler.Context.StructType(new[]
             {
-                FunctionAllocationSet.FunctionCompletionStatusType,
-                LLVMExtensions.WakerType,
-            },
-            false);
+                FunctionAllocationSet.FunctionCompletionStatusType(compiler.Context),
+                compiler.Context.WakerType(),
+            });
 
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
                 promise = builder.CreateLoad(promisePtr, "promise"),
@@ -1174,7 +1175,7 @@ namespace Rebar.RebarTarget.LLVM
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
                 functionCompletionState = builder.CreateExtractValue(state, 0u, "functionCompletionState"),
-                isDone = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, functionCompletionState, ((byte)0).AsLLVMValue(), "isDone");
+                isDone = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, functionCompletionState, compiler.Context.AsLLVMValue((byte)0), "isDone");
             builder.CreateCondBr(isDone, targetDoneBlock, targetNotDoneBlock);
 
             builder.PositionBuilderAtEnd(targetDoneBlock);
@@ -1182,7 +1183,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef result = builder.CreateExtractValue(promise, MethodCallPromiseOutputFieldIndex, "result"),
                 optionResultOutputPtr = methodCallPromisePollFunction.GetParam(2u);
             LLVMTypeRef optionResultOutputType = optionResultOutputPtr.TypeOf().GetElementType();
-            LLVMValueRef someResult = builder.BuildOptionValue(optionResultOutputType, result);
+            LLVMValueRef someResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, result);
             builder.CreateStore(someResult, optionResultOutputPtr);
             builder.CreateRetVoid();
 
@@ -1192,7 +1193,7 @@ namespace Rebar.RebarTarget.LLVM
                 wakerStatePtr = builder.CreateExtractValue(waker, 1u, "wakerStatePtr"),
                 pollFunctionPtr = builder.CreateExtractValue(promise, MethodCallPromisePollFunctionPtrFieldIndex, "pollFunctionPtr");
             builder.CreateCall(pollFunctionPtr, new LLVMValueRef[] { stateVoidPtr, wakerFunctionPtr, wakerStatePtr }, string.Empty);
-            LLVMValueRef noneResult = builder.BuildOptionValue(optionResultOutputType, null);
+            LLVMValueRef noneResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
         }
@@ -1237,7 +1238,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             public ConditionallyExecutingFrameData(Frame frame, FunctionCompiler functionCompiler)
             {
-                ConditionValue = true.AsLLVMValue();
+                ConditionValue = functionCompiler.Context.AsLLVMValue(true);
             }
 
             public LLVMValueRef ConditionValue { get; set; }
@@ -1274,7 +1275,7 @@ namespace Rebar.RebarTarget.LLVM
                     // after initialization.
                     VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
                     ValueSource outputSource = GetValueSource(outputVariable);
-                    LLVMTypeRef outputType = outputVariable.Type.AsLLVMType();
+                    LLVMTypeRef outputType = Context.AsLLVMType(outputVariable.Type);
                     Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
                 }
             }
@@ -1337,7 +1338,7 @@ namespace Rebar.RebarTarget.LLVM
 
             if (!loopConditionInput.IsConnected)
             {
-                InitializeIfNecessary(GetConditionAllocationSource(loop), _ => true.AsLLVMValue());
+                InitializeIfNecessary(GetConditionAllocationSource(loop), _ => Context.AsLLVMValue(true));
             }
 
             // initialize all output tunnels with None values, in case the loop interior does not execute
@@ -1348,7 +1349,7 @@ namespace Rebar.RebarTarget.LLVM
                 // to treat these as Phi ValueSources.
                 VariableReference tunnelOutputVariable = outputTunnel.OutputTerminals[0].GetTrueVariable();
                 ValueSource tunnelOutputSource = GetValueSource(tunnelOutputVariable);
-                LLVMTypeRef tunnelOutputType = tunnelOutputVariable.Type.AsLLVMType();
+                LLVMTypeRef tunnelOutputType = Context.AsLLVMType(tunnelOutputVariable.Type);
                 Update(tunnelOutputSource, LLVMSharp.LLVM.ConstNull(tunnelOutputType));
             }
         }
