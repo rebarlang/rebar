@@ -115,18 +115,14 @@ namespace Tests.Rebar.Unit.Execution
         {
             NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
             functionBuilder.IsStatic = true;
-            functionBuilder.DefineParameter(PFTypes.Int32, "in", NIParameterPassingRule.Required, NIParameterPassingRule.NotAllowed, "in");
-            functionBuilder.DefineParameter(PFTypes.Int32, "out", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out");
-            return functionBuilder.CreateType();
+            return functionBuilder.AddInput(PFTypes.Int32, "in").AddOutput(PFTypes.Int32, "out").CreateType();
         }
 
         private NIType DefineFunctionSignatureWithTwoOutParameters(string functionName)
         {
             NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
             functionBuilder.IsStatic = true;
-            functionBuilder.DefineParameter(PFTypes.Int32, "out0", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out0");
-            functionBuilder.DefineParameter(PFTypes.Int32, "out1", NIParameterPassingRule.NotAllowed, NIParameterPassingRule.Optional, "out1");
-            return functionBuilder.CreateType();
+            return functionBuilder.AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
         }
 
         private DfirRoot CreateFunctionFromSignature(NIType functionSignature, ExtendedQualifiedName functionQualifiedName)

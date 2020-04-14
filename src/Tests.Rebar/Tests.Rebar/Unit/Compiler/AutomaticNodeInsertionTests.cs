@@ -20,14 +20,11 @@ namespace Tests.Rebar.Unit.Compiler
         static AutomaticNodeInsertionTests()
         {
             NIFunctionBuilder signatureBuilder = PFTypes.Factory.DefineFunction("outputOwner");
-            Signatures.AddOutputParameter(signatureBuilder, PFTypes.Int32, "owner");
-            _outputOwnerSignature = signatureBuilder.CreateType();
+            _outputOwnerSignature = signatureBuilder.AddOutput(PFTypes.Int32, "owner").CreateType();
             signatureBuilder = PFTypes.Factory.DefineFunction("outputString");
-            Signatures.AddOutputParameter(signatureBuilder, PFTypes.String, "owner");
-            _outputOwnerStringSignature = signatureBuilder.CreateType();
+            _outputOwnerStringSignature = signatureBuilder.AddOutput(PFTypes.String, "owner").CreateType();
             signatureBuilder = PFTypes.Factory.DefineFunction("stringSlicePassthrough");
-            Signatures.AddInputOutputParameter(
-                signatureBuilder, 
+            signatureBuilder.AddInputOutput(
                 DataTypes.StringSliceType.CreateImmutableReference(Signatures.AddGenericLifetimeTypeParameter(signatureBuilder, "TLife")), 
                 "stringSlice");
             _stringSlicePassthroughSignature = signatureBuilder.CreateType();
