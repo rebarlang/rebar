@@ -228,8 +228,7 @@ namespace Tests.Rebar.Unit.Compiler
         public void LifetimeWithLiveVariablesOnMainAndNestedDiagrams_ValidateVariableUsages_TerminateLifetimeNodeHasCorrectInputTerminalCount()
         {
             var signatureBuilder = PFTypes.Factory.DefineFunction("outputString");
-            Signatures.AddOutputParameter(signatureBuilder, PFTypes.String, "owner");
-            NIType outputOwnerStringSignature = signatureBuilder.CreateType();
+            NIType outputOwnerStringSignature = signatureBuilder.AddOutput(PFTypes.String, "owner").CreateType();
 
             DfirRoot function = DfirRoot.Create();
             var outputString = new FunctionalNode(function.BlockDiagram, outputOwnerStringSignature);

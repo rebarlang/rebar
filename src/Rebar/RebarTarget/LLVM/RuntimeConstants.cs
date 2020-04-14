@@ -2,6 +2,8 @@
 {
     internal static class RuntimeConstants
     {
-        public const byte PanicStatus = 2;
+        public const byte FunctionNotDoneStatus = 0;
+        public const byte FunctionCompletedNormallyStatus = 1;
+        public const byte FunctionPanickedStatus = 2;
     }
 }

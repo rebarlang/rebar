@@ -185,7 +185,7 @@ namespace Rebar.RebarTarget.LLVM
                 /* completionStatus = */func();
                 _executing = false;
             }
-            if (completionStatus == RuntimeConstants.PanicStatus)
+            if (completionStatus == RuntimeConstants.FunctionPanickedStatus)
             {
                 _runtimeServices.PanicOccurred = true;
             }

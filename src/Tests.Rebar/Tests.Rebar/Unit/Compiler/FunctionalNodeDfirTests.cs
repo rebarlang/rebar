@@ -417,8 +417,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot dfirRoot = DfirRoot.Create();
             NIFunctionBuilder signatureTypeBuilder = PFTypes.Factory.DefineFunction("NonGenericInput");
-            Signatures.AddInputParameter(signatureTypeBuilder, PFTypes.Int32, "input");
-            NIType signatureType = signatureTypeBuilder.CreateType();
+            NIType signatureType = signatureTypeBuilder.AddInput(PFTypes.Int32, "input").CreateType();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
 

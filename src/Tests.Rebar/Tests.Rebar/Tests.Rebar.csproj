@@ -198,6 +198,7 @@
     <Compile Include="Unit\Execution\IteratorExecutionTests.cs" />
     <Compile Include="Unit\Execution\LoopExecutionTests.cs" />
     <Compile Include="Unit\Execution\MethodCallExecutionTests.cs" />
+    <Compile Include="Unit\Execution\FunctionTypeExtensions.cs" />
     <Compile Include="Unit\Execution\NumericExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionPatternStructureExecutionTests.cs" />
     <Compile Include="Unit\Execution\OptionTypeExecutionTests.cs" />

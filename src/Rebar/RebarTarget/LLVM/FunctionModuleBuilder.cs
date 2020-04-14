@@ -116,7 +116,7 @@ namespace Rebar.RebarTarget.LLVM
                 && !unconditionalContinuation.UnconditionalSuccessors.Any()
                 && this is AsynchronousFunctionModuleBuilder)
             {
-                GenerateStoreCompletionState(1);
+                GenerateStoreCompletionState(RuntimeConstants.FunctionCompletedNormallyStatus);
             }
 
             if (asyncStateGroup.IsSkippable)

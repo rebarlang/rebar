@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.Linking;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Loop = Rebar.Compiler.Nodes.Loop;
@@ -200,6 +202,96 @@ namespace Tests.Rebar.Unit.Execution
             AssertNoOutput(executionInstance);
         }
 
+        [TestMethod]
+        public void PanickingMethodCallWithNoParametersThatPanics_Execute_RuntimeRegistersPanic()
+        {
+            string calleeName = "callee";
+            NIType calleeType = calleeName.DefineMethodType().CreateType();
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CreatePanickingUnwrapOption(calleeFunction.BlockDiagram);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.PanicOccurred);
+        }
+
+        [TestMethod]
+        public void PanickingMethodCallWithNoParametersThatDoesNotPanic_Execute_RuntimeDoesNotRegisterPanic()
+        {
+            string calleeName = "callee";
+            NIType calleeType = calleeName.DefineMethodType().CreateType();
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CreateNonPanickingUnwrapOption(calleeFunction.BlockDiagram);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            Assert.IsFalse(executionInstance.RuntimeServices.PanicOccurred);
+        }
+
+        [TestMethod]
+        public void PanickingMethodCallWithInputAndOutputThatPanicsIntoOutput_Execute_NoOutputValue()
+        {
+            string calleeName = "callee";
+            NIType calleeType = DefineFunctionTypeWithOptionIntInAndIntOut(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
+            DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
+            FunctionalNode unwrap = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.UnwrapOptionType);
+            Wire.Create(calleeFunction.BlockDiagram, inputDataAccessor.Terminal, unwrap.InputTerminals[0]);
+            Wire.Create(calleeFunction.BlockDiagram, unwrap.OutputTerminals[0], outputDataAccessor.Terminal);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            FunctionalNode noneInteger = CreateNoneOfOptionIntegerType(callerFunction.BlockDiagram);
+            Wire.Create(callerFunction.BlockDiagram, noneInteger.OutputTerminals[0], methodCall.InputTerminals[0]);
+            ConnectOutputToOutputTerminal(methodCall.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            AssertNoOutput(executionInstance);
+        }
+
+        [TestMethod]
+        public void PanickingMethodCallWithTwoOutputsThatDoesNotPanicIntoAdd_Execute_CorrectValue()
+        {
+            string calleeName = "callee";
+            NIType calleeType = DefineFunctionTypeWithTwoIntOuts(calleeName);
+            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            DataAccessor outputDataAccessor0 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Input);
+            DataAccessor outputDataAccessor1 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
+            FunctionalNode unwrap = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.UnwrapOptionType);
+            ConnectSomeOfIntegerToInputTerminal(unwrap.InputTerminals[0], 1);
+            Wire.Create(calleeFunction.BlockDiagram, unwrap.OutputTerminals[0], outputDataAccessor0.Terminal, outputDataAccessor1.Terminal);
+            DfirRoot callerFunction = DfirRoot.Create();
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            FunctionalNode add = new FunctionalNode(callerFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            Wire.Create(callerFunction.BlockDiagram, methodCall.OutputTerminals[0], add.InputTerminals[0]);
+            Wire.Create(callerFunction.BlockDiagram, methodCall.OutputTerminals[1], add.InputTerminals[1]);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(add.OutputTerminals[2]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            AssertByteArrayIsInt32(inspectValue, 2);
+        }
+
+        private NIType DefineFunctionTypeWithOptionIntInAndIntOut(string functionName)
+        {
+            return functionName.DefineMethodType().AddInput(PFTypes.Int32.CreateOption(), "in").AddOutput(PFTypes.Int32, "out").CreateType();
+        }
+
+        private NIType DefineFunctionTypeWithTwoIntOuts(string functionName)
+        {
+            return functionName.DefineMethodType().AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
+        }
+
         private FunctionalNode ConnectSomeOfIntegerToInputTerminal(Terminal inputTerminal, int value, bool mutable = false)
         {
             var someConstructor = ConnectSomeConstructorToInputTerminal(inputTerminal, mutable);
@@ -221,6 +313,13 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode createNoneInteger = CreateNoneOfOptionIntegerType(parentDiagram);
             var unwrap = new FunctionalNode(parentDiagram, Signatures.UnwrapOptionType);
             Wire.Create(parentDiagram, createNoneInteger.OutputTerminals[0], unwrap.InputTerminals[0]);
+            return unwrap;
+        }
+
+        private FunctionalNode CreateNonPanickingUnwrapOption(Diagram parentDiagram)
+        {
+            var unwrap = new FunctionalNode(parentDiagram, Signatures.UnwrapOptionType);
+            ConnectSomeOfIntegerToInputTerminal(unwrap.InputTerminals[0], 0);
             return unwrap;
         }
 
