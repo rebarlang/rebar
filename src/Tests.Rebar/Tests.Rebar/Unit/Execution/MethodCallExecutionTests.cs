@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -18,7 +17,7 @@ namespace Tests.Rebar.Unit.Execution
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithNoParameters(calleeName);
             ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
             Constant calleeConstant = Constant.Create(calleeFunction.BlockDiagram, 5, PFTypes.Int32);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(calleeConstant.OutputTerminal);
             DfirRoot callerFunction = DfirRoot.Create();
@@ -36,7 +35,7 @@ namespace Tests.Rebar.Unit.Execution
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
             ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
             DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
             DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
             FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
@@ -60,7 +59,7 @@ namespace Tests.Rebar.Unit.Execution
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
             ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
             DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
             DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
             FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
@@ -86,7 +85,7 @@ namespace Tests.Rebar.Unit.Execution
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithTwoOutParameters(calleeName);
             ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = CreateFunctionFromSignature(calleeType, calleeQualifiedName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
             DataAccessor outputDataAccessor0 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Input);
             DataAccessor outputDataAccessor1 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
             ConnectConstantToInputTerminal(outputDataAccessor0.Terminal, PFTypes.Int32, 5, false);
@@ -106,40 +105,17 @@ namespace Tests.Rebar.Unit.Execution
 
         private NIType DefineFunctionSignatureWithNoParameters(string functionName)
         {
-            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
-            functionBuilder.IsStatic = true;
-            return functionBuilder.CreateType();
+            return functionName.DefineMethodType().CreateType();
         }
 
         private NIType DefineFunctionSignatureWithInAndOutParameters(string functionName)
         {
-            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
-            functionBuilder.IsStatic = true;
-            return functionBuilder.AddInput(PFTypes.Int32, "in").AddOutput(PFTypes.Int32, "out").CreateType();
+            return functionName.DefineMethodType().AddInput(PFTypes.Int32, "in").AddOutput(PFTypes.Int32, "out").CreateType();
         }
 
         private NIType DefineFunctionSignatureWithTwoOutParameters(string functionName)
         {
-            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
-            functionBuilder.IsStatic = true;
-            return functionBuilder.AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
-        }
-
-        private DfirRoot CreateFunctionFromSignature(NIType functionSignature, ExtendedQualifiedName functionQualifiedName)
-        {
-            DfirRoot function = DfirRoot.Create(new SpecAndQName(null, functionQualifiedName));
-            int connectorPaneIndex = 0;
-            foreach (NIType parameter in functionSignature.GetParameters())
-            {
-                function.CreateDataItem(
-                    parameter.GetName(),
-                    parameter.GetDataType(),
-                    null,   // defaultValue
-                    parameter.GetInputParameterPassingRule(),
-                    parameter.GetOutputParameterPassingRule(),
-                    connectorPaneIndex++);
-            }
-            return function;
+            return functionName.DefineMethodType().AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
         }
     }
 }

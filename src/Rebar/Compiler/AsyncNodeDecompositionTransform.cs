@@ -73,11 +73,7 @@ namespace Rebar.Compiler
             var methodCallNode = node as MethodCallNode;
             if (methodCallNode != null)
             {
-                if (_mayPanic[methodCallNode.TargetName])
-                {
-                    throw new NotImplementedException("Decomposing calls to panicking Functions not implemented yet.");
-                }
-                DecomposeMethodCall(methodCallNode);
+                DecomposeMethodCall(methodCallNode, _isYielding[methodCallNode.TargetName], _mayPanic[methodCallNode.TargetName]);
                 return;
             }
             var functionalNode = node as FunctionalNode;
@@ -94,18 +90,8 @@ namespace Rebar.Compiler
             }
         }
 
-        private void DecomposeMethodCall(MethodCallNode methodCallNode)
+        private void DecomposeMethodCall(MethodCallNode methodCallNode, bool isYielding, bool mayPanic)
         {
-            var createMethodCallPromise = new CreateMethodCallPromise(methodCallNode.ParentDiagram, methodCallNode.Signature, methodCallNode.TargetName);
-            AutoBorrowNodeFacade methodCallNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(methodCallNode);
-            AutoBorrowNodeFacade createMethodCallPromiseFacade = AutoBorrowNodeFacade.GetNodeFacade(createMethodCallPromise);
-            foreach (var terminalPair in methodCallNode.InputTerminals.Zip(createMethodCallPromise.InputTerminals))
-            {
-                Terminal methodCallTerminal = terminalPair.Key, createMethodCallPromiseTerminal = terminalPair.Value;
-                methodCallTerminal.ConnectedTerminal.ConnectTo(createMethodCallPromiseTerminal);
-                createMethodCallPromiseFacade[createMethodCallPromiseTerminal] = methodCallNodeFacade[methodCallTerminal];
-            }
-
             NIType outputType;
             // TODO: try to use something like Unit or Void
             NIType emptyOutputType = PFTypes.Boolean;
@@ -121,24 +107,55 @@ namespace Rebar.Compiler
                     outputType = methodCallNode.OutputTerminals.Select(t => t.GetTrueVariable().Type).DefineTupleType();
                     break;
             }
-            Terminal methodCallOutputTerminal = methodCallNode.OutputTerminals.FirstOrDefault();
-            NIType promiseType = outputType.CreateMethodCallPromise();
-            Terminal promiseTerminal = createMethodCallPromise.OutputTerminals[0];
-            createMethodCallPromiseFacade[promiseTerminal] = new SimpleTerminalFacade(
-                promiseTerminal,
-                createMethodCallPromise.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(promiseType));
 
-            AwaitNode awaitNode = ConnectNewNodeToOutputTerminal(createMethodCallPromise, diagram => new AwaitNode(diagram));
+            AutoBorrowNodeFacade methodCallNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(methodCallNode);
+            AwaitNode awaitNode = null;
+            if (isYielding)
+            {
+                CreateMethodCallPromise createMethodCallPromise = new CreateMethodCallPromise(methodCallNode.ParentDiagram, methodCallNode.Signature, methodCallNode.TargetName);
+                AutoBorrowNodeFacade createMethodCallPromiseFacade = AutoBorrowNodeFacade.GetNodeFacade(createMethodCallPromise);
+                foreach (var terminalPair in methodCallNode.InputTerminals.Zip(createMethodCallPromise.InputTerminals))
+                {
+                    Terminal methodCallTerminal = terminalPair.Key, createMethodCallPromiseTerminal = terminalPair.Value;
+                    methodCallTerminal.ConnectedTerminal.ConnectTo(createMethodCallPromiseTerminal);
+                    createMethodCallPromiseFacade[createMethodCallPromiseTerminal] = methodCallNodeFacade[methodCallTerminal];
+                }
 
-            CreateDefaultFacadeForAwaitOutputTerminal(awaitNode, outputType);
+                Terminal methodCallOutputTerminal = methodCallNode.OutputTerminals.FirstOrDefault();
+                NIType awaitOutputType = mayPanic ? outputType.CreatePanicResult() : outputType;
+                NIType promiseType = awaitOutputType.CreateMethodCallPromise();
+                Terminal promiseTerminal = createMethodCallPromise.OutputTerminals[0];
+                createMethodCallPromiseFacade[promiseTerminal] = new SimpleTerminalFacade(
+                    promiseTerminal,
+                    createMethodCallPromise.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(promiseType));
+
+                awaitNode = ConnectNewNodeToOutputTerminalWithOutputFacade(createMethodCallPromise, diagram => new AwaitNode(diagram), awaitOutputType);
+            }
+
+            Node outputNode = awaitNode;
+            if (mayPanic)
+            {
+                Node panicOrContinueInput = awaitNode;
+                if (!isYielding)
+                {
+                    // Create PanickingMethodCall as input to PanicOrContinue
+                    throw new NotImplementedException("Calling non-yielding panicking methods not supported yet.");
+                }
+                outputNode = ConnectNewNodeToOutputTerminalWithOutputFacade(
+                    panicOrContinueInput,
+                    diagram => new PanicOrContinueNode(diagram),
+                    outputType);
+            }
+
+            Terminal outputNodeTerminal = outputNode.OutputTerminals[0];
             switch (methodCallNode.OutputTerminals.Count)
             {
                 case 0:
                     // no method call output terminals; drop the result of the await
-                    InsertDropTransform.InsertDropForVariable(awaitNode.ParentDiagram, LiveVariable.FromTerminal(awaitNode.OutputTerminal), _unificationResultFactory);
+                    InsertDropTransform.InsertDropForVariable(outputNode.ParentDiagram, LiveVariable.FromTerminal(outputNodeTerminal), _unificationResultFactory);
                     break;
                 case 1:
-                    ConnectOutputTerminal(methodCallNode.OutputTerminals[0], awaitNode.OutputTerminal);
+                    ConnectOutputTerminal(methodCallNode.OutputTerminals[0], outputNodeTerminal);
                     break;
                 default:
                     {
@@ -146,7 +163,7 @@ namespace Rebar.Compiler
                         // decomposed terminal to a method call terminal
                         DecomposeTupleNode decomposeTupleNode = InsertDropTransform.InsertDecompositionForTupleVariable(
                             methodCallNode.ParentDiagram,
-                            LiveVariable.FromTerminal(awaitNode.OutputTerminal),
+                            LiveVariable.FromTerminal(outputNodeTerminal),
                             _unificationResultFactory);
                         foreach (var pair in methodCallNode.OutputTerminals.Zip(decomposeTupleNode.OutputTerminals))
                         {
@@ -216,15 +233,26 @@ namespace Rebar.Compiler
             return node;
         }
 
-        private T ConnectNewNodeToOutputTerminal<T>(Node replacement, Func<Diagram, T> createNode) where T : Node
+        private T ConnectNewNodeToOutputTerminalWithOutputFacade<T>(
+            Node outputTerminalOwner,
+            Func<Diagram, T> createNode,
+            NIType newOutputTerminalType)
+            where T : Node
         {
-            var nodeToConnect = createNode(replacement.ParentDiagram);
+            T nodeToConnect = ConnectNewNodeToOutputTerminal(outputTerminalOwner, createNode);
+            CreateDefaultFacadeForOutputNodeTerminal(nodeToConnect, newOutputTerminalType);
+            return nodeToConnect;
+        }
+
+        private T ConnectNewNodeToOutputTerminal<T>(Node outputTerminalOwner, Func<Diagram, T> createNode) where T : Node
+        {
+            var nodeToConnect = createNode(outputTerminalOwner.ParentDiagram);
             AutoBorrowNodeFacade nodeToConnectFacade = AutoBorrowNodeFacade.GetNodeFacade(nodeToConnect);
             Terminal inputTerminal = nodeToConnect.InputTerminals[0];
             nodeToConnectFacade[inputTerminal] = new SimpleTerminalFacade(
                 inputTerminal,
-                replacement.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
-            Terminal outputTerminal = replacement.OutputTerminals[0];
+                outputTerminalOwner.GetTypeVariableSet().CreateReferenceToNewTypeVariable());
+            Terminal outputTerminal = outputTerminalOwner.OutputTerminals[0];
             new LiveVariable(outputTerminal.GetTrueVariable(), outputTerminal)
                 .ConnectToTerminalAsInputAndUnifyVariables(inputTerminal, _unificationResultFactory);
             return nodeToConnect;
@@ -245,12 +273,13 @@ namespace Rebar.Compiler
             }
         }
 
-        private void CreateDefaultFacadeForAwaitOutputTerminal(AwaitNode awaitNode, NIType awaitOutputType)
+        private void CreateDefaultFacadeForOutputNodeTerminal(Node outputNode, NIType outputTerminalType)
         {
-            AutoBorrowNodeFacade awaitNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(awaitNode);
-            awaitNodeFacade[awaitNode.OutputTerminal] = new SimpleTerminalFacade(
-                awaitNode.OutputTerminal,
-                awaitNode.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(awaitOutputType));
+            AutoBorrowNodeFacade outputNodeFacade = AutoBorrowNodeFacade.GetNodeFacade(outputNode);
+            Terminal outputTerminal = outputNode.OutputTerminals[0];
+            outputNodeFacade[outputTerminal] = new SimpleTerminalFacade(
+                outputTerminal,
+                outputNode.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(outputTerminalType));
         }
     }
 }

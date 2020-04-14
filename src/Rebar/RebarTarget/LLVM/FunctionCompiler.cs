@@ -7,6 +7,7 @@ using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.Linking;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -498,15 +499,18 @@ namespace Rebar.RebarTarget.LLVM
 
         private readonly FunctionCompilerSharedData _sharedData;
         private readonly FunctionModuleBuilder _moduleBuilder;
+        private readonly Dictionary<ExtendedQualifiedName, bool> _calleesMayPanic;
 
         public FunctionCompiler(
             DfirRoot targetDfir,
             FunctionModuleBuilder moduleBuilder,
-            FunctionCompilerSharedData sharedData)
+            FunctionCompilerSharedData sharedData,
+            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic)
         {
             TargetDfir = targetDfir;
             _moduleBuilder = moduleBuilder;
             _sharedData = sharedData;
+            _calleesMayPanic = calleesMayPanic;
         }
 
         private ContextWrapper Context => _sharedData.Context;
@@ -1117,8 +1121,15 @@ namespace Rebar.RebarTarget.LLVM
 
         bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
         {
-            LLVMValueRef promisePtr = GetAddress(GetTerminalValueSource(createMethodCallPromise.PromiseTerminal), Builder),
-                outputPtr = Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "outputPtr");
+            LLVMValueRef promisePtr = GetAddress(GetTerminalValueSource(createMethodCallPromise.PromiseTerminal), Builder);
+            // if the target may panic, then the promise's output field is a PanicResult whose first field will receive the actual output values.
+            LLVMValueRef outputPtr = _calleesMayPanic[createMethodCallPromise.TargetName]
+                ? Builder.CreateStructGEP(
+                    Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "panicResultPtr"),
+                    1u,
+                    "outputPtr")
+                : Builder.CreateStructGEP(promisePtr, MethodCallPromiseOutputFieldIndex, "outputPtr");
+
             var initializeParameters = new List<LLVMValueRef>();
             foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
             {
@@ -1157,9 +1168,18 @@ namespace Rebar.RebarTarget.LLVM
 
         private static void BuildMethodCallPromisePollFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef methodCallPromisePollFunction)
         {
+            NIType optionPromiseResultType = signature.GetParameters().ElementAt(2).GetDataType();
+            NIType promiseResultType;
+            optionPromiseResultType.TryDestructureOptionType(out promiseResultType);
+            NIType resultType;
+            bool mayPanic = promiseResultType.TryDestructurePanicResultType(out resultType);
+
             LLVMBasicBlockRef entryBlock = methodCallPromisePollFunction.AppendBasicBlock("entry"),
                 targetDoneBlock = methodCallPromisePollFunction.AppendBasicBlock("targetDone"),
                 targetNotDoneBlock = methodCallPromisePollFunction.AppendBasicBlock("targetNotDone");
+            LLVMBasicBlockRef targetPanickedBlock = mayPanic
+                ? methodCallPromisePollFunction.AppendBasicBlock("targetPanicked")
+                : default(LLVMBasicBlockRef);
             var builder = compiler.Context.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
@@ -1172,18 +1192,25 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
                 promise = builder.CreateLoad(promisePtr, "promise"),
                 stateVoidPtr = builder.CreateExtractValue(promise, MethodCallPromiseStatePtrFieldIndex, "stateVoidPtr"),
+                result = builder.CreateExtractValue(promise, MethodCallPromiseOutputFieldIndex, "result"),
                 statePtr = builder.CreateBitCast(stateVoidPtr, LLVMTypeRef.PointerType(stateType, 0u), "statePtr"),
                 state = builder.CreateLoad(statePtr, "state"),
                 functionCompletionState = builder.CreateExtractValue(state, 0u, "functionCompletionState"),
-                isDone = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, functionCompletionState, compiler.Context.AsLLVMValue((byte)0), "isDone");
-            builder.CreateCondBr(isDone, targetDoneBlock, targetNotDoneBlock);
+                optionResultOutputPtr = methodCallPromisePollFunction.GetParam(2u);
+            LLVMTypeRef optionResultOutputType = optionResultOutputPtr.TypeOf().GetElementType();
+
+            uint switchCases = mayPanic ? 2u : 1u;
+            LLVMValueRef completionStateSwitch = builder.CreateSwitch(functionCompletionState, targetNotDoneBlock, switchCases);
+            completionStateSwitch.AddCase(compiler.Context.AsLLVMValue(RuntimeConstants.FunctionCompletedNormallyStatus), targetDoneBlock);
+            if (mayPanic)
+            {
+                completionStateSwitch.AddCase(compiler.Context.AsLLVMValue(RuntimeConstants.FunctionPanickedStatus), targetPanickedBlock);
+            }
 
             builder.PositionBuilderAtEnd(targetDoneBlock);
             builder.CreateFree(stateVoidPtr);
-            LLVMValueRef result = builder.CreateExtractValue(promise, MethodCallPromiseOutputFieldIndex, "result"),
-                optionResultOutputPtr = methodCallPromisePollFunction.GetParam(2u);
-            LLVMTypeRef optionResultOutputType = optionResultOutputPtr.TypeOf().GetElementType();
-            LLVMValueRef someResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, result);
+            LLVMValueRef finalResult = mayPanic ? builder.CreateInsertValue(result, compiler.Context.AsLLVMValue(true), 0u, "okResult") : result;
+            LLVMValueRef someResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, finalResult);
             builder.CreateStore(someResult, optionResultOutputPtr);
             builder.CreateRetVoid();
 
@@ -1196,6 +1223,15 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef noneResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
+
+            if (mayPanic)
+            {
+                builder.PositionBuilderAtEnd(targetPanickedBlock);
+                LLVMValueRef panicResult = builder.CreateInsertValue(result, compiler.Context.AsLLVMValue(false), 0u, "panicResult"),
+                    somePanicResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, panicResult);
+                builder.CreateStore(somePanicResult, optionResultOutputPtr);
+                builder.CreateRetVoid();
+            }
         }
 
         bool IInternalDfirNodeVisitor<bool>.VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode)
@@ -1221,7 +1257,7 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateCondBr(shouldContinue, continueBlock, panicBlock);
 
             Builder.PositionBuilderAtEnd(panicBlock);
-            _moduleBuilder.GenerateStoreCompletionState(RuntimeConstants.PanicStatus);
+            _moduleBuilder.GenerateStoreCompletionState(RuntimeConstants.FunctionPanickedStatus);
             Builder.CreateBr(_moduleBuilder.CurrentGroupData.ExitBasicBlock);
 
             Builder.PositionBuilderAtEnd(continueBlock);

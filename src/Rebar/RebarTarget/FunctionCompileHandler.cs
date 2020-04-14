@@ -167,7 +167,7 @@ namespace Rebar.RebarTarget
                 var moduleBuilder = isYielding
                     ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
                     : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
-                sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData);
+                sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData, calleesMayPanic);
 
                 moduleBuilder.CompileFunction();
                 return new LLVM.FunctionCompileResult(new LLVM.ContextFreeModule(module), isYielding, mayPanic);

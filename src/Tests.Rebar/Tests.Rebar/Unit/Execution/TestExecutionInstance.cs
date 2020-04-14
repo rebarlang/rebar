@@ -22,6 +22,16 @@ namespace Tests.Rebar.Unit.Execution
 
         public void CompileAndExecuteFunction(CompilerTestBase test, DfirRoot function, DfirRoot[] otherFunctions)
         {
+            ExecuteFunction(CompileAndLoadFunction(test, function, otherFunctions));
+        }
+
+        public void ExecuteFunction(CompileLoadResult loadResult)
+        {
+            _context.ExecuteFunctionTopLevel(loadResult.TopLevelCompiledFunctionName, loadResult.TopLevelFunctionIsYielding);
+        }
+
+        public CompileLoadResult CompileAndLoadFunction(CompilerTestBase test, DfirRoot function, DfirRoot[] otherFunctions)
+        {
             var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
             var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
             foreach (DfirRoot otherFunction in otherFunctions)
@@ -39,7 +49,7 @@ namespace Tests.Rebar.Unit.Execution
             const string compiledFunctionName = "test";
             FunctionCompileResult compileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(function, compiledFunctionName, calleesIsYielding, calleesMayPanic);
             _context.LoadFunction(compileResult.Module);
-            _context.ExecuteFunctionTopLevel(compiledFunctionName, compileResult.IsYielding);
+            return new CompileLoadResult(compiledFunctionName, compileResult.IsYielding);
         }
 
         public byte[] GetLastValueFromInspectNode(FunctionalNode inspectNode)
@@ -47,5 +57,18 @@ namespace Tests.Rebar.Unit.Execution
             string globalName = $"inspect_{inspectNode.UniqueId}";
             return _context.ReadGlobalData(globalName);
         }
+    }
+
+    internal sealed class CompileLoadResult
+    {
+        public CompileLoadResult(string topLevelCompiledFunctionName, bool topLevelFunctionIsYielding)
+        {
+            TopLevelCompiledFunctionName = topLevelCompiledFunctionName;
+            TopLevelFunctionIsYielding = topLevelFunctionIsYielding;
+        }
+
+        public string TopLevelCompiledFunctionName { get; }
+
+        public bool TopLevelFunctionIsYielding { get; }
     }
 }
