@@ -145,11 +145,11 @@ namespace Rebar.RebarTarget.LLVM
             return contextFreeModule;
         }
 
-        private readonly FuncMemo<ContextFreeModule, Module> _contextModules;
+        private readonly FunctionMemo<ContextFreeModule, Module> _contextModules;
 
         public CommonModules(ContextWrapper contextWrapper)
         {
-            _contextModules = new FuncMemo<ContextFreeModule, Module>(contextWrapper.LoadContextFreeModule);
+            _contextModules = new FunctionMemo<ContextFreeModule, Module>(contextWrapper.LoadContextFreeModule);
         }
 
         public LLVMTypeRef GetCommonFunctionType(string functionName)

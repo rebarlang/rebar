@@ -1,5 +1,5 @@
 ﻿using System.Xml.Linq;
-using NationalInstruments.ComponentEditor.SourceModel;
+using NationalInstruments.MocCommon.Components.SourceModel;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
 using Rebar.SourceModel;
@@ -32,7 +32,7 @@ namespace Rebar.RebarTarget
         public static ApplicationComponentSubtypeProperties Create(IElementCreateInfo createInfo)
         {
             var applicationProperties = new ApplicationComponentSubtypeProperties();
-            applicationProperties.Init(createInfo);
+            applicationProperties.Initialize(createInfo);
             return applicationProperties;
         }
     }

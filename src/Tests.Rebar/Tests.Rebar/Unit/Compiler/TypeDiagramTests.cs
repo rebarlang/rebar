@@ -13,11 +13,24 @@ namespace Tests.Rebar.Unit.Compiler
     public class TypeDiagramTests : CompilerTestBase
     {
         [TestMethod]
+        public void TypeDiagram_InferTypes_DefinedTypeNameMatchesDfirRootName()
+        {
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
+            var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 1);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], NITypes.Int32);
+
+            RunSemanticAnalysisUpToTypeInference(typeDiagram);
+
+            NIType selfType = typeDiagram.GetSelfType();
+            Assert.AreEqual("type", selfType.GetName());
+        }
+
+        [TestMethod]
         public void PrimitiveTypeIntoSelf_InferTypes_SelfTypeIsPrimitiveType()
         {
-            DfirRoot typeDiagram = DfirRoot.Create();
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
             var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 1);
-            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], PFTypes.Int32);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], NITypes.Int32);
 
             RunSemanticAnalysisUpToTypeInference(typeDiagram);
 
@@ -30,10 +43,10 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void StructTypeIntoSelf_InferTypes_SelfTypeIsClusterType()
         {
-            DfirRoot typeDiagram = DfirRoot.Create();
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
             var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 2);
-            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], PFTypes.Int32);
-            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[1], PFTypes.Boolean);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], NITypes.Int32);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[1], NITypes.Boolean);
 
             RunSemanticAnalysisUpToTypeInference(typeDiagram);
 
@@ -45,7 +58,7 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void UnwiredSelfTypeNode_Validate_SelfTypeNodeInputTerminalHasUnwiredTerminalError()
         {
-            DfirRoot typeDiagram = DfirRoot.Create();
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
             var selfType = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 1);
 
             RunTypeDiagramSemanticAnalysisUpToValidation(typeDiagram);

@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.DynamicProperties;
@@ -20,15 +21,15 @@ namespace Rebar.SourceModel
 
         protected StructFieldAccessor()
         {
-            StructInputTerminal = new NodeTerminal(Direction.Input, PFTypes.Void, "valueRef", TerminalHotspots.Input1);
-            StructType = PFTypes.Void;
+            StructInputTerminal = new NodeTerminal(Direction.Input, NITypes.Void, "valueRef", TerminalHotspots.Input1);
+            StructType = NITypes.Void;
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
         public static StructFieldAccessor CreateStructFieldAccessor(IElementCreateInfo elementCreateInfo)
         {
             var structFieldAccessor = new StructFieldAccessor();
-            structFieldAccessor.Init(elementCreateInfo);
+            structFieldAccessor.Initialize(elementCreateInfo);
             return structFieldAccessor;
         }
 
@@ -46,9 +47,9 @@ namespace Rebar.SourceModel
         public IEnumerable<StructFieldAccessorTerminal> FieldTerminals => OutputTerminals.OfType<StructFieldAccessorTerminal>();
 
         /// <inheritdoc />
-        protected override void Init(IElementCreateInfo info)
+        protected override void Initialize(IElementCreateInfo info)
         {
-            base.Init(info);
+            base.Initialize(info);
 
             AddComponent(StructInputTerminal);
 
@@ -142,7 +143,7 @@ namespace Rebar.SourceModel
             {
                 new StructFieldAccessorTerminal(
                     Direction.Output,
-                    PFTypes.Void,
+                    NITypes.Void,
                     "element",
                     new SMPoint(Width, StockDiagramGeometries.StandardTerminalHeight / 2))
             };
@@ -161,19 +162,26 @@ namespace Rebar.SourceModel
 
         #region IViewVerticalGrowNode implementation
 
-        public float TopMargin => Template == ViewElementTemplate.List ? StockDiagramGeometries.ListViewHeaderHeight : 0;
+        /// <inheritdoc />
+        public override float TopMargin => Template == ViewElementTemplate.List ? StockDiagramGeometries.ListViewHeaderHeight : 0;
 
-        public float BottomMargin => Template == ViewElementTemplate.List ? ListViewFooterHeight : 0;
+        /// <inheritdoc />
+        public override float BottomMargin => Template == ViewElementTemplate.List ? ListViewFooterHeight : 0;
 
-        public float TerminalHeight => Template == ViewElementTemplate.List ? StockDiagramGeometries.LargeTerminalHeight : StockDiagramGeometries.StandardTerminalHeight;
+        /// <inheritdoc />
+        public override float TerminalHeight => Template == ViewElementTemplate.List ? StockDiagramGeometries.LargeTerminalHeight : StockDiagramGeometries.StandardTerminalHeight;
 
-        public float TerminalHotspotVerticalOffset => TerminalHotspots.HotspotVerticalOffsetForTerminalSize(TerminalSize.Small);
+        /// <inheritdoc />
+        public override float TerminalHotspotVerticalOffset => TerminalHotspots.HotspotVerticalOffsetForTerminalSize(TerminalSize.Small);
 
-        public float GetVerticalChunkHeight(int chunkIndex) => TerminalHeight;
+        /// <inheritdoc />
+        public override float GetVerticalChunkHeight(int chunkIndex) => TerminalHeight;
 
-        public float OffsetForVerticalChunk(int chunkIndex) => TopMargin + chunkIndex * this.GetFixedSizeVerticalChunkHeight();
+        /// <inheritdoc />
+        public override float OffsetForVerticalChunk(int chunkIndex) => TopMargin + chunkIndex * this.GetFixedSizeVerticalChunkHeight();
 
-        public float NodeHeightForVerticalChunkCount(int chunkCount) => OffsetForVerticalChunk(chunkCount) + BottomMargin;
+        /// <inheritdoc />
+        public override float NodeHeightForVerticalChunkCount(int chunkCount) => OffsetForVerticalChunk(chunkCount) + BottomMargin;
 
         #endregion
 
@@ -240,7 +248,7 @@ namespace Rebar.SourceModel
         public static StructFieldAccessorTerminal CreateStructFieldAccessorTerminal(IElementCreateInfo elementCreateInfo)
         {
             var structFieldAccessorTerminal = new StructFieldAccessorTerminal();
-            structFieldAccessorTerminal.Init(elementCreateInfo);
+            structFieldAccessorTerminal.Initialize(elementCreateInfo);
             return structFieldAccessorTerminal;
         }
 

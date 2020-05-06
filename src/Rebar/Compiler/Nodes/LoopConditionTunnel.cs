@@ -7,7 +7,7 @@ namespace Rebar.Compiler.Nodes
     {
         public LoopConditionTunnel(Loop parentLoop) : base(parentLoop)
         {
-            CreateStandardTerminals(Direction.Input, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Input, 1u, 1u, NITypes.Void);
         }
 
         private LoopConditionTunnel(Structure parentStructure, LoopConditionTunnel toCopy, NodeCopyInfo copyInfo)

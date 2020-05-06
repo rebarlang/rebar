@@ -18,13 +18,14 @@ namespace Rebar.SourceModel
         public static Loop CreateLoop(IElementCreateInfo elementCreateInfo)
         {
             var loop = new Loop();
-            loop.Init(elementCreateInfo);
+            loop.Initialize(elementCreateInfo);
             return loop;
         }
 
-        protected override void Init(IElementCreateInfo info)
+        /// <inheritdoc />
+        protected override void Initialize(IElementCreateInfo info)
         {
-            base.Init(info);
+            base.Initialize(info);
             if (info.ForParse)
             {
                 string fixupName = nameof(FixupLoop);
@@ -33,8 +34,8 @@ namespace Rebar.SourceModel
             }
             else
             {
-                var loopConditionTunnel = MakeTunnel<LoopConditionTunnel>(Diagram, NestedDiagrams.First());
-                var loopTerminateLifetimeTunnel = MakeTunnel<LoopTerminateLifetimeTunnel>(Diagram, NestedDiagrams.First());
+                var loopConditionTunnel = MakeTunnel<LoopConditionTunnel>(NestedDiagram, NestedDiagrams.First());
+                var loopTerminateLifetimeTunnel = MakeTunnel<LoopTerminateLifetimeTunnel>(NestedDiagram, NestedDiagrams.First());
                 loopConditionTunnel.TerminateLifetimeTunnel = loopTerminateLifetimeTunnel;
                 loopTerminateLifetimeTunnel.BeginLifetimeTunnel = loopConditionTunnel;
             }

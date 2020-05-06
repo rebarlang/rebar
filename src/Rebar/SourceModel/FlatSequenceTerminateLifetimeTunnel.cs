@@ -15,7 +15,7 @@ namespace Rebar.SourceModel
         public static FlatSequenceTerminateLifetimeTunnel CreateFlatSequenceTerminateLifetimeTunnel(IElementCreateInfo elementCreateInfo)
         {
             var flatSequenceTerminateLifetimeTunnel = new FlatSequenceTerminateLifetimeTunnel();
-            flatSequenceTerminateLifetimeTunnel.Init(elementCreateInfo);
+            flatSequenceTerminateLifetimeTunnel.Initialize(elementCreateInfo);
             return flatSequenceTerminateLifetimeTunnel;
         }
 

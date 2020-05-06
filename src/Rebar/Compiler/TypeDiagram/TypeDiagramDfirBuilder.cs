@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using NationalInstruments.Compiler;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using Rebar.SourceModel.TypeDiagram;
@@ -27,7 +28,7 @@ namespace Rebar.Compiler.TypeDiagram
         {
             if (TypeDiagramDfirRoot.Name.IsEmpty)
             {
-                TypeDiagramDfirRoot.Name = rootDiagram.Definition.ReferencingEnvoy.CreateExtendedQualifiedName();
+                TypeDiagramDfirRoot.Name = rootDiagram.Definition.ReferencingEnvoy.GetCompilableDefinitionName();
             }
 
             var rootDfirDiagram = TypeDiagramDfirRoot.BlockDiagram;

@@ -30,7 +30,7 @@ namespace Rebar.Design
         autoCreatesProject: true,
         commandLineArguments: OpenArgumentFormat + ", " + "Foo",
         defaultFileNameType: typeof(FunctionDocumentType))]
-    [AllowableAsTypeMember(true)]
+    [AllowAsTypeMember]
     public class FunctionDocumentType : SourceFileDocumentType
     {
         /// <summary>
@@ -452,7 +452,7 @@ namespace Rebar.Design
         {
             return new List<DocumentOverlayHelpContent>
             {
-                new DocumentOverlayHelpContent(OverlayHelpProviderVisualId.DocumentDescription, "NI.OverlayHelp:SketchDocument".NotLocalized(), OverlayHelpTitle)
+                new DocumentOverlayHelpContent(OverlayHelpProviderVisualId.DocumentDescription, "NI.OverlayHelp:SketchDocument", OverlayHelpTitle)
             };
         }
 

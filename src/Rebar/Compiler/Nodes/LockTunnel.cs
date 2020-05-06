@@ -8,7 +8,7 @@ namespace Rebar.Compiler.Nodes
     {
         public LockTunnel(Structure parentStructure) : base(parentStructure)
         {
-            CreateStandardTerminals(Direction.Input, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Input, 1u, 1u, NITypes.Void);
         }
 
         private LockTunnel(Structure parentStructure, LockTunnel toCopy, NodeCopyInfo copyInfo)

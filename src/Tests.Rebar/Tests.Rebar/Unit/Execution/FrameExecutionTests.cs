@@ -14,7 +14,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             ExplicitBorrowNode borrowNode = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
-            ConnectConstantToInputTerminal(borrowNode.InputTerminals[0], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(borrowNode.InputTerminals[0], NITypes.Int32, 5, false);
             Frame frame = Frame.Create(function.BlockDiagram);
             Tunnel inputTunnel = CreateInputTunnel(frame), outputTunnel = CreateOutputTunnel(frame);
             Wire.Create(function.BlockDiagram, borrowNode.OutputTerminals[0], inputTunnel.InputTerminals[0]);

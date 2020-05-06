@@ -48,10 +48,10 @@ namespace Tests.Rebar.Unit.Execution
                     selectorValueIsSome ? (int?)0 : null);
 
                 _someInspectNode = new FunctionalNode(patternStructure.Diagrams[0], Signatures.InspectType);
-                _test.ConnectConstantToInputTerminal(_someInspectNode.InputTerminals[0], PFTypes.Int32, 1, false);
+                _test.ConnectConstantToInputTerminal(_someInspectNode.InputTerminals[0], NITypes.Int32, 1, false);
 
                 _noneInspectNode = new FunctionalNode(patternStructure.Diagrams[1], Signatures.InspectType);
-                _test.ConnectConstantToInputTerminal(_noneInspectNode.InputTerminals[0], PFTypes.Int32, 1, false);
+                _test.ConnectConstantToInputTerminal(_noneInspectNode.InputTerminals[0], NITypes.Int32, 1, false);
             }
 
             public void CompileAndExecuteFunction()
@@ -111,8 +111,8 @@ namespace Tests.Rebar.Unit.Execution
                 function.BlockDiagram,
                 selectorValueIsSome ? (int?)0 : null);
             Tunnel outputTunnel = CreateOutputTunnel(patternStructure);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, someDiagramTunnelValue, false);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], PFTypes.Int32, noneDiagramTunnelValue, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, someDiagramTunnelValue, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], NITypes.Int32, noneDiagramTunnelValue, false);
             ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
             return function;
         }
@@ -124,11 +124,11 @@ namespace Tests.Rebar.Unit.Execution
             if (selectorValue != null)
             {
                 Wire.Create(parentDiagram, someConstructor.OutputTerminals[0], patternStructure.Selector.InputTerminals[0]);
-                ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, selectorValue, false);
+                ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, selectorValue, false);
             }
             else
             {
-                ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, 0, false);
+                ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, 0, false);
                 FunctionalNode assign = new FunctionalNode(parentDiagram, Signatures.AssignType);
                 Wire optionValueWire = Wire.Create(parentDiagram, someConstructor.OutputTerminals[0], assign.InputTerminals[0]);
                 optionValueWire.SetWireBeginsMutableVariable(true);

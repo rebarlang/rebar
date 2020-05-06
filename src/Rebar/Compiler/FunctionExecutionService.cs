@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using NationalInstruments.Core;
-using NationalInstruments.ExecutionFramework;
-using NationalInstruments.Linking;
-using NationalInstruments.SourceModel.Envoys;
-using NationalInstruments.VI.SourceModel;
+﻿using NationalInstruments.ExecutionFramework;
 
 namespace Rebar.Compiler
 {
@@ -14,12 +9,6 @@ namespace Rebar.Compiler
     /// the target it is under.</remarks>
     public class FunctionExecutionService : NationalInstruments.MocCommon.FunctionExecutionService
     {
-        /// <inheritdoc/>
-        protected override IEnumerable<Envoy> ResolveUnderDefaultBuildSpec(IQualifiedScope scopeContainingBuildSpec, QualifiedName name)
-        {
-            return scopeContainingBuildSpec.ResolveUnderDefaultBuildSpec(name);
-        }
-
         /// <inheritdoc/>
         protected override void AssureDocumentListeningToDebugEvents(IDebuggableFunction debuggable)
         {

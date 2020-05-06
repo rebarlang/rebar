@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using NationalInstruments;
 using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
 using NationalInstruments.VI.DfirBuilder;
@@ -227,7 +225,7 @@ namespace Rebar.Compiler
             else if (flatSequenceSimpleTunnel != null || loopTunnel != null || optionPatternStructureTunnel != null)
             {
                 return dfirParentStructure.CreateTunnel(
-                    VIDfirBuilder.TranslateDirection(sourceModelBorderNode.PrimaryOuterTerminal.Direction),
+                    sourceModelBorderNode.PrimaryOuterTerminal.Direction,
                     NationalInstruments.Dfir.TunnelMode.LastValue,
                     sourceModelBorderNode.PrimaryOuterTerminal.DataType,
                     sourceModelBorderNode.PrimaryInnerTerminals.First().DataType);
@@ -404,7 +402,7 @@ namespace Rebar.Compiler
         public void VisitDataAccessor(DataAccessor dataAccessor)
         {
             var dfirDataItem = (NationalInstruments.Dfir.DataItem)_map.GetDfirForModel(dataAccessor.DataItem);
-            NationalInstruments.Dfir.DataAccessor dfirDataAccessor = NationalInstruments.Dfir.DataAccessor.Create(_currentDiagram, dfirDataItem, dataAccessor.Direction.ToDfirDirection());
+            NationalInstruments.Dfir.DataAccessor dfirDataAccessor = NationalInstruments.Dfir.DataAccessor.Create(_currentDiagram, dfirDataItem, dataAccessor.Direction);
             _map.AddMapping(dataAccessor, dfirDataAccessor);
             _map.MapTerminalsInOrder(dataAccessor, dfirDataAccessor);
         }
@@ -470,8 +468,10 @@ namespace Rebar.Compiler
 
         public void VisitMethodCall(MocCommonMethodCall callStatic)
         {
-            ExtendedQualifiedName targetName = callStatic.SelectedMethodCallTarget.QualifiedTarget.CreateExtendedQualifiedName();
-            var methodCallDfir = new MethodCallNode(_currentDiagram, targetName, callStatic.Signature);
+            var methodCallDfir = new MethodCallNode(
+                _currentDiagram,
+                callStatic.SelectedMethodCallTarget.AssociatedEnvoy.GetCompilableDefinitionName(),
+                callStatic.Signature);
             _map.AddMapping(callStatic, methodCallDfir);
             _map.MapTerminalsInOrder(callStatic, methodCallDfir);
         }
@@ -550,7 +550,7 @@ namespace Rebar.Compiler
         {
             if (CreatedDfirRoot.Name.IsEmpty)
             {
-                CreatedDfirRoot.Name = function.ReferencingEnvoy.CreateExtendedQualifiedName();
+                CreatedDfirRoot.Name = function.ReferencingEnvoy.GetCompilableDefinitionName();
             }
 
             foreach (DataItem dataItem in function.DataItems)

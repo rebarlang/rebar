@@ -34,7 +34,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             var borrowTunnel = CreateIterateTunnel(loop);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, false);
             var lifetimeAssociation = new LifetimeVariableAssociation();
 
             RunSemanticAnalysisUpToSetVariableTypes(function, null, null, lifetimeAssociation);
@@ -67,7 +67,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             var iterateTunnel = CreateIterateTunnel(loop);
-            ConnectConstantToInputTerminal(iterateTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(iterateTunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -77,8 +77,8 @@ namespace Tests.Rebar.Unit.Compiler
         private FunctionalNode ConnectRangeWithIntegerInputsToInputTerminal(Terminal inputTerminal, bool mutable = true)
         {
             FunctionalNode range = new FunctionalNode(inputTerminal.ParentDiagram, Signatures.RangeType);
-            ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(range.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(range.InputTerminals[1], NITypes.Int32, false);
             Wire wire = Wire.Create(inputTerminal.ParentDiagram, range.OutputTerminals[0], inputTerminal);
             wire.SetWireBeginsMutableVariable(mutable);
             return range;

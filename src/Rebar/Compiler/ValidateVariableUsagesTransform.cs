@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -162,7 +163,7 @@ namespace Rebar.Compiler
             if (methodCallNode.TargetName.IsEmpty)
             {
                 methodCallNode.SetDfirMessage(new DfirMessage(
-                    NationalInstruments.SourceModel.MessageSeverity.Error,
+                    MessageSeverity.Error,
                     SemanticAnalysisMessageCategories.Connection,
                     AllModelsOfComputationErrorMessages.NoValidMethodCallTarget));
             }

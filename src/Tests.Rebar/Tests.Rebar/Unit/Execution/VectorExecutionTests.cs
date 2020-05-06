@@ -72,12 +72,12 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode initializeVector = new FunctionalNode(function.BlockDiagram, Signatures.VectorInitializeType);
-            ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], PFTypes.Int32, elementValue, false);
-            ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], PFTypes.Int32, 4, false);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], NITypes.Int32, elementValue, false);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], NITypes.Int32, 4, false);
             FunctionalNode vectorToSlice = new FunctionalNode(function.BlockDiagram, Signatures.VectorToSliceType);
             Wire.Create(function.BlockDiagram, initializeVector.OutputTerminals[0], vectorToSlice.InputTerminals[0]);
             FunctionalNode sliceIndex = new FunctionalNode(function.BlockDiagram, Signatures.SliceIndexType);
-            ConnectConstantToInputTerminal(sliceIndex.InputTerminals[0], PFTypes.Int32, index, false);
+            ConnectConstantToInputTerminal(sliceIndex.InputTerminals[0], NITypes.Int32, index, false);
             Wire.Create(function.BlockDiagram, vectorToSlice.OutputTerminals[0], sliceIndex.InputTerminals[1]);
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
@@ -109,13 +109,13 @@ namespace Tests.Rebar.Unit.Execution
             var removeLastFromVector = new FunctionalNode(secondLoop.Diagram, Signatures.VectorRemoveLastType);
             Wire.Create(secondLoop.Diagram, secondLoopBorrowTunnel.OutputTerminals[0], removeLastFromVector.InputTerminals[0]);
             BorrowTunnel resultBorrowTunnel = CreateBorrowTunnel(secondLoop, BorrowMode.Mutable);
-            ConnectConstantToInputTerminal(resultBorrowTunnel.InputTerminals[0], PFTypes.Int32, 0, true);
+            ConnectConstantToInputTerminal(resultBorrowTunnel.InputTerminals[0], NITypes.Int32, 0, true);
             Frame unwrapFrame = Frame.Create(secondLoop.Diagram);
             UnwrapOptionTunnel unwrapTunnel = CreateUnwrapOptionTunnel(unwrapFrame);
             Wire.Create(secondLoop.Diagram, removeLastFromVector.OutputTerminals[1], unwrapTunnel.InputTerminals[0]);
             Tunnel inputTunnel = CreateInputTunnel(unwrapFrame);
             Wire.Create(secondLoop.Diagram, resultBorrowTunnel.OutputTerminals[0], inputTunnel.InputTerminals[0]);
-            var accumulateAdd = new FunctionalNode(unwrapFrame.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32));
+            var accumulateAdd = new FunctionalNode(unwrapFrame.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", NITypes.Int32));
             Wire.Create(unwrapFrame.Diagram, inputTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
             Wire.Create(unwrapFrame.Diagram, unwrapTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(resultBorrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0]);
@@ -129,8 +129,8 @@ namespace Tests.Rebar.Unit.Execution
         private IterateTunnel CreateRangeAndIterateTunnel(Loop loop, int rangeLow, int rangeHigh)
         {
             var range = new FunctionalNode(loop.ParentDiagram, Signatures.RangeType);
-            ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, 1, false);
-            ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, 7, false);
+            ConnectConstantToInputTerminal(range.InputTerminals[0], NITypes.Int32, 1, false);
+            ConnectConstantToInputTerminal(range.InputTerminals[1], NITypes.Int32, 7, false);
             IterateTunnel iterateTunnel = CreateIterateTunnel(loop);
             Wire.Create(loop.ParentDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0]);
             return iterateTunnel;

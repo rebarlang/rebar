@@ -14,8 +14,8 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             var structConstructorNode = new StructConstructorNode(function.BlockDiagram, StructType);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], PFTypes.Int32, 5, false);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], PFTypes.Boolean, true, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], NITypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], NITypes.Boolean, true, false);
             var structFieldAccessor = new StructFieldAccessorNode(function.BlockDiagram, new string[] { "_0", "_1" });
             Wire.Create(function.BlockDiagram, structConstructorNode.OutputTerminals[0], structFieldAccessor.StructInputTerminal);
             FunctionalNode inspect0 = ConnectInspectToOutputTerminal(structFieldAccessor.OutputTerminals[0]);
@@ -33,9 +33,9 @@ namespace Tests.Rebar.Unit.Execution
         {
             get
             {
-                NIClassBuilder builder = PFTypes.Factory.DefineValueClass("struct.td");
-                builder.DefineField(PFTypes.Int32, "_0", NIFieldAccessPolicies.ReadWrite);
-                builder.DefineField(PFTypes.Boolean, "_1", NIFieldAccessPolicies.ReadWrite);
+                NIClassBuilder builder = NITypes.Factory.DefineValueClass("struct.td");
+                builder.DefineField(NITypes.Int32, "_0", NIFieldAccessPolicies.ReadWrite);
+                builder.DefineField(NITypes.Boolean, "_1", NIFieldAccessPolicies.ReadWrite);
                 return builder.CreateType();
             }
         }
@@ -57,7 +57,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             get
             {
-                NIClassBuilder builder = PFTypes.Factory.DefineValueClass("fakeDropStruct.td");
+                NIClassBuilder builder = NITypes.Factory.DefineValueClass("fakeDropStruct.td");
                 builder.DefineField(DataTypes.FakeDropType, "_0", NIFieldAccessPolicies.ReadWrite);
                 return builder.CreateType();
             }

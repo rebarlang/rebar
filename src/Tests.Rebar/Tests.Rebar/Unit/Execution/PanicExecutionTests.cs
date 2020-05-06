@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NationalInstruments.Core;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 using Loop = Rebar.Compiler.Nodes.Loop;
@@ -57,7 +57,7 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode unwrapNone = CreatePanickingUnwrapOption(function.BlockDiagram);
             var unwrapSome = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
             ConnectSomeOfIntegerToInputTerminal(unwrapSome.InputTerminals[0], 5);
-            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(function.BlockDiagram, unwrapNone.OutputTerminals[0], add.InputTerminals[0]);
             Wire.Create(function.BlockDiagram, unwrapSome.OutputTerminals[0], add.InputTerminals[1]);
             ConnectOutputToOutputTerminal(add.OutputTerminals[2]);
@@ -161,7 +161,7 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode unwrap = CreatePanickingUnwrapOption(someDiagram);
             Tunnel outputTunnel = CreateOutputTunnel(optionPatternStructure);
             Wire.Create(someDiagram, unwrap.OutputTerminals[0], outputTunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], PFTypes.Int32, 1, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], NITypes.Int32, 1, false);
             ConnectOutputToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -177,7 +177,7 @@ namespace Tests.Rebar.Unit.Execution
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel condition = CreateLoopConditionTunnel(loop);
             // Wire explicit true to condition so that it is initialized outside the PanicAndContinue's clump 
-            ConnectConstantToInputTerminal(condition.InputTerminals[0], PFTypes.Boolean, true, false);
+            ConnectConstantToInputTerminal(condition.InputTerminals[0], NITypes.Boolean, true, false);
             Tunnel inputTunnel = CreateInputTunnel(loop);
             Wire.Create(function.BlockDiagram, unwrap.OutputTerminals[0], inputTunnel.InputTerminals[0]);
             ConnectOutputToOutputTerminal(inputTunnel.OutputTerminals[0]);
@@ -207,11 +207,11 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = calleeName.DefineMethodType().CreateType();
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             CreatePanickingUnwrapOption(calleeFunction.BlockDiagram);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
 
@@ -223,11 +223,11 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = calleeName.DefineMethodType().CreateType();
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             CreateNonPanickingUnwrapOption(calleeFunction.BlockDiagram);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
 
@@ -239,15 +239,15 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionTypeWithOptionIntInAndIntOut(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
             DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
             FunctionalNode unwrap = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.UnwrapOptionType);
             Wire.Create(calleeFunction.BlockDiagram, inputDataAccessor.Terminal, unwrap.InputTerminals[0]);
             Wire.Create(calleeFunction.BlockDiagram, unwrap.OutputTerminals[0], outputDataAccessor.Terminal);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
             FunctionalNode noneInteger = CreateNoneOfOptionIntegerType(callerFunction.BlockDiagram);
             Wire.Create(callerFunction.BlockDiagram, noneInteger.OutputTerminals[0], methodCall.InputTerminals[0]);
             ConnectOutputToOutputTerminal(methodCall.OutputTerminals[0]);
@@ -262,16 +262,16 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionTypeWithTwoIntOuts(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             DataAccessor outputDataAccessor0 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Input);
             DataAccessor outputDataAccessor1 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
             FunctionalNode unwrap = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.UnwrapOptionType);
             ConnectSomeOfIntegerToInputTerminal(unwrap.InputTerminals[0], 1);
             Wire.Create(calleeFunction.BlockDiagram, unwrap.OutputTerminals[0], outputDataAccessor0.Terminal, outputDataAccessor1.Terminal);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
-            FunctionalNode add = new FunctionalNode(callerFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
+            FunctionalNode add = new FunctionalNode(callerFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(callerFunction.BlockDiagram, methodCall.OutputTerminals[0], add.InputTerminals[0]);
             Wire.Create(callerFunction.BlockDiagram, methodCall.OutputTerminals[1], add.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(add.OutputTerminals[2]);
@@ -284,18 +284,18 @@ namespace Tests.Rebar.Unit.Execution
 
         private NIType DefineFunctionTypeWithOptionIntInAndIntOut(string functionName)
         {
-            return functionName.DefineMethodType().AddInput(PFTypes.Int32.CreateOption(), "in").AddOutput(PFTypes.Int32, "out").CreateType();
+            return functionName.DefineMethodType().AddInput(NITypes.Int32.CreateOption(), "in").AddOutput(NITypes.Int32, "out").CreateType();
         }
 
         private NIType DefineFunctionTypeWithTwoIntOuts(string functionName)
         {
-            return functionName.DefineMethodType().AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
+            return functionName.DefineMethodType().AddOutput(NITypes.Int32, "out0").AddOutput(NITypes.Int32, "out1").CreateType();
         }
 
         private FunctionalNode ConnectSomeOfIntegerToInputTerminal(Terminal inputTerminal, int value, bool mutable = false)
         {
             var someConstructor = ConnectSomeConstructorToInputTerminal(inputTerminal, mutable);
-            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, value, false);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, value, false);
             return someConstructor;
         }
 
@@ -336,7 +336,7 @@ namespace Tests.Rebar.Unit.Execution
             Diagram loopDiagram = condition.OutputTerminals[0].ParentDiagram;
             var assign = new FunctionalNode(loopDiagram, Signatures.AssignType);
             Wire.Create(loopDiagram, condition.OutputTerminals[0], assign.InputTerminals[0]);
-            ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Boolean, false, false);
+            ConnectConstantToInputTerminal(assign.InputTerminals[1], NITypes.Boolean, false, false);
         }
 
         private void AssertNoOutput(TestExecutionInstance executionInstance)

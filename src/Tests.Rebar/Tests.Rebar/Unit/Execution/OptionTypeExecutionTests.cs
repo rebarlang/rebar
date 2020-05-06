@@ -135,7 +135,7 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Mutable);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, true);
             FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
             Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], assign.InputTerminals[0]);
             Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[1]);
@@ -156,7 +156,7 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             Tunnel outputTunnel = CreateOutputTunnel(frame);
-            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, 5, false);
+            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -174,7 +174,7 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, none.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Mutable);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, true);
             FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
             Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], assign.InputTerminals[0]);
             Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[1]);
@@ -197,9 +197,9 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
             Wire unwrapWire = Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
             unwrapWire.SetWireBeginsMutableVariable(true);
-            ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(assign.InputTerminals[1], NITypes.Int32, false);
             Tunnel outputTunnel = CreateOutputTunnel(frame);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -213,7 +213,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
             var some = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
             Wire.Create(function.BlockDiagram, borrow.OutputTerminals[0], some.InputTerminals[0]);
             Frame frame = Frame.Create(function.BlockDiagram);
@@ -226,7 +226,7 @@ namespace Tests.Rebar.Unit.Execution
         private FunctionalNode CreateInt32SomeConstructor(Diagram diagram, int value)
         {
             FunctionalNode initialSome = new FunctionalNode(diagram, Signatures.SomeConstructorType);
-            Constant constant = ConnectConstantToInputTerminal(initialSome.InputTerminals[0], PFTypes.Int32, value, false);
+            Constant constant = ConnectConstantToInputTerminal(initialSome.InputTerminals[0], NITypes.Int32, value, false);
             return initialSome;
         }
 

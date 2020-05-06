@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LLVMSharp;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -147,7 +148,7 @@ namespace Rebar.RebarTarget
                 }
                 _variableStorage.AddContinuationConditionVariable(
                     asyncStateGroup,
-                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", PFTypes.Boolean));
+                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", NITypes.Boolean));
             }
         }
 

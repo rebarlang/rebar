@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NationalInstruments.DataTypes;
+﻿using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace Rebar.Compiler.Nodes
@@ -12,7 +7,7 @@ namespace Rebar.Compiler.Nodes
     {
         public OptionPatternStructureSelector(OptionPatternStructure parentOptionPatternStructure) : base(parentOptionPatternStructure)
         {
-            CreateStandardTerminals(Direction.Input, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Input, 1u, 1u, NITypes.Void);
         }
 
         private OptionPatternStructureSelector(Structure parentStructure, OptionPatternStructureSelector toCopy, NodeCopyInfo copyInfo)

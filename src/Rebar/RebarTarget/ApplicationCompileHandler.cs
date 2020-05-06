@@ -36,14 +36,18 @@ namespace Rebar.RebarTarget
         }
 
         /// <inheritdoc />
-        protected override IEnumerable<IFileBuilder> CreateFileBuilders(DfirRoot targetDfir, ComponentBuildResult componentBuildResult)
+        protected override IEnumerable<FileBuilder> CreateFileBuilders(DfirRoot targetDfir, ComponentBuildResult componentBuildResult)
         {
-            return Enumerable.Empty<IFileBuilder>();
+            return Enumerable.Empty<FileBuilder>();
         }
 
         /// <inheritdoc />
-        protected override IBuiltPackage CreateExecutionBuiltPackage(SpecAndQName specAndQName, string absoluteDirectoryForComponent,
-            IEnumerable<IFileBuilder> builders, ComponentBuildResult componentBuildResult)
+        protected override IBuiltPackage CreateExecutionBuiltPackage(
+            CompileSpecification compileSpecification,
+            string absoluteDirectoryForComponent,
+            IEnumerable<FileBuilder> builders,
+            ComponentBuildResult componentBuildResult,
+            CompileMetadata compileMetadata)
         {
             throw new NotImplementedException();
         }
@@ -76,10 +80,19 @@ namespace Rebar.RebarTarget
             #region IMemberBuilderBehavior Implementation
 
             /// <inheritdoc />
-            public Task<CompileInformation> GetCompileInformation(SpecAndQName itemSpecAndQName, CompileCancellationToken cancellationToken,
-                ProgressToken progressToken, CompileThreadState compileThreadState)
+            public Task<CompileInformation> GetCompileInformationAsync(
+                CompileSpecification itemCompileSpecification,
+                CompileCancellationToken cancellationToken,
+                ProgressToken progressToken,
+                CompileThreadState compileThreadState)
             {
-                return Compiler.CompileAsTopLevel(itemSpecAndQName, cancellationToken, progressToken, compileThreadState);
+                return Compiler.CompileAsTopLevelAsync(itemCompileSpecification, cancellationToken, progressToken, compileThreadState);
+            }
+
+            /// <inheritdoc />
+            public Task<DebugSource> GetDebugSourceAsync(CompileSpecification itemCompileSpecification, CompileCancellationToken cancellationToken)
+            {
+                return Task.FromResult<DebugSource>(null);
             }
 
             #endregion IMemberBuilderBehavior Implementation

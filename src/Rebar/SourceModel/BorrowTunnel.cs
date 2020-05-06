@@ -16,7 +16,7 @@ namespace Rebar.SourceModel
         public static BorrowTunnel CreateBorrowTunnel(IElementCreateInfo elementCreateInfo)
         {
             var borrowTunnel = new BorrowTunnel();
-            borrowTunnel.Init(elementCreateInfo);
+            borrowTunnel.Initialize(elementCreateInfo);
             return borrowTunnel;
         }
 

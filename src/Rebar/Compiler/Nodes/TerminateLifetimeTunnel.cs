@@ -7,7 +7,7 @@ namespace Rebar.Compiler.Nodes
     {
         public TerminateLifetimeTunnel(Structure parentStructure) : base(parentStructure)
         {
-            CreateStandardTerminals(Direction.Output, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Output, 1u, 1u, NITypes.Void);
         }
 
         private TerminateLifetimeTunnel(Structure parentStructure, TerminateLifetimeTunnel toCopy, NodeCopyInfo copyInfo)

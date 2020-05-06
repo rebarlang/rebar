@@ -5,7 +5,7 @@ using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -27,12 +27,12 @@ namespace Rebar.Compiler
         }
 
         private readonly ITypeUnificationResultFactory _unificationResultFactory;
-        private readonly Dictionary<ExtendedQualifiedName, bool> _isYielding;
-        private readonly Dictionary<ExtendedQualifiedName, bool> _mayPanic;
+        private readonly Dictionary<CompilableDefinitionName, bool> _isYielding;
+        private readonly Dictionary<CompilableDefinitionName, bool> _mayPanic;
 
         public AsyncNodeDecompositionTransform(
-            Dictionary<ExtendedQualifiedName, bool> isYielding,
-            Dictionary<ExtendedQualifiedName, bool> mayPanic,
+            Dictionary<CompilableDefinitionName, bool> isYielding,
+            Dictionary<CompilableDefinitionName, bool> mayPanic,
             ITypeUnificationResultFactory unificationResultFactory)
         {
             _isYielding = isYielding;
@@ -94,7 +94,7 @@ namespace Rebar.Compiler
         {
             NIType outputType;
             // TODO: try to use something like Unit or Void
-            NIType emptyOutputType = PFTypes.Boolean;
+            NIType emptyOutputType = NITypes.Boolean;
             switch (methodCallNode.OutputTerminals.Count)
             {
                 case 0:

@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NationalInstruments.Core;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -16,12 +16,12 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithNoParameters(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
-            Constant calleeConstant = Constant.Create(calleeFunction.BlockDiagram, 5, PFTypes.Int32);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
+            Constant calleeConstant = Constant.Create(calleeFunction.BlockDiagram, 5, NITypes.Int32);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(calleeConstant.OutputTerminal);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
 
@@ -34,17 +34,17 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
             DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
-            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(calleeFunction.BlockDiagram, inputDataAccessor.Terminal, add.InputTerminals[0]);
-            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, 1, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], NITypes.Int32, 1, false);
             Wire.Create(calleeFunction.BlockDiagram, add.OutputTerminals[2], outputDataAccessor.Terminal);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
-            ConnectConstantToInputTerminal(methodCall.InputTerminals[0], PFTypes.Int32, 5, false);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
+            ConnectConstantToInputTerminal(methodCall.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
@@ -58,19 +58,19 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithInAndOutParameters(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             DataAccessor inputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Output);
             DataAccessor outputDataAccessor = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
-            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            FunctionalNode add = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(calleeFunction.BlockDiagram, inputDataAccessor.Terminal, add.InputTerminals[0]);
-            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, 1, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], NITypes.Int32, 1, false);
             var yieldNode = new FunctionalNode(calleeFunction.BlockDiagram, Signatures.YieldType);
             Wire.Create(calleeFunction.BlockDiagram, add.OutputTerminals[2], yieldNode.InputTerminals[0]);
             Wire.Create(calleeFunction.BlockDiagram, yieldNode.OutputTerminals[0], outputDataAccessor.Terminal);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
-            ConnectConstantToInputTerminal(methodCall.InputTerminals[0], PFTypes.Int32, 5, false);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
+            ConnectConstantToInputTerminal(methodCall.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(callerFunction, calleeFunction);
@@ -84,14 +84,14 @@ namespace Tests.Rebar.Unit.Execution
         {
             string calleeName = "callee";
             NIType calleeType = DefineFunctionSignatureWithTwoOutParameters(calleeName);
-            ExtendedQualifiedName calleeQualifiedName = ExtendedQualifiedName.CreateName(new QualifiedName(calleeName), "component", null, ContentId.EmptyId, null);
-            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeQualifiedName);
+            CompilableDefinitionName calleeDefinitionName = CreateTestCompilableDefinitionName(calleeName);
+            DfirRoot calleeFunction = calleeType.CreateFunctionFromSignature(calleeDefinitionName);
             DataAccessor outputDataAccessor0 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[0], Direction.Input);
             DataAccessor outputDataAccessor1 = DataAccessor.Create(calleeFunction.BlockDiagram, calleeFunction.DataItems[1], Direction.Input);
-            ConnectConstantToInputTerminal(outputDataAccessor0.Terminal, PFTypes.Int32, 5, false);
-            ConnectConstantToInputTerminal(outputDataAccessor1.Terminal, PFTypes.Int32, 6, false);
+            ConnectConstantToInputTerminal(outputDataAccessor0.Terminal, NITypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(outputDataAccessor1.Terminal, NITypes.Int32, 6, false);
             DfirRoot callerFunction = DfirRoot.Create();
-            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeQualifiedName, calleeType);
+            var methodCall = new MethodCallNode(callerFunction.BlockDiagram, calleeDefinitionName, calleeType);
             FunctionalNode inspect0 = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[0]);
             FunctionalNode inspect1 = ConnectInspectToOutputTerminal(methodCall.OutputTerminals[1]);
 
@@ -110,12 +110,12 @@ namespace Tests.Rebar.Unit.Execution
 
         private NIType DefineFunctionSignatureWithInAndOutParameters(string functionName)
         {
-            return functionName.DefineMethodType().AddInput(PFTypes.Int32, "in").AddOutput(PFTypes.Int32, "out").CreateType();
+            return functionName.DefineMethodType().AddInput(NITypes.Int32, "in").AddOutput(NITypes.Int32, "out").CreateType();
         }
 
         private NIType DefineFunctionSignatureWithTwoOutParameters(string functionName)
         {
-            return functionName.DefineMethodType().AddOutput(PFTypes.Int32, "out0").AddOutput(PFTypes.Int32, "out1").CreateType();
+            return functionName.DefineMethodType().AddOutput(NITypes.Int32, "out0").AddOutput(NITypes.Int32, "out1").CreateType();
         }
     }
 }

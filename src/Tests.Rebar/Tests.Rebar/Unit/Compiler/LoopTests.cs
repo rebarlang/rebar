@@ -16,7 +16,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             Tunnel outputTunnel = CreateOutputTunnel(loop);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 

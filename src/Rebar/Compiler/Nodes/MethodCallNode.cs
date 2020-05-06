@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using NationalInstruments.Dfir;
 using NationalInstruments.DataTypes;
-using NationalInstruments.Linking;
-using NationalInstruments.Compiler;
+using NationalInstruments.CommonModel;
+using NationalInstruments.ExecutionFramework;
 
 namespace Rebar.Compiler.Nodes
 {
@@ -11,8 +11,13 @@ namespace Rebar.Compiler.Nodes
         private readonly List<PassthroughTerminalPair> _passthroughTerminalPairs;
         private readonly Dictionary<Terminal, NIType> _terminalParameters = new Dictionary<Terminal, NIType>();
 
-        public MethodCallNode(Node parentNode, ExtendedQualifiedName targetName, NIType signature)
-            : base(parentNode, EnumerateRequiredDependencies(new SpecAndQName(parentNode.DfirRoot.BuildSpec, targetName), signature))
+        public MethodCallNode(
+            Node parentNode,
+            CompilableDefinitionName targetName,
+            NIType signature)
+            : base(
+                  parentNode,
+                  EnumerateRequiredDependencies(DfirDependencyName.CreateFromCompilableDefinitionName(targetName, parentNode.DfirRoot.BuildSpec), signature))
         {
             TargetName = targetName;
             Signature = signature;
@@ -50,13 +55,16 @@ namespace Rebar.Compiler.Nodes
             Signature = nodeToCopy.Signature;
         }
 
-        private static IEnumerable<DfirDependency> EnumerateRequiredDependencies(SpecAndQName targetSpecAndQName, NIType targetSignature)
+        private static IEnumerable<DfirDependency> EnumerateRequiredDependencies(DfirDependencyName targetDependencyName, NIType targetSignature)
         {
-            yield return new SignatureDependency(targetSpecAndQName, targetSignature);
-            yield return new RunnableExistenceDependency(targetSpecAndQName);
+            yield return new SignatureDependency(targetDependencyName, targetSignature);
+            yield return new RunnableExistenceDependency(targetDependencyName);
         }
 
-        public ExtendedQualifiedName TargetName { get; }
+        /// <summary>
+        /// The <see cref="CompilableDefinitionName"/> of the call target.
+        /// </summary>
+        public CompilableDefinitionName TargetName { get; }
 
         public NIType Signature { get; }
 

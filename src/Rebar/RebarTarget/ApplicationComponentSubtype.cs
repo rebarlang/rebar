@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using NationalInstruments.Compiler;
-using NationalInstruments.ComponentEditor.Design;
-using NationalInstruments.ComponentEditor.SourceModel;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir.Component;
+using NationalInstruments.MocCommon.Components.Design;
+using NationalInstruments.MocCommon.Components.SourceModel;
 using NationalInstruments.Shell;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
@@ -57,30 +57,13 @@ namespace Rebar.RebarTarget
         public override IEnumerable<BindingKeyword> SupportedFileTypes => _supportedFileTypes;
 
         /// <inheritdoc/>
-        public override void AddRightRailContent(ICommandPresentationContext context, ComponentConfiguration componentConfiguration)
-        {
-            context.Remove(ComponentCommands.ComponentProtectionGroupCommand);
-            context.Remove(DocumentCommands.ToggleMatchFileNameAndTitleCommand);
-            context.Remove(DocumentCommands.ChangeDocumentTitleCommand);
-        }
-
-        /// <inheritdoc/>
-        public override void AddRightRailContentForItem(ICommandPresentationContext context, ComponentItemProperties itemProperties, Envoy associatedEnvoy)
-        {
-            base.AddRightRailContentForItem(context, itemProperties, associatedEnvoy);
-        }
-
-        /// <inheritdoc/>
-        public override IDocumentType CustomPropertiesDocument => null;
-
-        /// <inheritdoc/>
         public override IProvideComponentProperties CreateComponentSubtypeProperties()
         {
             return ApplicationComponentSubtypeProperties.Create(ElementCreateInfo.ForNew);
         }
 
         /// <inheritdoc/>
-        public override void Init(ComponentConfiguration componentConfiguration)
+        public override void Initialize(ComponentConfiguration componentConfiguration)
         {
         }
 
@@ -108,13 +91,6 @@ namespace Rebar.RebarTarget
         public override string GetOutputTopLevelFilePath(ComponentConfiguration componentConfiguration)
         {
             return componentConfiguration.GetOutputDirectory();
-        }
-
-        /// <inheritdoc/>
-        public override BuildId CreateBuildId(ComponentConfiguration componentConfiguration)
-        {
-            string outputDirectory = componentConfiguration.GetOutputDirectory();
-            return new BuildId(Identifier, outputDirectory);
         }
 
 #endregion IBuildableComponentSubtype Members

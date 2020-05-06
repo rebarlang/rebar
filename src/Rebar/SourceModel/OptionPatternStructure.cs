@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Xml.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
@@ -17,16 +18,16 @@ namespace Rebar.SourceModel
         public static OptionPatternStructure CreateOptionPatternStructure(IElementCreateInfo elementCreateInfo)
         {
             var optionPatternStructure = new OptionPatternStructure();
-            optionPatternStructure.Init(elementCreateInfo);
+            optionPatternStructure.Initialize(elementCreateInfo);
             return optionPatternStructure;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
 
         /// <inheritdoc />
-        protected override void Init(IElementCreateInfo info)
+        protected override void Initialize(IElementCreateInfo info)
         {
-            base.Init(info);
+            base.Initialize(info);
             if (info.ForParse)
             {
                 // info.FixupRegistrar.AddPostParseFixupOrder(nameof(FixupCaseStructure), CaseDiagramPatternSerializer.CaseDiagramPatternSerializerPostParseFixupName);
@@ -93,8 +94,8 @@ namespace Rebar.SourceModel
                 }
                 else
                 {
-                    throw new InvalidParseException("Attempting to setup tunnels on OptionPatternStructure ID=".NotLocalized() + optionPatternStructure.Identifier.ToParsableString() +
-                                                    " at post-parse fixup, OptionPatternStructure has malformed tunnel without enough terminals.".NotLocalized());
+                    throw new InvalidParseException("Attempting to setup tunnels on OptionPatternStructure ID=" + optionPatternStructure.Identifier.ToParsableString() +
+                                                    " at post-parse fixup, OptionPatternStructure has malformed tunnel without enough terminals.");
                 }
 
                 // This correctly places the hotspots of the tunnels so that wires that are about to be connected to them

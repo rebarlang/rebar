@@ -33,15 +33,17 @@ namespace Rebar.Compiler.TypeDiagram
                 _host.GetSharedExportedValue<ScheduledActivityManager>(),
                 AdditionalErrorTexts,
                 creationArguments.BuildSpecSource,
-                creationArguments.SpecAndQName,
+                creationArguments.CompileSpecification,
                 typeDiagramDfirBuilder.DfirModelMap);
             creationArguments.PrebuildTransform(dfirRoot, reflector, this);
 
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
-            return GenerateMocTransformManager(creationArguments.SpecAndQName, dfirRoot, new CompileCancellationToken());
+            return GenerateMocTransformManager(creationArguments.CompileSpecification, dfirRoot, new CompileCancellationToken());
         }
 
-        public override MocTransformManager GenerateMocTransformManager(SpecAndQName specAndQName, DfirRoot sourceDfir,
+        public override MocTransformManager GenerateMocTransformManager(
+            CompileSpecification compileSpecification,
+            DfirRoot sourceDfir,
             CompileCancellationToken cancellationToken)
         {
             var semanticAnalysisTransforms = new List<IDfirTransformBase>()
@@ -60,7 +62,7 @@ namespace Rebar.Compiler.TypeDiagram
             };
 
             return new StandardMocTransformManager(
-                specAndQName,
+                compileSpecification,
                 sourceDfir,
                 semanticAnalysisTransforms,
                 toTargetDfirTransforms,
@@ -81,7 +83,7 @@ namespace Rebar.Compiler.TypeDiagram
             {
                 return NIType.Unset;
             }
-            return BuildTypeFromSelfType(selfTypeNode, typeDiagramDfirRoot.SpecAndQName.QualifiedName.GetLastStringIdentifier());
+            return BuildTypeFromSelfType(selfTypeNode, typeDiagramDfirRoot.CompileSpecification.Name.SourceName.Last);
         }
 
         private static NIType BuildTypeFromSelfType(Nodes.SelfTypeNode selfTypeNode, string typeName)
@@ -89,7 +91,7 @@ namespace Rebar.Compiler.TypeDiagram
             switch (selfTypeNode.Mode)
             {
                 case SelfTypeMode.Struct:
-                    NIClassBuilder classBuilder = PFTypes.Factory.DefineValueClass(typeName);
+                    NIClassBuilder classBuilder = NITypes.Factory.DefineValueClass(typeName);
                     int fieldIndex = 0;
                     foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
                     {

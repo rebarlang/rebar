@@ -1,4 +1,5 @@
-﻿using NationalInstruments.DataTypes;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -37,7 +38,7 @@ namespace Rebar.Compiler
                     continue;
                 }
                 VariableReference variable = terminal.GetFacadeVariable();
-                NIType terminalType = PFTypes.Void;
+                NIType terminalType = NITypes.Void;
                 if (variable.TypeVariableReference.TypeVariableSet != null && !variable.Type.IsUnset())
                 {
                     terminalType = variable.Type;

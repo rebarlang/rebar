@@ -4,18 +4,18 @@ using NationalInstruments.FeatureToggles;
 namespace Rebar
 {
     [ExportFeatureToggles]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), CellDataType, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), RebarTarget, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), OutputNode, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), VectorAndSliceTypes, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), VisualizeVariableIdentity, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), StringDataType, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), AllIntegerTypes, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), FileHandleDataType, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), OptionPatternStructure, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), ParametersAndCalls, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), NotifierType, CodeReadiness.Release)]
-    [ExposeFeatureToggle(typeof(RebarFeatureToggles), Panics, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), CellDataType, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), RebarTarget, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), OutputNode, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), VectorAndSliceTypes, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), VisualizeVariableIdentity, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), StringDataType, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), AllIntegerTypes, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), FileHandleDataType, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), OptionPatternStructure, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), ParametersAndCalls, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), NotifierType, CodeReadiness.Release)]
+    [ExposeUserVisibleFeatureToggle(typeof(RebarFeatureToggles), Panics, CodeReadiness.Release)]
     public sealed class RebarFeatureToggles : FeatureTogglesProvider<RebarFeatureToggles>
     {
         private const string RebarFeatureCategory = "Rebar";

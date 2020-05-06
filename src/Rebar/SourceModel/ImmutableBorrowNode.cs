@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
@@ -15,7 +16,7 @@ namespace Rebar.SourceModel
 
         protected ImmutableBorrowNode()
         {
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             FixedTerminals.Add(new NodeTerminal(Direction.Input, immutableReferenceType, "value in"));
             FixedTerminals.Add(new NodeTerminal(Direction.Output, immutableReferenceType, "reference out"));
         }
@@ -24,7 +25,7 @@ namespace Rebar.SourceModel
         public static ImmutableBorrowNode CreateImmutablePassthroughNode(IElementCreateInfo elementCreateInfo)
         {
             var immutableBorrowNode = new ImmutableBorrowNode();
-            immutableBorrowNode.Init(elementCreateInfo);
+            immutableBorrowNode.Initialize(elementCreateInfo);
             return immutableBorrowNode;
         }
 

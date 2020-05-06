@@ -30,7 +30,7 @@ namespace Rebar.SourceModel.TypeDiagram
             owner => owner.UnderlyingType,
             (owner, value) => owner.UpdateUnderlyingType((NIType)value, true),
             PropertySerializers.DataTypeSerializer,
-            PFTypes.Void);
+            NITypes.Void);
 
         /// <summary>
         /// Name of the DataType property used in property changed events.
@@ -51,7 +51,7 @@ namespace Rebar.SourceModel.TypeDiagram
         /// </summary>
         public NationalInstruments.SourceModel.RootDiagram Diagram => Components.OfType<NationalInstruments.SourceModel.RootDiagram>().Single();
 
-        private NIType _underlyingType = PFTypes.Void;
+        private NIType _underlyingType = NITypes.Void;
 
         private TypeDiagramDefinition()
             : base(new BlockDiagram(), false)
@@ -66,7 +66,7 @@ namespace Rebar.SourceModel.TypeDiagram
         {
             var typeDiagramDefinition = new TypeDiagramDefinition();
             typeDiagramDefinition.Host = elementCreateInfo.Host;
-            typeDiagramDefinition.Init(elementCreateInfo);
+            typeDiagramDefinition.Initialize(elementCreateInfo);
             return typeDiagramDefinition;
         }
 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
 using NationalInstruments.ExecutionFramework;
+using NationalInstruments.Linking;
 
 namespace Rebar.RebarTarget
 {
@@ -67,7 +68,8 @@ namespace Rebar.RebarTarget
         {
         }
 
-        protected override void UnloadCore(string runtimeName, string editorName)
+        /// <inheritdoc />
+        protected override void UnloadCore(string runtimeName, CompilableDefinitionName editorName)
         {
             throw new NotImplementedException();
         }
@@ -75,20 +77,24 @@ namespace Rebar.RebarTarget
 
     internal class HostExecutionServices : IRebarTargetRuntimeServices
     {
-        private readonly ICompositionHost _host;
         private readonly IDebugHost _debugHost;
+        private static readonly string _messageSource;
         private bool _panicOccurred = false;
+
+        static HostExecutionServices()
+        {
+            _messageSource = ExtendedQualifiedName.CreateContentName(new QualifiedName("Rebar runtime"), string.Empty, ContentId.EmptyId).ToEncodedString();
+        }
 
         public HostExecutionServices(ICompositionHost host)
         {
-            _host = host;
             _debugHost = host.GetSharedExportedValue<IDebugHost>();
         }
 
         public void Output(string value)
         {
             string message = $"Output: {value}";
-            _debugHost.LogMessage(new DebugMessage("Rebar runtime", DebugMessageSeverity.Information, message));
+            _debugHost.LogMessage(new DebugMessage(_messageSource, DebugMessageSeverity.Information, message));
         }
 
         void IRebarTargetRuntimeServices.FakeDrop(int id)

@@ -18,7 +18,7 @@ namespace Rebar.SourceModel
         public static UnwrapOptionTunnel CreateUnwrapOptionTunnel(IElementCreateInfo elementCreateInfo)
         {
             var unwrapOptionTunnel = new UnwrapOptionTunnel();
-            unwrapOptionTunnel.Init(elementCreateInfo);
+            unwrapOptionTunnel.Initialize(elementCreateInfo);
             return unwrapOptionTunnel;
         }
 

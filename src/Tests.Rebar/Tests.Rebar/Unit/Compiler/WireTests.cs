@@ -17,7 +17,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.MutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode sink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, PFTypes.Int32);
+            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, NITypes.Int32);
             Wire wire = Wire.Create(dfirRoot.BlockDiagram, constant.OutputTerminal, sink.InputTerminals[0]);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
@@ -34,7 +34,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode firstSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType),
                 secondSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, PFTypes.Int32);
+            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, NITypes.Int32);
             constant.OutputTerminal.WireTogether(firstSink.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
             constant.OutputTerminal.WireTogether(secondSink.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
 
@@ -53,7 +53,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode firstSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType),
                 secondSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, PFTypes.Int32);
+            Constant constant = Constant.Create(dfirRoot.BlockDiagram, 0, NITypes.Int32);
             constant.OutputTerminal.WireTogether(firstSink.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
             constant.OutputTerminal.WireTogether(secondSink.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
             Wire branchedWire = (Wire)constant.OutputTerminal.ConnectedTerminal.ParentNode;
@@ -75,7 +75,7 @@ namespace Tests.Rebar.Unit.Compiler
             FunctionalNode firstSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType),
                 secondSink = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode mutableBorrow = new ExplicitBorrowNode(dfirRoot.BlockDiagram, BorrowMode.Mutable, 1, true, true);
-            ConnectConstantToInputTerminal(mutableBorrow.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(mutableBorrow.InputTerminals[0], NITypes.Int32, true);
             Wire branchedWire = Wire.Create(dfirRoot.BlockDiagram, mutableBorrow.OutputTerminals[0], firstSink.InputTerminals[0], secondSink.InputTerminals[0]);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);

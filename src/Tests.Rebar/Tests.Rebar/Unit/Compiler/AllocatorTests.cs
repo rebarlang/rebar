@@ -20,7 +20,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.InspectType);
-            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], PFTypes.Int32, 5, false);
+            Constant constant = ConnectConstantToInputTerminal(inspect.InputTerminals[0], NITypes.Int32, 5, false);
 
             FunctionVariableStorage valueStorage = RunAllocator(function);
 
@@ -34,9 +34,9 @@ namespace Tests.Rebar.Unit.Compiler
         public void AddConstants_Allocate_SumGetsImmutableValueSource()
         {
             DfirRoot function = DfirRoot.Create();
-            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
-            ConnectConstantToInputTerminal(add.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
+            ConnectConstantToInputTerminal(add.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], NITypes.Int32, false);
 
             FunctionVariableStorage valueStorage = RunAllocator(function);
 
@@ -48,9 +48,9 @@ namespace Tests.Rebar.Unit.Compiler
         public void AddConstantsAndYieldResult_Allocate_SumGetsLocalAllocation()
         {
             DfirRoot function = DfirRoot.Create();
-            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
-            ConnectConstantToInputTerminal(add.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, false);
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
+            ConnectConstantToInputTerminal(add.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], NITypes.Int32, false);
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
             Wire.Create(function.BlockDiagram, add.OutputTerminals[2], yieldNode.InputTerminals[0]);
 

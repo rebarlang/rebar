@@ -55,7 +55,7 @@ namespace Rebar.SourceModel
         {
             var function = new Function();
             function.Host = elementCreateInfo.Host;
-            function.Init(elementCreateInfo);
+            function.Initialize(elementCreateInfo);
             return function;
         }
 

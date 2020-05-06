@@ -15,8 +15,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             var structConstructorNode = new StructConstructorNode(function.BlockDiagram, StructType);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], NITypes.Boolean, false);
             var structFieldAccessor = new StructFieldAccessorNode(function.BlockDiagram, new string[] { "_0", "_1" });
             Wire.Create(function.BlockDiagram, structConstructorNode.OutputTerminals[0], structFieldAccessor.StructInputTerminal);
 
@@ -33,8 +33,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             var structConstructorNode = new StructConstructorNode(function.BlockDiagram, StructType);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], NITypes.Boolean, false);
             var structFieldAccessor = new StructFieldAccessorNode(function.BlockDiagram, new string[] { "_2" });
             Wire.Create(function.BlockDiagram, structConstructorNode.OutputTerminals[0], structFieldAccessor.StructInputTerminal);
 
@@ -49,8 +49,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             var structConstructorNode = new StructConstructorNode(function.BlockDiagram, StructType);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(structConstructorNode.InputTerminals[1], NITypes.Boolean, false);
             var structFieldAccessor = new StructFieldAccessorNode(function.BlockDiagram, new string[] { null });
             Wire.Create(function.BlockDiagram, structConstructorNode.OutputTerminals[0], structFieldAccessor.StructInputTerminal);
 
@@ -64,9 +64,9 @@ namespace Tests.Rebar.Unit.Compiler
         {
             get
             {
-                NIClassBuilder builder = PFTypes.Factory.DefineValueClass("struct.td");
-                builder.DefineField(PFTypes.Int32, "_0", NIFieldAccessPolicies.ReadWrite);
-                builder.DefineField(PFTypes.Boolean, "_1", NIFieldAccessPolicies.ReadWrite);
+                NIClassBuilder builder = NITypes.Factory.DefineValueClass("struct.td");
+                builder.DefineField(NITypes.Int32, "_0", NIFieldAccessPolicies.ReadWrite);
+                builder.DefineField(NITypes.Boolean, "_1", NIFieldAccessPolicies.ReadWrite);
                 return builder.CreateType();
             }
         }

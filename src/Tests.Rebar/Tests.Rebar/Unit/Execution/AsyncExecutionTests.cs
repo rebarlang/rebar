@@ -14,7 +14,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
-            ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(yieldNode.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -28,10 +28,10 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             var yieldNode0 = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
-            ConnectConstantToInputTerminal(yieldNode0.InputTerminals[0], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(yieldNode0.InputTerminals[0], NITypes.Int32, 5, false);
             var yieldNode1 = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
-            ConnectConstantToInputTerminal(yieldNode1.InputTerminals[0], PFTypes.Int32, 6, false);
-            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            ConnectConstantToInputTerminal(yieldNode1.InputTerminals[0], NITypes.Int32, 6, false);
+            var add = new FunctionalNode(function.BlockDiagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(function.BlockDiagram, yieldNode0.OutputTerminals[0], add.InputTerminals[0]);
             Wire.Create(function.BlockDiagram, yieldNode1.OutputTerminals[0], add.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(add.OutputTerminals[2]);
@@ -47,12 +47,12 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode some = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
-            ConnectConstantToInputTerminal(some.InputTerminals[0], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(some.InputTerminals[0], NITypes.Int32, 5, false);
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Mutable);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, 0, true);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, 0, true);
             FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
             var yieldNode = new FunctionalNode(frame.Diagram, Signatures.YieldType);
             Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], yieldNode.InputTerminals[0]);
@@ -75,7 +75,7 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, none.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Mutable);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, 0, true);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, 0, true);
             FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
             var yieldNode = new FunctionalNode(frame.Diagram, Signatures.YieldType);
             Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], yieldNode.InputTerminals[0]);
@@ -99,7 +99,7 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode inspect = ConnectInspectToOutputTerminal(getNotifierValue.OutputTerminals[0]);
             var setNotifierValue = new FunctionalNode(function.BlockDiagram, Signatures.SetNotifierValueType);
             Wire.Create(function.BlockDiagram, createNotifierPair.OutputTerminals[1], setNotifierValue.InputTerminals[0]);
-            ConnectConstantToInputTerminal(setNotifierValue.InputTerminals[1], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(setNotifierValue.InputTerminals[1], NITypes.Int32, 5, false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
@@ -119,9 +119,9 @@ namespace Tests.Rebar.Unit.Execution
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, inspect.OutputTerminals[0], unwrapOption.InputTerminals[0]);
-            var add = new FunctionalNode(frame.Diagram, Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32));
+            var add = new FunctionalNode(frame.Diagram, Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32));
             Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], add.InputTerminals[0]);
-            ConnectConstantToInputTerminal(add.InputTerminals[1], PFTypes.Int32, 0, false);
+            ConnectConstantToInputTerminal(add.InputTerminals[1], NITypes.Int32, 0, false);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 

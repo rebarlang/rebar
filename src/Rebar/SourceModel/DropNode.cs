@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
@@ -14,14 +15,14 @@ namespace Rebar.SourceModel
 
         protected DropNode()
         {
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void, "value"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, NITypes.Void, "value"));
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
         public static DropNode CreateDropNode(IElementCreateInfo elementCreateInfo)
         {
             var dropNode = new DropNode();
-            dropNode.Init(elementCreateInfo);
+            dropNode.Initialize(elementCreateInfo);
             dropNode.SetIconViewGeometry();
             return dropNode;
         }

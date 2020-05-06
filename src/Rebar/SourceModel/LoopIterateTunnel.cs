@@ -23,7 +23,7 @@ namespace Rebar.SourceModel
         public static LoopIterateTunnel CreateLoopIterateTunnel(IElementCreateInfo elementCreateInfo)
         {
             var loopIterateTunnel = new LoopIterateTunnel();
-            loopIterateTunnel.Init(elementCreateInfo);
+            loopIterateTunnel.Initialize(elementCreateInfo);
             return loopIterateTunnel;
         }
 

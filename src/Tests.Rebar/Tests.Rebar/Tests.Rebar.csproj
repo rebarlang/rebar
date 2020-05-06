@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	<NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
@@ -39,6 +40,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	<NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVMSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -56,18 +58,20 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="NationalInstruments.Compiler">
-      <HintPath>$(InstallLocation)\NationalInstruments.Compiler.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Core">
-      <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.Core.dll</HintPath>
     </Reference>
-    <Reference Include="NationalInstruments.ExecutionFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="NationalInstruments.ExecutionFramework">
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
+	</Reference>
     <Reference Include="NationalInstruments.PlatformFramework">
-      <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.RuntimeSerialization, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(InstallLocation)\NationalInstruments.RuntimeSerialization.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.RuntimeSerialization.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">

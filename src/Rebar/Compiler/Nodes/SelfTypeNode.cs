@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -13,7 +14,7 @@ namespace Rebar.Compiler.Nodes
             Mode = mode;
             foreach (int i in Enumerable.Range(0, inputCount))
             {
-                CreateTerminal(Direction.Input, PFTypes.Void, $"type{i}");
+                CreateTerminal(Direction.Input, NITypes.Void, $"type{i}");
             }
         }
 

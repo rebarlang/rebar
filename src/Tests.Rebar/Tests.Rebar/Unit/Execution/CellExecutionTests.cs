@@ -14,7 +14,7 @@ namespace Tests.Rebar.Unit.Execution
         {
             DfirRoot function = DfirRoot.Create();
             FunctionalNode createShared = new FunctionalNode(function.BlockDiagram, Signatures.SharedCreateType);
-            ConnectConstantToInputTerminal(createShared.InputTerminals[0], PFTypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(createShared.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode createCopy = new FunctionalNode(function.BlockDiagram, Signatures.CreateCopyType);
             Wire.Create(function.BlockDiagram, createShared.OutputTerminals[0], createCopy.InputTerminals[0]);
             FunctionalNode getCellValue0 = new FunctionalNode(function.BlockDiagram, Signatures.SharedGetValueType),

@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -9,13 +10,13 @@ namespace Rebar.Compiler.Nodes
     {
         public StructFieldAccessorNode(Node parentNode, string[] fieldNames) : base(parentNode)
         {
-            StructType = PFTypes.Void;
-            StructInputTerminal = CreateTerminal(Direction.Input, PFTypes.Void, "struct");
+            StructType = NITypes.Void;
+            StructInputTerminal = CreateTerminal(Direction.Input, NITypes.Void, "struct");
             FieldNames = fieldNames;
 
             foreach (var fieldNamePair in fieldNames.Zip(Enumerable.Range(0, fieldNames.Length)))
             {
-                CreateTerminal(Direction.Output, PFTypes.Void, fieldNamePair.Key ?? $"field{fieldNamePair.Value}");
+                CreateTerminal(Direction.Output, NITypes.Void, fieldNamePair.Key ?? $"field{fieldNamePair.Value}");
             }
         }
 

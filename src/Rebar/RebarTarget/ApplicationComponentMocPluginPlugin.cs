@@ -9,9 +9,9 @@ using Rebar.Compiler;
 
 namespace Rebar.RebarTarget
 {
-    [Export(typeof(IComponentMocPluginPlugin))]
+    [Export(typeof(ComponentMocPluginPlugin))]
     [PartCreationPolicy(CreationPolicy.Shared)]
-    internal class ApplicationComponentMocPluginPlugin : ComponentMocPluginPluginBase
+    internal class ApplicationComponentMocPluginPlugin : ComponentMocPluginPlugin
     {
         public static readonly DfirRootRuntimeType ApplicationRuntimeType = new DfirRootRuntimeType(ApplicationComponentSubtype.Identifier);
 
@@ -19,12 +19,16 @@ namespace Rebar.RebarTarget
 
         public override DfirRootRuntimeType RuntimeType => ApplicationRuntimeType;
 
-        public override IComponentIRBuilder CreateIRBuilder()
+        public override ComponentIRBuilder CreateIRBuilder()
         {
             return new ApplicationIRBuilder();
         }
 
-        public override MocReflector CreateMocReflector(ICompilableModel source, ReflectionCancellationToken reflectionCancellationToken, Envoy buildSpecSource, SpecAndQName specAndQName)
+        public override MocReflector CreateMocReflector(
+            ICompilableModel source,
+            ReflectionCancellationToken reflectionCancellationToken,
+            Envoy buildSpecSource,
+            CompileSpecification compileSpecification)
         {
             return new ApplicationComponentMocReflector(
                 source,
@@ -32,12 +36,12 @@ namespace Rebar.RebarTarget
                 ScheduledActivityManager,
                 AdditionalErrorTexts,
                 buildSpecSource,
-                specAndQName);
+                compileSpecification);
         }
 
-        public override IEnumerable<IDfirTransformBase> GetSemanticTransforms(BuildSpec buildSpec)
+        /// <inheritdoc />
+        public override IEnumerable<IDfirTransformBase> GetSemanticTransforms()
         {
-            yield return new RebarSupportedTargetTransform();
             yield return new ReflectErrorsTransform(CompilePhase.SemanticAnalysis);
         }
     }

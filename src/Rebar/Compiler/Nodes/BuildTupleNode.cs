@@ -1,4 +1,4 @@
-﻿using System;
+﻿using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -9,10 +9,10 @@ namespace Rebar.Compiler.Nodes
         public BuildTupleNode(Diagram parentDiagram, int inputCount)
             : base(parentDiagram)
         {
-            CreateTerminal(Direction.Output, PFTypes.Void, "out");
+            CreateTerminal(Direction.Output, NITypes.Void, "out");
             for (int i = 0; i < inputCount; ++i)
             {
-                CreateTerminal(Direction.Input, PFTypes.Void, $"in_{i}");
+                CreateTerminal(Direction.Input, NITypes.Void, $"in_{i}");
             }
         }
 

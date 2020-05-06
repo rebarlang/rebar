@@ -30,7 +30,7 @@ namespace Rebar.RebarTarget
             CreatedDate = DateTime.Now;
             ExecutionTarget = target;
             CompiledName = runtimeIdentity.EditorName;
-            RuntimeName = FunctionCompileHandler.FunctionLLVMName((SpecAndQName)runtimeIdentity);
+            RuntimeName = FunctionCompileHandler.FunctionLLVMName(runtimeIdentity.EditorName);
             _llvmContext = context;
             IsAsync = isAsync;
         }
@@ -41,7 +41,7 @@ namespace Rebar.RebarTarget
         public string CompiledComponentName => RuntimeNameHelper.GetComponentNameFromRuntimeString(RuntimeName);
 
         /// <inheritdoc />
-        public string CompiledName { get; }
+        public CompilableDefinitionName CompiledName { get; }
 
         /// <inheritdoc />
         public DateTime CreatedDate { get; }
@@ -108,17 +108,19 @@ namespace Rebar.RebarTarget
         public event PropertyChangedEventHandler PropertyChanged;
 
         /// <inheritdoc />
-        public void Abort()
+        public Task AbortAsync()
         {
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
-        public void StartRun()
+        public Task BeginRunAsync()
         {
             CurrentSimpleExecutionState = DefaultExecutionState.RunningTopLevel;
             _llvmContext.ExecuteFunctionTopLevel(RuntimeName, IsAsync);
             ExecutionStopped?.Invoke(this, new ExecutionStoppedEventArgs(this));
             CurrentSimpleExecutionState = DefaultExecutionState.Idle;
+            return Task.CompletedTask;
         }
 
         #region IPanelExecutable implementation

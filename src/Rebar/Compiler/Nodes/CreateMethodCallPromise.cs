@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 
 namespace Rebar.Compiler.Nodes
 {
     internal class CreateMethodCallPromise : DfirNode
     {
-        public CreateMethodCallPromise(Node parentNode, NIType signature, ExtendedQualifiedName targetName) : base(parentNode)
+        public CreateMethodCallPromise(Node parentNode, NIType signature, CompilableDefinitionName targetName) : base(parentNode)
         {
-            PromiseTerminal = CreateTerminal(Direction.Output, PFTypes.Void, "promise");
+            PromiseTerminal = CreateTerminal(Direction.Output, NITypes.Void, "promise");
             foreach (NIType parameter in signature.GetParameters().Where(p => p.GetInputParameterPassingRule() == NIParameterPassingRule.Required))
             {
-                CreateTerminal(Direction.Input, PFTypes.Void, parameter.GetName());
+                CreateTerminal(Direction.Input, NITypes.Void, parameter.GetName());
             }
             Signature = signature;
             TargetName = targetName;
@@ -31,7 +32,7 @@ namespace Rebar.Compiler.Nodes
 
         public NIType Signature { get; }
 
-        public ExtendedQualifiedName TargetName { get; }
+        public CompilableDefinitionName TargetName { get; }
 
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {

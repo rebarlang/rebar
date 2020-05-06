@@ -36,7 +36,7 @@ namespace Rebar.RebarTarget.LLVM
                 string groupName = asyncStateGroup.Label;
                 if (asyncStateGroup.MaxFireCount > 1)
                 {
-                    fireCountFields[asyncStateGroup] = SharedData.AllocationSet.CreateStateField($"{groupName}FireCount", PFTypes.Int32);
+                    fireCountFields[asyncStateGroup] = SharedData.AllocationSet.CreateStateField($"{groupName}FireCount", NITypes.Int32);
                 }
             }
             SharedData.AllocationSet.InitializeStateType(module, functionName);

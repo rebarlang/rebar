@@ -12,7 +12,8 @@ namespace Rebar.Design
     [ExportProvideViewModels(typeof(FunctionDiagramEditor))]
     public class FunctionViewModelProvider : ViewModelProvider
     {
-        public FunctionViewModelProvider()
+        /// <inheritdoc />
+        protected override void AddSupportedModels()
         {
             AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
             AddSupportedModel<Wire>(w => new FunctionWireViewModel(w));

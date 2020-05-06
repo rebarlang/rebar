@@ -40,18 +40,18 @@ namespace Rebar.SourceModel
 
         private Constructor()
         {
-            OutputTerminal = new NodeTerminal(Direction.Output, PFTypes.Void, "value");
+            OutputTerminal = new NodeTerminal(NationalInstruments.CommonModel.Direction.Output, NITypes.Void, "value");
             FixedTerminals = new OwnerComponentCollection(this);
             FixedTerminals.Add(OutputTerminal);
             TypeName = QualifiedName.Empty;
-            Type = PFTypes.Void;
+            Type = NITypes.Void;
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
         public static Constructor CreateConstructor(IElementCreateInfo elementCreateInfo)
         {
             var constructor = new Constructor();
-            constructor.Init(elementCreateInfo);
+            constructor.Initialize(elementCreateInfo);
             return constructor;
         }
 
@@ -263,7 +263,7 @@ namespace Rebar.SourceModel
                     while (newFieldCount > InputTerminals.Count())
                     {
                         int index = InputTerminals.Count();
-                        FixedTerminals.Add(new ConstructorTerminal(PFTypes.Void, $"element{index}"));
+                        FixedTerminals.Add(new ConstructorTerminal(NITypes.Void, $"element{index}"));
                     }
                     foreach (var pair in FixedTerminals.Skip(1).Cast<ConstructorTerminal>().Zip(structFields))
                     {
@@ -293,7 +293,7 @@ namespace Rebar.SourceModel
         }
 
         public ConstructorTerminal(NIType type, string name)
-            : base(Direction.Input, type, name)
+            : base(NationalInstruments.CommonModel.Direction.Input, type, name)
         {
         }
 
@@ -301,7 +301,7 @@ namespace Rebar.SourceModel
         public static ConstructorTerminal CreateConstructorTerminal(IElementCreateInfo elementCreateInfo)
         {
             var constructorTerminal = new ConstructorTerminal();
-            constructorTerminal.Init(elementCreateInfo);
+            constructorTerminal.Initialize(elementCreateInfo);
             return constructorTerminal;
         }
 

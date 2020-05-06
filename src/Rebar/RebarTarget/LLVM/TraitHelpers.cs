@@ -54,7 +54,7 @@ namespace Rebar.RebarTarget.LLVM
             NIType signature = functionBuilder.CreateType();
 
             NIType innerType;
-            if (droppedValueType == PFTypes.String)
+            if (droppedValueType == NITypes.String)
             {
                 dropFunctionCreator = MakeCommonFunctionImporter(CommonModules.DropStringName);
                 return true;

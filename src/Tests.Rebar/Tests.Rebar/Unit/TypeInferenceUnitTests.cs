@@ -14,7 +14,7 @@ namespace Tests.Rebar.Unit
         public void LiteralTypeAndTypeVariable_Unify_BothBecomeLiteralType()
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
-            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32);
+            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32);
             TypeVariableReference typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
 
             typeVariableSet.Unify(typeVariable, literalReference, new TestTypeUnificationResult());
@@ -27,7 +27,7 @@ namespace Tests.Rebar.Unit
         public void TwoTypeVariables_Unify_BothBecomeSingleTypeVariable()
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
-            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32);
+            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32);
             TypeVariableReference typeVariable1 = typeVariableSet.CreateReferenceToNewTypeVariable(),
                 typeVariable2 = typeVariableSet.CreateReferenceToNewTypeVariable();
 
@@ -42,8 +42,8 @@ namespace Tests.Rebar.Unit
         public void TwoDifferentLiteralTypes_Unify_TypeMismatchReported()
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
-            TypeVariableReference literalReference1 = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32),
-                literalReference2 = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Boolean);
+            TypeVariableReference literalReference1 = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32),
+                literalReference2 = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean);
             var testTypeUnificationResult = new TestTypeUnificationResult();
 
             typeVariableSet.Unify(literalReference2, literalReference1, testTypeUnificationResult);
@@ -55,8 +55,8 @@ namespace Tests.Rebar.Unit
         public void LiteralTypeAndConstructorType_Unify_TypeMismatchReported()
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
-            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32),
-                constructorReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32.CreateVector());
+            TypeVariableReference literalReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32),
+                constructorReference = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32.CreateVector());
             var testTypeUnificationResult = new TestTypeUnificationResult();
 
             typeVariableSet.Unify(constructorReference, literalReference, testTypeUnificationResult);
@@ -73,7 +73,7 @@ namespace Tests.Rebar.Unit
             TypeVariableReference innerTypeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
             TypeVariableReference constructorType1 = typeVariableSet.CreateReferenceToOptionType(innerTypeVariable);
             TypeVariableReference constructorType2 = typeVariableSet.CreateReferenceToOptionType(
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32));
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32));
 
             typeVariableSet.Unify(constructorType1, constructorType2, new TestTypeUnificationResult());
 
@@ -85,9 +85,9 @@ namespace Tests.Rebar.Unit
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
             TypeVariableReference constructorType1 = typeVariableSet.CreateReferenceToOptionType(
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32));
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32));
             TypeVariableReference constructorType2 = typeVariableSet.CreateReferenceToOptionType(
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Boolean));
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean));
             var typeUnificationResult = new TestTypeUnificationResult();
 
             typeVariableSet.Unify(constructorType1, constructorType2, typeUnificationResult);
@@ -100,9 +100,9 @@ namespace Tests.Rebar.Unit
         {
             TypeVariableSet typeVariableSet = new TypeVariableSet();
             TypeVariableReference constructorType1 = typeVariableSet.CreateReferenceToOptionType(
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32));
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32));
             TypeVariableReference constructorType2 = typeVariableSet.CreateReferenceToLockingCellType(
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32));
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32));
             var typeUnificationResult = new TestTypeUnificationResult();
 
             typeVariableSet.Unify(constructorType1, constructorType2, typeUnificationResult);
@@ -120,7 +120,7 @@ namespace Tests.Rebar.Unit
             TypeVariableSet typeVariableSet = new TypeVariableSet();
             TypeVariableReference literalReference = typeVariableSet.CreateReferenceToReferenceType(
                 true,
-                typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32),
+                typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32),
                 typeVariableSet.CreateReferenceToLifetimeType(Lifetime.Static));
             var constraint = new SimpleTraitConstraint("Copy");
             TypeVariableReference typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable(constraint.ToEnumerable());
@@ -137,7 +137,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromIntegerType_TypeVariableReferenceHasExpectedTraits()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference integerType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32);
+            TypeVariableReference integerType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32);
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, integerType, "Display");
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, integerType, "Clone");
@@ -148,7 +148,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromBooleanType_TypeVariableReferenceHasExpectedTraits()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference booleanType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Boolean);
+            TypeVariableReference booleanType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean);
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, booleanType, "Display");
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, booleanType, "Clone");
@@ -159,7 +159,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromStringType_TypeVariableReferenceHasExpectedTraits()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference stringType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String);
+            TypeVariableReference stringType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.String);
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, stringType, "Display");
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, stringType, "Clone");
@@ -189,7 +189,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromOptionOfCopyType_TypeVariableReferenceHasCopyTrait()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference optionType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32.CreateOption());
+            TypeVariableReference optionType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32.CreateOption());
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, optionType, "Copy");
         }
@@ -198,7 +198,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromOptionOfNonCopyType_TypeVariableReferenceDoesNotHaveCopyTrait()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference optionType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String.CreateOption());
+            TypeVariableReference optionType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.String.CreateOption());
 
             AssertTypeVariableReferenceDoesNotHaveParameterlessTrait(typeVariableSet, optionType, "Copy");
         }
@@ -207,7 +207,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromSharedType_TypeVariableHasCloneAndDropTraits()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference sharedType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String.CreateShared());
+            TypeVariableReference sharedType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.String.CreateShared());
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, sharedType, "Clone");
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, sharedType, "Drop");
@@ -217,7 +217,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromVectorOfCloneType_TypeVariableHasCloneTrait()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String.CreateVector());
+            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.String.CreateVector());
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, vectorType, "Clone");
         }
@@ -226,7 +226,7 @@ namespace Tests.Rebar.Unit
         public void CreateTypeVariableReferenceFromVectorOfCopyType_TypeVariableHasCloneTrait()
         {
             var typeVariableSet = new TypeVariableSet();
-            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Int32.CreateVector());
+            TypeVariableReference vectorType = typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Int32.CreateVector());
 
             AssertTypeVariableReferenceHasParameterlessTrait(typeVariableSet, vectorType, "Clone");
         }

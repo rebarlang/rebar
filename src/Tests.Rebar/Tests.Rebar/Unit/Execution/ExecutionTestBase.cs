@@ -1,6 +1,4 @@
-﻿#define LLVM_TEST
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
@@ -43,19 +41,14 @@ namespace Tests.Rebar.Unit.Execution
         internal FunctionalNode CreateFakeDropWithId(Diagram parentDiagram, int id)
         {
             FunctionalNode fakeDropCreate = new FunctionalNode(parentDiagram, Signatures.FakeDropCreateType);
-            ConnectConstantToInputTerminal(fakeDropCreate.InputTerminals[0], PFTypes.Int32, id, false);
+            ConnectConstantToInputTerminal(fakeDropCreate.InputTerminals[0], NITypes.Int32, id, false);
             return fakeDropCreate;
         }
 
         protected void AssertByteArrayIsBoolean(byte[] region, bool value)
         {
-#if LLVM_TEST
             Assert.AreEqual(1, region.Length);
             Assert.AreEqual(value ? 1 : 0, region[0]);
-#else
-            Assert.AreEqual(4, region.Length);
-            Assert.AreEqual(value ? 1 : 0, BitConverter.ToInt32(region, 0));
-#endif
         }
 
         protected void AssertByteArrayIsInt8(byte[] region, sbyte value)

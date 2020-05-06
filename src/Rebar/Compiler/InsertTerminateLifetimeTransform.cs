@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -74,7 +75,7 @@ namespace Rebar.Compiler
 
         private LiveVariable PullLiveVariableUpToNextHigherDiagram(LiveVariable liveVariable)
         {
-            Tunnel outputTunnel = liveVariable.Terminal.ParentDiagram.ParentStructure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            Tunnel outputTunnel = liveVariable.Terminal.ParentDiagram.ParentStructure.CreateTunnel(Direction.Output, TunnelMode.LastValue, NITypes.Void, NITypes.Void);
             Terminal inputTerminal = outputTunnel.InputTerminals[0],
                 outputTerminal = outputTunnel.OutputTerminals[0];
             CreateNodeFacadesTransform.CreateTunnelNodeFacade(outputTunnel);

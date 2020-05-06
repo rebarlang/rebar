@@ -20,7 +20,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(function.BlockDiagram);
             var lockTunnel = CreateLockTunnel(frame);
             FunctionalNode createLockingCell = ConnectCreateLockingCellToInputTerminal(lockTunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -38,7 +38,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(function.BlockDiagram);
             var lockTunnel = CreateLockTunnel(frame);
             FunctionalNode createLockingCell = ConnectCreateLockingCellToInputTerminal(lockTunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], NITypes.Int32, false);
             var lifetimeAssociation = new LifetimeVariableAssociation();
 
             RunSemanticAnalysisUpToSetVariableTypes(function, null, null, lifetimeAssociation);
@@ -57,7 +57,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             var lockTunnel = CreateLockTunnel(frame);
-            ConnectConstantToInputTerminal(lockTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(lockTunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 

@@ -7,7 +7,7 @@ namespace Rebar.Compiler.Nodes
     {
         public BorrowTunnel(Structure parentStructure, Common.BorrowMode borrowMode) : base(parentStructure)
         {
-            CreateStandardTerminals(Direction.Input, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Input, 1u, 1u, NITypes.Void);
             BorrowMode = borrowMode;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;

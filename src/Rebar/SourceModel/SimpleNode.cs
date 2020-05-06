@@ -20,9 +20,9 @@ namespace Rebar.SourceModel
         public override IEnumerable<Element> Components => FixedTerminals;
 
         /// <inheritdoc />
-        protected override void Init(IElementCreateInfo info)
+        protected override void Initialize(IElementCreateInfo info)
         {
-            base.Init(info);
+            base.Initialize(info);
             SetIconViewGeometry();
         }
 

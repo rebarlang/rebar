@@ -24,7 +24,7 @@ namespace Rebar.SourceModel
         public static AssignNode CreateAssignNode(IElementCreateInfo elementCreateInfo)
         {
             var assignNode = new AssignNode();
-            assignNode.Init(elementCreateInfo);
+            assignNode.Initialize(elementCreateInfo);
             return assignNode;
         }
 
@@ -45,7 +45,7 @@ namespace Rebar.SourceModel
         public static ExchangeValues CreateExchangeValues(IElementCreateInfo elementCreateInfo)
         {
             var exchangeValues = new ExchangeValues();
-            exchangeValues.Init(elementCreateInfo);
+            exchangeValues.Initialize(elementCreateInfo);
             return exchangeValues;
         }
 
@@ -65,7 +65,7 @@ namespace Rebar.SourceModel
         public static CreateCopyNode CreateCreateCopyNode(IElementCreateInfo elementCreateInfo)
         {
             var createCopyNode = new CreateCopyNode();
-            createCopyNode.Init(elementCreateInfo);
+            createCopyNode.Initialize(elementCreateInfo);
             return createCopyNode;
         }
 
@@ -87,7 +87,7 @@ namespace Rebar.SourceModel
         public static SelectReferenceNode CreateSelectReferenceNode(IElementCreateInfo elementCreateInfo)
         {
             var selectReferenceNode = new SelectReferenceNode();
-            selectReferenceNode.Init(elementCreateInfo);
+            selectReferenceNode.Initialize(elementCreateInfo);
             return selectReferenceNode;
         }
 
@@ -111,7 +111,7 @@ namespace Rebar.SourceModel
         public static Output CreateOutput(IElementCreateInfo elementCreateInfo)
         {
             var outputNode = new Output();
-            outputNode.Init(elementCreateInfo);
+            outputNode.Initialize(elementCreateInfo);
             return outputNode;
         }
 
@@ -147,7 +147,7 @@ namespace Rebar.SourceModel
         public static Increment CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
             var increment = new Increment();
-            increment.Init(elementCreateInfo);
+            increment.Initialize(elementCreateInfo);
             return increment;
         }
 
@@ -164,7 +164,7 @@ namespace Rebar.SourceModel
         public static Not CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
             var not = new Not();
-            not.Init(elementCreateInfo);
+            not.Initialize(elementCreateInfo);
             return not;
         }
 
@@ -189,7 +189,7 @@ namespace Rebar.SourceModel
         public static Add CreateAdd(IElementCreateInfo elementCreateInfo)
         {
             var add = new Add();
-            add.Init(elementCreateInfo);
+            add.Initialize(elementCreateInfo);
             return add;
         }
 
@@ -206,7 +206,7 @@ namespace Rebar.SourceModel
         public static Subtract CreateSubtract(IElementCreateInfo elementCreateInfo)
         {
             var subtract = new Subtract();
-            subtract.Init(elementCreateInfo);
+            subtract.Initialize(elementCreateInfo);
             return subtract;
         }
 
@@ -223,7 +223,7 @@ namespace Rebar.SourceModel
         public static Multiply CreateMultiply(IElementCreateInfo elementCreateInfo)
         {
             var multiply = new Multiply();
-            multiply.Init(elementCreateInfo);
+            multiply.Initialize(elementCreateInfo);
             return multiply;
         }
 
@@ -240,7 +240,7 @@ namespace Rebar.SourceModel
         public static Divide CreateDivide(IElementCreateInfo elementCreateInfo)
         {
             var divide = new Divide();
-            divide.Init(elementCreateInfo);
+            divide.Initialize(elementCreateInfo);
             return divide;
         }
 
@@ -257,7 +257,7 @@ namespace Rebar.SourceModel
         public static Modulus CreateModulus(IElementCreateInfo elementCreateInfo)
         {
             var modulus = new Modulus();
-            modulus.Init(elementCreateInfo);
+            modulus.Initialize(elementCreateInfo);
             return modulus;
         }
 
@@ -274,7 +274,7 @@ namespace Rebar.SourceModel
         public static And CreateAdd(IElementCreateInfo elementCreateInfo)
         {
             var and = new And();
-            and.Init(elementCreateInfo);
+            and.Initialize(elementCreateInfo);
             return and;
         }
 
@@ -291,7 +291,7 @@ namespace Rebar.SourceModel
         public static Or CreateOr(IElementCreateInfo elementCreateInfo)
         {
             var or = new Or();
-            or.Init(elementCreateInfo);
+            or.Initialize(elementCreateInfo);
             return or;
         }
 
@@ -308,7 +308,7 @@ namespace Rebar.SourceModel
         public static Xor CreateXor(IElementCreateInfo elementCreateInfo)
         {
             var xor = new Xor();
-            xor.Init(elementCreateInfo);
+            xor.Initialize(elementCreateInfo);
             return xor;
         }
 
@@ -336,7 +336,7 @@ namespace Rebar.SourceModel
         public static AccumulateIncrement CreateAccumulateIncrement(IElementCreateInfo elementCreateInfo)
         {
             var accumulateIncrement = new AccumulateIncrement();
-            accumulateIncrement.Init(elementCreateInfo);
+            accumulateIncrement.Initialize(elementCreateInfo);
             return accumulateIncrement;
         }
 
@@ -353,7 +353,7 @@ namespace Rebar.SourceModel
         public static AccumulateNot CreateIncrement(IElementCreateInfo elementCreateInfo)
         {
             var accumulateNot = new AccumulateNot();
-            accumulateNot.Init(elementCreateInfo);
+            accumulateNot.Initialize(elementCreateInfo);
             return accumulateNot;
         }
 
@@ -378,7 +378,7 @@ namespace Rebar.SourceModel
         public static AccumulateAdd CreateAccumulateAdd(IElementCreateInfo elementCreateInfo)
         {
             var accumulateAdd = new AccumulateAdd();
-            accumulateAdd.Init(elementCreateInfo);
+            accumulateAdd.Initialize(elementCreateInfo);
             return accumulateAdd;
         }
 
@@ -395,7 +395,7 @@ namespace Rebar.SourceModel
         public static AccumulateSubtract CreateAccumulateSubtract(IElementCreateInfo elementCreateInfo)
         {
             var accumulateSubtract = new AccumulateSubtract();
-            accumulateSubtract.Init(elementCreateInfo);
+            accumulateSubtract.Initialize(elementCreateInfo);
             return accumulateSubtract;
         }
 
@@ -412,7 +412,7 @@ namespace Rebar.SourceModel
         public static AccumulateMultiply CreateAccumulateMultiply(IElementCreateInfo elementCreateInfo)
         {
             var accumulateMultiply = new AccumulateMultiply();
-            accumulateMultiply.Init(elementCreateInfo);
+            accumulateMultiply.Initialize(elementCreateInfo);
             return accumulateMultiply;
         }
 
@@ -429,7 +429,7 @@ namespace Rebar.SourceModel
         public static AccumulateDivide CreateAccumulateAdd(IElementCreateInfo elementCreateInfo)
         {
             var accumulateDivide = new AccumulateDivide();
-            accumulateDivide.Init(elementCreateInfo);
+            accumulateDivide.Initialize(elementCreateInfo);
             return accumulateDivide;
         }
 
@@ -446,7 +446,7 @@ namespace Rebar.SourceModel
         public static AccumulateAnd CreateAccumulateAnd(IElementCreateInfo elementCreateInfo)
         {
             var accumulateAnd = new AccumulateAnd();
-            accumulateAnd.Init(elementCreateInfo);
+            accumulateAnd.Initialize(elementCreateInfo);
             return accumulateAnd;
         }
 
@@ -463,7 +463,7 @@ namespace Rebar.SourceModel
         public static AccumulateOr CreateAccumulateOr(IElementCreateInfo elementCreateInfo)
         {
             var accumulateOr = new AccumulateOr();
-            accumulateOr.Init(elementCreateInfo);
+            accumulateOr.Initialize(elementCreateInfo);
             return accumulateOr;
         }
 
@@ -480,7 +480,7 @@ namespace Rebar.SourceModel
         public static AccumulateXor CreateAccumulateXor(IElementCreateInfo elementCreateInfo)
         {
             var accumulateXor = new AccumulateXor();
-            accumulateXor.Init(elementCreateInfo);
+            accumulateXor.Initialize(elementCreateInfo);
             return accumulateXor;
         }
 
@@ -497,7 +497,7 @@ namespace Rebar.SourceModel
         public static Equal CreateEqual(IElementCreateInfo elementCreateInfo)
         {
             var equal = new Equal();
-            equal.Init(elementCreateInfo);
+            equal.Initialize(elementCreateInfo);
             return equal;
         }
 
@@ -514,7 +514,7 @@ namespace Rebar.SourceModel
         public static NotEqual CreateNotEqual(IElementCreateInfo elementCreateInfo)
         {
             var notEqual = new NotEqual();
-            notEqual.Init(elementCreateInfo);
+            notEqual.Initialize(elementCreateInfo);
             return notEqual;
         }
 
@@ -531,7 +531,7 @@ namespace Rebar.SourceModel
         public static LessThan CreateLessThan(IElementCreateInfo elementCreateInfo)
         {
             var lessThan = new LessThan();
-            lessThan.Init(elementCreateInfo);
+            lessThan.Initialize(elementCreateInfo);
             return lessThan;
         }
 
@@ -548,7 +548,7 @@ namespace Rebar.SourceModel
         public static LessEqual CreateLessEqual(IElementCreateInfo elementCreateInfo)
         {
             var lessEqual = new LessEqual();
-            lessEqual.Init(elementCreateInfo);
+            lessEqual.Initialize(elementCreateInfo);
             return lessEqual;
         }
 
@@ -565,7 +565,7 @@ namespace Rebar.SourceModel
         public static GreaterThan CreateGreaterThan(IElementCreateInfo elementCreateInfo)
         {
             var greaterThan = new GreaterThan();
-            greaterThan.Init(elementCreateInfo);
+            greaterThan.Initialize(elementCreateInfo);
             return greaterThan;
         }
 
@@ -582,7 +582,7 @@ namespace Rebar.SourceModel
         public static GreaterEqual CreateGreaterEqual(IElementCreateInfo elementCreateInfo)
         {
             var greaterEqual = new GreaterEqual();
-            greaterEqual.Init(elementCreateInfo);
+            greaterEqual.Initialize(elementCreateInfo);
             return greaterEqual;
         }
 
@@ -609,7 +609,7 @@ namespace Rebar.SourceModel
         public static Range CreateRange(IElementCreateInfo elementCreateInfo)
         {
             var range = new Range();
-            range.Init(elementCreateInfo);
+            range.Initialize(elementCreateInfo);
             return range;
         }
 
@@ -639,7 +639,7 @@ namespace Rebar.SourceModel
         public static SomeConstructorNode CreateSomeConstructorNode(IElementCreateInfo elementCreateInfo)
         {
             var someConstructor = new SomeConstructorNode();
-            someConstructor.Init(elementCreateInfo);
+            someConstructor.Initialize(elementCreateInfo);
             return someConstructor;
         }
 
@@ -667,7 +667,7 @@ namespace Rebar.SourceModel
         public static NoneConstructorNode CreateNoneConstructorNode(IElementCreateInfo elementCreateInfo)
         {
             var noneConstructor = new NoneConstructorNode();
-            noneConstructor.Init(elementCreateInfo);
+            noneConstructor.Initialize(elementCreateInfo);
             return noneConstructor;
         }
 
@@ -695,7 +695,7 @@ namespace Rebar.SourceModel
         public static UnwrapOption CreateUnwrapOption(IElementCreateInfo elementCreateInfo)
         {
             var unwrapOption = new UnwrapOption();
-            unwrapOption.Init(elementCreateInfo);
+            unwrapOption.Initialize(elementCreateInfo);
             return unwrapOption;
         }
 
@@ -726,7 +726,7 @@ namespace Rebar.SourceModel
         public static StringFromSlice CreateStringFromSlice(IElementCreateInfo elementCreateInfo)
         {
             var stringFromSlice = new StringFromSlice();
-            stringFromSlice.Init(elementCreateInfo);
+            stringFromSlice.Initialize(elementCreateInfo);
             return stringFromSlice;
         }
 
@@ -750,7 +750,7 @@ namespace Rebar.SourceModel
         public static StringToSlice CreateStringToSlice(IElementCreateInfo elementCreateInfo)
         {
             var stringToSlice = new StringToSlice();
-            stringToSlice.Init(elementCreateInfo);
+            stringToSlice.Initialize(elementCreateInfo);
             return stringToSlice;
         }
 
@@ -777,7 +777,7 @@ namespace Rebar.SourceModel
         public static StringConcat CreateStringConcat(IElementCreateInfo elementCreateInfo)
         {
             var stringConcat = new StringConcat();
-            stringConcat.Init(elementCreateInfo);
+            stringConcat.Initialize(elementCreateInfo);
             return stringConcat;
         }
 
@@ -801,7 +801,7 @@ namespace Rebar.SourceModel
         public static StringAppend CreateStringAppend(IElementCreateInfo elementCreateInfo)
         {
             var stringAppend = new StringAppend();
-            stringAppend.Init(elementCreateInfo);
+            stringAppend.Initialize(elementCreateInfo);
             return stringAppend;
         }
 
@@ -825,7 +825,7 @@ namespace Rebar.SourceModel
         public static StringSliceToStringSplitIterator CreateStringSliceToStringSplitIterator(IElementCreateInfo elementCreateInfo)
         {
             var stringSliceToStringSplitIterator = new StringSliceToStringSplitIterator();
-            stringSliceToStringSplitIterator.Init(elementCreateInfo);
+            stringSliceToStringSplitIterator.Initialize(elementCreateInfo);
             return stringSliceToStringSplitIterator;
         }
 
@@ -856,7 +856,7 @@ namespace Rebar.SourceModel
         public static VectorCreate CreateVectorCreate(IElementCreateInfo elementCreateInfo)
         {
             var vectorCreate = new VectorCreate();
-            vectorCreate.Init(elementCreateInfo);
+            vectorCreate.Initialize(elementCreateInfo);
             return vectorCreate;
         }
 
@@ -883,7 +883,7 @@ namespace Rebar.SourceModel
         public static VectorAppend CreateVectorAppend(IElementCreateInfo elementCreateInfo)
         {
             var vectorAppend = new VectorAppend();
-            vectorAppend.Init(elementCreateInfo);
+            vectorAppend.Initialize(elementCreateInfo);
             return vectorAppend;
         }
 
@@ -907,7 +907,7 @@ namespace Rebar.SourceModel
         public static VectorInsert CreateVectorInsert(IElementCreateInfo elementCreateInfo)
         {
             var vectorInsert = new VectorInsert();
-            vectorInsert.Init(elementCreateInfo);
+            vectorInsert.Initialize(elementCreateInfo);
             return vectorInsert;
         }
 
@@ -931,7 +931,7 @@ namespace Rebar.SourceModel
         public static VectorInitialize CreateVectorInitialize(IElementCreateInfo elementCreateInfo)
         {
             var vectorInitialize = new VectorInitialize();
-            vectorInitialize.Init(elementCreateInfo);
+            vectorInitialize.Initialize(elementCreateInfo);
             return vectorInitialize;
         }
 
@@ -955,7 +955,7 @@ namespace Rebar.SourceModel
         public static VectorRemoveLast CreateVectorRemoveLast(IElementCreateInfo elementCreateInfo)
         {
             var vectorRemoveLast = new VectorRemoveLast();
-            vectorRemoveLast.Init(elementCreateInfo);
+            vectorRemoveLast.Initialize(elementCreateInfo);
             return vectorRemoveLast;
         }
 
@@ -979,7 +979,7 @@ namespace Rebar.SourceModel
         public static VectorToSlice CreateVectorToSlice(IElementCreateInfo elementCreateInfo)
         {
             var vectorToSlice = new VectorToSlice();
-            vectorToSlice.Init(elementCreateInfo);
+            vectorToSlice.Initialize(elementCreateInfo);
             return vectorToSlice;
         }
 
@@ -1003,7 +1003,7 @@ namespace Rebar.SourceModel
         public static SliceIndex CreateSliceIndex(IElementCreateInfo elementCreateInfo)
         {
             var sliceIndex = new SliceIndex();
-            sliceIndex.Init(elementCreateInfo);
+            sliceIndex.Initialize(elementCreateInfo);
             return sliceIndex;
         }
 
@@ -1031,7 +1031,7 @@ namespace Rebar.SourceModel
         public static CreateLockingCell CreateCreateLockingCell(IElementCreateInfo elementCreateInfo)
         {
             var createLockingCell = new CreateLockingCell();
-            createLockingCell.Init(elementCreateInfo);
+            createLockingCell.Initialize(elementCreateInfo);
             return createLockingCell;
         }
 
@@ -1058,7 +1058,7 @@ namespace Rebar.SourceModel
         public static SharedCreate CreateSharedCreate(IElementCreateInfo elementCreateInfo)
         {
             var sharedCreate = new SharedCreate();
-            sharedCreate.Init(elementCreateInfo);
+            sharedCreate.Initialize(elementCreateInfo);
             return sharedCreate;
         }
 
@@ -1085,7 +1085,7 @@ namespace Rebar.SourceModel
         public static SharedGetValue CreateSharedGetValue(IElementCreateInfo elementCreateInfo)
         {
             var sharedGetValue = new SharedGetValue();
-            sharedGetValue.Init(elementCreateInfo);
+            sharedGetValue.Initialize(elementCreateInfo);
             return sharedGetValue;
         }
 
@@ -1116,7 +1116,7 @@ namespace Rebar.SourceModel
         public static OpenFileHandle CreateOpenFileHandle(IElementCreateInfo elementCreateInfo)
         {
             var openFileHandle = new OpenFileHandle();
-            openFileHandle.Init(elementCreateInfo);
+            openFileHandle.Initialize(elementCreateInfo);
             return openFileHandle;
         }
 
@@ -1140,7 +1140,7 @@ namespace Rebar.SourceModel
         public static ReadLineFromFileHandle CreateReadLineFromFileHandle(IElementCreateInfo elementCreateInfo)
         {
             var readLineFromFileHandle = new ReadLineFromFileHandle();
-            readLineFromFileHandle.Init(elementCreateInfo);
+            readLineFromFileHandle.Initialize(elementCreateInfo);
             return readLineFromFileHandle;
         }
 
@@ -1164,7 +1164,7 @@ namespace Rebar.SourceModel
         public static WriteStringToFileHandle CreateWriteStringToFileHandle(IElementCreateInfo elementCreateInfo)
         {
             var writeStringToFileHandle = new WriteStringToFileHandle();
-            writeStringToFileHandle.Init(elementCreateInfo);
+            writeStringToFileHandle.Initialize(elementCreateInfo);
             return writeStringToFileHandle;
         }
 
@@ -1192,7 +1192,7 @@ namespace Rebar.SourceModel
         public static Yield CreateYield(IElementCreateInfo elementCreateInfo)
         {
             var yield = new Yield();
-            yield.Init(elementCreateInfo);
+            yield.Initialize(elementCreateInfo);
             return yield;
         }
 
@@ -1220,7 +1220,7 @@ namespace Rebar.SourceModel
         public static NotifierCreate CreateNotifierCreate(IElementCreateInfo elementCreateInfo)
         {
             var notifierCreate = new NotifierCreate();
-            notifierCreate.Init(elementCreateInfo);
+            notifierCreate.Initialize(elementCreateInfo);
             return notifierCreate;
         }
 
@@ -1244,7 +1244,7 @@ namespace Rebar.SourceModel
         public static SetNotifierValue CreateSetNotifierValue(IElementCreateInfo elementCreateInfo)
         {
             var setNotifierValue = new SetNotifierValue();
-            setNotifierValue.Init(elementCreateInfo);
+            setNotifierValue.Initialize(elementCreateInfo);
             return setNotifierValue;
         }
 
@@ -1268,7 +1268,7 @@ namespace Rebar.SourceModel
         public static GetNotifierValue CreateGetNotifierValue(IElementCreateInfo elementCreateInfo)
         {
             var getNotifierValue = new GetNotifierValue();
-            getNotifierValue.Init(elementCreateInfo);
+            getNotifierValue.Initialize(elementCreateInfo);
             return getNotifierValue;
         }
 
@@ -1299,7 +1299,7 @@ namespace Rebar.SourceModel
         public static ImmutablePassthroughNode CreateImmutablePassthroughNode(IElementCreateInfo elementCreateInfo)
         {
             var immutablePassthroughNode = new ImmutablePassthroughNode();
-            immutablePassthroughNode.Init(elementCreateInfo);
+            immutablePassthroughNode.Initialize(elementCreateInfo);
             return immutablePassthroughNode;
         }
 
@@ -1320,7 +1320,7 @@ namespace Rebar.SourceModel
         public static MutablePassthroughNode CreateMutablePassthroughNode(IElementCreateInfo elementCreateInfo)
         {
             var mutablePassthroughNode = new MutablePassthroughNode();
-            mutablePassthroughNode.Init(elementCreateInfo);
+            mutablePassthroughNode.Initialize(elementCreateInfo);
             return mutablePassthroughNode;
         }
 

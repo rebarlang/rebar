@@ -17,7 +17,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             Frame frame = Frame.Create(dfirRoot.BlockDiagram);
             Tunnel tunnel = CreateInputTunnel(frame);
-            ConnectConstantToInputTerminal(tunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(tunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -31,7 +31,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             Frame frame = Frame.Create(dfirRoot.BlockDiagram);
             Tunnel tunnel = CreateOutputTunnel(frame);
-            ConnectConstantToInputTerminal(tunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(tunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -46,7 +46,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(dfirRoot.BlockDiagram);
             Tunnel tunnel = CreateInputTunnel(frame);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(tunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -62,7 +62,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(dfirRoot.BlockDiagram);
             Tunnel tunnel = CreateOutputTunnel(frame);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(tunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -78,7 +78,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(dfirRoot.BlockDiagram);
             Tunnel tunnel = CreateOutputTunnel(frame);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(tunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 

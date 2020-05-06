@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
+using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -17,6 +19,11 @@ namespace Tests.Rebar.Unit.Compiler
 {
     public class CompilerTestBase
     {
+        protected CompilableDefinitionName CreateTestCompilableDefinitionName(string definitionName)
+        {
+            return new CompilableDefinitionName(new QualifiedName(definitionName), "component");
+        }
+
         protected void RunSemanticAnalysisUpToCreateNodeFacades(DfirRoot dfirRoot, CompileCancellationToken cancellationToken = null)
         {
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
@@ -68,7 +75,7 @@ namespace Tests.Rebar.Unit.Compiler
             cancellationToken = cancellationToken ?? new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
             var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
-            var emptyDictionary = new Dictionary<ExtendedQualifiedName, bool>();
+            var emptyDictionary = new Dictionary<CompilableDefinitionName, bool>();
             new AsyncNodeDecompositionTransform(emptyDictionary, emptyDictionary, nodeInsertionTypeUnificationResultFactory)
                 .Execute(dfirRoot, cancellationToken);
         }
@@ -76,8 +83,8 @@ namespace Tests.Rebar.Unit.Compiler
         internal FunctionCompileResult RunSemanticAnalysisUpToLLVMCodeGeneration(
             DfirRoot dfirRoot,
             string compiledFunctionName,
-            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
-            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic)
+            Dictionary<CompilableDefinitionName, bool> calleesIsYielding,
+            Dictionary<CompilableDefinitionName, bool> calleesMayPanic)
         {
             var cancellationToken = new CompileCancellationToken();
             RunCompilationUpToAutomaticNodeInsertion(dfirRoot, cancellationToken);
@@ -86,7 +93,7 @@ namespace Tests.Rebar.Unit.Compiler
 
         protected NIType DefineGenericOutputFunctionSignature()
         {
-            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction("genericOutput");
+            NIFunctionBuilder functionBuilder = NITypes.Factory.DefineFunction("genericOutput");
             NIType typeParameter = Signatures.AddGenericDataTypeParameter(functionBuilder, "TData");
             return functionBuilder.AddOutput(typeParameter, "out").CreateType();
         }
@@ -126,12 +133,12 @@ namespace Tests.Rebar.Unit.Compiler
 
         protected Tunnel CreateInputTunnel(Structure structure)
         {
-            return structure.CreateTunnel(Direction.Input, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            return structure.CreateTunnel(Direction.Input, TunnelMode.LastValue, NITypes.Void, NITypes.Void);
         }
 
         protected Tunnel CreateOutputTunnel(Structure structure)
         {
-            return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, PFTypes.Void, PFTypes.Void);
+            return structure.CreateTunnel(Direction.Output, TunnelMode.LastValue, NITypes.Void, NITypes.Void);
         }
 
         internal UnwrapOptionTunnel CreateUnwrapOptionTunnel(Frame frame)

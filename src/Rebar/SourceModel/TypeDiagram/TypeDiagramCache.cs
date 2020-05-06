@@ -29,13 +29,11 @@ namespace Rebar.SourceModel.TypeDiagram
         public static TypeDiagramCache CreateTypeDiagramCache(IElementCreateInfo elementCreateInfo)
         {
             var typeDiagramCache = new TypeDiagramCache();
-            typeDiagramCache.Init(elementCreateInfo);
+            typeDiagramCache.Initialize(elementCreateInfo);
             return typeDiagramCache;
         }
 
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
-
-        public override RecursionSupport Recursion => RecursionSupport.EnablesRecursion;
 
         public NIType DataType { get; private set; }
 

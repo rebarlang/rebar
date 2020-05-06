@@ -23,7 +23,7 @@ namespace Rebar.SourceModel
         public static LoopConditionTunnel CreateLoopConditionTunnel(IElementCreateInfo elementCreateInfo)
         {
             var loopConditionTunnel = new LoopConditionTunnel();
-            loopConditionTunnel.Init(elementCreateInfo);
+            loopConditionTunnel.Initialize(elementCreateInfo);
             return loopConditionTunnel;
         }
 

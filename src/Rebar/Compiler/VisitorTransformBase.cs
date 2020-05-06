@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.Dfir;
 

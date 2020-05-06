@@ -1,4 +1,5 @@
 ﻿using System;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -8,8 +9,8 @@ namespace Rebar.Compiler.Nodes
     {
         public PanicOrContinueNode(Node parentNode) : base(parentNode)
         {
-            InputTerminal = CreateTerminal(Direction.Input, PFTypes.Void, "panicResult");
-            OutputTerminal = CreateTerminal(Direction.Output, PFTypes.Void, "result");
+            InputTerminal = CreateTerminal(Direction.Input, NITypes.Void, "panicResult");
+            OutputTerminal = CreateTerminal(Direction.Output, NITypes.Void, "result");
         }
 
         private PanicOrContinueNode(Node newParentNode, PanicOrContinueNode nodeToCopy, NodeCopyInfo copyInfo)

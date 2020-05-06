@@ -50,7 +50,7 @@ namespace Rebar.Common
 
             public override NIType RenderNIType()
             {
-                return PFTypes.Void;
+                return NITypes.Void;
             }
 
             public override Lifetime Lifetime => Lifetime.Empty;
@@ -221,7 +221,7 @@ namespace Rebar.Common
             public override Lifetime Lifetime => Lifetime.Unbounded;
 
             // An IndefiniteFieldedType not unified with any ConcreteTypes cannot determine its NIType.
-            public override NIType RenderNIType() => PFTypes.Void;
+            public override NIType RenderNIType() => NITypes.Void;
 
             public override bool IsOrContainsTypeVariable() => true;
         }
@@ -707,7 +707,7 @@ namespace Rebar.Common
         public NIType RenderNIType(TypeVariableReference typeVariableReference)
         {
             TypeBase typeBase = GetTypeForTypeVariableReference(typeVariableReference);
-            return typeBase?.RenderNIType() ?? PFTypes.Void;
+            return typeBase?.RenderNIType() ?? NITypes.Void;
         }
 
         public Lifetime GetLifetime(TypeVariableReference typeVariableReference)

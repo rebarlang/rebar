@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -301,7 +302,7 @@ namespace Rebar.Compiler
             Terminal loopConditionInput = loopConditionTunnel.InputTerminals.ElementAt(0),
                 loopConditionOutput = loopConditionTunnel.OutputTerminals.ElementAt(0);
 
-            TypeVariableReference boolType = _typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.Boolean);
+            TypeVariableReference boolType = _typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean);
             _nodeFacade[loopConditionInput] = new SimpleTerminalFacade(loopConditionInput, boolType);
             Lifetime innerLifetime = loopConditionOutput.GetDiagramLifetime();
             TypeVariableReference boolReferenceType = _typeVariableSet.CreateReferenceToReferenceType(

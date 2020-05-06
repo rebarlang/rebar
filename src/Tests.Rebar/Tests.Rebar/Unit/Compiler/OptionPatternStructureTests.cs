@@ -19,7 +19,7 @@ namespace Tests.Rebar.Unit.Compiler
             OptionPatternStructure patternStructure = CreateOptionPatternStructure(function.BlockDiagram);
             FunctionalNode someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
             Wire.Create(function.BlockDiagram, someConstructor.OutputTerminals[0], patternStructure.Selector.InputTerminals[0]);
-            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -45,7 +45,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             OptionPatternStructure patternStructure = CreateOptionPatternStructure(function.BlockDiagram);
             Tunnel outputTunnel = CreateOutputTunnel(patternStructure);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 

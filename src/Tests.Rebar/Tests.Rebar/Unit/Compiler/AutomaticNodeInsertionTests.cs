@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -19,11 +20,11 @@ namespace Tests.Rebar.Unit.Compiler
 
         static AutomaticNodeInsertionTests()
         {
-            NIFunctionBuilder signatureBuilder = PFTypes.Factory.DefineFunction("outputOwner");
-            _outputOwnerSignature = signatureBuilder.AddOutput(PFTypes.Int32, "owner").CreateType();
-            signatureBuilder = PFTypes.Factory.DefineFunction("outputString");
-            _outputOwnerStringSignature = signatureBuilder.AddOutput(PFTypes.String, "owner").CreateType();
-            signatureBuilder = PFTypes.Factory.DefineFunction("stringSlicePassthrough");
+            NIFunctionBuilder signatureBuilder = NITypes.Factory.DefineFunction("outputOwner");
+            _outputOwnerSignature = signatureBuilder.AddOutput(NITypes.Int32, "owner").CreateType();
+            signatureBuilder = NITypes.Factory.DefineFunction("outputString");
+            _outputOwnerStringSignature = signatureBuilder.AddOutput(NITypes.String, "owner").CreateType();
+            signatureBuilder = NITypes.Factory.DefineFunction("stringSlicePassthrough");
             signatureBuilder.AddInputOutput(
                 DataTypes.StringSliceType.CreateImmutableReference(Signatures.AddGenericLifetimeTypeParameter(signatureBuilder, "TLife")), 
                 "stringSlice");
@@ -192,7 +193,7 @@ namespace Tests.Rebar.Unit.Compiler
             // downstream of the auto-inserted TL when creating a Drop.
             DfirRoot function = DfirRoot.Create();
             FunctionalNode mutablePassthrough = new FunctionalNode(function.BlockDiagram, Signatures.MutablePassthroughType);
-            ConnectConstantToInputTerminal(mutablePassthrough.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(mutablePassthrough.InputTerminals[0], NITypes.Int32, false);
             var borrowNode = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
             Wire.Create(function.BlockDiagram, mutablePassthrough.OutputTerminals[0], borrowNode.InputTerminals[0]);
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
@@ -210,8 +211,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], NITypes.Boolean, false);
 
             RunCompilationUpToAutomaticNodeInsertion(function);
 
@@ -220,9 +221,9 @@ namespace Tests.Rebar.Unit.Compiler
             AssertVariablesReferenceSame(buildTuple.OutputTerminals[0].GetTrueVariable(), decomposeTuple.InputTerminals[0].GetTrueVariable());
             Assert.AreEqual(2, decomposeTuple.OutputTerminals.Count);
             DropNode drop0 = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[0]);
-            AssertDropInputVariableHasType(drop0, PFTypes.Int32);
+            AssertDropInputVariableHasType(drop0, NITypes.Int32);
             DropNode drop1 = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeTuple.OutputTerminals[1]);
-            AssertDropInputVariableHasType(drop1, PFTypes.Boolean);
+            AssertDropInputVariableHasType(drop1, NITypes.Boolean);
         }
 
         [TestMethod]
@@ -240,15 +241,15 @@ namespace Tests.Rebar.Unit.Compiler
             DecomposeStructNode decomposeStruct = AssertDiagramContainsNodeWithSources<DecomposeStructNode>(function.BlockDiagram, constructorNode.OutputTerminals[0]);
             Assert.AreEqual(StructType, decomposeStruct.Type);
             DropNode dropNode = AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, decomposeStruct.OutputTerminals[0]);
-            AssertDropInputVariableHasType(dropNode, PFTypes.String);
+            AssertDropInputVariableHasType(dropNode, NITypes.String);
         }
 
         private NIType StructType
         {
             get
             {
-                NIClassBuilder structBuilder = PFTypes.Factory.DefineValueClass("struct.td");
-                structBuilder.DefineField(PFTypes.String, "_0", NIFieldAccessPolicies.ReadWrite);
+                NIClassBuilder structBuilder = NITypes.Factory.DefineValueClass("struct.td");
+                structBuilder.DefineField(NITypes.String, "_0", NIFieldAccessPolicies.ReadWrite);
                 return structBuilder.CreateType();
             }
         }
@@ -301,7 +302,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             var yieldNode = new FunctionalNode(function.BlockDiagram, Signatures.YieldType);
-            Constant constant = ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], PFTypes.Int32, false);
+            Constant constant = ConnectConstantToInputTerminal(yieldNode.InputTerminals[0], NITypes.Int32, false);
 
             RunCompilationUpToAsyncNodeDecomposition(function);
 
@@ -320,7 +321,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             var unwrapOption = new FunctionalNode(function.BlockDiagram, Signatures.UnwrapOptionType);
             var someConstructor = ConnectSomeConstructorToInputTerminal(unwrapOption.InputTerminals[0]);
-            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, false);
 
             RunCompilationUpToAsyncNodeDecomposition(function);
 

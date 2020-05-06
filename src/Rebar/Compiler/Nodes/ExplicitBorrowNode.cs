@@ -1,4 +1,5 @@
-﻿using NationalInstruments.DataTypes;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 
@@ -16,14 +17,14 @@ namespace Rebar.Compiler.Nodes
             BorrowMode = borrowMode;
             AlwaysBeginLifetime = alwaysBeginLifetime;
             AlwaysCreateReference = alwaysCreateReference;
-            NIType inputType = PFTypes.Void, outputType;
+            NIType inputType = NITypes.Void, outputType;
             switch (borrowMode)
             {
                 case BorrowMode.Mutable:
-                    outputType = PFTypes.Void.CreateMutableReference();
+                    outputType = NITypes.Void.CreateMutableReference();
                     break;
                 default:
-                    outputType = PFTypes.Void.CreateImmutableReference();
+                    outputType = NITypes.Void.CreateImmutableReference();
                     break;
             }
             for (int i = 0; i < inputs; ++i)

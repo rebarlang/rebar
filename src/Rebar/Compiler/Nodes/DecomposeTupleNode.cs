@@ -1,4 +1,5 @@
-﻿using NationalInstruments.DataTypes;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace Rebar.Compiler.Nodes
@@ -9,10 +10,10 @@ namespace Rebar.Compiler.Nodes
             : base(parent)
         {
             DecomposeMode = decomposeMode;
-            CreateTerminal(Direction.Input, PFTypes.Void, "in");
+            CreateTerminal(Direction.Input, NITypes.Void, "in");
             for (int i = 0; i < outputCount; ++i)
             {
-                CreateTerminal(Direction.Output, PFTypes.Void, $"out_{i}");
+                CreateTerminal(Direction.Output, NITypes.Void, $"out_{i}");
             }
         }
 

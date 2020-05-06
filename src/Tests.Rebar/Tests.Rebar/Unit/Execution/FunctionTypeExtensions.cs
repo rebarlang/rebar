@@ -1,7 +1,7 @@
 ﻿using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 
 namespace Tests.Rebar.Unit.Execution
 {
@@ -9,14 +9,14 @@ namespace Tests.Rebar.Unit.Execution
     {
         public static NIFunctionBuilder DefineMethodType(this string functionName)
         {
-            NIFunctionBuilder functionBuilder = PFTypes.Factory.DefineFunction(functionName);
+            NIFunctionBuilder functionBuilder = NITypes.Factory.DefineFunction(functionName);
             functionBuilder.IsStatic = true;
             return functionBuilder;
         }
 
-        public static DfirRoot CreateFunctionFromSignature(this NIType functionSignature, ExtendedQualifiedName functionQualifiedName)
+        public static DfirRoot CreateFunctionFromSignature(this NIType functionSignature, CompilableDefinitionName functionDefinitionName)
         {
-            DfirRoot function = DfirRoot.Create(new SpecAndQName(null, functionQualifiedName));
+            DfirRoot function = DfirRoot.Create(new CompileSpecification(functionDefinitionName, null));
             int connectorPaneIndex = 0;
             foreach (NIType parameter in functionSignature.GetParameters())
             {

@@ -61,67 +61,67 @@ namespace Rebar.Common
 
         static DataTypes()
         {
-            var mutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("MutableReference");
+            var mutableReferenceGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("MutableReference");
             mutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife");
             mutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             MutableReferenceGenericType = mutableReferenceGenericTypeBuilder.CreateType();
 
-            var immutableReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("ImmutableReference");
+            var immutableReferenceGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("ImmutableReference");
             immutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife");
             immutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             ImmutableReferenceGenericType = immutableReferenceGenericTypeBuilder.CreateType();
 
-            var polymorphicReferenceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("PolymorphicReference");
+            var polymorphicReferenceGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("PolymorphicReference");
             polymorphicReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife", "TMut");
             polymorphicReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             PolymorphicReferenceGenericType = polymorphicReferenceGenericTypeBuilder.CreateType();
 
-            var cloneInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Clone");
+            var cloneInterfaceBuilder = NITypes.Factory.DefineReferenceInterface("Clone");
             cloneInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             CloneInterfaceType = cloneInterfaceBuilder.CreateType();
 
-            var dropInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Drop");
+            var dropInterfaceBuilder = NITypes.Factory.DefineReferenceInterface("Drop");
             dropInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             DropInterfaceType = dropInterfaceBuilder.CreateType();
 
-            var displayInterfaceBuilder = PFTypes.Factory.DefineReferenceInterface("Display");
+            var displayInterfaceBuilder = NITypes.Factory.DefineReferenceInterface("Display");
             displayInterfaceBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             DisplayInterfaceType = displayInterfaceBuilder.CreateType();
 
-            var optionGenericTypeBuilder = PFTypes.Factory.DefineValueClass("Option");
+            var optionGenericTypeBuilder = NITypes.Factory.DefineValueClass("Option");
             optionGenericTypeBuilder.MakeGenericParameters("T");
             optionGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             OptionGenericType = optionGenericTypeBuilder.CreateType();
 
-            var lockingCellGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("LockingCell");
+            var lockingCellGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("LockingCell");
             lockingCellGenericTypeBuilder.MakeGenericParameters("T");
             lockingCellGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             LockingCellGenericType = lockingCellGenericTypeBuilder.CreateType();
 
-            var sharedGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Shared");
+            var sharedGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("Shared");
             sharedGenericTypeBuilder.MakeGenericParameters("T");
             sharedGenericTypeBuilder.DefineImplementedInterfaceFromExisting(CloneInterfaceType);
             sharedGenericTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             sharedGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             SharedGenericType = sharedGenericTypeBuilder.CreateType();
 
-            var iteratorGenericTypeBuilder = PFTypes.Factory.DefineReferenceInterface("Iterator");
+            var iteratorGenericTypeBuilder = NITypes.Factory.DefineReferenceInterface("Iterator");
             iteratorGenericTypeBuilder.MakeGenericParameters("TItem");
             iteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             IteratorInterfaceGenericType = iteratorGenericTypeBuilder.CreateType();
 
-            var rangeIteratorTypeBuilder = PFTypes.Factory.DefineReferenceClass("RangeIterator");
-            var iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(PFTypes.Int32);
+            var rangeIteratorTypeBuilder = NITypes.Factory.DefineReferenceClass("RangeIterator");
+            var iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(NITypes.Int32);
             rangeIteratorTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
             rangeIteratorTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             RangeIteratorType = rangeIteratorTypeBuilder.CreateType();
 
-            var stringSliceTypeBuilder = PFTypes.Factory.DefineValueClass("StringSlice");
+            var stringSliceTypeBuilder = NITypes.Factory.DefineValueClass("StringSlice");
             stringSliceTypeBuilder.DefineImplementedInterfaceFromExisting(DisplayInterfaceType);
             stringSliceTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             StringSliceType = stringSliceTypeBuilder.CreateType();
 
-            var stringSplitIteratorTypeBuilder = PFTypes.Factory.DefineValueClass("StringSplitIterator");
+            var stringSplitIteratorTypeBuilder = NITypes.Factory.DefineValueClass("StringSplitIterator");
             NIType sliceReferenceLifetimeParameter = AddGenericLifetimeTypeParameter(stringSplitIteratorTypeBuilder, "TLife");
             iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(
                 StringSliceType.CreateImmutableReference(sliceReferenceLifetimeParameter));
@@ -129,66 +129,66 @@ namespace Rebar.Common
             stringSplitIteratorTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             StringSplitIteratorGenericType = stringSplitIteratorTypeBuilder.CreateType();
 
-            var vectorGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Vector");
+            var vectorGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("Vector");
             vectorGenericTypeBuilder.MakeGenericParameters("T");
             vectorGenericTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             vectorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             VectorGenericType = vectorGenericTypeBuilder.CreateType();
 
-            var sliceGenericTypeBuilder = PFTypes.Factory.DefineReferenceClass("Slice");
+            var sliceGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("Slice");
             sliceGenericTypeBuilder.MakeGenericParameters("TElem");
             sliceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             SliceGenericType = sliceGenericTypeBuilder.CreateType();
 
-            var fileHandleTypeBuilder = PFTypes.Factory.DefineValueClass("FileHandle");
+            var fileHandleTypeBuilder = NITypes.Factory.DefineValueClass("FileHandle");
             fileHandleTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             FileHandleType = fileHandleTypeBuilder.CreateType();
 
-            var fakeDropTypeBuilder = PFTypes.Factory.DefineValueClass("FakeDrop");
+            var fakeDropTypeBuilder = NITypes.Factory.DefineValueClass("FakeDrop");
             fakeDropTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             FakeDropType = fakeDropTypeBuilder.CreateType();
 
-            var promiseInterfaceGenericTypeBuilder = PFTypes.Factory.DefineReferenceInterface("Promise");
+            var promiseInterfaceGenericTypeBuilder = NITypes.Factory.DefineReferenceInterface("Promise");
             promiseInterfaceGenericTypeBuilder.MakeGenericParameters("TValue");
             promiseInterfaceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             PromiseInterfaceGenericType = promiseInterfaceGenericTypeBuilder.CreateType();
 
-            var wakerTypeBuilder = PFTypes.Factory.DefineValueClass("Waker");
+            var wakerTypeBuilder = NITypes.Factory.DefineValueClass("Waker");
             WakerType = wakerTypeBuilder.CreateType();
 
-            var yieldPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("YieldPromise");
+            var yieldPromiseGenericTypeBuilder = NITypes.Factory.DefineValueClass("YieldPromise");
             var yieldParameters = yieldPromiseGenericTypeBuilder.MakeGenericParameters("T");
             var promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(yieldParameters.First().CreateType());
             yieldPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
             yieldPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             YieldPromiseGenericType = yieldPromiseGenericTypeBuilder.CreateType();
 
-            var methodCallPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("MethodCallPromise");
+            var methodCallPromiseGenericTypeBuilder = NITypes.Factory.DefineValueClass("MethodCallPromise");
             var methodCallPromiseParameters = methodCallPromiseGenericTypeBuilder.MakeGenericParameters("T");
             promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(methodCallPromiseParameters.First().CreateType());
             methodCallPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
             methodCallPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             MethodCallPromiseGenericType = methodCallPromiseGenericTypeBuilder.CreateType();
 
-            var notifierReaderGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierReader");
+            var notifierReaderGenericTypeBuilder = NITypes.Factory.DefineValueClass("NotifierReader");
             notifierReaderGenericTypeBuilder.MakeGenericParameters("T");
             notifierReaderGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             NotifierReaderGenericType = notifierReaderGenericTypeBuilder.CreateType();
 
-            var notifierWriterGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierWriter");
+            var notifierWriterGenericTypeBuilder = NITypes.Factory.DefineValueClass("NotifierWriter");
             notifierWriterGenericTypeBuilder.MakeGenericParameters("T");
             notifierWriterGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             NotifierWriterGenericType = notifierWriterGenericTypeBuilder.CreateType();
 
-            var notifierReaderPromiseGenericTypeBuilder = PFTypes.Factory.DefineValueClass("NotifierReaderPromise");
+            var notifierReaderPromiseGenericTypeBuilder = NITypes.Factory.DefineValueClass("NotifierReaderPromise");
             var notifierParameters = notifierReaderPromiseGenericTypeBuilder.MakeGenericParameters("T");
             promiseSpecialization = PromiseInterfaceGenericType.ReplaceGenericParameters(notifierParameters.First().CreateType().CreateOption());
             notifierReaderPromiseGenericTypeBuilder.DefineImplementedInterfaceFromExisting(promiseSpecialization);
             notifierReaderPromiseGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             NotifierReaderPromiseGenericType = notifierReaderPromiseGenericTypeBuilder.CreateType();
 
-            var panicResultGenericTypeBuilder = PFTypes.Factory.DefineValueClass("PanicResult");
+            var panicResultGenericTypeBuilder = NITypes.Factory.DefineValueClass("PanicResult");
             var panicResultParameters = panicResultGenericTypeBuilder.MakeGenericParameters("T");
             panicResultGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             PanicResultGenericType = panicResultGenericTypeBuilder.CreateType();
@@ -547,10 +547,10 @@ namespace Rebar.Common
 
         internal static NIType CreateNotifierSharedDataType(this NIType valueType)
         {
-            NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+            NIClusterBuilder clusterBuilder = NITypes.Factory.DefineCluster();
             clusterBuilder.DefineField(WakerType, "waker");
             clusterBuilder.DefineField(valueType, "value");
-            clusterBuilder.DefineField(PFTypes.Int32, "state");
+            clusterBuilder.DefineField(NITypes.Int32, "state");
             return clusterBuilder.CreateType();
         }
 
@@ -601,17 +601,17 @@ namespace Rebar.Common
 
         internal static bool TypeHasDropTrait(this NIType type)
         {
-            return type == PFTypes.String || type.IsOrImplements(DropInterfaceType);
+            return type == NITypes.String || type.IsOrImplements(DropInterfaceType);
         }
 
         internal static bool TypeHasCloneTrait(this NIType type)
         {
-            return type == PFTypes.String || type.IsOrImplements(CloneInterfaceType);
+            return type == NITypes.String || type.IsOrImplements(CloneInterfaceType);
         }
 
         internal static NIType DefineTupleType(this IEnumerable<NIType> fieldTypes)
         {
-            NIClusterBuilder clusterBuilder = PFTypes.Factory.DefineCluster();
+            NIClusterBuilder clusterBuilder = NITypes.Factory.DefineCluster();
             int index = 0;
             foreach (NIType type in fieldTypes)
             {

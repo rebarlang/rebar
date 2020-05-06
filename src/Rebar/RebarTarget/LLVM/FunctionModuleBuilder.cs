@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using LLVMSharp;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
-using NationalInstruments.Dfir;
 
 namespace Rebar.RebarTarget.LLVM
 {

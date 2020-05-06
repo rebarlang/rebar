@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
@@ -16,7 +17,7 @@ namespace Rebar.SourceModel
 
         protected TerminateLifetime()
         {
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             var inputTerminal = new NodeTerminal(Direction.Input, immutableReferenceType, "inner lifetime 0");
             FixedTerminals.Add(inputTerminal);
             var outputTerminal = new NodeTerminal(Direction.Output, immutableReferenceType, "outer lifetime");
@@ -27,7 +28,7 @@ namespace Rebar.SourceModel
         public static TerminateLifetime CreateTerminateLifetime(IElementCreateInfo elementCreateInfo)
         {
             var createCell = new TerminateLifetime();
-            createCell.Init(elementCreateInfo);
+            createCell.Initialize(elementCreateInfo);
             return createCell;
         }
 
@@ -53,7 +54,7 @@ namespace Rebar.SourceModel
 
         public void UpdateTerminals(int inputTerminalCount, int outputTerminalCount)
         {
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             int currentInputTerminalCount = InputTerminals.Count();
             if (currentInputTerminalCount < inputTerminalCount)
             {

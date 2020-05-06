@@ -1,4 +1,5 @@
 ﻿using System;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -10,7 +11,7 @@ namespace Rebar.Compiler.Nodes
             : base(parentNode)
         {
             Type = structType;
-            CreateTerminal(Direction.Input, PFTypes.Void, "struct");
+            CreateTerminal(Direction.Input, NITypes.Void, "struct");
             foreach (NIType field in structType.GetFields())
             {
                 CreateTerminal(Direction.Output, field.GetDataType(), field.GetName());

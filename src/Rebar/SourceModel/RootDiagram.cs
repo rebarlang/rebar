@@ -12,7 +12,7 @@ namespace Rebar.SourceModel
         public static RootDiagram CreateRootDiagram(IElementCreateInfo elementCreateInfo)
         {
             var diagram = new RootDiagram();
-            diagram.Init(elementCreateInfo);
+            diagram.Initialize(elementCreateInfo);
             return diagram;
         }
 

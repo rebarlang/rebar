@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Compiler;

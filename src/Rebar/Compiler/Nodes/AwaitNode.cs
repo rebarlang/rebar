@@ -1,4 +1,5 @@
 ﻿using System;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
@@ -8,8 +9,8 @@ namespace Rebar.Compiler.Nodes
     {
         public AwaitNode(Node parentNode) : base(parentNode)
         {
-            InputTerminal = CreateTerminal(Direction.Input, PFTypes.Void, "promise");
-            OutputTerminal = CreateTerminal(Direction.Output, PFTypes.Void, "value");
+            InputTerminal = CreateTerminal(Direction.Input, NITypes.Void, "promise");
+            OutputTerminal = CreateTerminal(Direction.Output, NITypes.Void, "value");
         }
 
         private AwaitNode(Node newParentNode, AwaitNode nodeToCopy, NodeCopyInfo copyInfo)

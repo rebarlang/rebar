@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NationalInstruments;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
-using NationalInstruments.Linking;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using static NationalInstruments.Dfir.DfirDependencyNameStagingUtilities;
 
 namespace Rebar.RebarTarget
 {
@@ -47,8 +48,8 @@ namespace Rebar.RebarTarget
         }
 
         /// <inheritdoc />
-        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> BackEndCompileAsyncCore(
-            SpecAndQName specAndQName,
+        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> CompileCoreAsync(
+            CompileSpecification compileSpecification,
             DfirRoot targetDfir,
             CompileCancellationToken cancellationToken,
             ProgressToken progressToken,
@@ -67,23 +68,23 @@ namespace Rebar.RebarTarget
                 compileSignatureParameters.Add(compileSignatureParameter);
             }
 
-            var compileSignatures = new Dictionary<ExtendedQualifiedName, CompileSignature>();
-            var dependencyIdentities = new HashSet<SpecAndQName>();
+            var compileSignatures = new Dictionary<CompilableDefinitionName, CompileSignature>();
+            var dependencyIdentities = new HashSet<CompileSpecification>();
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
             {
-                dependencyIdentities.Add(dependency.SpecAndQName);
-                var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.SpecAndQName, cancellationToken, progressToken, compileThreadState);
+                dependencyIdentities.Add(ConvertToCompileSpecificationDuringMigration(dependency.DependeeName));
+                var compileSignature = await Compiler.GetCompileSignatureAsync(dependency.DependeeName, cancellationToken, progressToken, compileThreadState);
                 if (compileSignature != null)
                 {
                     targetDfir.AddDependency(
                         targetDfir,
-                        new CompileSignatureDependency(dependency.SpecAndQName, compileSignature));
-                    compileSignatures[dependency.SpecAndQName.QualifiedName] = compileSignature;
+                        new CompileSignatureDependency(dependency.DependeeName, compileSignature));
+                    compileSignatures[ConvertToCompilableDefinitionNameDuringMigration(dependency.DependeeName)] = compileSignature;
                 }
             }
 
-            var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
-            var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
+            var calleesIsYielding = new Dictionary<CompilableDefinitionName, bool>();
+            var calleesMayPanic = new Dictionary<CompilableDefinitionName, bool>();
             foreach (var methodCallNode in targetDfir.GetAllNodesIncludingSelf().OfType<MethodCallNode>())
             {
                 CompileSignature calleeSignature = compileSignatures[methodCallNode.TargetName];
@@ -99,7 +100,7 @@ namespace Rebar.RebarTarget
                 calleesIsYielding,
                 calleesMayPanic);
             var builtPackage = new LLVM.FunctionBuiltPackage(
-                specAndQName,
+                compileSpecification,
                 Compiler.TargetName,
                 dependencyIdentities.ToArray(),
                 functionCompileResult.Module,
@@ -128,8 +129,8 @@ namespace Rebar.RebarTarget
         internal static LLVM.FunctionCompileResult CompileFunctionForLLVM(
             DfirRoot dfirRoot,
             CompileCancellationToken cancellationToken,
-            Dictionary<ExtendedQualifiedName, bool> calleesIsYielding,
-            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic,
+            Dictionary<CompilableDefinitionName, bool> calleesIsYielding,
+            Dictionary<CompilableDefinitionName, bool> calleesMayPanic,
             string compiledFunctionName = "")
         {
             // TODO: running this here because it needs to know which callee Functions are yielding/panicking.
@@ -154,7 +155,7 @@ namespace Rebar.RebarTarget
                 allocator.Execute(dfirRoot, cancellationToken);
 
                 var module = contextWrapper.CreateModule("module");
-                compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.SpecAndQName) : compiledFunctionName;
+                compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.CompileSpecification.Name) : compiledFunctionName;
 
                 var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
                 var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
@@ -174,10 +175,15 @@ namespace Rebar.RebarTarget
             }
         }
 
-        internal static string FunctionLLVMName(SpecAndQName functionSpecAndQName)
+        internal static string FunctionLLVMName(CompilableDefinitionName functionCompilableDefinitionName)
         {
-            QualifiedName relativeQualifiedName = functionSpecAndQName.QualifiedName.Name.AbsoluteQualifiedNameToQualifiedName();
-            return string.Join("::", relativeQualifiedName.Identifiers);
+            return FunctionLLVMName(functionCompilableDefinitionName.SourceName);
+        }
+
+        internal static string FunctionLLVMName(QualifiedName functionAbsoluteQualifiedName)
+        {
+            // TODO: this used to be the relative qualified name, obtained with AbsoluteQualifiedNameToQualifiedName().
+            return string.Join("::", functionAbsoluteQualifiedName.Identifiers.Where(identifier => !string.IsNullOrEmpty(identifier)));
         }
 
         private static LLVM.ParameterInfo ToParameterInfo(DataItem dataItem)

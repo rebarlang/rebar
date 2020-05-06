@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using LLVMSharp;
 using NationalInstruments;
-using NationalInstruments.Compiler;
+using NationalInstruments.CommonModel;
+using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -240,7 +241,7 @@ namespace Rebar.RebarTarget.LLVM
             functionBuilder.ReplaceGenericParameters(valueType, NIType.Unset);
             NIType signature = functionBuilder.CreateType();
             NIType innerType;
-            if (valueType == PFTypes.String)
+            if (valueType == NITypes.String)
             {
                 cloneFunction = GetImportedCommonFunction(CommonModules.StringCloneName);
                 return true;
@@ -499,13 +500,13 @@ namespace Rebar.RebarTarget.LLVM
 
         private readonly FunctionCompilerSharedData _sharedData;
         private readonly FunctionModuleBuilder _moduleBuilder;
-        private readonly Dictionary<ExtendedQualifiedName, bool> _calleesMayPanic;
+        private readonly Dictionary<CompilableDefinitionName, bool> _calleesMayPanic;
 
         public FunctionCompiler(
             DfirRoot targetDfir,
             FunctionModuleBuilder moduleBuilder,
             FunctionCompilerSharedData sharedData,
-            Dictionary<ExtendedQualifiedName, bool> calleesMayPanic)
+            Dictionary<CompilableDefinitionName, bool> calleesMayPanic)
         {
             TargetDfir = targetDfir;
             _moduleBuilder = moduleBuilder;
@@ -534,7 +535,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef GetImportedSynchronousFunction(MethodCallNode methodCallNode)
         {
-            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, methodCallNode.TargetName));
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(methodCallNode.TargetName);
             return GetImportedFunction(
                 FunctionNames.GetSynchronousFunctionName(targetFunctionName),
                 () => TranslateFunctionType(methodCallNode.Signature));
@@ -542,7 +543,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef GetImportedInitializeStateFunction(CreateMethodCallPromise createMethodCallPromise)
         {
-            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(createMethodCallPromise.TargetName);
             return GetImportedFunction(
                 FunctionNames.GetInitializeStateFunctionName(targetFunctionName),
                 () => TranslateInitializeFunctionType(createMethodCallPromise.Signature));
@@ -550,7 +551,7 @@ namespace Rebar.RebarTarget.LLVM
 
         private LLVMValueRef GetImportedPollFunction(CreateMethodCallPromise createMethodCallPromise)
         {
-            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(new SpecAndQName(TargetDfir.BuildSpec, createMethodCallPromise.TargetName));
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(createMethodCallPromise.TargetName);
             return GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => AsynchronousFunctionModuleBuilder.PollFunctionType(Context));
         }
 
@@ -1241,7 +1242,7 @@ namespace Rebar.RebarTarget.LLVM
             uint fieldIndex = 0;
             foreach (Terminal outputTerminal in decomposeStructNode.OutputTerminals)
             {
-                LLVMValueRef structFieldValue = Builder.CreateExtractValue(structValue, fieldIndex, outputTerminal.Name);
+                LLVMValueRef structFieldValue = Builder.CreateExtractValue(structValue, fieldIndex, $"structField_{fieldIndex}");
                 Initialize(GetTerminalValueSource(outputTerminal), structFieldValue);
                 ++fieldIndex;
             }

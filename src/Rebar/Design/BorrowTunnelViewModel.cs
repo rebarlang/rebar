@@ -122,8 +122,8 @@ namespace Rebar.Design
                         BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
 
-                        BorrowTunnel borrowTunnel = model.MakeTunnel<BorrowTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        BorrowTunnel borrowTunnel = model.MakeTunnel<BorrowTunnel>(model.AncestorDiagram, model.NestedDiagrams.First());
+                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.AncestorDiagram, model.NestedDiagrams.First());
                         borrowTunnel.TerminateLifetimeTunnel = flatSequenceTerminateLifetimeTunnel;
                         flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = borrowTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
@@ -167,8 +167,8 @@ namespace Rebar.Design
                         BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
                         Structure model = (Structure)structureViewModel.Model;
 
-                        LockTunnel lockTunnel = model.MakeTunnel<LockTunnel>(model.Diagram, model.NestedDiagrams.First());
-                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        LockTunnel lockTunnel = model.MakeTunnel<LockTunnel>(model.PrimaryNestedDiagram, model.NestedDiagrams.First());
+                        FlatSequenceTerminateLifetimeTunnel flatSequenceTerminateLifetimeTunnel = model.MakeTunnel<FlatSequenceTerminateLifetimeTunnel>(model.AncestorDiagram, model.NestedDiagrams.First());
                         lockTunnel.TerminateLifetimeTunnel = flatSequenceTerminateLifetimeTunnel;
                         flatSequenceTerminateLifetimeTunnel.BeginLifetimeTunnel = lockTunnel;
                         // Set both as rules were not consistently picking right one to adjust to other.
@@ -211,7 +211,7 @@ namespace Rebar.Design
                         Structure model = (Structure)structureViewModel.Model;
                         SMRect leftRect, rightRect;
                         BorderNodeViewModelHelpers.FindBorderNodePositions(structureViewModel, out leftRect, out rightRect);
-                        UnwrapOptionTunnel unwrapOptionTunnel = model.MakeTunnel<UnwrapOptionTunnel>(model.Diagram, model.NestedDiagrams.First());
+                        UnwrapOptionTunnel unwrapOptionTunnel = model.MakeTunnel<UnwrapOptionTunnel>(model.AncestorDiagram, model.NestedDiagrams.First());
                         unwrapOptionTunnel.Top = leftRect.Y;
                         unwrapOptionTunnel.Left = leftRect.X;
                     }

@@ -21,11 +21,11 @@ namespace Tests.Rebar.Unit.Execution
             FunctionalNode range = new FunctionalNode(function.BlockDiagram, Signatures.RangeType);
             Wire rangeWire = Wire.Create(function.BlockDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0]);
             rangeWire.SetWireBeginsMutableVariable(true);
-            Constant lowConstant = ConnectConstantToInputTerminal(range.InputTerminals[0], PFTypes.Int32, 0, false);
-            Constant highConstant = ConnectConstantToInputTerminal(range.InputTerminals[1], PFTypes.Int32, 10, false);
+            Constant lowConstant = ConnectConstantToInputTerminal(range.InputTerminals[0], NITypes.Int32, 0, false);
+            Constant highConstant = ConnectConstantToInputTerminal(range.InputTerminals[1], NITypes.Int32, 10, false);
             BorrowTunnel borrow = CreateBorrowTunnel(loop, BorrowMode.Mutable);
-            Constant accumulateConstant = ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, 0, true);
-            FunctionalNode accumulateAdd = new FunctionalNode(loop.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32));
+            Constant accumulateConstant = ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, 0, true);
+            FunctionalNode accumulateAdd = new FunctionalNode(loop.Diagram, Signatures.DefineMutatingBinaryFunction("AccumulateAdd", NITypes.Int32));
             Wire.Create(loop.Diagram, borrow.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
             Wire.Create(loop.Diagram, iterateTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(borrow.TerminateLifetimeTunnel.OutputTerminals[0]);

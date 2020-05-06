@@ -66,7 +66,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel loopConditionTunnel = CreateLoopConditionTunnel(loop);
-            ConnectConstantToInputTerminal(loopConditionTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(loopConditionTunnel.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -80,7 +80,7 @@ namespace Tests.Rebar.Unit.Compiler
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel loopConditionTunnel = CreateLoopConditionTunnel(loop);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(loopConditionTunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Boolean, false);
 
             RunSemanticAnalysisUpToValidation(function);
 

@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Dfir;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.Dfir;
 using Rebar.Common;
 
 namespace Rebar.RebarTarget.LLVM

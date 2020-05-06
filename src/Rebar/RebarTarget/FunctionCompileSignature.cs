@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.RebarTarget.LLVM;
 
 namespace Rebar.RebarTarget
@@ -13,11 +13,12 @@ namespace Rebar.RebarTarget
     internal class FunctionCompileSignature : CompileSignature
     {
         public FunctionCompileSignature(
-            ExtendedQualifiedName functionName,
+            CompilableDefinitionName functionName,
             IEnumerable<CompileSignatureParameter> compileSignatureParameters,
             bool isYielding,
             bool mayPanic)
-            : base(functionName: functionName,
+            : base(
+                functionName: functionName,
                 parameters: compileSignatureParameters,
                 declaringType: NIType.Unset,
                 reentrancy: Reentrancy.None,

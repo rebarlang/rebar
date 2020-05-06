@@ -12,7 +12,7 @@ namespace Rebar.SourceModel
         public static CaseStructure CreateCaseStructure(IElementCreateInfo elementCreateInfo)
         {
             var caseStructure = new CaseStructure();
-            caseStructure.Init(elementCreateInfo);
+            caseStructure.Initialize(elementCreateInfo);
             return caseStructure;
         }
 

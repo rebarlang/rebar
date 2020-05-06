@@ -2,6 +2,7 @@
 using NationalInstruments.Dfir;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
+using NationalInstruments.CommonModel;
 
 namespace Rebar.Compiler.Nodes
 {
@@ -9,7 +10,7 @@ namespace Rebar.Compiler.Nodes
     {
         public TerminateLifetimeNode(Node parentNode, int inputs, int outputs) : base(parentNode)
         {
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             for (int i = 0; i < inputs; ++i)
             {
                 CreateTerminal(Direction.Input, immutableReferenceType, "inner lifetime");
@@ -49,7 +50,7 @@ namespace Rebar.Compiler.Nodes
         public void UpdateInputTerminals(int inputTerminalCount)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(this);
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             int currentInputTerminalCount = InputTerminals.Count();
             if (currentInputTerminalCount < inputTerminalCount)
             {
@@ -79,7 +80,7 @@ namespace Rebar.Compiler.Nodes
         public void UpdateOutputTerminals(int outputTerminalCount)
         {
             AutoBorrowNodeFacade nodeFacade = AutoBorrowNodeFacade.GetNodeFacade(this);
-            var immutableReferenceType = PFTypes.Void.CreateImmutableReference();
+            var immutableReferenceType = NITypes.Void.CreateImmutableReference();
             int currentOutputTerminalCount = OutputTerminals.Count();
             if (currentOutputTerminalCount < outputTerminalCount)
             {

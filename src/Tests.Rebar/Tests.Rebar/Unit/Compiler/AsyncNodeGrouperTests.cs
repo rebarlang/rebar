@@ -19,7 +19,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             Tunnel inputTunnel = CreateInputTunnel(frame);
-            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], NITypes.Int32, false);
             var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
             Wire.Create(frame.Diagram, inputTunnel.OutputTerminals[0], output.InputTerminals[0]);
 
@@ -37,7 +37,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(function.BlockDiagram);
             UnwrapOptionTunnel unwrapTunnel = CreateUnwrapOptionTunnel(frame);
             FunctionalNode someConstructor = ConnectSomeConstructorToInputTerminal(unwrapTunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, false);
             var output = new FunctionalNode(frame.Diagram, Signatures.OutputType);
             Wire.Create(frame.Diagram, unwrapTunnel.OutputTerminals[0], output.InputTerminals[0]);
 
@@ -62,7 +62,7 @@ namespace Tests.Rebar.Unit.Compiler
             Wire.Create(frame.Diagram, inputTunnel.OutputTerminals[0], createYieldPromise.InputTerminals[0]);
             Wire.Create(frame.Diagram, createYieldPromise.OutputTerminals[0], awaitNode.InputTerminal);
             Wire.Create(frame.Diagram, awaitNode.OutputTerminal, outputTunnel.InputTerminals[0]);
-            Constant constant = ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            Constant constant = ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], NITypes.Int32, false);
             FunctionalNode inspect = new FunctionalNode(function.BlockDiagram, Signatures.ImmutablePassthroughType);
             Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], inspect.InputTerminals[0]);
 
@@ -75,7 +75,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Loop firstLoop = new Loop(function.BlockDiagram);
             BorrowTunnel firstLoopBorrow = CreateBorrowTunnel(firstLoop, BorrowMode.Immutable);
-            ConnectConstantToInputTerminal(firstLoopBorrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(firstLoopBorrow.InputTerminals[0], NITypes.Int32, false);
             TerminateLifetimeTunnel firstLoopTerminate = firstLoopBorrow.TerminateLifetimeTunnel;
             Loop secondLoop = new Loop(function.BlockDiagram);
             Tunnel loopTunnel = CreateInputTunnel(secondLoop);

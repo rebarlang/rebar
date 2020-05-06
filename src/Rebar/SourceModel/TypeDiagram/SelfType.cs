@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
@@ -41,7 +42,7 @@ namespace Rebar.SourceModel.TypeDiagram
         public static SelfType CreateSelfType(IElementCreateInfo elementCreateInfo)
         {
             var selfType = new SelfType();
-            selfType.Init(elementCreateInfo);
+            selfType.Initialize(elementCreateInfo);
             return selfType;
         }
 
@@ -51,9 +52,9 @@ namespace Rebar.SourceModel.TypeDiagram
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
 
         /// <inheritdoc />
-        protected override void Init(IElementCreateInfo info)
+        protected override void Initialize(IElementCreateInfo info)
         {
-            base.Init(info);
+            base.Initialize(info);
 
             // Set the initial chunk count
             this.SetVerticalChunkCount(DefaultChunkCount, GrowNodeResizeDirection.Bottom);
@@ -68,7 +69,7 @@ namespace Rebar.SourceModel.TypeDiagram
         /// <inheritdoc />
         public override IList<WireableTerminal> CreateTerminalsForVerticalChunk(int chunkIndex)
         {
-            return new List<WireableTerminal> { new NodeTerminal(Direction.Input, PFTypes.Void, "element", TerminalHotspots.Input1) };
+            return new List<WireableTerminal> { new NodeTerminal(Direction.Input, NITypes.Void, "element", TerminalHotspots.Input1) };
         }
 
         /// <inheritdoc />
@@ -84,19 +85,26 @@ namespace Rebar.SourceModel.TypeDiagram
 
         #region IViewVerticalGrowNode implementation
 
-        public float TopMargin => Template == ViewElementTemplate.List ? StockDiagramGeometries.ListViewHeaderHeight : 0;
+        /// <inheritdoc />
+        public override float TopMargin => Template == ViewElementTemplate.List ? StockDiagramGeometries.ListViewHeaderHeight : 0;
 
-        public float BottomMargin => Template == ViewElementTemplate.List ? ListViewFooterHeight : 0;
+        /// <inheritdoc />
+        public override float BottomMargin => Template == ViewElementTemplate.List ? ListViewFooterHeight : 0;
 
-        public float TerminalHeight => Template == ViewElementTemplate.List ? StockDiagramGeometries.LargeTerminalHeight : StockDiagramGeometries.StandardTerminalHeight;
+        /// <inheritdoc />
+        public override float TerminalHeight => Template == ViewElementTemplate.List ? StockDiagramGeometries.LargeTerminalHeight : StockDiagramGeometries.StandardTerminalHeight;
 
-        public float TerminalHotspotVerticalOffset => TerminalHotspots.HotspotVerticalOffsetForTerminalSize(TerminalSize.Small);
+        /// <inheritdoc />
+        public override float TerminalHotspotVerticalOffset => TerminalHotspots.HotspotVerticalOffsetForTerminalSize(TerminalSize.Small);
 
-        public float GetVerticalChunkHeight(int chunkIndex) => TerminalHeight;
+        /// <inheritdoc />
+        public override float GetVerticalChunkHeight(int chunkIndex) => TerminalHeight;
 
-        public float OffsetForVerticalChunk(int chunkIndex) => TopMargin + chunkIndex * this.GetFixedSizeVerticalChunkHeight();
+        /// <inheritdoc />
+        public override float OffsetForVerticalChunk(int chunkIndex) => TopMargin + chunkIndex * this.GetFixedSizeVerticalChunkHeight();
 
-        public float NodeHeightForVerticalChunkCount(int chunkCount) => OffsetForVerticalChunk(chunkCount) + BottomMargin;
+        /// <inheritdoc />
+        public override float NodeHeightForVerticalChunkCount(int chunkCount) => OffsetForVerticalChunk(chunkCount) + BottomMargin;
 
         #endregion
     }

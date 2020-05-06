@@ -13,7 +13,7 @@ namespace Rebar.RebarTarget.SystemModel
     [WithPaletteDisplayInfoMetadata(
         typeof(PaletteCategory),
         "RebarPaletteCategory_RebarPaletteDisplayName",
-        PaletteIconPath = "pack://application:,,,/NationalInstruments.LabVIEW.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/PaletteCategory_Web_40x40.xml",
+        PaletteIconPath = "pack://application:,,,/NationalInstruments.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/PaletteCategory_Web_40x40.xml",
         Weight = 0.9)]
     public class PaletteCategory : IPaletteCategoryExport
     {

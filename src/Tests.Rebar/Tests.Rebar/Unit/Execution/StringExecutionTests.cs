@@ -1,6 +1,4 @@
-﻿#define LLVM_TEST
-
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -26,11 +24,7 @@ namespace Tests.Rebar.Unit.Execution
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-#if LLVM_TEST
             const int stringSliceReferenceSize = 16;
-#else
-            const int stringSliceReferenceSize = 8;
-#endif
 
             byte[] inspect1Value = executionInstance.GetLastValueFromInspectNode(inspect1Node);
             Assert.AreEqual(stringSliceReferenceSize, inspect1Value.Length);

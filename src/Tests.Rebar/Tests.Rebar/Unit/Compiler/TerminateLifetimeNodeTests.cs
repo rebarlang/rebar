@@ -43,9 +43,9 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 2, 1);
             ExplicitBorrowNode borrow1 = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow1.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow1.InputTerminals[0], NITypes.Int32, false);
             ExplicitBorrowNode borrow2 = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[1]);
-            ConnectConstantToInputTerminal(borrow2.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow2.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -57,7 +57,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
-            ConnectConstantToInputTerminal(terminateLifetime.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(terminateLifetime.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -71,7 +71,7 @@ namespace Tests.Rebar.Unit.Compiler
             Frame frame = Frame.Create(function.BlockDiagram);
             Tunnel tunnel = CreateInputTunnel(frame);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(tunnel.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(frame.Diagram, 1, 1);
             Wire wire = Wire.Create(frame.Diagram, tunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
 
@@ -86,7 +86,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             Frame frame = Frame.Create(function.BlockDiagram);
             BorrowTunnel borrowTunnel = CreateBorrowTunnel(frame, BorrowMode.Immutable);
-            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, false);
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(frame.Diagram, 1, 1);
             Wire wire = Wire.Create(frame.Diagram, borrowTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
 
@@ -101,7 +101,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
             FunctionalNode passthrough = new FunctionalNode(function.BlockDiagram, Signatures.ImmutablePassthroughType);
             borrow.OutputTerminals[0].WireTogether(passthrough.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
 
@@ -116,8 +116,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 2, 1);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[0], terminateLifetime.InputTerminals[1]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -132,8 +132,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 2, 1);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(terminateLifetime.InputTerminals[0], terminateLifetime.InputTerminals[1]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -151,7 +151,7 @@ namespace Tests.Rebar.Unit.Compiler
             genericOutput.OutputTerminals[0].WireTogether(borrow.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
             var assignNode = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
             terminateLifetime.OutputTerminals[0].WireTogether(assignNode.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
-            ConnectConstantToInputTerminal(assignNode.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(assignNode.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -168,8 +168,8 @@ namespace Tests.Rebar.Unit.Compiler
             FunctionalNode selectReference = new FunctionalNode(function.BlockDiagram, Signatures.SelectReferenceType);
             Wire.Create(function.BlockDiagram, selectReference.OutputTerminals[1], terminateLifetime.InputTerminals[0]);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(selectReference.InputTerminals[1], selectReference.InputTerminals[2]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -192,8 +192,8 @@ namespace Tests.Rebar.Unit.Compiler
             Wire.Create(frame.Diagram, selectReference.OutputTerminals[1], outputTunnel.InputTerminals[0]);
             Wire.Create(function.BlockDiagram, outputTunnel.OutputTerminals[0], terminateLifetime.InputTerminals[0]);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(inputTunnel1.InputTerminals[0], inputTunnel2.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -214,7 +214,7 @@ namespace Tests.Rebar.Unit.Compiler
             FunctionalNode someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
             Wire.Create(function.BlockDiagram, someConstructor.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(someConstructor.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -227,8 +227,8 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void LifetimeWithLiveVariablesOnMainAndNestedDiagrams_ValidateVariableUsages_TerminateLifetimeNodeHasCorrectInputTerminalCount()
         {
-            var signatureBuilder = PFTypes.Factory.DefineFunction("outputString");
-            NIType outputOwnerStringSignature = signatureBuilder.AddOutput(PFTypes.String, "owner").CreateType();
+            var signatureBuilder = NITypes.Factory.DefineFunction("outputString");
+            NIType outputOwnerStringSignature = signatureBuilder.AddOutput(NITypes.String, "owner").CreateType();
 
             DfirRoot function = DfirRoot.Create();
             var outputString = new FunctionalNode(function.BlockDiagram, outputOwnerStringSignature);

@@ -16,9 +16,9 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel conditionTunnel = CreateLoopConditionTunnel(loop);
-            Constant falseConstant = ConnectConstantToInputTerminal(conditionTunnel.InputTerminals[0], PFTypes.Boolean, false, false);
+            Constant falseConstant = ConnectConstantToInputTerminal(conditionTunnel.InputTerminals[0], NITypes.Boolean, false, false);
             Tunnel outputTunnel = CreateOutputTunnel(loop);
-            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
@@ -33,12 +33,12 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             Loop loop = new Loop(function.BlockDiagram);
             LoopConditionTunnel conditionTunnel = CreateLoopConditionTunnel(loop);
-            Constant trueConstant = ConnectConstantToInputTerminal(conditionTunnel.InputTerminals[0], PFTypes.Boolean, true, false);
+            Constant trueConstant = ConnectConstantToInputTerminal(conditionTunnel.InputTerminals[0], NITypes.Boolean, true, false);
             FunctionalNode assign = new FunctionalNode(loop.Diagram, Signatures.AssignType);
             Wire.Create(loop.Diagram, conditionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
-            Constant falseConstant = ConnectConstantToInputTerminal(assign.InputTerminals[1], PFTypes.Boolean, false, false);
+            Constant falseConstant = ConnectConstantToInputTerminal(assign.InputTerminals[1], NITypes.Boolean, false, false);
             Tunnel outputTunnel = CreateOutputTunnel(loop);
-            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], PFTypes.Int32, 5, false);
+            Constant intConstant = ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
             FunctionalNode inspect = ConnectInspectToOutputTerminal(outputTunnel.OutputTerminals[0]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);

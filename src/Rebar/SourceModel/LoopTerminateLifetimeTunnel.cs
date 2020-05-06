@@ -20,7 +20,7 @@ namespace Rebar.SourceModel
         public static LoopTerminateLifetimeTunnel CreateLoopConditionTunnel(IElementCreateInfo elementCreateInfo)
         {
             var loopTerminateLifetimeTunnel = new LoopTerminateLifetimeTunnel();
-            loopTerminateLifetimeTunnel.Init(elementCreateInfo);
+            loopTerminateLifetimeTunnel.Initialize(elementCreateInfo);
             return loopTerminateLifetimeTunnel;
         }
 

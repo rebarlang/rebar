@@ -24,9 +24,9 @@ namespace Rebar.Compiler
             IScheduledActivityManager scheduledActivityManager,
             IMessageDescriptorTranslator additionalErrorTexts,
             Envoy buildSpecSource,
-            SpecAndQName specAndQName,
-            DfirModelMap map) :
-            base(source, reflectionCancellationToken, scheduledActivityManager, additionalErrorTexts, buildSpecSource, specAndQName)
+            CompileSpecification compileSpecification,
+            DfirModelMap map)
+            : base(source, reflectionCancellationToken, scheduledActivityManager, additionalErrorTexts, buildSpecSource, compileSpecification)
         {
             _map = map;
         }

@@ -53,11 +53,13 @@ namespace Rebar.RebarTarget
             return null;
         }
 
-        public override void UnloadFunction(string functionName, string compiledComponentName)
+        /// <inheritdoc />
+        public override void UnloadFunction(CompilableDefinitionName executableName)
         {
         }
 
-        protected override IExecutable TryGetExecutable(string executableName, string compiledComponentName, int cloneNumber)
+        /// <inheritdoc />
+        protected override IExecutable TryGetExecutable(CompilableDefinitionName executableName, int cloneNumber)
         {
             throw new NotImplementedException();
         }

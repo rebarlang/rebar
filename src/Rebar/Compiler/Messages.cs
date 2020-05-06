@@ -1,4 +1,5 @@
-﻿using NationalInstruments.Compiler.SemanticAnalysis;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
 using NationalInstruments.SourceModel;
 using Rebar.Common;

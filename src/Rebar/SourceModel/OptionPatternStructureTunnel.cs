@@ -13,7 +13,7 @@ namespace Rebar.SourceModel
         public static OptionPatternStructureTunnel CreateOptionPatternStructureTunnel(IElementCreateInfo elementCreateInfo)
         {
             var optionPatternStructureTunnel = new OptionPatternStructureTunnel();
-            optionPatternStructureTunnel.Init(elementCreateInfo);
+            optionPatternStructureTunnel.Initialize(elementCreateInfo);
             return optionPatternStructureTunnel;
         }
 

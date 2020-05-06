@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.DynamicProperties;
@@ -23,15 +24,15 @@ namespace Rebar.SourceModel
 
         protected TypePassthrough()
         {
-            FixedTerminals.Add(new NodeTerminal(Direction.Input, PFTypes.Void, "ref in"));
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void, "ref out"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Input, NITypes.Void, "ref in"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, NITypes.Void, "ref out"));
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
         public static TypePassthrough CreateTypePassthrough(IElementCreateInfo elementCreateInfo)
         {
             var typePassthrough = new TypePassthrough();
-            typePassthrough.Init(elementCreateInfo);
+            typePassthrough.Initialize(elementCreateInfo);
             typePassthrough.SetIconViewGeometry();
             return typePassthrough;
         }

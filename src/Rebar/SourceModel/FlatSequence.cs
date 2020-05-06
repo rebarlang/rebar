@@ -14,7 +14,7 @@ namespace Rebar.SourceModel
         public static FlatSequence CreateFlatSequence(IElementCreateInfo elementCreateInfo)
         {
             var flatSequence = new FlatSequence();
-            flatSequence.Init(elementCreateInfo);
+            flatSequence.Initialize(elementCreateInfo);
             return flatSequence;
         }
 
@@ -51,7 +51,7 @@ namespace Rebar.SourceModel
         public static FlatSequenceSimpleTunnel CreateFlatSequenceSimpleTunnel(IElementCreateInfo elementCreateInfo)
         {
             var flatSequenceSimpleTunnel = new FlatSequenceSimpleTunnel();
-            flatSequenceSimpleTunnel.Init(elementCreateInfo);
+            flatSequenceSimpleTunnel.Initialize(elementCreateInfo);
             return flatSequenceSimpleTunnel;
         }
 

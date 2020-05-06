@@ -16,9 +16,6 @@ namespace Rebar.SourceModel
         {
         }
 
-        // TODO: depends on whether this is used by a DataItem
-        public override bool CanImpactOwnersSignature => false;
-
         public Task OnExportsChangedAsync(Envoy envoy, ExportsChangedData data)
         {
             // TODO

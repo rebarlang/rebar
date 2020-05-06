@@ -8,7 +8,8 @@ namespace Rebar.Design.TypeDiagram
     [ExportProvideViewModels(typeof(TypeDiagramEditor))]
     public class TypeDiagramViewModelProvider : ViewModelProvider
     {
-        public TypeDiagramViewModelProvider()
+        /// <inheritdoc />
+        protected override void AddSupportedModels()
         {
             AddSupportedModel<DiagramLabel>(n => new DiagramLabelViewModel(n));
             AddSupportedModel<SelfType>(n => new SelfTypeViewModel(n /*, @"Resources\Diagram\Nodes\SelfType.png"*/));

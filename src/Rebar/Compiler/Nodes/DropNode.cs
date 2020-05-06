@@ -2,7 +2,7 @@
 using System.Linq;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using Direction = NationalInstruments.Dfir.Direction;
+using Direction = NationalInstruments.CommonModel.Direction;
 using Node = NationalInstruments.Dfir.Node;
 
 namespace Rebar.Compiler.Nodes
@@ -11,7 +11,7 @@ namespace Rebar.Compiler.Nodes
     {
         public DropNode(Node parentNode) : base(parentNode)
         {
-            CreateTerminal(Direction.Input, PFTypes.Void, "value in");
+            CreateTerminal(Direction.Input, NITypes.Void, "value in");
         }
 
         private DropNode(Node newParentNode, Node nodeToCopy, NodeCopyInfo copyInfo) 

@@ -15,49 +15,49 @@ namespace Tests.Rebar.Unit.Execution
         [TestMethod]
         public void AndTwoBooleans_Execute_CorrectResultValue()
         {
-            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("And", PFTypes.Boolean, PFTypes.Boolean), true, false, false);
+            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("And", NITypes.Boolean, NITypes.Boolean), true, false, false);
         }
 
         [TestMethod]
         public void OrTwoBooleans_Execute_CorrectResultValue()
         {
-            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("Or", PFTypes.Boolean, PFTypes.Boolean), true, false, true);
+            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("Or", NITypes.Boolean, NITypes.Boolean), true, false, true);
         }
 
         [TestMethod]
         public void XorTwoBooleans_Execute_CorrectResultValue()
         {
-            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("Xor", PFTypes.Boolean, PFTypes.Boolean), true, false, true);
+            TestPureBinaryBooleanOperation(Signatures.DefinePureBinaryFunction("Xor", NITypes.Boolean, NITypes.Boolean), true, false, true);
         }
 
         [TestMethod]
         public void NotBoolean_Execute_CorrectResultValue()
         {
-            TestPureUnaryBooleanOperation(Signatures.DefinePureUnaryFunction("Not", PFTypes.Boolean, PFTypes.Boolean), true, false);
+            TestPureUnaryBooleanOperation(Signatures.DefinePureUnaryFunction("Not", NITypes.Boolean, NITypes.Boolean), true, false);
         }
 
         [TestMethod]
         public void AccumulateAndTwoBooleans_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateAnd", PFTypes.Boolean), true, false, false);
+            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateAnd", NITypes.Boolean), true, false, false);
         }
 
         [TestMethod]
         public void AccumulateOrTwoBooleans_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateOr", PFTypes.Boolean), true, false, true);
+            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateOr", NITypes.Boolean), true, false, true);
         }
 
         [TestMethod]
         public void AccumulateXorTwoBooleans_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateXor", PFTypes.Boolean), true, false, true);
+            TestMutatingBinaryBooleanOperation(Signatures.DefineMutatingBinaryFunction("AccumulateXor", NITypes.Boolean), true, false, true);
         }
         
         [TestMethod]
         public void AccumulateNotBoolean_Execute_CorrectResultValue()
         {
-            TestMutatingUnaryBooleanOperation(Signatures.DefineMutatingUnaryFunction("AccumulateNot", PFTypes.Boolean), true, false);
+            TestMutatingUnaryBooleanOperation(Signatures.DefineMutatingUnaryFunction("AccumulateNot", NITypes.Boolean), true, false);
         }
 
         private void TestPureBinaryBooleanOperation(NIType operationSignature, bool leftValue, bool rightValue, bool expectedResult)
@@ -66,7 +66,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 leftValue,
                 rightValue,
-                PFTypes.Boolean,
+                NITypes.Boolean,
                 false,
                 value => AssertByteArrayIsBoolean(value, expectedResult));
         }
@@ -77,7 +77,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 value,
                 null,
-                PFTypes.Boolean,
+                NITypes.Boolean,
                 false,
                 v => AssertByteArrayIsBoolean(v, expectedResult));
         }
@@ -88,7 +88,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 leftValue,
                 rightValue,
-                PFTypes.Boolean,
+                NITypes.Boolean,
                 true,
                 value => AssertByteArrayIsBoolean(value, expectedResult));
         }
@@ -99,7 +99,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 value,
                 null,
-                PFTypes.Boolean,
+                NITypes.Boolean,
                 true,
                 v => AssertByteArrayIsBoolean(v, expectedResult));
         }

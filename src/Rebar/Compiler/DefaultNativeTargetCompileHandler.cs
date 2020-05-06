@@ -7,8 +7,7 @@ using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
-using NationalInstruments.Linking;
-using NationalInstruments.NativeTarget.Compiler;
+using NationalInstruments.NativeTarget;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.Compiler.TypeDiagram;
 
@@ -37,8 +36,8 @@ namespace Rebar.Compiler
         public override bool IsDefaultBuildSpecEager() => false;
 
         /// <inheritdoc />
-        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> BackEndCompileAsyncCore(
-            SpecAndQName specAndQName,
+        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> CompileCoreAsync(
+            CompileSpecification compileSpecification,
             DfirRoot targetDfir,
             CompileCancellationToken cancellationToken,
             ProgressToken progressToken,
@@ -57,13 +56,17 @@ namespace Rebar.Compiler
                 ExecutionPriority.Normal,
                 CallingConvention.StdCall);
 
-            var builtPackage = new EmptyBuiltPackage(specAndQName, Compiler.TargetName, Enumerable.Empty<SpecAndQName>());
+            var builtPackage = new EmptyBuiltPackage(
+                compileSpecification,
+                Compiler.TargetName,
+                Enumerable.Empty<CompileSpecification>(),
+                CompileMetadata.Empty);
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,
                 targetDfir,
-                new Dictionary<ExtendedQualifiedName, CompileSignature>(),
+                new Dictionary<CompilableDefinitionName, CompileSignature>(),
                 token,
                 cancellationToken,
                 progressToken,
@@ -88,11 +91,11 @@ namespace Rebar.Compiler
     }
 
     /// <summary>
-    /// Envoy service factory for <see cref="FunctionCompilerHandlerFactory"/>. Binds to Rebar targets as an envoy service.
+    /// Envoy service factory for <see cref="DefaultNativeTargetCompileHandlerFactory"/>. Binds to the native target as an envoy service.
     /// </summary>
     [ExportEnvoyServiceFactory(typeof(ITargetCompileHandlerFactory))]
-    [BindsToKeyword(NativeTargetCompilerServices.TargetModelName)]
-    public class FunctionCompileHandlerFactoryFactory : EnvoyServiceFactory
+    [BindsToKeyword(NativeTargetDefinition.ModelDefinitionTypeLocalName, NativeTargetDefinition.ModelDefinitionTypeNamespaceName)]
+    public class DefaultNativeTargetCompileHandlerFactoryFactory : EnvoyServiceFactory
     {
         /// <inheritdoc />
         protected override EnvoyService CreateService()

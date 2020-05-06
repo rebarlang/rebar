@@ -1,7 +1,7 @@
-﻿using NationalInstruments.Compiler;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.Compiler;
 using NationalInstruments.Compiler.SemanticAnalysis;
 using NationalInstruments.Dfir;
-using NationalInstruments.SourceModel;
 
 namespace Rebar.Compiler
 {
@@ -12,13 +12,19 @@ namespace Rebar.Compiler
     {
         private const string TransformCategory = "RebarSupportedTargetTransform";
 
+        private readonly ISemanticAnalysisTargetInfo _semanticAnalysisTargetInfo;
+
+        public RebarSupportedTargetTransform(ISemanticAnalysisTargetInfo semanticAnalysisTargetInfo)
+        {
+            _semanticAnalysisTargetInfo = semanticAnalysisTargetInfo;
+        }
+
         /// <inheritdoc />
         public void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
             dfirRoot.MarkErrorCategoryChanged(TransformCategory);
 
-            var targetKind = dfirRoot.BuildSpec.TargetCompiler.TargetKind;
-            if (targetKind != RebarTarget.TargetCompiler.Kind)
+            if (_semanticAnalysisTargetInfo.TargetKind != RebarTarget.TargetCompiler.Kind)
             {
                 dfirRoot.SetDfirMessage(MessageSeverity.Error, TransformCategory, AllModelsOfComputationErrorMessages.UnsupportedDocumentTypeOnTarget);
             }

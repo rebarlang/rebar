@@ -15,7 +15,7 @@ namespace Rebar.SourceModel
         public static LockTunnel CreateLockTunnel(IElementCreateInfo elementCreateInfo)
         {
             var lockTunnel = new LockTunnel();
-            lockTunnel.Init(elementCreateInfo);
+            lockTunnel.Initialize(elementCreateInfo);
             return lockTunnel;
         }
 

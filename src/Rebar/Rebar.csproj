@@ -25,6 +25,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
@@ -34,6 +36,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVMSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -47,55 +50,55 @@
     <Reference Include="NationalInstruments.Common, Version=15.1.40.49152, Culture=neutral, PublicKeyToken=dc6ad606294fc298, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.Common.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.Common.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Compiler, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.Compiler.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.Compiler.dll</HintPath>
     </Reference>
-    <Reference Include="NationalInstruments.ComponentEditor">
+    <Reference Include="NationalInstruments.MocCommon.Components">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.ComponentEditor.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.MocCommon.Components.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.Core">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.Core.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.Core.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.ExecutionFramework, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.MocCommon">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.MocCommon.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.MocCommon.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.NativeTarget">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.NativeTarget.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.NativeTarget.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PanelCommon, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.PanelCommon.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.PanelCommon.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.PlatformFramework">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.RuntimeSerialization">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.RuntimeSerialization.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.RuntimeSerialization.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.SystemDesigner">
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.SystemDesigner.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.SystemDesigner.dll</HintPath>
     </Reference>
     <Reference Include="NationalInstruments.VI, Version=6.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
-      <HintPath>$(InstallLocation)\NationalInstruments.VI.dll</HintPath>
+      <HintPath>$(NXGDependenciesLocation)\NationalInstruments.VI.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -352,6 +355,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionDeployedPackage.cs" />
     <Compile Include="RebarTarget\LLVM\LLVMExtensions.cs" />
     <Compile Include="RebarTarget\RuntimeExecutionTarget.cs" />
+    <Compile Include="RebarTarget\SystemModel\TargetDefinitionTypeSupportPolicyFactory.cs" />
     <Compile Include="RebarTarget\TargetCompiler.cs" />
     <Compile Include="RebarTarget\TargetCompilerServices.cs" />
     <Compile Include="RebarTarget\TargetCompilerServicesInitialization.cs" />
@@ -377,7 +381,7 @@
     <Compile Include="Design\FunctionProjectItemInfoService.cs" />
     <Compile Include="Design\FunctionWireViewModel.cs" />
     <Compile Include="Design\TypeAssetProviders.cs" />
-    <Compile Include="RebarTarget\SystemModel\CreateItemInScopeRulesService.cs" />
+    <Compile Include="RebarTarget\SystemModel\TargetDefinitionTypeSupportPolicy.cs" />
     <Compile Include="RebarTarget\SystemModel\DeviceCatalogItem.cs" />
     <Compile Include="RebarTarget\SystemModel\DeviceDisplayInfo.cs" />
     <Compile Include="RebarTarget\SystemModel\DeviceKind.cs" />
@@ -388,7 +392,6 @@
     <Compile Include="RebarTarget\SystemModel\ModuleKind.cs" />
     <Compile Include="RebarTarget\SystemModel\PaletteCategory.cs" />
     <Compile Include="RebarTarget\SystemModel\ProcessFactoryServiceBuilder.cs" />
-    <Compile Include="RebarTarget\SystemModel\ProcessServiceBuilder.cs" />
     <Compile Include="RebarTarget\SystemModel\SystemModelNamespaceSchema.cs" />
     <Compile Include="RebarTarget\SystemModel\TargetEnvoyCreationServiceBuilder.cs" />
     <Compile Include="RebarTarget\SystemModel\TargetKind.cs" />

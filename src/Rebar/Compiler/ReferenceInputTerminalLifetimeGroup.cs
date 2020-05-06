@@ -372,7 +372,7 @@ namespace Rebar.Compiler
                 typeVariableSet.TryDecomposeReferenceType(stringSliceReferenceType, out u, out lifetime, out m);
                 TypeVariableReference stringReferenceType = typeVariableSet.CreateReferenceToReferenceType(
                     false,
-                    typeVariableSet.CreateTypeVariableReferenceFromNIType(PFTypes.String),
+                    typeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.String),
                     lifetime);
 
                 AutoBorrowNodeFacade stringToSliceFacade = AutoBorrowNodeFacade.GetNodeFacade(stringToSlice);
@@ -398,7 +398,7 @@ namespace Rebar.Compiler
 
                 string typeName = TypeVariableSet.GetTypeName(underlyingType);
                 bool underlyingTypeIsStringSlice = typeName == DataTypes.StringSliceType.GetName(),
-                    underlyingTypeIsString = typeName == PFTypes.String.GetName();
+                    underlyingTypeIsString = typeName == NITypes.String.GetName();
                 bool inputCoercesToStringSlice = underlyingTypeIsString || underlyingTypeIsStringSlice;
                 bool needsBorrow = !otherIsReference || !underlyingTypeIsStringSlice;
                 TypeVariableReference lifetimeType = otherIsReference

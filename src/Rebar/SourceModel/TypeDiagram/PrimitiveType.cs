@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DataTypes;
 using NationalInstruments.DynamicProperties;
@@ -22,14 +23,14 @@ namespace Rebar.SourceModel.TypeDiagram
 
         private PrimitiveType()
         {
-            FixedTerminals.Add(new NodeTerminal(Direction.Output, PFTypes.Void, "type"));
+            FixedTerminals.Add(new NodeTerminal(Direction.Output, NITypes.Void, "type"));
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
         public static PrimitiveType CreatePrimitiveType(IElementCreateInfo elementCreateInfo)
         {
             var primitiveType = new PrimitiveType();
-            primitiveType.Init(elementCreateInfo);
+            primitiveType.Initialize(elementCreateInfo);
             primitiveType.SetIconViewGeometry();
             return primitiveType;
         }

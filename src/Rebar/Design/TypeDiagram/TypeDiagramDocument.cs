@@ -388,7 +388,7 @@ namespace Rebar.Design.TypeDiagram
         {
             return new List<DocumentOverlayHelpContent>
             {
-                new DocumentOverlayHelpContent(OverlayHelpProviderVisualId.DocumentDescription, "NI.OverlayHelp:SketchDocument".NotLocalized(), OverlayHelpTitle)
+                new DocumentOverlayHelpContent(OverlayHelpProviderVisualId.DocumentDescription, "NI.OverlayHelp:SketchDocument", OverlayHelpTitle)
             };
         }
 

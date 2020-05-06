@@ -16,8 +16,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], NITypes.Boolean, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -33,7 +33,7 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
@@ -45,8 +45,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             BuildTupleNode buildTuple = new BuildTupleNode(function.BlockDiagram, 2);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(buildTuple.InputTerminals[1], NITypes.Boolean, false);
             var decomposeTuple = new DecomposeTupleNode(function.BlockDiagram, 2, DecomposeMode.Borrow);
             Wire.Create(function.BlockDiagram, buildTuple.OutputTerminals[0], decomposeTuple.InputTerminals[0]);
 

@@ -11,7 +11,7 @@ namespace Rebar.Compiler.Nodes
     {
         public IterateTunnel(Structure parentStructure) : base(parentStructure)
         {
-            CreateStandardTerminals(Direction.Input, 1u, 1u, PFTypes.Void);
+            CreateStandardTerminals(NationalInstruments.CommonModel.Direction.Input, 1u, 1u, NITypes.Void);
         }
 
         private IterateTunnel(Structure parentStructure, IterateTunnel toCopy, NodeCopyInfo copyInfo)

@@ -17,7 +17,7 @@ namespace Rebar.SourceModel
         public static LoopTunnel CreateLoopTunnel(IElementCreateInfo elementCreateInfo)
         {
             var loopTunnel = new LoopTunnel();
-            loopTunnel.Init(elementCreateInfo);
+            loopTunnel.Initialize(elementCreateInfo);
             return loopTunnel;
         }
 

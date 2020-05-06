@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using NationalInstruments;
-using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using DfirDiagram = NationalInstruments.Dfir.Diagram;
 using DfirNode = NationalInstruments.Dfir.Node;
@@ -52,7 +51,7 @@ namespace Rebar.Compiler
             for (int looseEndsIndex = 0; looseEndsIndex < numberOfLooseEndsInModel; ++looseEndsIndex)
             {
                 DfirTerminal dfirTerminal = dfirWire.CreateBranch();
-                dfirTerminal.DataType = PFTypes.Void;
+                dfirTerminal.DataType = NITypes.Void;
             }
             return dfirWire;
         }
@@ -63,8 +62,7 @@ namespace Rebar.Compiler
             DfirTerminal dfirTerminal)
         {
             dfirModelMap.AddMapping(modelTerminal, dfirTerminal);
-            dfirTerminal.SetSourceModelId(modelTerminal);
-            dfirTerminal.DataType = modelTerminal.DataType.IsUnset() ? PFTypes.Void : modelTerminal.DataType;
+            dfirTerminal.DataType = modelTerminal.DataType.IsUnset() ? NITypes.Void : modelTerminal.DataType;
         }
 
         public static void MapTerminalsInOrder(this DfirModelMap dfirModelMap, SMNode sourceModelNode, DfirNode dfirNode)

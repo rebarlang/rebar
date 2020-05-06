@@ -34,11 +34,11 @@ namespace Rebar.Common
                 case BinaryPrimitiveOps.Multiply:
                 case BinaryPrimitiveOps.Divide:
                 case BinaryPrimitiveOps.Modulus:
-                    return PFTypes.Int32;
+                    return NITypes.Int32;
                 case BinaryPrimitiveOps.And:
                 case BinaryPrimitiveOps.Or:
                 case BinaryPrimitiveOps.Xor:
-                    return PFTypes.Boolean;
+                    return NITypes.Boolean;
                 default:
                     throw new NotImplementedException();
             }
@@ -49,9 +49,9 @@ namespace Rebar.Common
             switch (unaryOp)
             {
                 case UnaryPrimitiveOps.Increment:
-                    return PFTypes.Int32;
+                    return NITypes.Int32;
                 case UnaryPrimitiveOps.Not:
-                    return PFTypes.Boolean;
+                    return NITypes.Boolean;
                 default:
                     throw new NotImplementedException();
             }

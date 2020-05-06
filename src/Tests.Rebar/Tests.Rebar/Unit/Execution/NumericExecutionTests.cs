@@ -10,67 +10,67 @@ namespace Tests.Rebar.Unit.Execution
         [TestMethod]
         public void AddTwoI32s_Execute_CorrectResultValue()
         {
-            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Add", PFTypes.Int32, PFTypes.Int32), 6, 5, 11);
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Add", NITypes.Int32, NITypes.Int32), 6, 5, 11);
         }
 
         [TestMethod]
         public void SubtractTwoI32s_Execute_CorrectResultValue()
         {
-            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Subtract", PFTypes.Int32, PFTypes.Int32), 6, 5, 1);
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Subtract", NITypes.Int32, NITypes.Int32), 6, 5, 1);
         }
 
         [TestMethod]
         public void MultiplyTwoI32s_Execute_CorrectResultValue()
         {
-            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Multiply", PFTypes.Int32, PFTypes.Int32), 6, 5, 30);
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Multiply", NITypes.Int32, NITypes.Int32), 6, 5, 30);
         }
 
         [TestMethod]
         public void DivideTwoI32s_Execute_CorrectResultValue()
         {
-            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Divide", PFTypes.Int32, PFTypes.Int32), 6, 5, 1);
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Divide", NITypes.Int32, NITypes.Int32), 6, 5, 1);
         }
 
         [TestMethod]
         public void ModulusOfTwoI32s_Execute_CorrectResultValue()
         {
-            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Modulus", PFTypes.Int32, PFTypes.Int32), 7, 5, 2);
+            TestPureBinaryI32Operation(Signatures.DefinePureBinaryFunction("Modulus", NITypes.Int32, NITypes.Int32), 7, 5, 2);
         }
 
         [TestMethod]
         public void IncrementI32_Execute_CorrectResultValue()
         {
-            TestPureUnaryI32Operation(Signatures.DefinePureUnaryFunction("Increment", PFTypes.Int32, PFTypes.Int32), 6, 7);
+            TestPureUnaryI32Operation(Signatures.DefinePureUnaryFunction("Increment", NITypes.Int32, NITypes.Int32), 6, 7);
         }
 
         [TestMethod]
         public void AccumulateAddTwoI32s_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateAdd", PFTypes.Int32), 6, 5, 11);
+            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateAdd", NITypes.Int32), 6, 5, 11);
         }
 
         [TestMethod]
         public void AccumulateSubtractTwoI32s_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateSubtract", PFTypes.Int32), 6, 5, 1);
+            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateSubtract", NITypes.Int32), 6, 5, 1);
         }
 
         [TestMethod]
         public void AccumulateMultiplyTwoI32s_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateMultiply", PFTypes.Int32), 6, 5, 30);
+            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateMultiply", NITypes.Int32), 6, 5, 30);
         }
 
         [TestMethod]
         public void AccumulateDivideTwoI32s_Execute_CorrectResultValue()
         {
-            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateDivide", PFTypes.Int32), 6, 5, 1);
+            TestMutatingBinaryI32Operation(Signatures.DefineMutatingBinaryFunction("AccumulateDivide", NITypes.Int32), 6, 5, 1);
         }
 
         [TestMethod]
         public void AccumulateIncrementI32_Execute_CorrectResultValue()
         {
-            TestMutatingUnaryI32Operation(Signatures.DefineMutatingUnaryFunction("AccumulateIncrement", PFTypes.Int32), 6, 7);
+            TestMutatingUnaryI32Operation(Signatures.DefineMutatingUnaryFunction("AccumulateIncrement", NITypes.Int32), 6, 7);
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 leftValue,
                 rightValue,
-                PFTypes.Int32,
+                NITypes.Int32,
                 false,
                 value => AssertByteArrayIsInt32(value, expectedResult));
         }
@@ -126,7 +126,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 value,
                 null,
-                PFTypes.Int32,
+                NITypes.Int32,
                 false,
                 v => AssertByteArrayIsInt32(v, expectedResult));
         }
@@ -137,7 +137,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 leftValue,
                 rightValue,
-                PFTypes.Int32,
+                NITypes.Int32,
                 true,
                 value => AssertByteArrayIsInt32(value, expectedResult));
         }
@@ -148,7 +148,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 value,
                 null,
-                PFTypes.Int32,
+                NITypes.Int32,
                 true,
                 v => AssertByteArrayIsInt32(v, expectedResult));
         }
@@ -159,7 +159,7 @@ namespace Tests.Rebar.Unit.Execution
                 operationSignature,
                 leftValue,
                 rightValue,
-                PFTypes.Int32,
+                NITypes.Int32,
                 false,
                 v => AssertByteArrayIsBoolean(v, expectedResult));
         }

@@ -1,5 +1,5 @@
-﻿using NationalInstruments.ComponentEditor.SourceModel;
-using NationalInstruments.Core;
+﻿using NationalInstruments.Core;
+using NationalInstruments.MocCommon.Components.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
 using Rebar.SourceModel;
 using Rebar.SourceModel.TypeDiagram;
@@ -7,16 +7,14 @@ using Rebar.SourceModel.TypeDiagram;
 namespace Rebar.RebarTarget.SystemModel
 {
     /// <summary>
-    /// Implementation of <see cref="ICreateItemsInScopeRules"/> for the Rebar target. This is necessary
+    /// Implementation of <see cref="ITargetDefinitionTypeSupportPolicy"/> for the Rebar target. This is necessary
     /// to allow Rebar functions and other documents to be added to components under the Rebar target.
     /// </summary>
-    internal class CreateItemInScopeRulesService : ICreateItemsInScopeRules
+    internal class TargetDefinitionTypeSupportPolicy : EnvoyService, ITargetDefinitionTypeSupportPolicy
     {
         /// <inheritdoc />
-        public bool DisallowEditDocumentType(BindingKeyword modelDefinitionType, BindingKeyword overridingModelDefinitionType)
-        {
-            return !CanHandleType(modelDefinitionType, overridingModelDefinitionType);
-        }
+        public bool SupportsModelDefinitionType(BindingKeyword modelDefinitionType, BindingKeyword overridingModelDefinitionType)
+            => CanHandleType(modelDefinitionType, overridingModelDefinitionType);
 
         /// <summary>
         /// Determines if the Rebar target supports a given model definition type.

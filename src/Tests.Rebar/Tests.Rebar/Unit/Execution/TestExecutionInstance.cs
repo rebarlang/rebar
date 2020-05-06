@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using NationalInstruments.Core;
 using NationalInstruments.Dfir;
-using NationalInstruments.Linking;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget;
 using Rebar.RebarTarget.LLVM;
@@ -32,17 +33,17 @@ namespace Tests.Rebar.Unit.Execution
 
         public CompileLoadResult CompileAndLoadFunction(CompilerTestBase test, DfirRoot function, DfirRoot[] otherFunctions)
         {
-            var calleesIsYielding = new Dictionary<ExtendedQualifiedName, bool>();
-            var calleesMayPanic = new Dictionary<ExtendedQualifiedName, bool>();
+            var calleesIsYielding = new Dictionary<CompilableDefinitionName, bool>();
+            var calleesMayPanic = new Dictionary<CompilableDefinitionName, bool>();
             foreach (DfirRoot otherFunction in otherFunctions)
             {
                 FunctionCompileResult otherCompileResult = test.RunSemanticAnalysisUpToLLVMCodeGeneration(
                     otherFunction,
-                    FunctionCompileHandler.FunctionLLVMName(otherFunction.SpecAndQName),
+                    FunctionCompileHandler.FunctionLLVMName(otherFunction.CompileSpecification.Name),
                     calleesIsYielding,
                     calleesMayPanic);
-                calleesIsYielding[otherFunction.SpecAndQName.QualifiedName] = otherCompileResult.IsYielding;
-                calleesMayPanic[otherFunction.SpecAndQName.QualifiedName] = otherCompileResult.MayPanic;
+                calleesIsYielding[otherFunction.CompileSpecification.Name] = otherCompileResult.IsYielding;
+                calleesMayPanic[otherFunction.CompileSpecification.Name] = otherCompileResult.MayPanic;
                 _context.LoadFunction(otherCompileResult.Module);
             }
 

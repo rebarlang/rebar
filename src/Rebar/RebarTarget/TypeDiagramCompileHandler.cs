@@ -7,7 +7,6 @@ using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
-using NationalInstruments.Linking;
 using Rebar.Compiler.TypeDiagram;
 
 namespace Rebar.RebarTarget
@@ -33,8 +32,8 @@ namespace Rebar.RebarTarget
         public override bool IsDefaultBuildSpecEager() => true;
 
         /// <inheritdoc />
-        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> BackEndCompileAsyncCore(
-            SpecAndQName specAndQName,
+        public override async Task<Tuple<CompileCacheEntry, CompileSignature>> CompileCoreAsync(
+            CompileSpecification compileSpecification,
             DfirRoot targetDfir,
             CompileCancellationToken cancellationToken,
             ProgressToken progressToken,
@@ -52,7 +51,7 @@ namespace Rebar.RebarTarget
                 true,
                 ExecutionPriority.Normal,
                 CallingConvention.StdCall);
-            BuildSpec typeDiagramBuildSpec = specAndQName.BuildSpec;
+            BuildSpec typeDiagramBuildSpec = compileSpecification.BuildSpec;
 
 #if FALSE
             foreach (var dependency in targetDfir.Dependencies.OfType<CompileInvalidationDfirDependency>().ToList())
@@ -69,13 +68,17 @@ namespace Rebar.RebarTarget
 
             IBuiltPackage builtPackage = null;
             // TODO: create TypeDiagramBuiltPackage
-            builtPackage = new EmptyBuiltPackage(specAndQName, Compiler.TargetName, Enumerable.Empty<SpecAndQName>());
+            builtPackage = new EmptyBuiltPackage(
+                compileSpecification,
+                Compiler.TargetName,
+                Enumerable.Empty<CompileSpecification>(),
+                CompileMetadata.Empty);
 
             BuiltPackageToken token = Compiler.AddToBuiltPackagesCache(builtPackage);
             CompileCacheEntry entry = await Compiler.CreateStandardCompileCacheEntryFromDfirRootAsync(
                 CompileState.Complete,
                 targetDfir,
-                new Dictionary<ExtendedQualifiedName, CompileSignature>(),
+                new Dictionary<CompilableDefinitionName, CompileSignature>(),
                 token,
                 cancellationToken,
                 progressToken,

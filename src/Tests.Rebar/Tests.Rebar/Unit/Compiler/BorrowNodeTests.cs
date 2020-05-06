@@ -20,8 +20,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 2, true, true);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -39,8 +39,8 @@ namespace Tests.Rebar.Unit.Compiler
         {
             DfirRoot function = DfirRoot.Create();
             ExplicitBorrowNode borrow = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 2, true, true);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
             var lifetimeVariableAssociation = new LifetimeVariableAssociation();
 
             RunSemanticAnalysisUpToSetVariableTypes(function, null, null, lifetimeVariableAssociation);

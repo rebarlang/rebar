@@ -13,7 +13,7 @@ namespace Rebar.SourceModel
         public static OptionPatternStructureDiagram CreateOptionPatternStructureDiagram(IElementCreateInfo elementCreateInfo)
         {
             var optionPatternStructureDiagram = new OptionPatternStructureDiagram();
-            optionPatternStructureDiagram.Init(elementCreateInfo);
+            optionPatternStructureDiagram.Initialize(elementCreateInfo);
             return optionPatternStructureDiagram;
         }
 

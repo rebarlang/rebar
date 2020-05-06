@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -116,7 +117,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.ImmutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
             var lifetimeVariableAssociation = new LifetimeVariableAssociation();
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot, null, null, lifetimeVariableAssociation);
@@ -135,7 +136,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.CreateCopyType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -150,7 +151,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -160,7 +161,7 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void FunctionNodeWithNonGenericOutParameter_SetVariableTypes_TypeSetOnOutput()
         {
-            NIType signatureType = Signatures.DefinePureUnaryFunction("unary", PFTypes.Int32, PFTypes.Int32);
+            NIType signatureType = Signatures.DefinePureUnaryFunction("unary", NITypes.Int32, NITypes.Int32);
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
 
@@ -177,7 +178,7 @@ namespace Tests.Rebar.Unit.Compiler
             var genericOutput = new FunctionalNode(function.BlockDiagram, DefineGenericOutputFunctionSignature());
             var assignNode = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
             genericOutput.OutputTerminals[0].WireTogether(assignNode.InputTerminals[0], SourceModelIdSource.NoSourceModelId);
-            ConnectConstantToInputTerminal(assignNode.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(assignNode.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
@@ -190,8 +191,8 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.SelectReferenceType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -209,8 +210,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -228,8 +229,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -243,8 +244,8 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.SelectReferenceType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], PFTypes.Int32, true);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], NITypes.Int32, true);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], NITypes.Int32, true);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -262,8 +263,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(BorrowMode.Mutable, functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, true);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, true);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -282,8 +283,8 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(BorrowMode.Mutable, functionalNode.InputTerminals[1], functionalNode.InputTerminals[2]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, true);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[1], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, true);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[1], NITypes.Int32, true);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -312,7 +313,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.OutputType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToSetVariableTypes(dfirRoot);
 
@@ -337,7 +338,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.MutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -351,7 +352,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -364,7 +365,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.MutablePassthroughType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, true);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, true);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -378,7 +379,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -392,7 +393,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
             ExplicitBorrowNode borrow = ConnectExplicitBorrowToInputTerminals(functionalNode.InputTerminals[0]);
-            ConnectConstantToInputTerminal(borrow.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(borrow.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -405,7 +406,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.RangeType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -416,10 +417,10 @@ namespace Tests.Rebar.Unit.Compiler
         public void FunctionNodeWithNonGenericSignatureParameterAndIncorrectTypeWired_ValidateVariableUsages_ErrorCreated()
         {
             DfirRoot dfirRoot = DfirRoot.Create();
-            NIFunctionBuilder signatureTypeBuilder = PFTypes.Factory.DefineFunction("NonGenericInput");
-            NIType signatureType = signatureTypeBuilder.AddInput(PFTypes.Int32, "input").CreateType();
+            NIFunctionBuilder signatureTypeBuilder = NITypes.Factory.DefineFunction("NonGenericInput");
+            NIType signatureType = signatureTypeBuilder.AddInput(NITypes.Int32, "input").CreateType();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Boolean, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -432,7 +433,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.OutputType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -445,7 +446,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.VectorInsertType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[0], NITypes.Boolean, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -458,8 +459,8 @@ namespace Tests.Rebar.Unit.Compiler
             NIType signatureType = Signatures.SelectReferenceType;
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode functionalNode = new FunctionalNode(dfirRoot.BlockDiagram, signatureType);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], PFTypes.Boolean, false);
-            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], PFTypes.Int32, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[1], NITypes.Boolean, false);
+            ConnectConstantToInputTerminal(functionalNode.InputTerminals[2], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 
@@ -469,13 +470,13 @@ namespace Tests.Rebar.Unit.Compiler
         [TestMethod]
         public void FunctionNodeWithConstrainedGenericInputParameterAndDisallowedTypeWired_ValidateVariableUsages_ErrorCreated()
         {
-            NIType disallowedType = PFTypes.Boolean.CreateLockingCell();
+            NIType disallowedType = NITypes.Boolean.CreateLockingCell();
             Assert.IsFalse(disallowedType.TypeHasDisplayTrait());
             DfirRoot dfirRoot = DfirRoot.Create();
             FunctionalNode output = new FunctionalNode(dfirRoot.BlockDiagram, Signatures.OutputType);
             FunctionalNode createLockingCell = new FunctionalNode(dfirRoot.BlockDiagram, Signatures.CreateLockingCellType);
             Wire.Create(dfirRoot.BlockDiagram, createLockingCell.OutputTerminals[0], output.InputTerminals[0]);
-            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], PFTypes.Boolean, false);
+            ConnectConstantToInputTerminal(createLockingCell.InputTerminals[0], NITypes.Boolean, false);
 
             RunSemanticAnalysisUpToValidation(dfirRoot);
 

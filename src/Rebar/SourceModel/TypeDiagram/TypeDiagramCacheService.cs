@@ -12,9 +12,6 @@ namespace Rebar.SourceModel.TypeDiagram
     {
         public string DisplayName => AssociatedEnvoy.Name.Last;
 
-        /// <inheritdoc />
-        public override NIType Signature => TypeDiagramCache?.DataType ?? NIType.Unset;
-
         public async Task<NIType> GetDataTypeAsync()
         {
             await InitializeAsync(null);
@@ -34,8 +31,7 @@ namespace Rebar.SourceModel.TypeDiagram
     /// <summary>
     /// Factory class for <see cref="GTypeDefinitionCacheService"/>
     /// </summary>
-    [ProvidedInterface(typeof(IProvideDataType))]
-    [ExportEnvoyServiceFactory(typeof(IMethodCallTarget))]
+    [ExportEnvoyServiceFactory(typeof(IProvideDataType))]
     [ProvidedInterface(typeof(IDependencyTargetExport))]
     [BindsToModelDefinitionType(TypeDiagramDefinition.TypeDiagramDefinitionType)]
     [BindOnTargeted] // TODO: US151337 - This service must be attached on the UI thread (see CAR# 651774 for more info) but there is not a good way to specify this. Use BindOnTargeted to ensure attach occurs on the UI thread. Ideally, this should be BindOnLoaded.

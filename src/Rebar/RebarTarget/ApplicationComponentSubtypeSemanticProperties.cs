@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using NationalInstruments.Compiler;
 using NationalInstruments.Core;
 using NationalInstruments.Dfir.Component;
 using Rebar.RebarTarget.SystemModel;
@@ -26,11 +27,11 @@ namespace Rebar.RebarTarget
         /// <inheritdoc />
         protected override IEnumerable<string> SupportedPlatformsWhitelist => _supportedPlatforms;
 
+        /// <inheritdoc />
+        public override string ComponentSubtypeIdentifier => ApplicationComponentSubtype.Identifier;
+
         /// <inheritdoc/>
-        public override bool CanBeExported(BindingKeyword modelDefinitionType)
-        {
-            return false;
-        }
+        public override bool CanBeExported(BindingKeyword modelDefinitionType) => false;
 
         /// <inheritdoc/>
         public override bool CanBeTopLevel(BindingKeyword modelDefinitionType)
@@ -40,9 +41,6 @@ namespace Rebar.RebarTarget
         }
 
         /// <inheritdoc/>
-        public override bool CanBeAlwaysIncluded(BindingKeyword modelDefinitionType)
-        {
-            return true;
-        }
+        public override bool CanBeAlwaysIncluded(BindingKeyword modelDefinitionType) => true;
     }
 }

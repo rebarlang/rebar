@@ -1,4 +1,5 @@
-﻿using NationalInstruments.DataTypes;
+﻿using NationalInstruments.CommonModel;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 
 namespace Rebar.Compiler.Nodes

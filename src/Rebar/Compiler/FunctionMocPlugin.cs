@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using NationalInstruments.Compiler;
 using NationalInstruments.Composition;
 using NationalInstruments.Core;
@@ -28,16 +29,21 @@ namespace Rebar.Compiler
                 _host.GetSharedExportedValue<ScheduledActivityManager>(),
                 AdditionalErrorTexts,
                 creationArguments.BuildSpecSource,
-                creationArguments.SpecAndQName,
+                creationArguments.CompileSpecification,
                 dfirBuilder.DfirModelMap);
             creationArguments.PrebuildTransform(dfirRoot, reflector, this);
 
             dfirBuilder.VisitFunction(function);
             ExecutionOrderSortingVisitor.SortDiagrams(dfirRoot);
-            return GenerateMocTransformManager(creationArguments.SpecAndQName, dfirRoot, new CompileCancellationToken());
+            return GenerateMocTransformManager(
+                creationArguments.CompileSpecification,
+                dfirRoot,
+                new CompileCancellationToken());
         }
 
-        public override MocTransformManager GenerateMocTransformManager(SpecAndQName specAndQName, DfirRoot sourceDfir,
+        public override MocTransformManager GenerateMocTransformManager(
+            CompileSpecification compileSpecification,
+            DfirRoot sourceDfir,
             CompileCancellationToken cancellationToken)
         {
             TerminalTypeUnificationResults unificationResults = new TerminalTypeUnificationResults();
@@ -54,7 +60,7 @@ namespace Rebar.Compiler
 
             if (RebarFeatureToggles.IsRebarTargetEnabled)
             {
-                semanticAnalysisTransforms.Add(new RebarSupportedTargetTransform());
+                semanticAnalysisTransforms.Add(new RebarSupportedTargetTransform(SemanticAnalysisTargetInfo));
             }
             semanticAnalysisTransforms.Add(new StandardTypeReflectionTransform());
             ReflectErrorsTransform.AddErrorReflection(semanticAnalysisTransforms, CompilePhase.SemanticAnalysis);
@@ -72,7 +78,7 @@ namespace Rebar.Compiler
             };
 
             return new StandardMocTransformManager(
-                specAndQName,
+                compileSpecification,
                 sourceDfir,
                 semanticAnalysisTransforms,
                 toTargetDfirTransforms, 

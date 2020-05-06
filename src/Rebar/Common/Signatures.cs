@@ -60,11 +60,11 @@ namespace Rebar.Common
 
         static Signatures()
         {
-            NITypeBuilder displayTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Display");
-            NITypeBuilder copyTraitConstraintBuilder = PFTypes.Factory.DefineValueInterface("Copy");
-            NITypeBuilder cloneTraitConstraintBuilder = PFTypes.Factory.DefineReferenceInterface("Clone");
+            NITypeBuilder displayTraitConstraintBuilder = NITypes.Factory.DefineValueInterface("Display");
+            NITypeBuilder copyTraitConstraintBuilder = NITypes.Factory.DefineValueInterface("Copy");
+            NITypeBuilder cloneTraitConstraintBuilder = NITypes.Factory.DefineReferenceInterface("Clone");
 
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction("ImmutPass");
+            var functionTypeBuilder = NITypes.Factory.DefineFunction("ImmutPass");
             var tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -72,7 +72,7 @@ namespace Rebar.Common
                 "valueRef");
             ImmutablePassthroughType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("MutPass");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("MutPass");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -80,7 +80,7 @@ namespace Rebar.Common
                 "valueRef");
             MutablePassthroughType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Assign");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Assign");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -92,7 +92,7 @@ namespace Rebar.Common
                 "value");
             AssignType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Exchange");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Exchange");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             var tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             AddInputOutput(
@@ -105,7 +105,7 @@ namespace Rebar.Common
                 "exchangeeRef2");
             ExchangeValuesType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateCopy");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("CreateCopy");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", cloneTraitConstraintBuilder);
             AddInputOutput(
                 functionTypeBuilder,
@@ -117,7 +117,7 @@ namespace Rebar.Common
                 "copy");
             CreateCopyType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Drop");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Drop");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             AddInputOutput(
                 functionTypeBuilder,
@@ -125,7 +125,7 @@ namespace Rebar.Common
                 "valueRef");
             DropType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Output");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Output");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", displayTraitConstraintBuilder);
             AddInputOutput(
                 functionTypeBuilder,
@@ -134,7 +134,7 @@ namespace Rebar.Common
             OutputType = functionTypeBuilder.CreateType();
 
             {
-                functionTypeBuilder = PFTypes.Factory.DefineFunction("IteratorNext");
+                functionTypeBuilder = NITypes.Factory.DefineFunction("IteratorNext");
                 // Technically, the TIterator type should have an Iterator interface constraint related to TItem.
                 // This signature is only being used by IterateTunnel currently, which does not need the constraint for type inference;
                 // once this becomes a standalone diagram node, the constraint will be necessary for type inference.
@@ -152,7 +152,7 @@ namespace Rebar.Common
                 IteratorNextType = functionTypeBuilder.CreateType();
             }
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Inspect");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Inspect");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -160,10 +160,10 @@ namespace Rebar.Common
                 "valueRef");
             InspectType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("FakeDropCreate");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("FakeDropCreate");
             AddInput(
                 functionTypeBuilder,
-                PFTypes.Int32,
+                NITypes.Int32,
                 "id");
             AddOutput(
                 functionTypeBuilder,
@@ -171,11 +171,11 @@ namespace Rebar.Common
                 "fakeDrop");
             FakeDropCreateType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("SelectReference");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SelectReference");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
-                PFTypes.Boolean.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                NITypes.Boolean.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "selectorRef");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2");
             var tMutabilityParameter = AddGenericMutabilityTypeParameter(functionTypeBuilder, "TMut");
@@ -194,14 +194,14 @@ namespace Rebar.Common
                 "selectedValueRef");
             SelectReferenceType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Range");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Range");
             AddInput(
                 functionTypeBuilder,
-                PFTypes.Int32,
+                NITypes.Int32,
                 "lowValue");
             AddInput(
                 functionTypeBuilder,
-                PFTypes.Int32,
+                NITypes.Int32,
                 "highValue");
             AddOutput(
                 functionTypeBuilder,
@@ -209,7 +209,7 @@ namespace Rebar.Common
                 "range");
             RangeType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Some");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Some");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
                 functionTypeBuilder,
@@ -221,7 +221,7 @@ namespace Rebar.Common
                 "option");
             SomeConstructorType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("None");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("None");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddOutput(
                 functionTypeBuilder,
@@ -229,7 +229,7 @@ namespace Rebar.Common
                 "option");
             NoneConstructorType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("UnwrapOption");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("UnwrapOption");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
                 functionTypeBuilder,
@@ -241,7 +241,7 @@ namespace Rebar.Common
                 "value");
             UnwrapOptionType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("OptionToPanicResult");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("OptionToPanicResult");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
                 functionTypeBuilder,
@@ -253,22 +253,22 @@ namespace Rebar.Common
                 "panicResult");
             OptionToPanicResultType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringFromSlice");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringFromSlice");
             AddInputOutput(
                 functionTypeBuilder,
                 DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
                 "slice");
             AddOutput(
                 functionTypeBuilder,
-                PFTypes.String,
+                NITypes.String,
                 "string");
             StringFromSliceType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringToSlice");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringToSlice");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             AddInput(
                 functionTypeBuilder,
-                PFTypes.String.CreateImmutableReference(tLifetimeParameter),
+                NITypes.String.CreateImmutableReference(tLifetimeParameter),
                 "string");
             AddOutput(
                 functionTypeBuilder,
@@ -276,7 +276,7 @@ namespace Rebar.Common
                 "slice");
             StringToSliceType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringConcat");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringConcat");
             AddInputOutput(
                 functionTypeBuilder,
                 DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
@@ -287,14 +287,14 @@ namespace Rebar.Common
                 "secondSlice");
             AddOutput(
                 functionTypeBuilder,
-                PFTypes.String,
+                NITypes.String,
                 "combined");
             StringConcatType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringAppend");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringAppend");
             AddInputOutput(
                 functionTypeBuilder,
-                PFTypes.String.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
+                NITypes.String.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
                 "string");
             AddInputOutput(
                 functionTypeBuilder,
@@ -302,7 +302,7 @@ namespace Rebar.Common
                 "slice");
             StringAppendType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("StringSliceToStringSplitIterator");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringSliceToStringSplitIterator");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             AddInput(
                 functionTypeBuilder,
@@ -314,7 +314,7 @@ namespace Rebar.Common
                 "iterator");
             StringSliceToStringSplitIteratorType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorCreate");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorCreate");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddOutput(
                 functionTypeBuilder,
@@ -322,17 +322,17 @@ namespace Rebar.Common
                 "vector");
             VectorCreateType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInitialize");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorInitialize");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData", copyTraitConstraintBuilder);
             AddInput(functionTypeBuilder, tDataParameter, "element");
-            AddInput(functionTypeBuilder, PFTypes.Int32, "size");
+            AddInput(functionTypeBuilder, NITypes.Int32, "size");
             AddOutput(
                 functionTypeBuilder,
                 tDataParameter.CreateVector(),
                 "vector");
             VectorInitializeType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorToSlice");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorToSlice");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             tMutabilityParameter = AddGenericMutabilityTypeParameter(functionTypeBuilder, "TMut");
@@ -346,7 +346,7 @@ namespace Rebar.Common
                 "sliceRef");
             VectorToSliceType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorAppend");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorAppend");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -355,7 +355,7 @@ namespace Rebar.Common
             AddInput(functionTypeBuilder, tDataParameter, "element");
             VectorAppendType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorInsert");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorInsert");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -363,7 +363,7 @@ namespace Rebar.Common
                 "vectorRef");
             AddInputOutput(
                 functionTypeBuilder,
-                PFTypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                NITypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "indexRef");
             AddInput(
                 functionTypeBuilder,
@@ -371,7 +371,7 @@ namespace Rebar.Common
                 "elementRef");
             VectorInsertType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("VectorRemoveLast");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("VectorRemoveLast");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInputOutput(
                 functionTypeBuilder,
@@ -380,13 +380,13 @@ namespace Rebar.Common
             AddOutput(functionTypeBuilder, tDataParameter.CreateOption(), "element");
             VectorRemoveLastType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("SliceIndex");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SliceIndex");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             tMutabilityParameter = AddGenericMutabilityTypeParameter(functionTypeBuilder, "TMut");
             AddInputOutput(
                 functionTypeBuilder,
-                PFTypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
+                NITypes.Int32.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife2")),
                 "indexRef");
             AddInput(
                 functionTypeBuilder,
@@ -398,7 +398,7 @@ namespace Rebar.Common
                 "elementRef");
             SliceIndexType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateLockingCell");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("CreateLockingCell");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
                 functionTypeBuilder,
@@ -410,7 +410,7 @@ namespace Rebar.Common
                 "cell");
             CreateLockingCellType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("SharedCreate");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SharedCreate");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
                 functionTypeBuilder,
@@ -422,7 +422,7 @@ namespace Rebar.Common
                 "shared");
             SharedCreateType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("SharedGetValue");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SharedGetValue");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             AddInput(
@@ -435,7 +435,7 @@ namespace Rebar.Common
                 "valueRef");
             SharedGetValueType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("OpenFileHandle");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("OpenFileHandle");
             AddInputOutput(
                 functionTypeBuilder,
                 DataTypes.StringSliceType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
@@ -446,18 +446,18 @@ namespace Rebar.Common
                 "fileHandle");
             OpenFileHandleType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("ReadLineFromFileHandle");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("ReadLineFromFileHandle");
             AddInputOutput(
                 functionTypeBuilder,
                 DataTypes.FileHandleType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
                 "fileHandleRef");
             AddOutput(
                 functionTypeBuilder,
-                PFTypes.String.CreateOption(),
+                NITypes.String.CreateOption(),
                 "line");
             ReadLineFromFileHandleType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("WriteStringToFileHandle");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("WriteStringToFileHandle");
             AddInputOutput(
                 functionTypeBuilder,
                 DataTypes.FileHandleType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
@@ -469,7 +469,7 @@ namespace Rebar.Common
             WriteStringToFileHandleType = functionTypeBuilder.CreateType();
 
             {
-                functionTypeBuilder = PFTypes.Factory.DefineFunction("Poll");
+                functionTypeBuilder = NITypes.Factory.DefineFunction("Poll");
                 NIType promiseType = AddGenericDataTypeParameter(functionTypeBuilder, "TPromise");
                 NIType valueType = AddGenericDataTypeParameter(functionTypeBuilder, "TValue");
                 AddInputOutput(
@@ -487,14 +487,14 @@ namespace Rebar.Common
                 PromisePollType = functionTypeBuilder.CreateType();
             }
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("Yield");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("Yield");
             AddInputOutput(
                 functionTypeBuilder,
                 AddGenericDataTypeParameter(functionTypeBuilder, "T").CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
                 "valueRef");
             YieldType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateYieldPromise");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("CreateYieldPromise");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
             AddInput(
@@ -507,7 +507,7 @@ namespace Rebar.Common
                 "promise");
             CreateYieldPromiseType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("CreateNotifierPair");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("CreateNotifierPair");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             AddOutput(
                 functionTypeBuilder,
@@ -519,7 +519,7 @@ namespace Rebar.Common
                 "writer");
             CreateNotifierPairType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("GetNotifierValue");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("GetNotifierValue");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             AddInput(
                 functionTypeBuilder,
@@ -531,7 +531,7 @@ namespace Rebar.Common
                 "value");
             GetNotifierValueType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("GetReaderPromise");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("GetReaderPromise");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             AddInput(
                 functionTypeBuilder,
@@ -543,7 +543,7 @@ namespace Rebar.Common
                 "promise");
             GetReaderPromiseType = functionTypeBuilder.CreateType();
 
-            functionTypeBuilder = PFTypes.Factory.DefineFunction("SetNotifierValue");
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SetNotifierValue");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "T");
             AddInput(
                 functionTypeBuilder,
@@ -653,7 +653,7 @@ namespace Rebar.Common
 
         public static NIType DefinePureUnaryFunction(string name, NIType inputType, NIType outputType)
         {
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
+            var functionTypeBuilder = NITypes.Factory.DefineFunction(name);
             AddInputOutput(
                 functionTypeBuilder,
                 inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
@@ -667,7 +667,7 @@ namespace Rebar.Common
 
         public static NIType DefinePureBinaryFunction(string name, NIType inputType, NIType outputType)
         {
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
+            var functionTypeBuilder = NITypes.Factory.DefineFunction(name);
             AddInputOutput(
                 functionTypeBuilder,
                 inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
@@ -685,7 +685,7 @@ namespace Rebar.Common
 
         public static NIType DefineMutatingUnaryFunction(string name, NIType inputType)
         {
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
+            var functionTypeBuilder = NITypes.Factory.DefineFunction(name);
             AddInputOutput(
                 functionTypeBuilder,
                 inputType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife")),
@@ -695,7 +695,7 @@ namespace Rebar.Common
 
         public static NIType DefineMutatingBinaryFunction(string name, NIType inputType)
         {
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
+            var functionTypeBuilder = NITypes.Factory.DefineFunction(name);
             AddInputOutput(
                 functionTypeBuilder,
                 inputType.CreateMutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
@@ -709,8 +709,8 @@ namespace Rebar.Common
 
         public static NIType DefineComparisonFunction(string name)
         {
-            var functionTypeBuilder = PFTypes.Factory.DefineFunction(name);
-            NIType inputType = PFTypes.Int32, outputType = PFTypes.Boolean;
+            var functionTypeBuilder = NITypes.Factory.DefineFunction(name);
+            NIType inputType = NITypes.Int32, outputType = NITypes.Boolean;
             AddInputOutput(
                 functionTypeBuilder,
                 inputType.CreateImmutableReference(AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife1")),
@@ -734,7 +734,7 @@ namespace Rebar.Common
             if (nonGenericSignature.IsOpenGeneric())
             {
                 NIType[] typeArguments = Enumerable.Range(0, functionSignature.GetGenericParameters().Count)
-                    .Select(i => PFTypes.Void)
+                    .Select(i => NITypes.Void)
                     .ToArray();
                 nonGenericSignature = nonGenericSignature.ReplaceGenericParameters(typeArguments);
             }

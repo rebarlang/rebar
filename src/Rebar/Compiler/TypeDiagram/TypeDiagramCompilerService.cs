@@ -22,20 +22,20 @@ namespace Rebar.Compiler.TypeDiagram
     }
 
     /// <summary>
-    /// Factory / registration class for the <see cref="FunctionCompilerService"/> envoy service.
+    /// Factory / registration class for the <see cref="TypeDiagramCompilerService"/> envoy service.
     /// </summary>
     [Preserve(AllMembers = true)]
     [ExportEnvoyServiceFactory(typeof(CompilerService))]
     [BindsToKeyword(TypeDiagramDefinition.TypeDiagramMocIdentifier)]
     [PartMetadata(ExportIdentifier.ExportIdentifierKey, "{62FE669C-9A5D-4DB8-B1FA-44F2ABEF1D23}")]
     [BindOnTargeted]
-    public class TypeDiagramCompilerServiceInitialization : EnvoyServiceFactory
+    public class TypeDiagramCompilerServiceInitialization : CompilerServiceFactory
     {
         /// <summary>
         ///  Called to create the envoy service
         /// </summary>
         /// <returns>the created envoy service</returns>
-        protected override EnvoyService CreateService()
+        protected override CompilerService CreateCompilerService()
         {
             return Host.CreateInstance<TypeDiagramCompilerService>();
         }

@@ -20,9 +20,10 @@ namespace Rebar.RebarTarget
                 () => new TargetCompiler(
                 AssociatedEnvoy.Project,
                 Host,
-                GetTargetQualifiedName(),
+                TargetCompilerIdentity,
                 AssociatedEnvoy.Project.GetPersistentCache(),
-                SpecializedTargetCompilerFactories));
+                SpecializedTargetCompilerFactories,
+                AssociatedEnvoy.Project.GetTargetCompilerLookup()));
 
             _executionTarget = new Lazy<ExecutionTarget>(() => new ExecutionTarget(Host));
 
@@ -48,9 +49,6 @@ namespace Rebar.RebarTarget
         /// </summary>
         public const string TargetModelName = TargetEnvoyCreationServiceBuilder.TargetKeyword;
 
-        private IBuiltPackage GetBuiltPackage(IRuntimeEntityIdentity name)
-        {
-            return _compiler.Value.GetBuiltPackage((SpecAndQName)name);
-        }
+        private IBuiltPackage GetBuiltPackage(IRuntimeEntityIdentity name) => _compiler.Value.GetBuiltPackage((CompileSpecification)name);
     }
 }

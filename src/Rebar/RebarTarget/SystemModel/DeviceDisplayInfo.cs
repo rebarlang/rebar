@@ -9,9 +9,9 @@ namespace Rebar.RebarTarget.SystemModel
         typeof(DeviceDisplayInfo),
         typeof(DeviceCatalogItem),
         DisplayNameResourceKey = "RebarTargetDisplayName",
-        PaletteIconPath = "pack://application:,,,/NationalInstruments.LabVIEW.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/Palette_WebServer_40x40.xml",
-        PartsViewIconPath = "pack://application:,,,/NationalInstruments.LabVIEW.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/PartsView_WebServer_24x24.xml",
-        IconViewIconPath = "pack://application:,,,/NationalInstruments.LabVIEW.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/IconView_WebServer_160x160.xml",
+        PaletteIconPath = "pack://application:,,,/NationalInstruments.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/Palette_WebServer_40x40.xml",
+        PartsViewIconPath = "pack://application:,,,/NationalInstruments.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/PartsView_WebServer_24x24.xml",
+        IconViewIconPath = "pack://application:,,,/NationalInstruments.VireoTarget;component/SystemDesigner/VireoBrowser/SystemDiagram/Palette/Images/IconView_WebServer_160x160.xml",
         Weight = 0.5)]
     public class DeviceDisplayInfo : DisplayInfoExport<PaletteCategory>
     {

@@ -122,7 +122,7 @@ namespace Rebar.Design
 
                 if (!variable.Type.IsRebarReferenceType())
                 {
-                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(null, variable.Type);
+                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets((Element)null, variable.Type);
                     ITypeAssetProvider outerAssetProvider = variable.Mutable
                         ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
                         : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);
@@ -139,7 +139,7 @@ namespace Rebar.Design
                 : variable.Type;
             int id = variable.Id;
             ITypeAssetProvider innerTypeAssetProvider = new VariableIdentityTypeAssetProvider(
-                stockResources.GetTypeAssets(null, variable.Type).GetShortName(innerType),
+                stockResources.GetTypeAssets((Element)null, variable.Type).GetShortName(innerType),
                 VariableIdentityTypeAssetProvider.GetColor(id));
             ITypeAssetProvider outerTypeAssetProvider;
             if (variable.Type.IsMutableReferenceType())

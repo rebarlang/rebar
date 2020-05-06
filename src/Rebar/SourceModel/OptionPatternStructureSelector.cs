@@ -1,4 +1,5 @@
 ﻿using System.Xml.Linq;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
@@ -20,7 +21,7 @@ namespace Rebar.SourceModel
         public static OptionPatternStructureSelector CreateOptionPatternStructureSelector(IElementCreateInfo elementCreateInfo)
         {
             var optionPatternStructureSelector = new OptionPatternStructureSelector();
-            optionPatternStructureSelector.Init(elementCreateInfo);
+            optionPatternStructureSelector.Initialize(elementCreateInfo);
             return optionPatternStructureSelector;
         }
 

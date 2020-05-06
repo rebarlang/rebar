@@ -28,16 +28,15 @@ namespace Rebar.Compiler
     [BindsToKeyword(Function.FunctionMocIdentifier)]
     [PartMetadata(ExportIdentifier.ExportIdentifierKey, "{1253CAD1-5874-4BB6-8090-7C3841BB5E21}")]
     [BindOnTargeted]
-    public class FunctionCompilerServiceInitialization : EnvoyServiceFactory
+    public class FunctionCompilerServiceInitialization : CompilerServiceFactory
     {
         /// <summary>
         ///  Called to create the envoy service
         /// </summary>
         /// <returns>the created envoy service</returns>
-        protected override EnvoyService CreateService()
+        protected override CompilerService CreateCompilerService()
         {
-            EnvoyService service = Host.CreateInstance<FunctionCompilerService>();
-            return service;
+            return Host.CreateInstance<FunctionCompilerService>();
         }
     }
 }

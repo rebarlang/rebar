@@ -22,9 +22,15 @@ namespace Rebar.RebarTarget
         /// <param name="scheduledActivityManager">The activity used to flip over into the UI thread as needed to do reflections</param>
         /// <param name="additionalErrorTexts">Supplies third-party message descriptions for this MoC</param>
         /// <param name="buildSpecSource">Source of the BuildSpec for which to reflect messages</param>
-        /// <param name="specAndQName">The <see cref="SpecAndQName"/> for which to reflect messages</param>
-        internal ApplicationComponentMocReflector(IReflectableModel source, ReflectionCancellationToken reflectionCancellationToken, IScheduledActivityManager scheduledActivityManager, IMessageDescriptorTranslator additionalErrorTexts, Envoy buildSpecSource, SpecAndQName specAndQName)
-            : base(source, reflectionCancellationToken, scheduledActivityManager, additionalErrorTexts, buildSpecSource, specAndQName)
+        /// <param name="compileSpecification">The <see cref="CompileSpecification"/> for which to reflect messages</param>
+        internal ApplicationComponentMocReflector(
+            IReflectableModel source,
+            ReflectionCancellationToken reflectionCancellationToken,
+            IScheduledActivityManager scheduledActivityManager,
+            IMessageDescriptorTranslator additionalErrorTexts,
+            Envoy buildSpecSource,
+            CompileSpecification compileSpecification)
+            : base(source, reflectionCancellationToken, scheduledActivityManager, additionalErrorTexts, buildSpecSource, compileSpecification)
         {
         }
 

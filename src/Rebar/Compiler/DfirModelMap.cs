@@ -18,13 +18,17 @@ namespace Rebar.Compiler
         public void AddMapping(Content content, DfirElement dfirElement)
         {
             _pairs.Add(new Tuple<Content, DfirElement>(content, dfirElement));
-            dfirElement.SetSourceModelId(content);
+            dfirElement.SetSourceModelIds(content);
         }
 
         public void AddMapping(SMTerminal modelTerminal, DfirTerminal dfirTerminal)
         {
             _terminalPairs.Add(new Tuple<SMTerminal, DfirTerminal>(modelTerminal, dfirTerminal));
-            dfirTerminal.SetSourceModelId(modelTerminal);
+            var contentOwner = modelTerminal.Owner as Content;
+            if (contentOwner != null)
+            {
+                dfirTerminal.SetSourceModelIds(contentOwner, modelTerminal.TerminalIdentifier);
+            }
         }
 
         public DfirElement GetDfirForModel(SMElement model)
