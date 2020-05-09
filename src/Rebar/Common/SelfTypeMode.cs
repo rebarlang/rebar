@@ -4,6 +4,6 @@
     {
         Struct,
 
-        Enum
+        Variant
     }
 }
