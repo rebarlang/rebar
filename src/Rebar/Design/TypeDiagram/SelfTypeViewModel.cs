@@ -97,7 +97,7 @@ namespace Rebar.Design.TypeDiagram
             }
 
             ((ICheckableCommandParameter)parameter).IsChecked = selfType.Mode == mode;
-            return true;
+            return mode != SelfTypeMode.Variant || RebarFeatureToggles.IsVariantTypesEnabled;
         }
 
         private static void SetTypeDiagramSelfMode(IEnumerable<IViewModel> selection, SelfTypeMode mode)
