@@ -15,8 +15,9 @@ namespace Rebar.SourceModel.TypeDiagram
     public class SelfType : VerticalGrowNode, IViewVerticalGrowNode
     {
         private const string ElementName = "SelfType";
-
         private const int DefaultChunkCount = 1;
+
+        private SelfTypeMode _mode;
 
         public static readonly PropertySymbol VerticalChunkCountPropertySymbol = ExposeVerticalChunkCountProperty<SelfType>(DefaultChunkCount);
 
@@ -26,8 +27,8 @@ namespace Rebar.SourceModel.TypeDiagram
         public static readonly PropertySymbol ModePropertySymbol =
             ExposeStaticProperty<SelfType>(
                 nameof(Mode),
-                selfType => selfType.Mode,
-                (selfType, value) => selfType.Mode = (SelfTypeMode)value,
+                selfType => selfType._mode,
+                (selfType, value) => selfType._mode = (SelfTypeMode)value,
                 PropertySerializers.CreateEnumSerializer<SelfTypeMode>(),
                 SelfTypeMode.Struct
             );
@@ -35,7 +36,7 @@ namespace Rebar.SourceModel.TypeDiagram
         private SelfType()
         {
             Width = StockDiagramGeometries.GridSize * 8;
-            Mode = SelfTypeMode.Struct;
+            _mode = SelfTypeMode.Struct;
         }
 
         [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
@@ -46,7 +47,28 @@ namespace Rebar.SourceModel.TypeDiagram
             return selfType;
         }
 
-        public SelfTypeMode Mode { get; private set; }
+        /// <summary>
+        /// The <see cref="SelfTypeMode"/> for this node, which determines what kind of
+        /// type its containing <see cref="TypeDiagramDefinition"/> will define.
+        /// </summary>
+        public SelfTypeMode Mode
+        {
+            get { return _mode; }
+            set
+            {
+                if (_mode != value)
+                {
+                    TransactionRecruiter.EnlistPropertyItem(
+                        this,
+                        nameof(Mode),
+                        _mode,
+                        value,
+                        (mode, reason) => _mode = mode,
+                        TransactionHints.Semantic);
+                    _mode = value;
+                }
+            }
+        }
 
         /// <inheritdoc />
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
