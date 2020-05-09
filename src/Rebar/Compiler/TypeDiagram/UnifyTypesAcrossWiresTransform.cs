@@ -1,6 +1,5 @@
 ﻿using System;
 using NationalInstruments.Dfir;
-using Rebar.Common;
 
 namespace Rebar.Compiler.TypeDiagram
 {
