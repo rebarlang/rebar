@@ -138,6 +138,10 @@ namespace Rebar.SourceModel.TypeDiagram
             {
                 builder = UnderlyingType.DefineClassFromExisting();
             }
+            else if (UnderlyingType.IsUnion())
+            {
+                builder = UnderlyingType.DefineUnionFromExisting();
+            }
             else
             {
                 string name = Name.Last;
