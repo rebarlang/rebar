@@ -51,14 +51,5 @@ namespace Rebar.Design.TypeDiagram
             base.Initialize();
             // ((TypeDiagramDocument)Document).AddCommandBindings(this);
         }
-
-        /// <inheritdoc />
-        public override void CreateCommandContentForDocument(ICommandPresentationContext context, Document document)
-        {
-            base.CreateCommandContentForDocument(context, document);
-            using (context.AddDocumentToolBarContent())
-            {
-            }
-        }
     }
 }
