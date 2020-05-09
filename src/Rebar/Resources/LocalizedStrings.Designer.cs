@@ -261,6 +261,24 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Rebar.
         /// </summary>
+        internal static string FeatureToggle_VariantTypes_Category {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VariantTypes_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable defining and using variant types.
+        /// </summary>
+        internal static string FeatureToggle_VariantTypes_Description {
+            get {
+                return ResourceManager.GetString("FeatureToggle_VariantTypes_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rebar.
+        /// </summary>
         internal static string FeatureToggle_VectorAndSliceTypes_Category {
             get {
                 return ResourceManager.GetString("FeatureToggle_VectorAndSliceTypes_Category", resourceCulture);

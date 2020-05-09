@@ -183,6 +183,12 @@
   <data name="FeatureToggle_StringDataType_Description" xml:space="preserve">
     <value>Enable string and string slice data types and related nodes</value>
   </data>
+  <data name="FeatureToggle_VariantTypes_Category" xml:space="preserve">
+    <value>Rebar</value>
+  </data>
+  <data name="FeatureToggle_VariantTypes_Description" xml:space="preserve">
+    <value>Enable defining and using variant types</value>
+  </data>
   <data name="FeatureToggle_VectorAndSliceTypes_Category" xml:space="preserve">
     <value>Rebar</value>
   </data>
