@@ -429,6 +429,8 @@ namespace Rebar.RebarTarget
 
         public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
+            WillGetValue(variantConstructorNode.InputTerminals[0]);
+            WillInitializeWithValue(variantConstructorNode.OutputTerminals[0]);
             return true;
         }
 
