@@ -213,6 +213,7 @@
     <Compile Include="Unit\Execution\StructExecutionTests.cs" />
     <Compile Include="Unit\Execution\TestExecutionInstance.cs" />
     <Compile Include="Unit\Execution\TupleExecutionTests.cs" />
+    <Compile Include="Unit\Execution\VariantExecutionTests.cs" />
     <Compile Include="Unit\Execution\VectorExecutionTests.cs" />
     <Compile Include="Unit\LLVMExecution\LLVMTesting.cs" />
     <Compile Include="Unit\TypeInferenceUnitTests.cs" />

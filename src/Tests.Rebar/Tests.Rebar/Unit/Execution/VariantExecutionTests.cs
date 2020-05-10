@@ -1,26 +1,24 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
-using Rebar.Common;
-using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
-namespace Tests.Rebar.Unit.Compiler
+namespace Tests.Rebar.Unit.Execution
 {
     [TestClass]
-    public class VariantTests : CompilerTestBase
+    public class VariantExecutionTests : ExecutionTestBase
     {
         [TestMethod]
-        public void VariantConstructorWithValidFields_SetVariableTypes_CorrectFieldVariableTypes()
+        public void VariantConstructorWithValidFields_Execute_CorrectVariantValue()
         {
             DfirRoot function = DfirRoot.Create();
             var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
             ConnectConstantToInputTerminal(variantConstructorNode.InputTerminals[0], NITypes.Int32, false);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(variantConstructorNode.OutputTerminals[0]);
 
-            RunSemanticAnalysisUpToSetVariableTypes(function);
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            VariableReference variantVariable = variantConstructorNode.OutputTerminals[0].GetTrueVariable();
-            Assert.AreEqual(VariantType, variantVariable.Type);
+            // TODO: assert structure of variant value
         }
 
         private NIType VariantType
