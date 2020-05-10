@@ -216,6 +216,8 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
+            MarkTrueVariableOfTerminalConsumed(variantConstructorNode.InputTerminals[0]);
+            MarkFacadeVariableOfTerminalLive(variantConstructorNode.OutputTerminals[0]);
             return true;
         }
 

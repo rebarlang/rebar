@@ -170,6 +170,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
+            variantConstructorNode.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 
