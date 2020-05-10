@@ -168,6 +168,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            return true;
+        }
+
         private void OutputLifetimeInterruptsInputVariable(Terminal inputTerminal, Terminal outputTerminal)
         {
             _lifetimeVariableAssociation.AddVariableInterruptedByLifetime(inputTerminal.GetTrueVariable(), outputTerminal.GetTrueVariable().Lifetime);

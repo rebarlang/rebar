@@ -227,6 +227,7 @@
     <Compile Include="Compiler\Nodes\PanicOrContinueNode.cs" />
     <Compile Include="Compiler\Nodes\StructConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\StructFieldAccessorNode.cs" />
+    <Compile Include="Compiler\Nodes\VariantConstructorNode.cs" />
     <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
     <Compile Include="Compiler\DfirTranslationHelpers.cs" />
     <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />

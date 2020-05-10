@@ -243,6 +243,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            return true;
+        }
+
         private void ValidateRequiredInputTerminal(Terminal inputTerminal)
         {
             if (inputTerminal.TestRequiredTerminalConnected())

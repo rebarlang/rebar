@@ -1060,6 +1060,11 @@ namespace Rebar.RebarTarget.LLVM
             }
             return true;
         }
+        
+        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            return true;
+        }
 
 #region IInternalDfirNodeVisitor implementation
 

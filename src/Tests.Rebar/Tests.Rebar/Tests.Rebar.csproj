@@ -30,7 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-	<NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
+    <NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <DebugType>pdbonly</DebugType>
@@ -40,7 +40,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-	<NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
+    <NXGDependenciesLocation>$(InstallLocation)</NXGDependenciesLocation>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LLVMSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -65,7 +65,7 @@
     </Reference>
     <Reference Include="NationalInstruments.ExecutionFramework">
       <HintPath>$(NXGDependenciesLocation)\NationalInstruments.ExecutionFramework.dll</HintPath>
-	</Reference>
+    </Reference>
     <Reference Include="NationalInstruments.PlatformFramework">
       <HintPath>$(NXGDependenciesLocation)\NationalInstruments.PlatformFramework.dll</HintPath>
     </Reference>
@@ -191,6 +191,7 @@
     <Compile Include="Unit\Compiler\TunnelTests.cs" />
     <Compile Include="Unit\Compiler\TupleTests.cs" />
     <Compile Include="Unit\Compiler\TypeDiagramTests.cs" />
+    <Compile Include="Unit\Compiler\VariantTests.cs" />
     <Compile Include="Unit\Compiler\WireTests.cs" />
     <Compile Include="Unit\Execution\AsyncExecutionTests.cs" />
     <Compile Include="Unit\Execution\BasicExecutionTesting.cs" />

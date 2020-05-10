@@ -427,6 +427,11 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
         {
             if (!wire.SinkTerminals.HasMoreThan(1))
