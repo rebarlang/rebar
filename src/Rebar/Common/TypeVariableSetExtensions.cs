@@ -66,7 +66,7 @@ namespace Rebar.Common
                 return typeVariableSet.CreateReferenceToTupleType(elementTypes);
             }
 
-            if (!type.IsClass())
+            if (!type.IsClass() && !type.IsUnion())
             {
                 return typeVariableSet.CreateTypeVariableReferenceFromPrimitiveType(type, genericTypeParameters);
             }
@@ -83,7 +83,7 @@ namespace Rebar.Common
                 return typeVariableSet.CreateReferenceToReferenceType(type.IsMutableReferenceType(), referentType, lifetimeType);
             }
 
-            return typeVariableSet.CreateTypeVariableReferenceFromClassNIType(type, genericTypeParameters);
+            return typeVariableSet.CreateTypeVariableReferenceFromClassOrUnionNIType(type, genericTypeParameters);
         }
 
         private static TypeVariableReference CreateTypeVariableReferenceFromPrimitiveType(
@@ -132,7 +132,7 @@ namespace Rebar.Common
             return typeVariableSet.CreateReferenceToParameterlessTraitType(typeName);
         }
 
-        private static TypeVariableReference CreateTypeVariableReferenceFromClassNIType(
+        private static TypeVariableReference CreateTypeVariableReferenceFromClassOrUnionNIType(
             this TypeVariableSet typeVariableSet,
             NIType type,
             Dictionary<NIType, TypeVariableReference> genericTypeParameters)

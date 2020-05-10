@@ -449,5 +449,18 @@ namespace Rebar.Compiler
             _nodeFacade[unwrappedOutput] = new SimpleTerminalFacade(unwrappedOutput, innerTypeVariable);
             return true;
         }
+
+        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            Terminal inputTerminal = variantConstructorNode.InputTerminals[0],
+                outputTerminal = variantConstructorNode.OutputTerminals[0];
+            _nodeFacade[inputTerminal] = new SimpleTerminalFacade(
+                inputTerminal,
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(inputTerminal.DataType));
+            _nodeFacade[outputTerminal] = new SimpleTerminalFacade(
+                outputTerminal,
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.VariantType));
+            return true;
+        }
     }
 }

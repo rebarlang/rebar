@@ -68,7 +68,7 @@ namespace Rebar.Common
             }
         }
 
-        private sealed class ConcreteType : ParameterizedType
+        private abstract class ConcreteType : ParameterizedType
         {
             private readonly NIType _niType;
 
@@ -77,7 +77,7 @@ namespace Rebar.Common
                 TypeVariableReference[] typeParameters,
                 IReadOnlyDictionary<string, TypeVariableReference> fieldTypes,
                 TypeVariableReference[] implementedTraits,
-                TraitDeriver traitDeriver = null)
+                TraitDeriver traitDeriver)
                 : base(typeParameters)
             {
                 _niType = niType;
@@ -85,6 +85,8 @@ namespace Rebar.Common
                 ImplementedTraits = implementedTraits;
                 TraitDeriver = traitDeriver;
             }
+
+            protected NIType NIType => _niType;
 
             public string TypeName => _niType.GetName();
 
@@ -131,18 +133,57 @@ namespace Rebar.Common
                     return Lifetime.Unbounded;
                 }
             }
+        }
+
+        private sealed class ConcreteClassType : ConcreteType
+        {
+            public ConcreteClassType(
+                NIType niType,
+                TypeVariableReference[] typeParameters,
+                IReadOnlyDictionary<string, TypeVariableReference> fieldTypes,
+                TypeVariableReference[] implementedTraits,
+                TraitDeriver traitDeriver = null)
+                : base(niType, typeParameters, fieldTypes, implementedTraits, traitDeriver)
+            {
+            }
 
             public override NIType RenderNIType()
             {
-                if (_niType.IsGenericType())
+                if (NIType.IsGenericType())
                 {
-                    NIType genericTypeDefinition = _niType.IsGenericTypeDefinition() ? _niType : _niType.GetGenericTypeDefinition();
+                    NIType genericTypeDefinition = NIType.IsGenericTypeDefinition() ? NIType : NIType.GetGenericTypeDefinition();
                     NIClassBuilder specializationTypeBuilder = genericTypeDefinition.DefineClassFromExisting();
                     NIType[] typeParameters = TypeParameters.Select(t => t.RenderNIType()).ToArray();
                     specializationTypeBuilder.ReplaceGenericParameters(typeParameters);
                     return specializationTypeBuilder.CreateType();
                 }
-                return _niType;
+                return NIType;
+            }
+        }
+
+        private sealed class ConcreteUnionType : ConcreteType
+        {
+            public ConcreteUnionType(
+                NIType niType,
+                TypeVariableReference[] typeParameters,
+                IReadOnlyDictionary<string, TypeVariableReference> fieldTypes,
+                TypeVariableReference[] implementedTraits,
+                TraitDeriver traitDeriver = null)
+                : base(niType, typeParameters, fieldTypes, implementedTraits, traitDeriver)
+            {
+            }
+
+            public override NIType RenderNIType()
+            {
+                if (NIType.IsGenericType())
+                {
+                    NIType genericTypeDefinition = NIType.IsGenericTypeDefinition() ? NIType : NIType.GetGenericTypeDefinition();
+                    NIUnionBuilder specializationTypeBuilder = genericTypeDefinition.DefineUnionFromExisting();
+                    NIType[] typeParameters = TypeParameters.Select(t => t.RenderNIType()).ToArray();
+                    // TODO: verify that this works for union NITypes
+                    return specializationTypeBuilder.CreateType().ReplaceGenericParameters(typeParameters);
+                }
+                return NIType;
             }
         }
 
@@ -467,7 +508,12 @@ namespace Rebar.Common
             TypeVariableReference[] implementedTraits,
             TraitDeriver traitDeriver = null)
         {
-            return CreateReferenceToNewType(new ConcreteType(niType, typeArguments, fieldTypes, implementedTraits, traitDeriver));
+            // TODO: we may need a separate ConcretePrimitiveType class
+            if (niType.IsUnion())
+            {
+                return CreateReferenceToNewType(new ConcreteUnionType(niType, typeArguments, fieldTypes, implementedTraits, traitDeriver));
+            }
+            return CreateReferenceToNewType(new ConcreteClassType(niType, typeArguments, fieldTypes, implementedTraits, traitDeriver));
         }
 
         public TypeVariableReference CreateReferenceToTraitType(string typeName, TypeVariableReference[] typeArguments)
