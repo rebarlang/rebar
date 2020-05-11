@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
@@ -17,8 +13,8 @@ namespace Rebar.Compiler.Nodes
             VariantType = variantType;
             SelectedFieldIndex = selectedFieldIndex;
             NIType fieldType = variantType.GetFields().ElementAt(selectedFieldIndex).GetDataType();
-            CreateTerminal(Direction.Input, fieldType, "field");
-            CreateTerminal(Direction.Output, variantType, "variant");
+            CreateTerminal(Direction.Output, NITypes.Void, "variant");
+            CreateTerminal(Direction.Input, NITypes.Void, "field");
         }
 
         private VariantConstructorNode(Node newParentNode, VariantConstructorNode nodeToCopy, NodeCopyInfo copyInfo) 

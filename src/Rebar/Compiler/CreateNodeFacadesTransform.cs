@@ -454,9 +454,10 @@ namespace Rebar.Compiler
         {
             Terminal inputTerminal = variantConstructorNode.InputTerminals[0],
                 outputTerminal = variantConstructorNode.OutputTerminals[0];
+            NIType elementType = variantConstructorNode.VariantType.GetFields().ElementAt(variantConstructorNode.SelectedFieldIndex).GetDataType();
             _nodeFacade[inputTerminal] = new SimpleTerminalFacade(
                 inputTerminal,
-                _typeVariableSet.CreateTypeVariableReferenceFromNIType(inputTerminal.DataType));
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(elementType));
             _nodeFacade[outputTerminal] = new SimpleTerminalFacade(
                 outputTerminal,
                 _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.VariantType));
