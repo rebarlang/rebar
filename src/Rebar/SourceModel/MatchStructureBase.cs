@@ -40,10 +40,11 @@ namespace Rebar.SourceModel
             // we'll always need to call EnsureView.
             matchStructure.EnsureView(EnsureViewHints.Bounds);
 
-            MatchStructureSelectorBase selector = matchStructure.Components.OfType<OptionPatternStructureSelector>().FirstOrDefault();
+            MatchStructureSelectorBase selector = matchStructure.Components.OfType<MatchStructureSelectorBase>().FirstOrDefault();
             if (selector != null)
             {
                 var selectorOuterTerminal = selector.BorderNodeTerminals.First();
+                selectorOuterTerminal.Primary = true;
                 selectorOuterTerminal.Direction = Direction.Input;
                 selectorOuterTerminal.Role = BorderNodeTerminalRole.Outer;
                 selectorOuterTerminal.Hotspot = TerminalHotspots.Input1;
@@ -52,6 +53,7 @@ namespace Rebar.SourceModel
                 foreach (var pair in matchStructure.NestedDiagrams.Zip(selector.BorderNodeTerminals.Skip(1)))
                 {
                     var selectorInnerTerminal = pair.Value;
+                    selectorInnerTerminal.Primary = true;
                     selectorInnerTerminal.Direction = Direction.Output;
                     selectorInnerTerminal.Role = BorderNodeTerminalRole.Inner;
                     selectorInnerTerminal.Hotspot = TerminalHotspots.CreateOutputTerminalHotspot(TerminalSize.Small, selector.Width, 0u);
