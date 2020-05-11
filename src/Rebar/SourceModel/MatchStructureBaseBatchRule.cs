@@ -3,7 +3,7 @@ using NationalInstruments.VI.SourceModel;
 
 namespace Rebar.SourceModel
 {
-    internal class OptionPatternStructureBatchRule : BatchRule
+    internal class MatchStructureBaseBatchRule : BatchRule
     {
         /// <inheritdoc/>
         public override ModelBatchRuleExecuteLevels InitializeForTransaction(IRuleInitializeContext context)
@@ -29,7 +29,7 @@ namespace Rebar.SourceModel
             {
                 ViewElementOverlapHelper.PreventBorderNodeOverlap(change.TargetElement.Structure);
             }
-            CoreBatchRule.HandleBorderNodeChanges<OptionPatternStructure>(boundsChanges);
+            CoreBatchRule.HandleBorderNodeChanges<MatchStructureBase>(boundsChanges);
         }
     }
 }

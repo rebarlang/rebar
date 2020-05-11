@@ -111,6 +111,11 @@ namespace Rebar.Design
             AddSupportedModel<OptionPatternStructureDiagram>(d => new OptionPatternStructureDiagramViewModel(d));
             AddSupportedModel<OptionPatternStructureSelector>(t => new BorderNodeViewModel(t));
             AddSupportedModel<OptionPatternStructureTunnel>(t => new BorderNodeViewModel(t));
+
+            AddSupportedModel<VariantMatchStructure>(s => new VariantMatchStructureEditor(s));
+            AddSupportedModel<VariantMatchStructureDiagram>(d => new VariantMatchStructureDiagramViewModel(d));
+            AddSupportedModel<VariantMatchStructureSelector>(t => new BorderNodeViewModel(t));
+            AddSupportedModel<VariantMatchStructureTunnel>(t => new BorderNodeViewModel(t));
         }
     }
 }

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PaletteControls PaletteBaseName="FunctionDiagram" 
+  xmlns:pf="http://www.ni.com/PlatformFramework" 
+  xmlns:rb="http://www.ni.com/Rebar"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Category Display="Values" UniqueId="Rebar:PaletteCategory.Values" Weight=".1" BackgroundImagePath="/NationalInstruments.MocCommon;component/Resources/Palette/Backgrounds/PaletteCategory_40x40.xml">
+    <Leaf Display="Variant Match Structure" UniqueId="Rebar:VariantMatchStructure" ElementId="NI.MocCommon:Literal.NationalInstruments.MocCommon.Modeling.INumericBehavior" Weight="3" ImagePath="/NationalInstruments.LabVIEW.VI;component/Designer/Resources/BlockDiagram/FalseConstant_40x40.xml">
+      <pf:MergeScript>
+        <pf:MergeItem>
+          <rb:VariantMatchStructure Id="1" Bounds="203 133 156 96">
+            <rb:VariantMatchStructure.Diagram Id="2" />
+            <rb:VariantMatchStructureSelector Id="3" Bounds="-5 20 13 10" Terminals="1, 2" />
+          </rb:VariantMatchStructure>
+        </pf:MergeItem>
+      </pf:MergeScript>
+    </Leaf>
+  </Category>
+</PaletteControls>

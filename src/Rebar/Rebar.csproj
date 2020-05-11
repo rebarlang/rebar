@@ -310,6 +310,9 @@
     <Compile Include="Design\TypeDiagram\TypeDiagramEditor.xaml.cs">
       <DependentUpon>TypeDiagramEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Design\VariantMatchStructureControl.cs" />
+    <Compile Include="Design\VariantMatchStructureDiagramViewModel.cs" />
+    <Compile Include="Design\VariantMatchStructureEditor.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -427,6 +430,10 @@
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
+    <Compile Include="SourceModel\MatchStructureBase.cs" />
+    <Compile Include="SourceModel\MatchStructureDiagramBase.cs" />
+    <Compile Include="SourceModel\MatchStructureSelectorBase.cs" />
+    <Compile Include="SourceModel\MatchStructureTunnelBase.cs" />
     <Compile Include="SourceModel\StructFieldAccessor.cs" />
     <Compile Include="SourceModel\TypeDiagram\PrimitiveType.cs" />
     <Compile Include="SourceModel\TypeDiagram\SelfType.cs" />
@@ -449,7 +456,7 @@
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
     <Compile Include="SourceModel\OptionPatternStructure.cs" />
-    <Compile Include="SourceModel\OptionPatternStructureBatchRule.cs" />
+    <Compile Include="SourceModel\MatchStructureBaseBatchRule.cs" />
     <Compile Include="SourceModel\OptionPatternStructureDiagram.cs" />
     <Compile Include="SourceModel\OptionPatternStructureSelector.cs" />
     <Compile Include="SourceModel\OptionPatternStructureTunnel.cs" />
@@ -468,6 +475,10 @@
     <Compile Include="SourceModel\TypeDiagram\TypeDiagramMergeScriptDataServiceFactory.cs" />
     <Compile Include="SourceModel\TypePassthrough.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
+    <Compile Include="SourceModel\VariantMatchStructure.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureDiagram.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureSelector.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureTunnel.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -565,6 +576,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\VariantMatchStructure_96.xml" />
+    <EmbeddedResource Include="Resources\VariantPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <None Include="app.config" />
     <None Include="packages.config" />
     <Content Include="RebarTarget\LLVM\Resources\output.bc">
