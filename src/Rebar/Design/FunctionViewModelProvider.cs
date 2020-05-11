@@ -20,6 +20,7 @@ namespace Rebar.Design
             AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
             AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
             AddSupportedModel<Constructor>(n => new ConstructorViewModel(n));
+            AddSupportedModel<ConstructorTerminal>(t => new ConstructorTerminalViewModel(t));
             AddSupportedModel<StructFieldAccessor>(n => new StructFieldAccessorViewModel(n));
             AddSupportedModel<StructFieldAccessorTerminal>(t => new StructFieldAccessorTerminalViewModel(t));
 
