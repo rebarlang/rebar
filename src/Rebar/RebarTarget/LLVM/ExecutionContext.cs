@@ -15,14 +15,6 @@ namespace Rebar.RebarTarget.LLVM
 
         static ExecutionContext()
         {
-            LLVMSharp.LLVM.LinkInMCJIT();
-
-            LLVMSharp.LLVM.InitializeX86TargetMC();
-            LLVMSharp.LLVM.InitializeX86Target();
-            LLVMSharp.LLVM.InitializeX86TargetInfo();
-            LLVMSharp.LLVM.InitializeX86AsmParser();
-            LLVMSharp.LLVM.InitializeX86AsmPrinter();
-
             AddSymbolForDelegate("schedule", _schedule);
             AddSymbolForDelegate("output_string", _outputString);
             AddSymbolForDelegate("fake_drop", _fakeDrop);

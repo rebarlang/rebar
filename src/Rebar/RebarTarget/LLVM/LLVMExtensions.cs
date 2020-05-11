@@ -21,6 +21,14 @@ namespace Rebar.RebarTarget.LLVM
                "instance",
                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
+            LLVMSharp.LLVM.LinkInMCJIT();
+
+            LLVMSharp.LLVM.InitializeX86TargetMC();
+            LLVMSharp.LLVM.InitializeX86Target();
+            LLVMSharp.LLVM.InitializeX86TargetInfo();
+            LLVMSharp.LLVM.InitializeX86AsmParser();
+            LLVMSharp.LLVM.InitializeX86AsmPrinter();
+
             _mcJITCompilerOptions = new LLVMMCJITCompilerOptions
             {
                 NoFramePointerElim = 1,
