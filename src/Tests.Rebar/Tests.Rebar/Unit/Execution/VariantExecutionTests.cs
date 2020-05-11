@@ -31,7 +31,7 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
-        public void VariantMatchStructure_Execute_CorrectFrameExecutes()
+        public void VariantMatchStructureWithTwoCasesAndFirstElementInput_Execute_CorrectFrameExecutes()
         {
             DfirRoot function = DfirRoot.Create();
             var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
@@ -44,6 +44,22 @@ namespace Tests.Rebar.Unit.Execution
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
             Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void VariantMatchStructureWithTwoCasesAndSecondElementInput_Execute_CorrectFrameExecutes()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 1);
+            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Boolean, true, false);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[0]);
+            this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("true", executionInstance.RuntimeServices.LastOutputValue);
         }
 
         private NIType VariantType

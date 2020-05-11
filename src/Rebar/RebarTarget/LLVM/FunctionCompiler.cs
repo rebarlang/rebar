@@ -1512,7 +1512,7 @@ namespace Rebar.RebarTarget.LLVM
                 DestructureSelectorValueInSomeCase(optionPatternStructure.Selector);
             }
         }
-        
+
         private void VisitOptionPatternStructureAfterDiagram(OptionPatternStructure optionPatternStructure, Diagram diagram)
         {
             LLVMBasicBlockRef currentBlock = Builder.GetInsertBlock();
@@ -1546,7 +1546,47 @@ namespace Rebar.RebarTarget.LLVM
 
         bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    VisitVariantMatchStructureBeforeLeftBorderNodes(variantMatchStructure);
+                    break;
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    VisitVariantMatchStructureBeforeDiagram(variantMatchStructure, nestedDiagram);
+                    break;
+#if FALSE
+                    // TODO: handle Tunnels
+                case StructureTraversalPoint.AfterDiagram:
+                    VisitOptionPatternStructureAfterDiagram(optionPatternStructure, nestedDiagram);
+                    break;
+#endif
+            }
             return true;
+        }
+
+        private void VisitVariantMatchStructureBeforeLeftBorderNodes(VariantMatchStructure variantMatchStructure)
+        {
+            ValueSource selectorInputSource = GetTerminalValueSource(variantMatchStructure.Selector.InputTerminals[0]);
+            LLVMValueRef variant = selectorInputSource.GetValue(Builder);
+            LLVMValueRef tag = Builder.CreateExtractValue(variant, 0, "tag");
+
+            LLVMValueRef conditionValue = tag;
+            if (variantMatchStructure.Diagrams.Count <= 2)
+            {
+                // TODO: just for now, truncate the tag to an i1. This will need to be fixed in order to handle >2 cases.
+                conditionValue = Builder.CreateTrunc(tag, Context.Int1Type, "truncatedTag");
+            }
+
+            Update(
+                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                conditionValue);
+        }
+
+        private void VisitVariantMatchStructureBeforeDiagram(VariantMatchStructure variantMatchStructure, Diagram diagram)
+        {
+            // TODO: this should be in a diagram-specific VisitOptionPatternStructureSelector
+            int diagramIndex = variantMatchStructure.Diagrams.IndexOf(diagram);
+            DestructureSelectorValueWithTag(variantMatchStructure.Selector, diagramIndex);
         }
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
@@ -1554,7 +1594,24 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-#endregion
+        private void DestructureSelectorValueWithTag(VariantMatchStructureSelector variantMatchStructureSelector, int diagramIndex)
+        {
+            ValueSource selectorInputAllocationSource = GetTerminalValueSource(variantMatchStructureSelector.InputTerminals[0]);
+            Terminal outputTerminal = variantMatchStructureSelector.OutputTerminals[diagramIndex];
+            ValueSource selectorOutputSource = GetTerminalValueSource(outputTerminal);
+            // TODO: if the outer structure and diagram initial blocks are all in the same function, we should be able
+            // to stash this read somewhere and reuse it
+            LLVMValueRef variant = selectorInputAllocationSource.GetValue(Builder);
+            LLVMValueRef alloca = Builder.CreateAlloca(variant.TypeOf().GetStructElementTypes()[1], "alloca");
+            LLVMValueRef genericTagValue = Builder.CreateExtractValue(variant, 1, "genericTagValue");
+            Builder.CreateStore(genericTagValue, alloca);
+            LLVMTypeRef elementLLVMType = Context.AsLLVMType(outputTerminal.GetTrueVariable().Type);
+            LLVMValueRef bitCastAlloca = Builder.CreateBitCast(alloca, LLVMTypeRef.PointerType(elementLLVMType, 0u), "bitCastAlloca");
+            LLVMValueRef loadedElement = Builder.CreateLoad(bitCastAlloca, "loadedElement");
+            Initialize(selectorOutputSource, loadedElement);
+        }
+
+        #endregion
     }
 
     internal abstract class FunctionCompilerState

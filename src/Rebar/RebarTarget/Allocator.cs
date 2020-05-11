@@ -358,6 +358,7 @@ namespace Rebar.RebarTarget
 
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
+            WillGetValue(optionPatternStructureSelector.InputTerminals[0]);
             WillInitializeWithValue(optionPatternStructureSelector.OutputTerminals[0]);
             return true;
         }
@@ -436,6 +437,9 @@ namespace Rebar.RebarTarget
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
+            WillGetValue(variantMatchStructureSelector.InputTerminals[0]);
+            // TODO: unclear if each of these should be initialized in a diagram-specific AsyncStateGroup
+            variantMatchStructureSelector.OutputTerminals.ForEach(WillInitializeWithValue);
             return true;
         }
 
