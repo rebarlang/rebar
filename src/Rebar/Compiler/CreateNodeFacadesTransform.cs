@@ -463,5 +463,10 @@ namespace Rebar.Compiler
                 _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.VariantType));
             return true;
         }
+
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            return true;
+        }
     }
 }

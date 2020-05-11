@@ -1540,6 +1540,20 @@ namespace Rebar.RebarTarget.LLVM
             Initialize(selectorOutputSource, innerValue);
         }
 
+        #endregion
+
+#region Variant Match Structure
+
+        bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            return true;
+        }
+
 #endregion
     }
 

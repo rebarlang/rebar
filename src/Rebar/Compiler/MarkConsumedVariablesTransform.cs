@@ -221,6 +221,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            return true;
+        }
+
         private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
         {
             var signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);

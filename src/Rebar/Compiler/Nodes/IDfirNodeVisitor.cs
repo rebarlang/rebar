@@ -25,6 +25,7 @@ namespace Rebar.Compiler.Nodes
         T VisitTunnel(Tunnel tunnel);
         T VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel);
         T VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode);
+        T VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector);
         T VisitWire(Wire wire);
     }
 

@@ -249,6 +249,11 @@ namespace Rebar.Compiler
             return true;
         }
 
+        public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            return true;
+        }
+
         private void ValidateRequiredInputTerminal(Terminal inputTerminal)
         {
             if (inputTerminal.TestRequiredTerminalConnected())

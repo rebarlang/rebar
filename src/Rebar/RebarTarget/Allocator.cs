@@ -434,6 +434,11 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            return true;
+        }
+
         bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
         {
             if (!wire.SinkTerminals.HasMoreThan(1))
@@ -679,6 +684,11 @@ namespace Rebar.RebarTarget
                     }
                     break;
             }
+            return true;
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
             return true;
         }
 
