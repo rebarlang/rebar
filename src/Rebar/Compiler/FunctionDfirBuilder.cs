@@ -89,6 +89,7 @@ namespace Rebar.Compiler
             var flatSequence = structure as FlatSequence;
             var loop = structure as SourceModel.Loop;
             var optionPatternStructure = structure as SourceModel.OptionPatternStructure;
+            var variantMatchStructure = structure as SourceModel.VariantMatchStructure;
             if (flatSequence != null)
             {
                 VisitRebarFlatSequence(flatSequence);
@@ -100,6 +101,10 @@ namespace Rebar.Compiler
             else if (optionPatternStructure != null)
             {
                 VisitOptionPatternStructure(optionPatternStructure);
+            }
+            else if (variantMatchStructure != null)
+            {
+                VisitVariantMatchStructure(variantMatchStructure);
             }
         }
 
@@ -167,6 +172,38 @@ namespace Rebar.Compiler
             }
         }
 
+        private void VisitVariantMatchStructure(SourceModel.VariantMatchStructure variantMatchStructure)
+        {
+            var variantMatchStructureDfir = new Nodes.VariantMatchStructure(_currentDiagram);
+            _map.AddMapping(variantMatchStructure, variantMatchStructureDfir);
+            int diagramIndex = 0;
+            foreach (NestedDiagram nestedDiagram in variantMatchStructure.NestedDiagrams)
+            {
+                NationalInstruments.Dfir.Diagram dfirDiagram;
+                if (diagramIndex == 0)
+                {
+                    dfirDiagram = variantMatchStructureDfir.Diagrams[0];
+                }
+                else
+                {
+                    dfirDiagram = variantMatchStructureDfir.CreateDiagram();
+                }
+                _map.AddMapping(nestedDiagram, dfirDiagram);
+                ++diagramIndex;
+            }
+
+            foreach (BorderNode borderNode in variantMatchStructure.BorderNodes)
+            {
+                NationalInstruments.Dfir.BorderNode dfirBorderNode = TranslateBorderNode(borderNode, variantMatchStructureDfir);
+                MapBorderNode(borderNode, dfirBorderNode);
+            }
+
+            foreach (NestedDiagram nestedDiagram in variantMatchStructure.NestedDiagrams)
+            {
+                nestedDiagram.AcceptVisitor(this);
+            }
+        }
+
         private NationalInstruments.Dfir.BorderNode TranslateBorderNode(BorderNode sourceModelBorderNode, NationalInstruments.Dfir.Structure dfirParentStructure)
         {
             var flatSequenceSimpleTunnel = sourceModelBorderNode as FlatSequenceSimpleTunnel;
@@ -181,6 +218,7 @@ namespace Rebar.Compiler
             var loopTerminateLifetimeTunnel = sourceModelBorderNode as LoopTerminateLifetimeTunnel;
             var unwrapOptionTunnel = sourceModelBorderNode as SourceModel.UnwrapOptionTunnel;
             var optionPatternStructureSelector = sourceModelBorderNode as SourceModel.OptionPatternStructureSelector;
+            var variantMatchStructureSelector = sourceModelBorderNode as SourceModel.VariantMatchStructureSelector;
             if (borrowTunnel != null)
             {
                 var borrowDfir = new Nodes.BorrowTunnel(dfirParentStructure, borrowTunnel.BorrowMode);
@@ -236,6 +274,10 @@ namespace Rebar.Compiler
             else if (optionPatternStructureSelector != null)
             {
                 return ((Nodes.OptionPatternStructure)dfirParentStructure).Selector;
+            }
+            else if (variantMatchStructureSelector != null)
+            {
+                return ((Nodes.VariantMatchStructure)dfirParentStructure).Selector;
             }
             throw new NotImplementedException("Unknown BorderNode type: " + sourceModelBorderNode.GetType().Name);
         }
