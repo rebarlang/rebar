@@ -176,6 +176,7 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
+            variantMatchStructureSelector.UnifyNodeInputTerminalTypes(_typeUnificationResults);
             return true;
         }
 

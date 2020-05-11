@@ -466,6 +466,20 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
+            var fieldTypes = new Dictionary<string, TypeVariableReference>();
+            int fieldIndex = 0;
+            foreach (var outputTerminal in variantMatchStructureSelector.OutputTerminals)
+            {
+                string fieldName = $"_{fieldIndex}";
+                TypeVariableReference fieldType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                fieldTypes[fieldName] = fieldType;
+                _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, fieldType);
+                ++fieldIndex;
+            }
+
+            TypeVariableReference fieldedType = _typeVariableSet.CreateReferenceToIndefiniteFieldedType(fieldTypes);
+            Terminal inputTerminal = variantMatchStructureSelector.InputTerminals[0];
+            _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, fieldedType);
             return true;
         }
     }
