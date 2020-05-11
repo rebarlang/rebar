@@ -39,38 +39,49 @@ namespace Rebar.Design
         {
             if (typeof(T) == typeof(ITypeAssetProvider))
             {
-                if (type.IsRebarReferenceType())
+                ITypeAssetProvider typeAssetProvider = GetTypeAssetProviderForType(type);
+                if (typeAssetProvider != null)
                 {
-                    NIType innerType = type.GetReferentType();
-                    ITypeAssetProvider innerTypeAssetProvider = StockResources.GetTypeAssets((Element)null, innerType);
-                    int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
-                    ITypeAssetProvider outerTypeAssetProvider = type.IsMutableReferenceType()
-                        ? (ITypeAssetProvider)new MutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality)
-                        : new ImmutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality);
-                    return new QueryResult<T>(outerTypeAssetProvider as T);
-                }
-                if (type.IsLockingCellType())
-                {
-                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Locking Cell") as T);
-                }
-                if (type.IsSharedType())
-                {
-                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Shared") as T);
-                }
-                if (type.IsIteratorType())
-                {
-                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Iterator") as T);
-                }
-                if (type.IsVectorType())
-                {
-                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Vector") as T);
-                }
-                if (type.IsUnion())
-                {
-                    return new QueryResult<T>(new VariantTypeAssetProvider(type.GetName()) as T);
+                    return new QueryResult<T>(typeAssetProvider as T);
                 }
             }
             return new QueryResult<T>();
+        }
+
+        private ITypeAssetProvider GetTypeAssetProviderForType(NIType type)
+        {
+            if (type.IsRebarReferenceType())
+            {
+                NIType innerType = type.GetReferentType();
+                ITypeAssetProvider innerTypeAssetProvider = GetTypeAssetProviderForType(innerType)
+                    ?? StockResources.GetTypeAssets((Element)null, innerType);
+                int innerTypeDimensionality = StockDiagramUIResources.TypeToArraySize(innerType);
+                ITypeAssetProvider outerTypeAssetProvider = type.IsMutableReferenceType()
+                    ? (ITypeAssetProvider)new MutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality)
+                    : new ImmutableReferenceTypeAssetProvider(innerTypeAssetProvider, innerTypeDimensionality);
+                return outerTypeAssetProvider;
+            }
+            if (type.IsLockingCellType())
+            {
+                return new GenericReferenceTypeAssetProvider("Locking Cell");
+            }
+            if (type.IsSharedType())
+            {
+                return new GenericReferenceTypeAssetProvider("Shared");
+            }
+            if (type.IsIteratorType())
+            {
+                return new GenericReferenceTypeAssetProvider("Iterator");
+            }
+            if (type.IsVectorType())
+            {
+                return new GenericReferenceTypeAssetProvider("Vector");
+            }
+            if (type.IsUnion())
+            {
+                return new VariantTypeAssetProvider(type.GetName());
+            }
+            return null;
         }
     }
 
