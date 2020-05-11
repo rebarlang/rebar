@@ -108,6 +108,7 @@ namespace Rebar.Compiler.TypeDiagram
                         unionBuilder.DefineField(fieldType, $"_{fieldIndex}");
                         ++fieldIndex;
                     }
+                    unionBuilder.AddTypeKeywordProviderAttribute(DataTypes.RebarTypeKeyword);
                     return unionBuilder.CreateType();
                 default:
                     throw new NotImplementedException($"SelfTypeMode: {selfTypeNode.Mode}");

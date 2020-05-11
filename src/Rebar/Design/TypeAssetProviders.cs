@@ -65,6 +65,10 @@ namespace Rebar.Design
                 {
                     return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Vector") as T);
                 }
+                if (type.IsUnion())
+                {
+                    return new QueryResult<T>(new VariantTypeAssetProvider(type.GetName()) as T);
+                }
             }
             return new QueryResult<T>();
         }
@@ -78,6 +82,18 @@ namespace Rebar.Design
                 "Resources/Reference",
                 StockTypeAssets.ReferenceAndPathTypeColor,
                 name)
+        {
+        }
+    }
+
+    internal class VariantTypeAssetProvider : NationalInstruments.SourceModel.TypeAssetProvider
+    {
+        public VariantTypeAssetProvider(string typeName)
+            : base(
+                  typeof(PlatformFrameworkResourceKey),
+                  "Resources/Variant",
+                  StockTypeAssets.VariantTypeColor,
+                  typeName)
         {
         }
     }
