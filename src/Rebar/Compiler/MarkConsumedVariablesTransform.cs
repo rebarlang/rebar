@@ -223,6 +223,8 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
+            MarkTrueVariableOfTerminalConsumed(variantMatchStructureSelector.InputTerminals[0]);
+            variantMatchStructureSelector.OutputTerminals.ForEach(MarkFacadeVariableOfTerminalLive);
             return true;
         }
 

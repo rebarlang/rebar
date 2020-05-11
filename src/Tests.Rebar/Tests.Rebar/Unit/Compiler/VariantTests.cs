@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
@@ -38,6 +39,18 @@ namespace Tests.Rebar.Unit.Compiler
             Assert.IsTrue(selectorInnerVariable0.Type.IsInt32());
             VariableReference selectorInnerVariable1 = variantMatchStructure.Selector.OutputTerminals[1].GetTrueVariable();
             Assert.IsTrue(selectorInnerVariable1.Type.IsBoolean());
+        }
+
+        [TestMethod]
+        public void VariantMatchStructureWithNonVariantSelectorInput_ValidateVariableUsages_SelectorInputHasErrorMessage()
+        {
+            DfirRoot function = DfirRoot.Create();
+            VariantMatchStructure variantMatchStructure = CreateVariantMatchStructure(function.BlockDiagram, 2);
+            ConnectConstantToInputTerminal(variantMatchStructure.Selector.InputTerminals[0], NITypes.Int32, false);
+
+            RunSemanticAnalysisUpToValidation(function);
+
+            Assert.IsTrue(variantMatchStructure.Selector.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeIsNotVariantTypeDescriptor));
         }
 
         private VariantMatchStructure CreateVariantMatchStructure(Diagram parentDiagram, int diagramCount)

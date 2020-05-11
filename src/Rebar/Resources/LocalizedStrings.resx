@@ -243,6 +243,9 @@
   <data name="TypeIsNotStructType" xml:space="preserve">
     <value>The connected data type is not a struct type.</value>
   </data>
+  <data name="TypeIsNotVariantType" xml:space="preserve">
+    <value>The connected data type is not a variant type.</value>
+  </data>
   <data name="TypeNotDetermined" xml:space="preserve">
     <value>The type of value created by this terminal has not been fully determined.</value>
   </data>

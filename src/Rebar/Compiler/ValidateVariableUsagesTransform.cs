@@ -251,6 +251,13 @@ namespace Rebar.Compiler
 
         public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
+            Terminal inputTerminal = variantMatchStructureSelector.InputTerminals[0];
+            ValidateRequiredInputTerminal(inputTerminal);
+            NIType inputType = inputTerminal.GetTrueVariable().Type;
+            if (!(inputType.IsUnion() && inputType.GetFields().Any()))
+            {
+                inputTerminal.SetDfirMessage(Messages.TypeIsNotVariantType);
+            }
             return true;
         }
 

@@ -439,6 +439,15 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The connected data type is not a variant type..
+        /// </summary>
+        internal static string TypeIsNotVariantType {
+            get {
+                return ResourceManager.GetString("TypeIsNotVariantType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The type of value created by this terminal has not been fully determined..
         /// </summary>
         internal static string TypeNotDetermined {
