@@ -7,7 +7,6 @@ using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.MocCommon.SourceModel;
 using NationalInstruments.SourceModel;
-using NationalInstruments.VI.DfirBuilder;
 using Rebar.SourceModel;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
@@ -506,6 +505,29 @@ namespace Rebar.Compiler
                 var structConstructorNode = new StructConstructorNode(_currentDiagram, dependencyType);
                 _map.AddMapping(constructor, structConstructorNode);
                 _map.MapTerminalsInOrder(constructor, structConstructorNode);
+                return;
+            }
+            else if (dependencyType.IsUnion())
+            {
+                int index = 0;
+                {
+                    var input = (ConstructorTerminal)constructor.InputTerminals.First();
+                    string fieldName = input.FieldName;
+                    int current = 0;
+                    foreach (NIType field in dependencyType.GetFields())
+                    {
+                        if (field.GetName() == fieldName)
+                        {
+                            index = current;
+                            break;
+                        }
+                        ++current;
+                    }
+                }
+
+                var variantConstructorNode = new VariantConstructorNode(_currentDiagram, dependencyType, index);
+                _map.AddMapping(constructor, variantConstructorNode);
+                _map.MapTerminalsInOrder(constructor, variantConstructorNode);
                 return;
             }
             else
