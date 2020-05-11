@@ -28,6 +28,8 @@ namespace Rebar.Compiler.Nodes
 
         public int SelectedFieldIndex { get; }
 
+        public Terminal VariantOutputTerminal => OutputTerminals[0];
+
         public override T AcceptVisitor<T>(IDfirNodeVisitor<T> visitor)
         {
             return visitor.VisitVariantConstructorNode(this);

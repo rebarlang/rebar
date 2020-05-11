@@ -15,10 +15,10 @@ namespace Tests.Rebar.Unit.Execution
             DfirRoot function = DfirRoot.Create();
             var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
             ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int32, 5, false);
-            FunctionalNode inspectInt = ConnectInspectToOutputTerminal(variantConstructorNodeInt.OutputTerminals[0]);
+            FunctionalNode inspectInt = ConnectInspectToOutputTerminal(variantConstructorNodeInt.VariantOutputTerminal);
             var variantConstructorNodeBool = new VariantConstructorNode(function.BlockDiagram, VariantType, 1);
             ConnectConstantToInputTerminal(variantConstructorNodeBool.InputTerminals[0], NITypes.Boolean, true, false);
-            FunctionalNode inspectBool = ConnectInspectToOutputTerminal(variantConstructorNodeBool.OutputTerminals[0]);
+            FunctionalNode inspectBool = ConnectInspectToOutputTerminal(variantConstructorNodeBool.VariantOutputTerminal);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 

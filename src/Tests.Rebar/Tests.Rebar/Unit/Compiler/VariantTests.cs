@@ -19,8 +19,35 @@ namespace Tests.Rebar.Unit.Compiler
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
 
-            VariableReference variantVariable = variantConstructorNode.OutputTerminals[0].GetTrueVariable();
+            VariableReference variantVariable = variantConstructorNode.VariantOutputTerminal.GetTrueVariable();
             Assert.AreEqual(VariantType, variantVariable.Type);
+        }
+
+        [TestMethod]
+        public void VariantMatchStructureWithVariantInput_SetVariableTypes_CorrectFieldTypesSetOnSelectorInnerTerminals()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
+            ConnectConstantToInputTerminal(variantConstructorNode.InputTerminals[0], NITypes.Int32, false);
+            VariantMatchStructure variantMatchStructure = CreateVariantMatchStructure(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, variantConstructorNode.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+
+            RunSemanticAnalysisUpToSetVariableTypes(function);
+
+            VariableReference selectorInnerVariable0 = variantMatchStructure.Selector.OutputTerminals[0].GetTrueVariable();
+            Assert.IsTrue(selectorInnerVariable0.Type.IsInt32());
+            VariableReference selectorInnerVariable1 = variantMatchStructure.Selector.OutputTerminals[1].GetTrueVariable();
+            Assert.IsTrue(selectorInnerVariable1.Type.IsBoolean());
+        }
+
+        private VariantMatchStructure CreateVariantMatchStructure(Diagram parentDiagram, int diagramCount)
+        {
+            var variantMatchStructure = new VariantMatchStructure(parentDiagram);
+            for (int i = 0; i < diagramCount - 1; ++i)
+            {
+                variantMatchStructure.CreateDiagram();
+            }
+            return variantMatchStructure;
         }
 
         private NIType VariantType
