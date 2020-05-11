@@ -339,6 +339,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionNames.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionVariableStorage.cs" />
+    <Compile Include="RebarTarget\LLVM\LocalTargetInfo.cs" />
     <Compile Include="RebarTarget\LLVM\ParameterInfo.cs" />
     <Compile Include="RebarTarget\LLVM\RuntimeConstants.cs" />
     <Compile Include="RebarTarget\LLVM\SynchronousFunctionModuleBuilder.cs" />

@@ -1060,9 +1060,25 @@ namespace Rebar.RebarTarget.LLVM
             }
             return true;
         }
-        
+
         bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
+            var fieldIndex = (byte)variantConstructorNode.SelectedFieldIndex;
+            LLVMTypeRef llvmVariantType = Context.AsLLVMType(variantConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
+
+            // TODO: if we have to allocate, we should allocate directly into the ValueSource. There should at least be a
+            // ValueSource subclass that knows how to handle variant values.
+            // Another idea is to generate one function per variant field that takes the field type and returns the constructed variant value.
+            LLVMValueRef variantAlloca = Builder.CreateAlloca(llvmVariantType, "variantAlloca"),
+                variantAllocaTagFieldPtr = Builder.CreateStructGEP(variantAlloca, 0u, "variantAllocaTagFieldPtr"),
+                variantAllocaDataFieldPtr = Builder.CreateStructGEP(variantAlloca, 1u, "variantAllocaDataFieldPtr"),
+                inputValue = GetValueSource(variantConstructorNode.InputTerminals[0].GetTrueVariable()).GetValue(Builder),
+                bitCastAllocaFieldPtr = Builder.CreateBitCast(variantAllocaDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
+            Builder.CreateStore(Context.AsLLVMValue(fieldIndex), variantAllocaTagFieldPtr);
+            Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
+
+            LLVMValueRef loadedVariant = Builder.CreateLoad(variantAlloca, "loadedVariant");
+            Initialize(GetValueSource(variantConstructorNode.OutputTerminals[0].GetTrueVariable()), loadedVariant);
             return true;
         }
 
