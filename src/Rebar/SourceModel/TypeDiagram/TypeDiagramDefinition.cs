@@ -140,7 +140,8 @@ namespace Rebar.SourceModel.TypeDiagram
             }
             else if (UnderlyingType.IsUnion())
             {
-                builder = UnderlyingType.DefineUnionFromExisting();
+                string name = Name.Last;
+                builder = UnderlyingType.DefineTypedef(name);
             }
             else
             {
