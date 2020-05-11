@@ -30,7 +30,7 @@ namespace Tests.Rebar.Unit.Compiler
             DfirRoot function = DfirRoot.Create();
             var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
             ConnectConstantToInputTerminal(variantConstructorNode.InputTerminals[0], NITypes.Int32, false);
-            VariantMatchStructure variantMatchStructure = CreateVariantMatchStructure(function.BlockDiagram, 2);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
             Wire.Create(function.BlockDiagram, variantConstructorNode.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
 
             RunSemanticAnalysisUpToSetVariableTypes(function);
@@ -45,22 +45,12 @@ namespace Tests.Rebar.Unit.Compiler
         public void VariantMatchStructureWithNonVariantSelectorInput_ValidateVariableUsages_SelectorInputHasErrorMessage()
         {
             DfirRoot function = DfirRoot.Create();
-            VariantMatchStructure variantMatchStructure = CreateVariantMatchStructure(function.BlockDiagram, 2);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
             ConnectConstantToInputTerminal(variantMatchStructure.Selector.InputTerminals[0], NITypes.Int32, false);
 
             RunSemanticAnalysisUpToValidation(function);
 
             Assert.IsTrue(variantMatchStructure.Selector.InputTerminals[0].GetDfirMessages().Any(message => message.Descriptor == Messages.TypeIsNotVariantTypeDescriptor));
-        }
-
-        private VariantMatchStructure CreateVariantMatchStructure(Diagram parentDiagram, int diagramCount)
-        {
-            var variantMatchStructure = new VariantMatchStructure(parentDiagram);
-            for (int i = 0; i < diagramCount - 1; ++i)
-            {
-                variantMatchStructure.CreateDiagram();
-            }
-            return variantMatchStructure;
         }
 
         private NIType VariantType

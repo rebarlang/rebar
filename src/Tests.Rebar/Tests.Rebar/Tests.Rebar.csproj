@@ -177,6 +177,7 @@
     <Compile Include="Unit\Compiler\BorrowNodeTests.cs" />
     <Compile Include="Unit\Compiler\BorrowTunnelTests.cs" />
     <Compile Include="Unit\Compiler\CompilerTestBase.cs" />
+    <Compile Include="Unit\Compiler\CompilerTestScriptingExtensions.cs" />
     <Compile Include="Unit\Compiler\ExchangeValuesTests.cs" />
     <Compile Include="Unit\Compiler\FunctionalNodeDfirTests.cs" />
     <Compile Include="Unit\Compiler\IterateTunnelTests.cs" />
