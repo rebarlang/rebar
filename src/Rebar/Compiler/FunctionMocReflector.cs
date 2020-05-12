@@ -81,6 +81,7 @@ namespace Rebar.Compiler
             var terminateLifetime = connectable as TerminateLifetime;
             var typePassthrough = connectable as TypePassthrough;
             var structFieldAccessor = connectable as StructFieldAccessor;
+            var variantMatchStructure = connectable as SourceModel.VariantMatchStructure;
             if (terminateLifetime != null)
             {
                 VisitTerminateLifetime(terminateLifetime);
@@ -94,6 +95,12 @@ namespace Rebar.Compiler
             {
                 var structFieldAccessorDfir = (StructFieldAccessorNode)_map.GetDfirForModel(structFieldAccessor);
                 structFieldAccessor.UpdateDependencies(structFieldAccessorDfir.StructType);
+            }
+            if (variantMatchStructure != null)
+            {
+                var variantMatchStructureSelectorDfir = ((Nodes.VariantMatchStructure)_map.GetDfirForModel(variantMatchStructure)).Selector;
+                NIType variantType = variantMatchStructureSelectorDfir.InputTerminals[0].GetTrueVariable().Type;
+                variantMatchStructure.UpdateDependencies(variantType);
             }
 
             foreach (var nodeTerminal in connectable.Terminals)

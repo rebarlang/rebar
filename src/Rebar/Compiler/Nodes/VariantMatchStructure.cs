@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using NationalInstruments.Core;
 using NationalInstruments.Dfir;
 
 namespace Rebar.Compiler.Nodes
 {
-    internal sealed class VariantMatchStructure : Structure
+   internal sealed class VariantMatchStructure : Structure
     {
         public VariantMatchStructure(Diagram parentDiagram)
             : base(parentDiagram)
