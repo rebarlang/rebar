@@ -185,10 +185,13 @@ namespace Rebar.Compiler
         public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
         {
             ValidateRequiredInputTerminal(structFieldAccessorNode.StructInputTerminal);
-            NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
-            if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+            if (structFieldAccessorNode.StructInputTerminal.IsConnected)
             {
-                structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+                NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+                if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+                {
+                    structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+                }
             }
             foreach (Terminal outputTerminal in structFieldAccessorNode.OutputTerminals)
             {
@@ -253,10 +256,13 @@ namespace Rebar.Compiler
         {
             Terminal inputTerminal = variantMatchStructureSelector.InputTerminals[0];
             ValidateRequiredInputTerminal(inputTerminal);
-            NIType inputType = inputTerminal.GetTrueVariable().Type;
-            if (!(inputType.IsUnion() && inputType.GetFields().Any()))
+            if (inputTerminal.IsConnected)
             {
-                inputTerminal.SetDfirMessage(Messages.TypeIsNotVariantType);
+                NIType inputType = inputTerminal.GetTrueVariable().Type;
+                if (!(inputType.IsUnion() && inputType.GetFields().Any()))
+                {
+                    inputTerminal.SetDfirMessage(Messages.TypeIsNotVariantType);
+                }
             }
             return true;
         }
