@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Execution
@@ -28,6 +29,19 @@ namespace Tests.Rebar.Unit.Execution
             byte[] inspectBoolValue = executionInstance.GetLastValueFromInspectNode(inspectBool);
             Assert.AreEqual((byte)1, inspectBoolValue[0]);
             Assert.AreEqual((byte)1, inspectBoolValue[1]);
+        }
+
+        [TestMethod]
+        public void VariantConstructorContainingDroppableValue_Execute_ValueIsDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantType, 1);
+            FunctionalNode createFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
+            Wire.Create(function.BlockDiagram, createFakeDrop.OutputTerminals[0], variantConstructorNode.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1));
         }
 
         [TestMethod]
@@ -84,6 +98,17 @@ namespace Tests.Rebar.Unit.Execution
                 NIUnionBuilder builder = NITypes.Factory.DefineUnion("variant.td");
                 builder.DefineField(NITypes.Int32, "_0");
                 builder.DefineField(NITypes.Boolean, "_1");
+                return builder.CreateType();
+            }
+        }
+
+        private NIType VariantWithDropField
+        {
+            get
+            {
+                NIUnionBuilder builder = NITypes.Factory.DefineUnion("dropVariant.td");
+                builder.DefineField(NITypes.Int32, "_0");
+                builder.DefineField(DataTypes.FakeDropType, "_1");
                 return builder.CreateType();
             }
         }
