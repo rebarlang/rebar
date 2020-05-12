@@ -1,4 +1,5 @@
 ﻿using NationalInstruments.VI.Design;
+using Rebar.SourceModel;
 
 namespace Rebar.Design
 {
@@ -6,7 +7,7 @@ namespace Rebar.Design
     {
         protected override void UpdatePattern()
         {
-            string pattern = VariantMatchStructureEditor.GetDiagramPattern(Model.SelectedDiagram);
+            string pattern = VariantMatchStructureEditor.GetDiagramPattern((VariantMatchStructureDiagram)Model.SelectedDiagram);
             SelectorText.Inlines.Clear();
             SelectorText.Inlines.Add(pattern);
         }

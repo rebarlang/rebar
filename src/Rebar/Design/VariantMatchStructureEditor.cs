@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
+using NationalInstruments;
 using NationalInstruments.Core;
+using NationalInstruments.DataTypes;
 using NationalInstruments.SourceModel;
 using NationalInstruments.VI.Design;
 using Rebar.SourceModel;
@@ -10,9 +13,6 @@ namespace Rebar.Design
 {
     internal sealed class VariantMatchStructureEditor : StackedStructureViewModel
     {
-        private const string SomePattern = "Some";
-        private const string NonePattern = "None";
-
         public VariantMatchStructureEditor(VariantMatchStructure model) : base(model)
         {
         }
@@ -38,6 +38,16 @@ namespace Rebar.Design
             }
         }
 
+        /// <inheritdoc />
+        protected override void NotifyPropertyChanged(string name)
+        {
+            base.NotifyPropertyChanged(name);
+            if (name == nameof(Opacity))
+            {
+                NotifyPropertyChanged(nameof(CaseSelectorOpacity));
+            }
+        }
+
         public override string Pattern
         {
             get
@@ -51,14 +61,10 @@ namespace Rebar.Design
             }
         }
 
-        public override IEnumerable<string> Patterns
-        {
-            get
-            {
-                yield return SomePattern;
-                yield return NonePattern;
-            }
-        }
+        /// <inheritdoc />
+        public override IEnumerable<string> Patterns => GetCaseNames(VariantMatchStructure);
+
+        public VariantMatchStructure VariantMatchStructure => (VariantMatchStructure)Model;
 
         public override void AddDiagram()
         {
@@ -67,10 +73,25 @@ namespace Rebar.Design
 
         public override bool FinishEdit() => true;
 
-        public static string GetDiagramPattern(NestedDiagram diagram)
+        public static string GetDiagramPattern(VariantMatchStructureDiagram diagram)
         {
             int selectedDiagramIndex = diagram.Index;
-            return selectedDiagramIndex == 1 ? NonePattern : SomePattern;
+            return GetCaseNames((VariantMatchStructure)diagram.Owner).ElementAt(selectedDiagramIndex);
+        }
+
+        private static IEnumerable<string> GetCaseNames(VariantMatchStructure variantMatchStructure)
+        {
+            int diagramCount = variantMatchStructure.NestedDiagrams.Count();
+            NIType variantType = variantMatchStructure.Type;
+            if (variantType.IsUnion())
+            {
+                IEnumerable<NIType> variantFields = variantType.GetFields();
+                if (variantFields.HasExactly(diagramCount))
+                {
+                    return variantFields.Select(f => f.GetName());
+                }
+            }
+            return string.Empty.Repeat(diagramCount);
         }
     }
 }

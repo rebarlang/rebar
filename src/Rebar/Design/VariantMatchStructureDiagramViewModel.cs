@@ -1,5 +1,6 @@
 ﻿using NationalInstruments.Design;
 using NationalInstruments.SourceModel;
+using Rebar.SourceModel;
 
 namespace Rebar.Design
 {
@@ -9,5 +10,7 @@ namespace Rebar.Design
             : base(parent)
         {
         }
+
+        public string Pattern => VariantMatchStructureEditor.GetDiagramPattern((VariantMatchStructureDiagram)Model);
     }
 }
