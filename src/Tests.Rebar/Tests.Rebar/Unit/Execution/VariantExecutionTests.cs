@@ -62,6 +62,21 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual("true", executionInstance.RuntimeServices.LastOutputValue);
         }
 
+        [TestMethod]
+        public void VariantMatchStructureWithThreeCasesAndThirdElementInput_Execute_CorrectFrameExecutes()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, ThreeFieldVariantType, 2);
+            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int16, (short)5, false);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 3);
+            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[2]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
         private NIType VariantType
         {
             get
@@ -69,6 +84,18 @@ namespace Tests.Rebar.Unit.Execution
                 NIUnionBuilder builder = NITypes.Factory.DefineUnion("variant.td");
                 builder.DefineField(NITypes.Int32, "_0");
                 builder.DefineField(NITypes.Boolean, "_1");
+                return builder.CreateType();
+            }
+        }
+
+        private NIType ThreeFieldVariantType
+        {
+            get
+            {
+                NIUnionBuilder builder = NITypes.Factory.DefineUnion("threeFieldVariant.td");
+                builder.DefineField(NITypes.Int32, "_0");
+                builder.DefineField(NITypes.Boolean, "_1");
+                builder.DefineField(NITypes.Int16, "_2");
                 return builder.CreateType();
             }
         }

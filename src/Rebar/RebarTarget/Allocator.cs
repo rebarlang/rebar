@@ -142,13 +142,22 @@ namespace Rebar.RebarTarget
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
             if (conditionalContinuation != null)
             {
-                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
+                NIType conditionVariableType;
+                if (conditionalContinuation.SuccessorConditionGroups.Count <= 2)
                 {
-                    throw new NotSupportedException("Only boolean conditions supported for continuations");
+                    conditionVariableType = NITypes.Boolean;
+                }
+                else if (conditionalContinuation.SuccessorConditionGroups.Count <= 256)
+                {
+                    conditionVariableType = NITypes.UInt8;
+                }
+                else
+                {
+                    throw new NotSupportedException("Only 256 conditional continuations supported");
                 }
                 _variableStorage.AddContinuationConditionVariable(
                     asyncStateGroup,
-                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", NITypes.Boolean));
+                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", conditionVariableType));
             }
         }
 
@@ -359,7 +368,8 @@ namespace Rebar.RebarTarget
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
             WillGetValue(optionPatternStructureSelector.InputTerminals[0]);
-            WillInitializeWithValue(optionPatternStructureSelector.OutputTerminals[0]);
+            // The selector output terminals are initialized in VisitOptionPatternStructure, each in their own
+            // diagram initial group.
             return true;
         }
 
@@ -435,11 +445,11 @@ namespace Rebar.RebarTarget
             return true;
         }
 
-        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
             WillGetValue(variantMatchStructureSelector.InputTerminals[0]);
-            // TODO: unclear if each of these should be initialized in a diagram-specific AsyncStateGroup
-            variantMatchStructureSelector.OutputTerminals.ForEach(WillInitializeWithValue);
+            // The selector output terminals are initialized in VisitVariantMatchStructure, each in their own
+            // diagram initial group.
             return true;
         }
 
@@ -677,6 +687,7 @@ namespace Rebar.RebarTarget
                     if (nestedDiagram == optionPatternStructure.Diagrams[0])
                     {
                         WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
+                        WillInitializeWithValue(optionPatternStructure.Selector.OutputTerminals[0]);
                     }
                     break;
                 case StructureTraversalPoint.AfterDiagram:
@@ -693,6 +704,13 @@ namespace Rebar.RebarTarget
 
         bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
+                    WillInitializeWithValue(variantMatchStructure.Selector.OutputTerminals[nestedDiagram.Index]);
+                    break;
+            }
             return true;
         }
 

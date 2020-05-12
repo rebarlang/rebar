@@ -150,32 +150,57 @@ namespace Rebar.RebarTarget.LLVM
             {
                 LLVMValueRef condition = SharedData.VariableStorage.GetContinuationConditionVariable(asyncStateGroup).GetValue(Builder);
 
-                AsyncStateGroup singleTrueSuccessor, singleFalseSuccessor;
-                if (conditionalContinuation.SuccessorConditionGroups[0].TryGetSingleElement(out singleFalseSuccessor)
-                    && conditionalContinuation.SuccessorConditionGroups[1].TryGetSingleElement(out singleTrueSuccessor)
-                    && singleFalseSuccessor.FunctionId == asyncStateGroup.FunctionId
-                    && singleTrueSuccessor.FunctionId == asyncStateGroup.FunctionId)
+                bool isBooleanCondition = conditionalContinuation.SuccessorConditionGroups.Count == 2;
+                bool allSynchronousContinuations = conditionalContinuation.SuccessorConditionGroups.All(group =>
                 {
-                    Builder.CreateCondBr(
-                        condition,
-                        AsyncStateGroups[singleTrueSuccessor].InitialBasicBlock,
-                        AsyncStateGroups[singleFalseSuccessor].InitialBasicBlock);
+                    AsyncStateGroup singleSuccessor;
+                    return group.TryGetSingleElement(out singleSuccessor) && singleSuccessor.FunctionId == asyncStateGroup.FunctionId;
+                });
+
+                if (allSynchronousContinuations)
+                {
+                    LLVMBasicBlockRef[] initialBlocks = conditionalContinuation.SuccessorConditionGroups
+                        .Select(g => AsyncStateGroups[g.First()].InitialBasicBlock)
+                        .ToArray();
+                    if (isBooleanCondition)
+                    {
+                        Builder.CreateCondBr(condition, initialBlocks[1], initialBlocks[0]);
+                    }
+                    else
+                    {
+                        LLVMValueRef conditionSwitch = Builder.CreateSwitch(condition, initialBlocks[0], (uint)(initialBlocks.Length - 1));
+                        for (int i = 1; i < initialBlocks.Length; ++i)
+                        {
+                            conditionSwitch.AddCase(SharedData.Context.AsLLVMValue((byte)i), initialBlocks[i]);
+                        }
+                    }
                     returnAfterGroup = false;
                 }
                 else
                 {
-                    LLVMBasicBlockRef continuationConditionFalseBlock = groupFunction.AppendBasicBlock("continuationConditionFalse"),
-                        continuationConditionTrueBlock = groupFunction.AppendBasicBlock("continuationConditionTrue"),
-                        exitBlock = groupFunction.AppendBasicBlock("exit");
-                    Builder.CreateCondBr(condition, continuationConditionTrueBlock, continuationConditionFalseBlock);
+                    LLVMBasicBlockRef[] continuationConditionBlocks = Enumerable.Range(0, conditionalContinuation.SuccessorConditionGroups.Count)
+                        .Select(i => groupFunction.AppendBasicBlock($"continuationCondition{i}"))
+                        .ToArray();
+                    LLVMBasicBlockRef exitBlock = groupFunction.AppendBasicBlock("exit");
+                    if (isBooleanCondition)
+                    {
+                        Builder.CreateCondBr(condition, continuationConditionBlocks[1], continuationConditionBlocks[0]);
+                    }
+                    else
+                    {
+                        LLVMValueRef conditionSwitch = Builder.CreateSwitch(condition, continuationConditionBlocks[0], (uint)(conditionalContinuation.SuccessorConditionGroups.Count - 1));
+                        for (int i = 1; i < continuationConditionBlocks.Length; ++i)
+                        {
+                            conditionSwitch.AddCase(SharedData.Context.AsLLVMValue((byte)i), continuationConditionBlocks[i]);
+                        }
+                    }
 
-                    Builder.PositionBuilderAtEnd(continuationConditionFalseBlock);
-                    CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[0]);
-                    Builder.CreateBr(exitBlock);
-
-                    Builder.PositionBuilderAtEnd(continuationConditionTrueBlock);
-                    CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[1]);
-                    Builder.CreateBr(exitBlock);
+                    for (int i = 0; i < continuationConditionBlocks.Length; ++i)
+                    {
+                        Builder.PositionBuilderAtEnd(continuationConditionBlocks[i]);
+                        CreateInvokeOrScheduleOfSuccessors(conditionalContinuation.SuccessorConditionGroups[i]);
+                        Builder.CreateBr(exitBlock);
+                    }
 
                     Builder.PositionBuilderAtEnd(exitBlock);
                 }
