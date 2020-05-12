@@ -1,4 +1,5 @@
-﻿using NationalInstruments.CommonModel;
+﻿using System.Collections.Generic;
+using NationalInstruments.CommonModel;
 using NationalInstruments.Core;
 using NationalInstruments.DynamicProperties;
 using NationalInstruments.SourceModel;
@@ -27,6 +28,17 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override bool CanDelete => false;
+
+        /// <inheritdoc />
+        public override IEnumerable<Terminal> VisibleTerminals
+        {
+            get
+            {
+                yield return PrimaryOuterTerminal;
+                Terminal innerTerminal = GetPrimaryTerminal(((MatchStructureBase)Structure).SelectedDiagram);
+                yield return innerTerminal;
+            }
+        }
 
         /// <inheritdoc />
         public override void EnsureView(EnsureViewHints hints)
