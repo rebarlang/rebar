@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.FeatureToggles;
+using Rebar;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -79,16 +81,19 @@ namespace Tests.Rebar.Unit.Execution
         [TestMethod]
         public void VariantMatchStructureWithThreeCasesAndThirdElementInput_Execute_CorrectFrameExecutes()
         {
-            DfirRoot function = DfirRoot.Create();
-            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, ThreeFieldVariantType, 2);
-            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int16, (short)5, false);
-            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 3);
-            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
-            this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[2]);
+            using (FeatureToggleSupport.TemporarilyEnableFeature(RebarFeatureToggles.AllIntegerTypes))
+            {
+                DfirRoot function = DfirRoot.Create();
+                var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, ThreeFieldVariantType, 2);
+                ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int16, (short)5, false);
+                VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 3);
+                Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+                this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[2]);
 
-            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+                TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
-            Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+                Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+            }
         }
 
         [TestMethod]
