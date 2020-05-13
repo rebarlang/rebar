@@ -458,6 +458,12 @@ namespace Rebar.RebarTarget.LLVM
                         {
                             return type.GetTypeDefinitionQualifiedName().ToString("::");
                         }
+                        if (type.IsUnion())
+                        {
+                            return type.IsTypedef()
+                                ? type.GetTypeDefinitionQualifiedName().ToString("::")
+                                : type.GetName();
+                        }
                         throw new NotSupportedException("Unsupported type: " + type);
                     }
             }
@@ -1609,6 +1615,43 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef bitCastAlloca = Builder.CreateBitCast(alloca, LLVMTypeRef.PointerType(elementLLVMType, 0u), "bitCastAlloca");
             LLVMValueRef loadedElement = Builder.CreateLoad(bitCastAlloca, "loadedElement");
             Initialize(selectorOutputSource, loadedElement);
+        }
+
+        internal static void BuildVariantDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef variantDropFunction)
+        {
+            NIType variantType = signature.GetGenericParameters().First();
+            Tuple<NIType, int>[] droppableFields = variantType.GetFields()
+                .Select((field, i) => new Tuple<NIType, int>(field, i))
+                .Where(field => field.Item1.GetDataType().TypeHasDropTrait()).ToArray();
+            LLVMBasicBlockRef entryBlock = variantDropFunction.AppendBasicBlock("entry");
+            Tuple<LLVMBasicBlockRef, int>[] dropBlocks = droppableFields.Select(field => new Tuple<LLVMBasicBlockRef, int>(variantDropFunction.AppendBasicBlock($"drop{field.Item1.GetName()}"), field.Item2)).ToArray();
+            LLVMBasicBlockRef exitBlock = variantDropFunction.AppendBasicBlock("exit");
+
+            var builder = compiler.Context.CreateIRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef variantPtr = variantDropFunction.GetParam(0u),
+                variantTagPtr = builder.CreateStructGEP(variantPtr, 0u, "variantTagPtr"),
+                variantDataPtr = builder.CreateStructGEP(variantPtr, 1u, "variantDataPtr"),
+                variantTag = builder.CreateLoad(variantTagPtr, "variantTag"),
+                tagSwitch = builder.CreateSwitch(variantTag, exitBlock, (uint)dropBlocks.Length);
+            foreach (var pair in dropBlocks)
+            {
+                tagSwitch.AddCase(compiler.Context.AsLLVMValue((byte)pair.Item2), pair.Item1);
+            }
+
+            for (int i = 0; i < droppableFields.Length; ++i)
+            {
+                builder.PositionBuilderAtEnd(dropBlocks[i].Item1);
+                NIType fieldType = droppableFields[i].Item1.GetDataType();
+                LLVMTypeRef fieldLLVMType = compiler.Context.AsLLVMType(fieldType);
+                LLVMValueRef bitCastFieldPtr = builder.CreateBitCast(variantDataPtr, LLVMTypeRef.PointerType(fieldLLVMType, 0u), "bitCastFieldPtr");
+                compiler.CreateDropCallIfDropFunctionExists(builder, fieldType, _ => bitCastFieldPtr);
+                builder.CreateBr(exitBlock);
+            }
+
+            builder.PositionBuilderAtEnd(exitBlock);
+            builder.CreateRetVoid();
         }
 
         #endregion
