@@ -64,6 +64,16 @@ namespace Rebar.SourceModel
             return MakeDefaultTunnelCore<VariantMatchStructureTunnel>(startDiagram, endDiagram, wire);
         }
 
+        /// <inheritdoc />
+        public override SMSize GetDesiredBorderNodeSize(BorderNode borderNode)
+        {
+            if (borderNode is VariantMatchStructureSelector)
+            {
+                return new SMSize(StockDiagramGeometries.GridSize * 4, StockDiagramGeometries.GridSize * 4);
+            }
+            return base.GetDesiredBorderNodeSize(borderNode);
+        }
+
         #region IQualifiedSource implementation
 
         /// <inheritdoc />

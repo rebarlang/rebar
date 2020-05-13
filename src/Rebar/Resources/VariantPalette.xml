@@ -9,7 +9,7 @@
         <pf:MergeItem>
           <rb:VariantMatchStructure Id="1" Bounds="203 133 156 96">
             <rb:VariantMatchStructure.Diagram Id="2" />
-            <rb:VariantMatchStructureSelector Id="3" Bounds="-5 20 13 10" Terminals="1, 2" />
+            <rb:VariantMatchStructureSelector Id="3" Bounds="-5 20 20 20" Terminals="1, 2" />
           </rb:VariantMatchStructure>
         </pf:MergeItem>
       </pf:MergeScript>

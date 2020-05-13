@@ -315,6 +315,7 @@
     <Compile Include="Design\VariantMatchStructureControl.cs" />
     <Compile Include="Design\VariantMatchStructureDiagramViewModel.cs" />
     <Compile Include="Design\VariantMatchStructureEditor.cs" />
+    <Compile Include="Design\VariantMatchStructureSelectorViewModel.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />

@@ -114,7 +114,7 @@ namespace Rebar.Design
 
             AddSupportedModel<VariantMatchStructure>(s => new VariantMatchStructureEditor(s));
             AddSupportedModel<VariantMatchStructureDiagram>(d => new VariantMatchStructureDiagramViewModel(d));
-            AddSupportedModel<VariantMatchStructureSelector>(t => new BorderNodeViewModel(t));
+            AddSupportedModel<VariantMatchStructureSelector>(t => new VariantMatchStructureSelectorViewModel(t, @"Resources\Diagram\Nodes\UnwrapOptionTunnel.png"));
             AddSupportedModel<VariantMatchStructureTunnel>(t => new BorderNodeViewModel(t));
         }
     }

@@ -9,6 +9,7 @@ namespace Rebar.Design
             ForegroundUri = new ResourceUri(this, foregroundUri);
         }
 
+        /// <inheritoc />
         protected override ResourceUri ForegroundUri { get; }
     }
 }
