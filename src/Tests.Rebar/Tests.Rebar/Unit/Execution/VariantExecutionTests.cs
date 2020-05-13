@@ -91,6 +91,23 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
         }
 
+        [TestMethod]
+        public void VariantMatchStructureWithInputTunnel_Execute_InputTunnelValueCorrectlyTransferred()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
+            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int32, 5, false);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 3);
+            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            Tunnel inputTunnel = CreateInputTunnel(variantMatchStructure);
+            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
+            this.ConnectOutputToOutputTerminal(inputTunnel.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
         private NIType VariantType
         {
             get
