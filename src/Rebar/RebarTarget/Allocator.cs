@@ -400,32 +400,33 @@ namespace Rebar.RebarTarget
 
         public bool VisitTunnel(Tunnel tunnel)
         {
-            tunnel.InputTerminals.ForEach(WillGetValue);
-            if (tunnel.Terminals.HasExactly(2))
+            if (tunnel.Direction == Direction.Input)
             {
-                Terminal inputTerminal = tunnel.InputTerminals[0],
-                    outputTerminal = tunnel.OutputTerminals[0];
-                VariableReference inputVariable = inputTerminal.GetTrueVariable(),
-                    outputVariable = outputTerminal.GetTrueVariable();
-                if (outputVariable.Type != inputVariable.Type.CreateOption())
+                VariableReference inputVariable = tunnel.InputTerminals[0].GetTrueVariable();
+                foreach (Terminal outputTerminal in tunnel.OutputTerminals)
                 {
-                    // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
-                    // the ValueSource if they are close enough
-                    _variableUsages[outputVariable] = _variableUsages[inputVariable];
-                }
-                else
-                {
-                    WillUpdateValue(outputTerminal);
+                    _variableUsages[outputTerminal.GetTrueVariable()] = _variableUsages[inputVariable];
                 }
             }
-            else
+            else // tunnel.Direction == Direction.Output
             {
-                // If this is an output tunnel, each input variable already has its own allocation, but
-                // the output needs a distinct one (for now)
-                // (Eventually we should try to share a single allocation for all variables.)
-                if (tunnel.InputTerminals.HasFewerThanOrExactly(1))
+                tunnel.InputTerminals.ForEach(WillGetValue);
+                Terminal inputTerminal;
+                if (tunnel.InputTerminals.TryGetSingleElement(out inputTerminal))
                 {
-                    throw new NotImplementedException();
+                    Terminal outputTerminal = tunnel.OutputTerminals[0];
+                    VariableReference inputVariable = inputTerminal.GetTrueVariable(),
+                        outputVariable = outputTerminal.GetTrueVariable();
+                    if (outputVariable.Type == inputVariable.Type.CreateOption())
+                    {
+                        WillUpdateValue(outputTerminal);
+                    }
+                    else
+                    {
+                        // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
+                        // the ValueSource if they are close enough
+                        _variableUsages[outputVariable] = _variableUsages[inputVariable];
+                    }
                 }
             }
             return true;
@@ -708,7 +709,10 @@ namespace Rebar.RebarTarget
             {
                 case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
                     WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
-                    WillInitializeWithValue(variantMatchStructure.Selector.OutputTerminals[nestedDiagram.Index]);
+                    foreach (NationalInstruments.Dfir.BorderNode borderNode in variantMatchStructure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
+                    {
+                        WillInitializeWithValue(borderNode.OutputTerminals[nestedDiagram.Index]);
+                    }
                     break;
             }
             return true;

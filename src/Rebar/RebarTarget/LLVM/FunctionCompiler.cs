@@ -1018,28 +1018,34 @@ namespace Rebar.RebarTarget.LLVM
 
         public bool VisitTunnel(Tunnel tunnel)
         {
-            if (tunnel.Terminals.HasExactly(2))
+            if (tunnel.Direction == Direction.Input)
             {
-                VariableReference input = tunnel.InputTerminals[0].GetTrueVariable(),
-                    output = tunnel.OutputTerminals[0].GetTrueVariable();
-                ValueSource inputValueSource = GetValueSource(input),
-                    outputValueSource = GetValueSource(output);
-                if (output.Type == input.Type.CreateOption())
-                {
-                    LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
-                    Initialize(outputValueSource, Context.BuildOptionValue(Builder, Context.AsLLVMType(output.Type), innerValue));
-                    return true;
-                }
-
-                if (inputValueSource != outputValueSource)
-                {
-                    // For now assume that the allocator will always make the input and output the same ValueSource.
-                    throw new NotImplementedException();
-                }
+                // do nothing, because the input and outputs share ValueSources
             }
             else
             {
-                if (tunnel.InputTerminals.HasMoreThan(1))
+                if (tunnel.Terminals.HasExactly(2))
+                {
+                    // TODO: this currently happens in the structure's output BN group;
+                    // instead it should happen in the inner diagram's terminal group.
+                    VariableReference input = tunnel.InputTerminals[0].GetTrueVariable(),
+                        output = tunnel.OutputTerminals[0].GetTrueVariable();
+                    ValueSource inputValueSource = GetValueSource(input),
+                        outputValueSource = GetValueSource(output);
+                    if (output.Type == input.Type.CreateOption())
+                    {
+                        LLVMValueRef innerValue = inputValueSource.GetValue(Builder);
+                        Initialize(outputValueSource, Context.BuildOptionValue(Builder, Context.AsLLVMType(output.Type), innerValue));
+                        return true;
+                    }
+
+                    if (inputValueSource != outputValueSource)
+                    {
+                        // For now assume that the allocator will always make the input and output the same ValueSource.
+                        throw new NotImplementedException();
+                    }
+                }
+                else
                 {
 #if FALSE
                     var inputVariables = tunnel.InputTerminals.Select(VariableExtensions.GetTrueVariable);
@@ -1058,10 +1064,6 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMValueRef tunnelValue = Builder.CreateLoad(tunnelValuePtr, nameof(tunnelValue));
                     outputAllocation.UpdateValue(Builder, tunnelValue);
 #endif
-                }
-                else
-                {
-                    throw new NotImplementedException();
                 }
             }
             return true;
