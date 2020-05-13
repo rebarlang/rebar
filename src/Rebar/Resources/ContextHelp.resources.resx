@@ -1140,4 +1140,16 @@
   <data name="UnwrapOption_value_Name" xml:space="preserve">
     <value>value</value>
   </data>
+  <data name="VariantMatchStructureSelector_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VariantMatchStructureSelector_Name" xml:space="preserve">
+    <value>Variant Match Structure Selector</value>
+  </data>
+  <data name="VariantMatchStructure_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="VariantMatchStructure_Name" xml:space="preserve">
+    <value>Variant Match Structure</value>
+  </data>
 </root>
