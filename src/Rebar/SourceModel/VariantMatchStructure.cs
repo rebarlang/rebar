@@ -53,8 +53,12 @@ namespace Rebar.SourceModel
 
         public NIType Type { get; private set; }
 
-        protected override RectangleSides GetSidesForBorderNode(BorderNode borderNode) => RectangleSides.All;
+        /// <inheritdoc />
+        protected override RectangleSides GetSidesForBorderNode(BorderNode borderNode) => borderNode is VariantMatchStructureSelector
+            ? RectangleSides.Left
+            : RectangleSides.All;
 
+        /// <inheritdoc />
         public override BorderNode MakeDefaultBorderNode(Diagram startDiagram, Diagram endDiagram, Wire wire, StructureIntersection intersection)
         {
             return MakeDefaultTunnelCore<VariantMatchStructureTunnel>(startDiagram, endDiagram, wire);
