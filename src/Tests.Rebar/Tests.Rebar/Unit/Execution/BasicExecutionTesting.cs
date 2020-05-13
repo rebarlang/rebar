@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.FeatureToggles;
+using Rebar;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -11,6 +13,20 @@ namespace Tests.Rebar.Unit.Execution
     [TestClass]
     public class BasicExecutionTesting : ExecutionTestBase
     {
+        private IDisposable _integerTypesFeatureToggle;
+
+        [TestInitialize]
+        public void Initialize()
+        {
+            _integerTypesFeatureToggle = FeatureToggleSupport.TemporarilyEnableFeature(RebarFeatureToggles.AllIntegerTypes);
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            _integerTypesFeatureToggle.Dispose();
+        }
+
         [TestMethod]
         public void FunctionWithInt8Constant_Execute_CorrectValue()
         {

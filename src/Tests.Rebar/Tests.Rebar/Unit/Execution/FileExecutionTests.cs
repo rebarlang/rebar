@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.Dfir;
 using Rebar.Common;
+using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 
 namespace Tests.Rebar.Unit.Execution
@@ -22,7 +23,8 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, openFileHandle.OutputTerminals[1], unwrapOption.InputTerminals[0]);
             FunctionalNode writeStringToFileHandle = new FunctionalNode(frame.Diagram, Signatures.WriteStringToFileHandleType);
-            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], writeStringToFileHandle.InputTerminals[0]);
+            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], writeStringToFileHandle.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
             const string data = "data";
             Constant dataConstant = ConnectStringConstantToInputTerminal(writeStringToFileHandle.InputTerminals[1], data);
 
@@ -58,7 +60,8 @@ namespace Tests.Rebar.Unit.Execution
             UnwrapOptionTunnel unwrapOption = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, openFileHandle.OutputTerminals[1], unwrapOption.InputTerminals[0]);
             FunctionalNode readLineFromFileHandle = new FunctionalNode(frame.Diagram, Signatures.ReadLineFromFileHandleType);
-            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], readLineFromFileHandle.InputTerminals[0]);
+            Wire.Create(frame.Diagram, unwrapOption.OutputTerminals[0], readLineFromFileHandle.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
             Frame innerFrame = Frame.Create(frame.Diagram);
             UnwrapOptionTunnel innerUnwrapOption = new UnwrapOptionTunnel(innerFrame);
             Wire.Create(frame.Diagram, readLineFromFileHandle.OutputTerminals[1], innerUnwrapOption.InputTerminals[0]);

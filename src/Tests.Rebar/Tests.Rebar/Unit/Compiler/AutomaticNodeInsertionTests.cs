@@ -193,7 +193,7 @@ namespace Tests.Rebar.Unit.Compiler
             // downstream of the auto-inserted TL when creating a Drop.
             DfirRoot function = DfirRoot.Create();
             FunctionalNode mutablePassthrough = new FunctionalNode(function.BlockDiagram, Signatures.MutablePassthroughType);
-            ConnectConstantToInputTerminal(mutablePassthrough.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(mutablePassthrough.InputTerminals[0], NITypes.Int32, true);
             var borrowNode = new ExplicitBorrowNode(function.BlockDiagram, BorrowMode.Immutable, 1, true, true);
             Wire.Create(function.BlockDiagram, mutablePassthrough.OutputTerminals[0], borrowNode.InputTerminals[0]);
             TerminateLifetimeNode terminateLifetime = new TerminateLifetimeNode(function.BlockDiagram, 1, 1);
@@ -227,7 +227,7 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
-        public void UnconsumedTupleVariable_AutomaticNodeInsertion_StructIsDecomposedAndElementsAreDropped()
+        public void UnconsumedStructVariable_AutomaticNodeInsertion_StructIsDecomposedAndElementsAreDropped()
         {
             DfirRoot function = DfirRoot.Create();
             var constructorNode = new StructConstructorNode(function.BlockDiagram, StructType);

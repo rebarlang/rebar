@@ -132,7 +132,8 @@ namespace Tests.Rebar.Unit.Execution
             ConnectConstantToInputTerminal(range.InputTerminals[0], NITypes.Int32, 1, false);
             ConnectConstantToInputTerminal(range.InputTerminals[1], NITypes.Int32, 7, false);
             IterateTunnel iterateTunnel = CreateIterateTunnel(loop);
-            Wire.Create(loop.ParentDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0]);
+            Wire.Create(loop.ParentDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
             return iterateTunnel;
         }
     }

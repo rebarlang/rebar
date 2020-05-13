@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
@@ -62,6 +64,17 @@ namespace Tests.Rebar.Unit.Compiler
             cancellationToken = cancellationToken ?? new CompileCancellationToken();
             var lifetimeVariableAssociation = new LifetimeVariableAssociation();
             RunSemanticAnalysisUpToValidation(dfirRoot, cancellationToken, lifetimeVariableAssociation);
+
+            if (DfirMessageHelper.CalculateIsBroken(dfirRoot))
+            {
+                var messageBuilder = new StringBuilder("Compilation failed because DfirRoot has semantic errors:\n");
+                foreach (DfirNodeMessagePair messagePair in DfirMessageHelper.ListAllNodeUserMessages(dfirRoot, false))
+                {
+                    messageBuilder.AppendLine($"{messagePair.Node}: {messagePair.Message.Descriptor}");
+                }
+                Assert.Fail(messageBuilder.ToString());
+            }
+
             new AutoBorrowTransform(lifetimeVariableAssociation).Execute(dfirRoot, cancellationToken);
             var nodeInsertionTypeUnificationResultFactory = new NodeInsertionTypeUnificationResultFactory();
             new InsertTerminateLifetimeTransform(lifetimeVariableAssociation, nodeInsertionTypeUnificationResultFactory)
