@@ -108,6 +108,42 @@ namespace Tests.Rebar.Unit.Execution
             Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
         }
 
+        [TestMethod]
+        public void VariantMatchStructureWithOutputTunnelAndFirstFieldInputValue_Execute_OutputTunnelHasCorrectValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 0);
+            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Int32, 5, false);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            Tunnel outputTunnel = CreateOutputTunnel(variantMatchStructure);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], NITypes.Int32, 6, false);
+            this.ConnectOutputToOutputTerminal(outputTunnel.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void VariantMatchStructureWithOutputTunnelAndSecondFieldInputValue_Execute_OutputTunnelHasCorrectValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNodeInt = new VariantConstructorNode(function.BlockDiagram, VariantType, 1);
+            ConnectConstantToInputTerminal(variantConstructorNodeInt.InputTerminals[0], NITypes.Boolean, true, false);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, variantConstructorNodeInt.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            Tunnel outputTunnel = CreateOutputTunnel(variantMatchStructure);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
+            ConnectConstantToInputTerminal(outputTunnel.InputTerminals[1], NITypes.Int32, 6, false);
+            this.ConnectOutputToOutputTerminal(outputTunnel.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("6", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
         private NIType VariantType
         {
             get

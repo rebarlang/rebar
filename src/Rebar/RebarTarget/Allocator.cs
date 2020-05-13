@@ -411,10 +411,10 @@ namespace Rebar.RebarTarget
             else // tunnel.Direction == Direction.Output
             {
                 tunnel.InputTerminals.ForEach(WillGetValue);
+                Terminal outputTerminal = tunnel.OutputTerminals[0];
                 Terminal inputTerminal;
                 if (tunnel.InputTerminals.TryGetSingleElement(out inputTerminal))
                 {
-                    Terminal outputTerminal = tunnel.OutputTerminals[0];
                     VariableReference inputVariable = inputTerminal.GetTrueVariable(),
                         outputVariable = outputTerminal.GetTrueVariable();
                     if (outputVariable.Type == inputVariable.Type.CreateOption())
@@ -427,6 +427,10 @@ namespace Rebar.RebarTarget
                         // the ValueSource if they are close enough
                         _variableUsages[outputVariable] = _variableUsages[inputVariable];
                     }
+                }
+                else
+                {
+                    // Note: handled in VisitOptionPatternStructure/VisitVariantMatchStructure
                 }
             }
             return true;
@@ -712,6 +716,14 @@ namespace Rebar.RebarTarget
                     foreach (NationalInstruments.Dfir.BorderNode borderNode in variantMatchStructure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
                     {
                         WillInitializeWithValue(borderNode.OutputTerminals[nestedDiagram.Index]);
+                    }
+                    break;
+                case StructureTraversalPoint.AfterDiagram:
+                    foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
+                    {
+                        Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
+                        WillGetValue(inputTerminal);
+                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
                     }
                     break;
             }

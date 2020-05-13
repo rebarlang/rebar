@@ -1562,12 +1562,9 @@ namespace Rebar.RebarTarget.LLVM
                 case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
                     VisitVariantMatchStructureBeforeDiagram(variantMatchStructure, nestedDiagram);
                     break;
-#if FALSE
-                    // TODO: handle Tunnels
                 case StructureTraversalPoint.AfterDiagram:
-                    VisitOptionPatternStructureAfterDiagram(optionPatternStructure, nestedDiagram);
+                    VisitVariantMatchStructureAfterDiagram(variantMatchStructure, nestedDiagram);
                     break;
-#endif
             }
             return true;
         }
@@ -1595,6 +1592,19 @@ namespace Rebar.RebarTarget.LLVM
             // TODO: this should be in a diagram-specific VisitOptionPatternStructureSelector
             int diagramIndex = variantMatchStructure.Diagrams.IndexOf(diagram);
             DestructureSelectorValueWithTag(variantMatchStructure.Selector, diagramIndex);
+        }
+
+        private void VisitVariantMatchStructureAfterDiagram(VariantMatchStructure variantMatchStructure, Diagram diagram)
+        {
+            LLVMBasicBlockRef currentBlock = Builder.GetInsertBlock();
+            foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
+            {
+                Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == diagram);
+                ValueSource inputTerminalValueSource = GetTerminalValueSource(inputTerminal);
+                ValueSource outputTerminalValueSource = GetTerminalValueSource(outputTunnel.OutputTerminals[0]);
+                // TODO: these Tunnel output variables should also be able to be Phi ValueSources
+                Update(outputTerminalValueSource, inputTerminalValueSource.GetValue(Builder));
+            }
         }
 
         bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
