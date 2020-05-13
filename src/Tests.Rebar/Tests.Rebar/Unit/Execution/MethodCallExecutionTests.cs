@@ -1,8 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
+using NationalInstruments.FeatureToggles;
+using Rebar;
 using Rebar.Common;
 using Rebar.Compiler.Nodes;
 
@@ -11,6 +14,20 @@ namespace Tests.Rebar.Unit.Execution
     [TestClass]
     public class MethodCallExecutionTests : ExecutionTestBase
     {
+        private IDisposable _methodCallFeatureToggle;
+
+        [TestInitialize]
+        public void Initialize()
+        {
+            _methodCallFeatureToggle = FeatureToggleSupport.TemporarilyEnableFeature(RebarFeatureToggles.ParametersAndCalls);
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            _methodCallFeatureToggle.Dispose();
+        }
+
         [TestMethod]
         public void FunctionWithCallToParameterlessFunction_Execute_CalleeFunctionsExecutes()
         {
