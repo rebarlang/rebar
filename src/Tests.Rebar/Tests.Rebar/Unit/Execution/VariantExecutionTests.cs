@@ -35,7 +35,7 @@ namespace Tests.Rebar.Unit.Execution
         public void VariantConstructorContainingDroppableValue_Execute_ValueIsDropped()
         {
             DfirRoot function = DfirRoot.Create();
-            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantType, 1);
+            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantWithDropField, 1);
             FunctionalNode createFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
             Wire.Create(function.BlockDiagram, createFakeDrop.OutputTerminals[0], variantConstructorNode.InputTerminals[0]);
 
