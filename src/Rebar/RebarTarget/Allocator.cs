@@ -367,7 +367,6 @@ namespace Rebar.RebarTarget
 
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
-            WillGetValue(optionPatternStructureSelector.InputTerminals[0]);
             // The selector output terminals are initialized in VisitOptionPatternStructure, each in their own
             // diagram initial group.
             return true;
@@ -452,7 +451,6 @@ namespace Rebar.RebarTarget
 
         public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
-            WillGetValue(variantMatchStructureSelector.InputTerminals[0]);
             // The selector output terminals are initialized in VisitVariantMatchStructure, each in their own
             // diagram initial group.
             return true;
@@ -711,6 +709,9 @@ namespace Rebar.RebarTarget
         {
             switch (traversalPoint)
             {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
+                    break;
                 case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
                     WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
                     foreach (NationalInstruments.Dfir.BorderNode borderNode in variantMatchStructure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
