@@ -209,6 +209,7 @@ namespace Rebar.Compiler
             var flatSequenceSimpleTunnel = sourceModelBorderNode as FlatSequenceSimpleTunnel;
             var loopTunnel = sourceModelBorderNode as LoopTunnel;
             var optionPatternStructureTunnel = sourceModelBorderNode as OptionPatternStructureTunnel;
+            var variantMatchStructureTunnel = sourceModelBorderNode as VariantMatchStructureTunnel;
             var borrowTunnel = sourceModelBorderNode as SourceModel.BorrowTunnel;
             var loopBorrowTunnel = sourceModelBorderNode as LoopBorrowTunnel;
             var lockTunnel = sourceModelBorderNode as SourceModel.LockTunnel;
@@ -259,7 +260,10 @@ namespace Rebar.Compiler
                 var beginLifetimeDfir = (Nodes.IBeginLifetimeTunnel)_map.GetDfirForModel((Element)loopTerminateLifetimeTunnel.BeginLifetimeTunnel);
                 return beginLifetimeDfir.TerminateLifetimeTunnel;
             }
-            else if (flatSequenceSimpleTunnel != null || loopTunnel != null || optionPatternStructureTunnel != null)
+            else if (flatSequenceSimpleTunnel != null
+                || loopTunnel != null
+                || optionPatternStructureTunnel != null
+                || variantMatchStructureTunnel != null)
             {
                 return dfirParentStructure.CreateTunnel(
                     sourceModelBorderNode.PrimaryOuterTerminal.Direction,
