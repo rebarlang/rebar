@@ -71,7 +71,7 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
-        public void UnwiredSelfTypeNode_Validate_SelfTypeNodeInputTerminalHasUnwiredTerminalError()
+        public void UnwiredStructSelfTypeNode_Validate_SelfTypeNodeInputTerminalHasUnwiredTerminalError()
         {
             DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
             var selfType = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 1);
@@ -79,6 +79,17 @@ namespace Tests.Rebar.Unit.Compiler
             RunTypeDiagramSemanticAnalysisUpToValidation(typeDiagram);
 
             AssertTerminalHasRequiredTerminalUnconnectedMessage(selfType.InputTerminals[0]);
+        }
+
+        [TestMethod]
+        public void UnwiredVariantSelfTypeNode_Validate_SelfTypeNodeInputTerminalHasUnwiredTerminalError()
+        {
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
+            var selfType = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Variant, 1);
+
+            RunTypeDiagramSemanticAnalysisUpToValidation(typeDiagram);
+
+            Assert.IsFalse(selfType.InputTerminals[0].GetDfirMessages().Any());
         }
 
         private PrimitiveTypeNode ConnectPrimitiveTypeToInputTerminal(Terminal inputTerminal, NIType type)
