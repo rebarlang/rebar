@@ -71,6 +71,20 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
+        public void SelfVariantTypeWithUnwiredInput_InferTypes_SelfTypeIsUnionTypeWithEmptyField()
+        {
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
+            var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Variant, 1);
+
+            RunSemanticAnalysisUpToTypeInference(typeDiagram);
+
+            NIType selfType = typeDiagram.GetSelfType();
+            Assert.IsTrue(selfType.IsUnion());
+            Assert.AreEqual(1, selfType.GetFields().Count());
+            Assert.IsTrue(selfType.GetFields().First().IsUnit());
+        }
+
+        [TestMethod]
         public void UnwiredStructSelfTypeNode_Validate_SelfTypeNodeInputTerminalHasUnwiredTerminalError()
         {
             DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
