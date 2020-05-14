@@ -9,6 +9,11 @@ namespace Rebar.Common
     {
         public const string RebarTypeKeyword = "RebarType";
 
+        /// <summary>
+        /// Represents a zero-sized/single-instance type that can be associated with empty variant fields.
+        /// </summary>
+        internal static NIType UnitType { get; }
+
         private static NIType MutableReferenceGenericType { get; }
 
         private static NIType ImmutableReferenceGenericType { get; }
@@ -61,6 +66,10 @@ namespace Rebar.Common
 
         static DataTypes()
         {
+            var unitTypeBuilder = NITypes.Factory.DefineReferenceClass("MutableReference");
+            unitTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            UnitType = unitTypeBuilder.CreateType();
+
             var mutableReferenceGenericTypeBuilder = NITypes.Factory.DefineReferenceClass("MutableReference");
             mutableReferenceGenericTypeBuilder.MakeGenericParameters("TDeref", "TLife");
             mutableReferenceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
@@ -247,6 +256,11 @@ namespace Rebar.Common
             var parameterBuilder = genericTypeParameters.ElementAt(0);
             SetLifetimeTypeAttribute((NIAttributedBaseBuilder)parameterBuilder);
             return parameterBuilder.CreateType();
+        }
+
+        public static bool IsUnit(this NIType type)
+        {
+            return type == UnitType;
         }
 
         public static NIType CreateMutableReference(this NIType dereferenceType, NIType lifetimeType = default(NIType))
