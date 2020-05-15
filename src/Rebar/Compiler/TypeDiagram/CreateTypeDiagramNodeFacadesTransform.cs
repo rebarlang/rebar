@@ -48,7 +48,9 @@ namespace Rebar.Compiler.TypeDiagram
             {
                 foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
                 {
-                    TypeVariableReference typeVariable = typeVariableSet.CreateReferenceToNewTypeVariable();
+                    TypeVariableReference typeVariable = selfTypeNode.Mode == SelfTypeMode.Variant && !inputTerminal.IsConnected
+                        ? typeVariableSet.CreateTypeVariableReferenceFromNIType(DataTypes.UnitType)
+                        : typeVariableSet.CreateReferenceToNewTypeVariable();
                     nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, typeVariable);
                 }
                 return;
