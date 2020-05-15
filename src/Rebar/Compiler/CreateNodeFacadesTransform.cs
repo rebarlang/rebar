@@ -452,15 +452,16 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
-            Terminal inputTerminal = variantConstructorNode.InputTerminals[0],
-                outputTerminal = variantConstructorNode.OutputTerminals[0];
-            NIType elementType = variantConstructorNode.VariantType.GetFields().ElementAt(variantConstructorNode.SelectedFieldIndex).GetDataType();
-            _nodeFacade[inputTerminal] = new SimpleTerminalFacade(
-                inputTerminal,
-                _typeVariableSet.CreateTypeVariableReferenceFromNIType(elementType));
-            _nodeFacade[outputTerminal] = new SimpleTerminalFacade(
-                outputTerminal,
+            _nodeFacade[variantConstructorNode.VariantOutputTerminal] = new SimpleTerminalFacade(
+                variantConstructorNode.VariantOutputTerminal,
                 _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.VariantType));
+
+            if (variantConstructorNode.RequiresInput)
+            {
+                _nodeFacade[variantConstructorNode.FieldInputTerminal] = new SimpleTerminalFacade(
+                    variantConstructorNode.FieldInputTerminal,
+                    _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.SelectedFieldType));
+            }
             return true;
         }
 
