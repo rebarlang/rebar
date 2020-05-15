@@ -216,8 +216,11 @@ namespace Rebar.Compiler
 
         bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
-            MarkTrueVariableOfTerminalConsumed(variantConstructorNode.InputTerminals[0]);
-            MarkFacadeVariableOfTerminalLive(variantConstructorNode.OutputTerminals[0]);
+            if (variantConstructorNode.RequiresInput)
+            {
+                MarkTrueVariableOfTerminalConsumed(variantConstructorNode.FieldInputTerminal);
+            }
+            MarkFacadeVariableOfTerminalLive(variantConstructorNode.VariantOutputTerminal);
             return true;
         }
 
