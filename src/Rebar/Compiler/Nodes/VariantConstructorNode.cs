@@ -2,6 +2,7 @@
 using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 
 namespace Rebar.Compiler.Nodes
 {
@@ -13,8 +14,12 @@ namespace Rebar.Compiler.Nodes
             VariantType = variantType;
             SelectedFieldIndex = selectedFieldIndex;
             NIType fieldType = variantType.GetFields().ElementAt(selectedFieldIndex).GetDataType();
+
             CreateTerminal(Direction.Output, NITypes.Void, "variant");
-            CreateTerminal(Direction.Input, NITypes.Void, "field");
+            if (!SelectedFieldType.IsUnit())
+            {
+                CreateTerminal(Direction.Input, NITypes.Void, "field");
+            }
         }
 
         private VariantConstructorNode(Node newParentNode, VariantConstructorNode nodeToCopy, NodeCopyInfo copyInfo) 
@@ -28,7 +33,13 @@ namespace Rebar.Compiler.Nodes
 
         public int SelectedFieldIndex { get; }
 
+        public NIType SelectedFieldType => VariantType.GetFields().ElementAt(SelectedFieldIndex).GetDataType();
+
+        public bool RequiresInput => !SelectedFieldType.IsUnit();
+
         public Terminal VariantOutputTerminal => OutputTerminals[0];
+
+        public Terminal FieldInputTerminal => InputTerminals.FirstOrDefault();
 
         public override T AcceptVisitor<T>(IDfirNodeVisitor<T> visitor)
         {
