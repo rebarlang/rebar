@@ -12,6 +12,9 @@ using Rebar.SourceModel.TypeDiagram;
 
 namespace Rebar.Design.TypeDiagram
 {
+    /// <summary>
+    /// View model for <see cref="SelfType"/>.
+    /// </summary>
     public class SelfTypeViewModel : GrowNodeViewModel
     {
         public SelfTypeViewModel(SelfType selfType) : base(selfType)
@@ -42,7 +45,7 @@ namespace Rebar.Design.TypeDiagram
         /// <summary>
         /// Command for setting a type diagram to define a struct type.
         /// </summary>
-        public static readonly ICommandEx StructModeCommand = new ShellSelectionRelayCommand(HandleExecuteStructCommand, HandleCanExecuteStructCommand)
+        private static readonly ICommandEx StructModeCommand = new ShellSelectionRelayCommand(HandleExecuteStructCommand, HandleCanExecuteStructCommand)
         {
             UniqueId = "NI.TypeDiagramCommands:StructMode",
             UIType = UITypeForCommand.RadioButton,
@@ -54,7 +57,7 @@ namespace Rebar.Design.TypeDiagram
         /// <summary>
         /// Command for setting a borrow tunnel to borrow mutably.
         /// </summary>
-        public static readonly ICommandEx VariantModeCommand = new ShellSelectionRelayCommand(HandleExecuteVariantCommand, HandleCanExecuteVariantCommand)
+        private static readonly ICommandEx VariantModeCommand = new ShellSelectionRelayCommand(HandleExecuteVariantCommand, HandleCanExecuteVariantCommand)
         {
             UniqueId = "NI.TypeDiagramCommands:VariantMode",
             UIType = UITypeForCommand.RadioButton,
