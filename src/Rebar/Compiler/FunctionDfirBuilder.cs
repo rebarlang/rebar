@@ -556,9 +556,9 @@ namespace Rebar.Compiler
             else if (dependencyType.IsUnion())
             {
                 int index = 0;
+                var inputTerminal = (ConstructorTerminal)constructor.InputTerminals.First();
+                string fieldName = inputTerminal.FieldName;
                 {
-                    var input = (ConstructorTerminal)constructor.InputTerminals.First();
-                    string fieldName = input.FieldName;
                     int current = 0;
                     foreach (NIType field in dependencyType.GetFields())
                     {
@@ -573,7 +573,11 @@ namespace Rebar.Compiler
 
                 var variantConstructorNode = new VariantConstructorNode(_currentDiagram, dependencyType, index);
                 _map.AddMapping(constructor, variantConstructorNode);
-                _map.MapTerminalsInOrder(constructor, variantConstructorNode);
+                _map.MapTerminalAndType(constructor.OutputTerminal, variantConstructorNode.VariantOutputTerminal);
+                if (variantConstructorNode.RequiresInput)
+                {
+                    _map.MapTerminalAndType(inputTerminal, variantConstructorNode.FieldInputTerminal);
+                }
                 return;
             }
             else
