@@ -66,7 +66,7 @@ namespace Rebar.Common
 
         static DataTypes()
         {
-            var unitTypeBuilder = NITypes.Factory.DefineReferenceClass("MutableReference");
+            var unitTypeBuilder = NITypes.Factory.DefineReferenceClass("Unit");
             unitTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             UnitType = unitTypeBuilder.CreateType();
 
