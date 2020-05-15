@@ -44,12 +44,5 @@ namespace Rebar.Design.TypeDiagram
             };
             return new AutoToolViewModel(tools);
         }
-
-        /// <inheritdoc />
-        protected override void Initialize()
-        {
-            base.Initialize();
-            // ((TypeDiagramDocument)Document).AddCommandBindings(this);
-        }
     }
 }
