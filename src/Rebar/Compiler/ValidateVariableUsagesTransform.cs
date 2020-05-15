@@ -248,7 +248,10 @@ namespace Rebar.Compiler
 
         public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
-            ValidateRequiredInputTerminal(variantConstructorNode.InputTerminals[0]);
+            if (variantConstructorNode.RequiresInput)
+            {
+                ValidateRequiredInputTerminal(variantConstructorNode.FieldInputTerminal);
+            }
             return true;
         }
 
