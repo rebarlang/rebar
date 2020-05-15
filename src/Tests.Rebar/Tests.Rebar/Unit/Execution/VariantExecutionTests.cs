@@ -34,6 +34,20 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void VariantConstructorsWithValidEmptyField_Execute_CorrectVariantValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantTypeWithEmpty, 0);
+            FunctionalNode inspect = ConnectInspectToOutputTerminal(variantConstructorNode.VariantOutputTerminal);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspect);
+            Assert.AreEqual(2, inspectValue.Length);
+            Assert.AreEqual((byte)0, inspectValue[0]);
+        }
+
+        [TestMethod]
         public void VariantConstructorContainingDroppableValue_Execute_ValueIsDropped()
         {
             DfirRoot function = DfirRoot.Create();
@@ -97,6 +111,22 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void VariantMatchStructureWithTwoCasesAndEmptyElementInput_Execute_CorrectFrameExecutes()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var variantConstructorNode = new VariantConstructorNode(function.BlockDiagram, VariantTypeWithEmpty, 0);
+            VariantMatchStructure variantMatchStructure = this.CreateVariantMatchStructure(function.BlockDiagram, 2);
+            Wire.Create(function.BlockDiagram, variantConstructorNode.VariantOutputTerminal, variantMatchStructure.Selector.InputTerminals[0]);
+            var output = new FunctionalNode(variantMatchStructure.Diagrams[0], Signatures.OutputType);
+            ConnectConstantToInputTerminal(output.InputTerminals[0], DataTypes.StringSliceType.CreateImmutableReference(), "empty", false);
+            this.ConnectOutputToOutputTerminal(variantMatchStructure.Selector.OutputTerminals[1]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("empty", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
         public void VariantMatchStructureWithInputTunnel_Execute_InputTunnelValueCorrectlyTransferred()
         {
             DfirRoot function = DfirRoot.Create();
@@ -155,6 +185,17 @@ namespace Tests.Rebar.Unit.Execution
             {
                 NIUnionBuilder builder = NITypes.Factory.DefineUnion("variant.td");
                 builder.DefineField(NITypes.Int32, "_0");
+                builder.DefineField(NITypes.Boolean, "_1");
+                return builder.CreateType();
+            }
+        }
+
+        private NIType VariantTypeWithEmpty
+        {
+            get
+            {
+                NIUnionBuilder builder = NITypes.Factory.DefineUnion("variantWithEmpty.td");
+                builder.DefineField(DataTypes.UnitType, "_0");
                 builder.DefineField(NITypes.Boolean, "_1");
                 return builder.CreateType();
             }
