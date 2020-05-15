@@ -81,7 +81,7 @@ namespace Tests.Rebar.Unit.Compiler
             NIType selfType = typeDiagram.GetSelfType();
             Assert.IsTrue(selfType.IsUnion());
             Assert.AreEqual(1, selfType.GetFields().Count());
-            Assert.IsTrue(selfType.GetFields().First().IsUnit());
+            Assert.IsTrue(selfType.GetFields().First().GetDataType().IsUnit());
         }
 
         [TestMethod]
