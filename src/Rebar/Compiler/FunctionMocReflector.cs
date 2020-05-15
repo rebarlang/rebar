@@ -103,7 +103,7 @@ namespace Rebar.Compiler
                 variantMatchStructure.UpdateDependencies(variantType);
             }
 
-            foreach (var nodeTerminal in connectable.Terminals)
+            foreach (var nodeTerminal in connectable.Terminals.Where(t => !_map.IsUnmappedSourceModelTerminal(t)))
             {
                 NationalInstruments.Dfir.Terminal dfirTerminal = _map.GetDfirForTerminal(nodeTerminal);
                 NIType typeToReflect = dfirTerminal.DataType;

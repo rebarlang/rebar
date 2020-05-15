@@ -14,6 +14,7 @@ namespace Rebar.Compiler
     {
         private readonly List<Tuple<Content, DfirElement>> _pairs = new List<Tuple<Content, DfirElement>>();
         private readonly List<Tuple<SMTerminal, DfirTerminal>> _terminalPairs = new List<Tuple<SMTerminal, DfirTerminal>>();
+        private readonly HashSet<SMTerminal> _unmappedModelTerminals = new HashSet<SMTerminal>();
 
         public void AddMapping(Content content, DfirElement dfirElement)
         {
@@ -31,19 +32,14 @@ namespace Rebar.Compiler
             }
         }
 
-        public DfirElement GetDfirForModel(SMElement model)
-        {
-            return _pairs.FirstOrDefault(pair => pair.Item1 == model).Item2;
-        }
+        public void AddUnmappedSourceModelTerminal(SMTerminal modelTerminal) => _unmappedModelTerminals.Add(modelTerminal);
 
-        public DfirTerminal GetDfirForTerminal(SMTerminal terminal)
-        {
-            return _terminalPairs.FirstOrDefault(pair => pair.Item1 == terminal).Item2;
-        }
+        public DfirElement GetDfirForModel(SMElement model) => _pairs.FirstOrDefault(pair => pair.Item1 == model).Item2;
 
-        public bool ContainsTerminal(SMTerminal terminal)
-        {
-            return _terminalPairs.Any(pair => pair.Item1 == terminal);
-        }
+        public DfirTerminal GetDfirForTerminal(SMTerminal terminal) => _terminalPairs.FirstOrDefault(pair => pair.Item1 == terminal).Item2;
+
+        public bool IsUnmappedSourceModelTerminal(SMTerminal modelTerminal) => _unmappedModelTerminals.Contains(modelTerminal);
+
+        public bool ContainsTerminal(SMTerminal terminal) => _terminalPairs.Any(pair => pair.Item1 == terminal);
     }
 }

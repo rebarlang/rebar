@@ -578,6 +578,10 @@ namespace Rebar.Compiler
                 {
                     _map.MapTerminalAndType(inputTerminal, variantConstructorNode.FieldInputTerminal);
                 }
+                else
+                {
+                    _map.AddUnmappedSourceModelTerminal(inputTerminal);
+                }
                 return;
             }
             else
