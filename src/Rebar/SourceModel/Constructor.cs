@@ -11,6 +11,7 @@ using NationalInstruments.Linking;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Envoys;
 using NationalInstruments.SourceModel.Persistence;
+using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.SourceModel.TypeDiagram;
 
@@ -325,6 +326,10 @@ namespace Rebar.SourceModel
             return base.PropertiesForGenerate(options).Where(pair => pair.Key != DataTypeProperty);
         }
 
+        private Constructor Constructor => (Constructor)Owner;
+
+        private NIType ConstructedType => Constructor.OutputTerminal.DataType;
+
         public string FieldName
         {
             get { return _fieldName; }
@@ -335,6 +340,17 @@ namespace Rebar.SourceModel
                     TransactionRecruiter.EnlistPropertyItem(this, nameof(FieldName), _fieldName, value, (f, _) => { _fieldName = f; }, TransactionHints.Semantic);
                     _fieldName = value;
                 }
+            }
+        }
+
+        /// <inheritdoc />
+        public override bool Visible
+        {
+            get
+            {
+                NIType outputType = ConstructedType;
+                return !(outputType.IsUnion()
+                    && outputType.GetField(FieldName).GetDataType().IsUnit());
             }
         }
     }
