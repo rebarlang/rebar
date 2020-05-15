@@ -268,12 +268,21 @@ namespace Rebar.RebarTarget.LLVM
                     }
                     if (niType.IsUnion())
                     {
-                        int maxSize = 4;
+                        int maxSize = 1;
                         foreach (NIType field in niType.GetFields())
                         {
                             // TODO: where possible, use a non-array type that matches the max size
-                            LLVMTypeRef llvmFieldType = context.AsLLVMType(field.GetDataType());
-                            int fieldSize = (int)LLVMSharp.LLVM.StoreSizeOfType(LocalTargetInfo.TargetData, llvmFieldType);
+                            NIType fieldDataType = field.GetDataType();
+                            int fieldSize;
+                            if (fieldDataType.IsUnit())
+                            {
+                                fieldSize = 1;
+                            }
+                            else
+                            {
+                                LLVMTypeRef llvmFieldType = context.AsLLVMType(field.GetDataType());
+                                fieldSize = (int)LLVMSharp.LLVM.StoreSizeOfType(LocalTargetInfo.TargetData, llvmFieldType);
+                            }
                             maxSize = Math.Max(maxSize, fieldSize);
                         }
                         LLVMTypeRef[] structFieldTypes = new LLVMTypeRef[]

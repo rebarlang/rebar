@@ -1078,12 +1078,16 @@ namespace Rebar.RebarTarget.LLVM
             // ValueSource subclass that knows how to handle variant values.
             // Another idea is to generate one function per variant field that takes the field type and returns the constructed variant value.
             LLVMValueRef variantAlloca = Builder.CreateAlloca(llvmVariantType, "variantAlloca"),
-                variantAllocaTagFieldPtr = Builder.CreateStructGEP(variantAlloca, 0u, "variantAllocaTagFieldPtr"),
-                variantAllocaDataFieldPtr = Builder.CreateStructGEP(variantAlloca, 1u, "variantAllocaDataFieldPtr"),
-                inputValue = GetValueSource(variantConstructorNode.InputTerminals[0].GetTrueVariable()).GetValue(Builder),
-                bitCastAllocaFieldPtr = Builder.CreateBitCast(variantAllocaDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
+                variantAllocaTagFieldPtr = Builder.CreateStructGEP(variantAlloca, 0u, "variantAllocaTagFieldPtr");
             Builder.CreateStore(Context.AsLLVMValue(fieldIndex), variantAllocaTagFieldPtr);
-            Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
+
+            if (variantConstructorNode.RequiresInput)
+            {
+                LLVMValueRef variantAllocaDataFieldPtr = Builder.CreateStructGEP(variantAlloca, 1u, "variantAllocaDataFieldPtr"),
+                    inputValue = GetValueSource(variantConstructorNode.InputTerminals[0].GetTrueVariable()).GetValue(Builder),
+                    bitCastAllocaFieldPtr = Builder.CreateBitCast(variantAllocaDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
+                Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
+            }
 
             LLVMValueRef loadedVariant = Builder.CreateLoad(variantAlloca, "loadedVariant");
             Initialize(GetValueSource(variantConstructorNode.OutputTerminals[0].GetTrueVariable()), loadedVariant);
@@ -1614,6 +1618,13 @@ namespace Rebar.RebarTarget.LLVM
 
         private void DestructureSelectorValueWithTag(VariantMatchStructureSelector variantMatchStructureSelector, int diagramIndex)
         {
+            NIType variantType = variantMatchStructureSelector.InputTerminals[0].GetTrueVariable().Type;
+            NIType fieldType = variantType.GetFields().ElementAt(diagramIndex).GetDataType();
+            if (fieldType.IsUnit())
+            {
+                return;
+            }
+
             ValueSource selectorInputAllocationSource = GetTerminalValueSource(variantMatchStructureSelector.InputTerminals[0]);
             Terminal outputTerminal = variantMatchStructureSelector.OutputTerminals[diagramIndex];
             ValueSource selectorOutputSource = GetTerminalValueSource(outputTerminal);
