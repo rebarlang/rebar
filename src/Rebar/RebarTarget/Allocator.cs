@@ -444,8 +444,11 @@ namespace Rebar.RebarTarget
 
         public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
-            WillGetValue(variantConstructorNode.InputTerminals[0]);
-            WillInitializeWithValue(variantConstructorNode.OutputTerminals[0]);
+            if (variantConstructorNode.RequiresInput)
+            {
+                WillGetValue(variantConstructorNode.FieldInputTerminal);
+            }
+            WillInitializeWithValue(variantConstructorNode.VariantOutputTerminal);
             return true;
         }
 
