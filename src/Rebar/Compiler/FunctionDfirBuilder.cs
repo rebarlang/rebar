@@ -20,6 +20,7 @@ using Structure = NationalInstruments.SourceModel.Structure;
 using Terminal = NationalInstruments.SourceModel.Terminal;
 using Tunnel = NationalInstruments.SourceModel.Tunnel;
 using Wire = NationalInstruments.SourceModel.Wire;
+using NationalInstruments;
 
 namespace Rebar.Compiler
 {
@@ -108,8 +109,32 @@ namespace Rebar.Compiler
             }
         }
 
+        private void TranslateStructure(
+            Structure structure,
+            Func<NationalInstruments.Dfir.Diagram, NationalInstruments.Dfir.Structure> createStructure,
+            Func<NationalInstruments.Dfir.Structure, NationalInstruments.Dfir.Diagram> createNestedDiagram)
+        {
+            var dfirStructure = createStructure(_currentDiagram);
+            _map.AddMapping(structure, dfirStructure);
+
+            _map.AddMapping(structure.NestedDiagrams.First(), dfirStructure.Diagrams.First());
+            foreach (var additionalDiagram in structure.NestedDiagrams.Skip(1))
+            {
+                NationalInstruments.Dfir.Diagram additionalDfirDiagram = createNestedDiagram(dfirStructure);
+                _map.AddMapping(additionalDiagram, additionalDfirDiagram);
+            }
+
+            foreach (BorderNode borderNode in structure.BorderNodes)
+            {
+                MapBorderNode(borderNode, TranslateBorderNode(borderNode, dfirStructure));
+            }
+
+            structure.NestedDiagrams.ForEach(nestedDiagram => nestedDiagram.AcceptVisitor(this));
+        }
+
         private void VisitRebarFlatSequence(FlatSequence flatSequence)
         {
+#if FALSE
             var firstDiagram = flatSequence.NestedDiagrams.First();
             var flatSequenceDfir = Frame.Create(_currentDiagram);
             _map.AddMapping(flatSequence, flatSequenceDfir);
@@ -122,6 +147,8 @@ namespace Rebar.Compiler
             }
 
             firstDiagram.AcceptVisitor(this);
+#endif
+            TranslateStructure(flatSequence, Frame.Create, null);
         }
 
         private void VisitLoop(SourceModel.Loop loop)
