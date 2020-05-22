@@ -1302,19 +1302,6 @@ namespace Rebar.RebarTarget.LLVM
             if (frame.DoesStructureExecuteConditionally())
             {
                 _frameData[frame] = new ConditionallyExecutingFrameData(frame, this);
-
-                foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
-                {
-                    // Store a None value for the tunnel
-                    // TODO: for now, this means that these tunnels require local allocations.
-                    // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
-                    // initialized by values from different predecessor blocks, but may not change
-                    // after initialization.
-                    VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
-                    ValueSource outputSource = GetValueSource(outputVariable);
-                    LLVMTypeRef outputType = Context.AsLLVMType(outputVariable.Type);
-                    Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
-                }
             }
         }
 
@@ -1340,9 +1327,49 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-#endregion
+        public bool VisitFrameSkippedBlockVisitation(FrameSkippedBlockVisitation visitation)
+        {
+            Frame frame = visitation.Frame;
+            // Drop any input variables that may need it
+            var variablesToDrop = new List<VariableReference>();
+            foreach (var inputTunnel in frame.BorderNodes.OfType<Tunnel>().Where(tunnel => tunnel.Direction == Direction.Input))
+            {
+                variablesToDrop.Add(inputTunnel.OutputTerminals[0].GetTrueVariable());
+            }
 
-#region Loop
+            var unwrapOptionTunnels = visitation.Frame.BorderNodes.OfType<UnwrapOptionTunnel>();
+            if (unwrapOptionTunnels.HasMoreThan(1))
+            {
+                foreach (var unwrapOptionTunnel in unwrapOptionTunnels)
+                {
+                    variablesToDrop.Add(unwrapOptionTunnel.InputTerminals[0].GetTrueVariable());
+                }
+            }
+
+            foreach (VariableReference variableToDrop in variablesToDrop)
+            {
+                CreateDropCallIfDropFunctionExists(Builder, variableToDrop.Type, builder => GetAddress(GetValueSource(variableToDrop), builder));
+            }
+
+            // Initialize any output variables to None
+            foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+            {
+                // TODO: for now, this means that these tunnels require local allocations.
+                // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
+                // initialized by values from different predecessor blocks, but may not change
+                // after initialization.
+                VariableReference outputVariable = tunnel.OutputTerminals[0].GetTrueVariable();
+                ValueSource outputSource = GetValueSource(outputVariable);
+                LLVMTypeRef outputType = Context.AsLLVMType(outputVariable.Type);
+                Update(outputSource, LLVMSharp.LLVM.ConstNull(outputType));
+            }
+
+            return true;
+        }
+
+        #endregion
+
+        #region Loop
 
         private ValueSource GetConditionAllocationSource(Compiler.Nodes.Loop loop)
         {
@@ -1519,7 +1546,7 @@ namespace Rebar.RebarTarget.LLVM
             Initialize(selectorOutputSource, innerValue);
         }
 
-#endregion
+        #endregion
     }
 
     internal abstract class FunctionCompilerState

@@ -78,6 +78,8 @@ namespace Rebar.RebarTarget
         /// </summary>
         private readonly List<AsyncStateGroup> _groups = new List<AsyncStateGroup>();
 
+        private readonly Dictionary<Frame, AsyncStateGroup> _frameSkippedBlockGroups = new Dictionary<Frame, AsyncStateGroup>();
+
         private DfirRoot _dfirRoot;
 
         public AsyncStateGrouper()
@@ -283,10 +285,19 @@ namespace Rebar.RebarTarget
                                 frame.Diagram);
                             diagramInitialGroup.BeginsAsDiagramInitialGroup = true;
                             _diagramInitialGroups[frame.Diagram] = diagramInitialGroup;
+
+                            AsyncStateGroup frameSkippedGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
+                                $"frame{frame.UniqueId}_frameSkippedGroup",
+                                null);
+                            AddVisitationToGroup(frameSkippedGroup, new FrameSkippedBlockVisitation(frame));
+                            _frameSkippedBlockGroups[frame] = frameSkippedGroup;
+
                             AsyncStateGroup frameTerminalGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
                                 $"frame{frame.UniqueId}_terminalGroup",
                                 frame.ParentDiagram);
-                            AddConditionalSuccessorGroups(frameInitialGroup, new HashSet<AsyncStateGroup> { frameTerminalGroup });  // false/0
+                            frameTerminalGroup.SignaledConditionally = true;
+                            AddConditionalSuccessorGroups(frameInitialGroup, new HashSet<AsyncStateGroup> { frameSkippedGroup });  // false/0
+                            AddUnconditionalSuccessorGroup(frameSkippedGroup, frameTerminalGroup);
                             AddConditionalSuccessorGroups(frameInitialGroup, new HashSet<AsyncStateGroup> { diagramInitialGroup }); // true/1
                             _nodeGroups[frame] = frameTerminalGroup;
                         }
@@ -339,6 +350,9 @@ namespace Rebar.RebarTarget
                                 AsyncStateGroup frameInitialGroup = _structureInitialGroups[frame];
                                 diagramTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
                                 frameTerminalGroup.FunctionId = frameInitialGroup.FunctionId;
+
+                                AsyncStateGroup frameSkippedGroup = _frameSkippedBlockGroups[frame];
+                                frameSkippedGroup.FunctionId = frameInitialGroup.FunctionId;
                             }
                         }
                         break;
@@ -638,7 +652,10 @@ namespace Rebar.RebarTarget
     {
     }
 
-    internal interface IVisitationHandler<T> : IDfirNodeVisitor<T>, IDfirStructureVisitor<T> { }
+    internal interface IVisitationHandler<T> : IDfirNodeVisitor<T>, IDfirStructureVisitor<T>
+    {
+        T VisitFrameSkippedBlockVisitation(FrameSkippedBlockVisitation visitation);
+    }
 
     internal static class VisitationExtensions
     {
@@ -646,6 +663,7 @@ namespace Rebar.RebarTarget
         {
             var nodeVisitation = visitation as NodeVisitation;
             var structureVisitation = visitation as StructureVisitation;
+            var frameSkippedBlockVisitation = visitation as FrameSkippedBlockVisitation;
             if (nodeVisitation != null)
             {
                 visitor.VisitRebarNode(nodeVisitation.Node);
@@ -656,6 +674,10 @@ namespace Rebar.RebarTarget
                     structureVisitation.Structure,
                     structureVisitation.TraversalPoint,
                     structureVisitation.Diagram);
+            }
+            else if (frameSkippedBlockVisitation != null)
+            {
+                visitor.VisitFrameSkippedBlockVisitation(frameSkippedBlockVisitation);
             }
         }
 
@@ -714,6 +736,16 @@ namespace Rebar.RebarTarget
         public Diagram Diagram { get; }
 
         public StructureTraversalPoint TraversalPoint { get; }
+    }
+
+    internal sealed class FrameSkippedBlockVisitation : Visitation
+    {
+        public FrameSkippedBlockVisitation(Frame frame)
+        {
+            Frame = frame;
+        }
+
+        public Frame Frame { get; }
     }
 
     internal static class AsyncStateGroupExtensions

@@ -634,19 +634,6 @@ namespace Rebar.RebarTarget
 
         bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
         {
-            switch (traversalPoint)
-            {
-                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
-                    {
-                        // TODO: these tunnels require local allocations for now.
-                        // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
-                        // initialized by values from different predecessor blocks, but may not change
-                        // after initialization.
-                        WillUpdateValue(tunnel.OutputTerminals[0]);
-                    }
-                    break;
-            }
             return true;
         }
 
@@ -671,6 +658,23 @@ namespace Rebar.RebarTarget
                         WillUpdateValue(outputTunnel.OutputTerminals[0]);
                     }
                     break;
+            }
+            return true;
+        }
+
+        #endregion
+
+        #region IVisitationHandler implementation
+
+        bool IVisitationHandler<bool>.VisitFrameSkippedBlockVisitation(FrameSkippedBlockVisitation visitation)
+        {
+            foreach (Tunnel tunnel in visitation.Frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+            {
+                // TODO: these tunnels require local allocations for now.
+                // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
+                // initialized by values from different predecessor blocks, but may not change
+                // after initialization.
+                WillUpdateValue(tunnel.OutputTerminals[0]);
             }
             return true;
         }
