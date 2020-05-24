@@ -104,6 +104,19 @@ namespace Rebar.RebarTarget
 
         private ValueSource CreateValueSourceFromUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> otherValueSources)
         {
+            if (usage.ParameterDirection == Direction.Input)
+            {
+                return _singleFunctionName != null
+                    ? (ValueSource)AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(variable), variable.Type)
+                    : AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
+            }
+            else if (usage.ParameterDirection == Direction.Output)
+            {
+                return _singleFunctionName != null
+                    ? (ValueSource)AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(variable), variable.Type)
+                    : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(variable), variable.Type);
+            }
+
             if (!variable.Mutable)
             {
                 if (usage.ReferencedVariableUsage != null)
@@ -189,21 +202,8 @@ namespace Rebar.RebarTarget
 
         private void VisitDataItem(DataItem dataItem)
         {
-            VariableReference dataItemVariable = dataItem.GetVariable();
-            ValueSource valueSource;
-            if (_singleFunctionName != null)
-            {
-                valueSource = dataItem.IsInput
-                    ? AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type)
-                    : AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type);
-            }
-            else
-            {
-                valueSource = dataItem.IsInput
-                    ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
-                    : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
-            }
-            _variableStorage.AddValueSourceForVariable(dataItemVariable, valueSource);
+            VariableUsage dataItemUsage = GetVariableUsageForVariable(dataItem.GetVariable());
+            dataItemUsage.IsParameter(dataItem.IsInput ? Direction.Input : Direction.Output);
         }
 
         #endregion
@@ -726,6 +726,8 @@ namespace Rebar.RebarTarget
 
             public bool TakesAddress { get; private set; }
 
+            public Direction ParameterDirection { get; private set; } = Direction.Unknown;
+
             public bool TryGetConstantInitialValue(out LLVMValueRef value)
             {
                 if (_constantValue != null)
@@ -793,6 +795,11 @@ namespace Rebar.RebarTarget
             {
                 _liveFunctionNames.Add(inGroup.FunctionId);
                 ReferencedVariableUsage?.WillUpdateValue(inGroup);
+            }
+
+            public void IsParameter(Direction direction)
+            {
+                ParameterDirection = direction;
             }
         }
     }
