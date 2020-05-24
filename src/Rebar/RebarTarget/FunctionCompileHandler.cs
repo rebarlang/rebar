@@ -150,15 +150,16 @@ namespace Rebar.RebarTarget
 
             using (var contextWrapper = new LLVM.ContextWrapper())
             {
+                var module = contextWrapper.CreateModule("module");
+                var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
+
                 var variableStorage = new LLVM.FunctionVariableStorage();
                 var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
                 allocator.Execute(dfirRoot, cancellationToken);
 
-                var module = contextWrapper.CreateModule("module");
                 compiledFunctionName = string.IsNullOrEmpty(compiledFunctionName) ? FunctionLLVMName(dfirRoot.CompileSpecification.Name) : compiledFunctionName;
 
                 var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
-                var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
                 var sharedData = new LLVM.FunctionCompilerSharedData(
                     contextWrapper,
                     parameterInfos,

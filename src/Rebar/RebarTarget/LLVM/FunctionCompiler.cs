@@ -198,7 +198,7 @@ namespace Rebar.RebarTarget.LLVM
             ValueSource assigneeSource = compiler.GetTerminalValueSource(assignNode.InputTerminals[0]),
                 newValueSource = compiler.GetTerminalValueSource(assignNode.InputTerminals[1]);
             NIType assigneeType = assigneeVariable.Type.GetReferentType();
-            compiler.CreateDropCallIfDropFunctionExists(compiler.Builder, assigneeType, b => assigneeSource.GetValue(b));
+            compiler.ModuleContext.CreateDropCallIfDropFunctionExists(compiler.Builder, assigneeType, b => assigneeSource.GetValue(b));
             assigneeSource.UpdateDereferencedValue(compiler.Builder, newValueSource.GetValue(compiler.Builder));
         }
 
@@ -224,44 +224,13 @@ namespace Rebar.RebarTarget.LLVM
             }
 
             LLVMValueRef cloneFunction;
-            if (compiler.TryGetCloneFunction(valueType, out cloneFunction))
+            if (compiler.ModuleContext.TryGetCloneFunction(valueType, out cloneFunction))
             {
                 compiler.CreateCallForFunctionalNode(cloneFunction, createCopyNode);
                 return;
             }
 
             throw new NotSupportedException("Don't know how to compile CreateCopy for type " + valueType);
-        }
-
-        private bool TryGetCloneFunction(NIType valueType, out LLVMValueRef cloneFunction)
-        {
-            cloneFunction = default(LLVMValueRef);
-            var functionBuilder = Signatures.CreateCopyType.DefineFunctionFromExisting();
-            functionBuilder.Name = "Clone";
-            functionBuilder.ReplaceGenericParameters(valueType, NIType.Unset);
-            NIType signature = functionBuilder.CreateType();
-            NIType innerType;
-            if (valueType == NITypes.String)
-            {
-                cloneFunction = GetImportedCommonFunction(CommonModules.StringCloneName);
-                return true;
-            }
-            if (valueType.TryDestructureSharedType(out innerType))
-            {
-                cloneFunction = GetSpecializedFunctionWithSignature(signature, BuildSharedCloneFunction);
-                return true;
-            }
-            if (valueType.TryDestructureVectorType(out innerType))
-            {
-                cloneFunction = GetSpecializedFunctionWithSignature(signature, BuildVectorCloneFunction);
-                return true;
-            }
-
-            if (valueType.TypeHasCloneTrait())
-            {
-                throw new NotSupportedException("Clone function not found for type: " + valueType);
-            }
-            return false;
         }
 
         private static void CompileSelectReference(FunctionCompiler compiler, FunctionalNode selectReferenceNode)
@@ -344,133 +313,14 @@ namespace Rebar.RebarTarget.LLVM
                 compiler.CreateCallForFunctionalNode(compiler.GetImportedCommonFunction(functionName), functionalNode, functionalNode.Signature);
         }
 
-        private static string MonomorphizeFunctionName(string functionName, IEnumerable<NIType> typeArguments)
+        private static void BuildCreateYieldPromiseFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef createYieldPromiseFunction)
         {
-            var nameBuilder = new StringBuilder(functionName);
-            foreach (NIType typeArgument in typeArguments)
-            {
-                nameBuilder.Append("_");
-                nameBuilder.Append(StringifyType(typeArgument));
-            }
-            return nameBuilder.ToString();
-        }
-
-        private static string MonomorphizeFunctionName(NIType signatureType)
-        {
-            return MonomorphizeFunctionName(signatureType.GetName(), signatureType.GetGenericParameters());
-        }
-
-        private static string StringifyType(NIType type)
-        {
-            switch (type.GetKind())
-            {
-                case NITypeKind.UInt8:
-                    return "u8";
-                case NITypeKind.Int8:
-                    return "i8";
-                case NITypeKind.UInt16:
-                    return "u16";
-                case NITypeKind.Int16:
-                    return "i16";
-                case NITypeKind.UInt32:
-                    return "u32";
-                case NITypeKind.Int32:
-                    return "i32";
-                case NITypeKind.UInt64:
-                    return "u64";
-                case NITypeKind.Int64:
-                    return "i64";
-                case NITypeKind.Boolean:
-                    return "bool";
-                case NITypeKind.String:
-                    return "string";
-                default:
-                    {
-                        if (type.IsRebarReferenceType())
-                        {
-                            NIType referentType = type.GetReferentType();
-                            if (referentType == DataTypes.StringSliceType)
-                            {
-                                return "str";
-                            }
-                            NIType sliceElementType;
-                            if (referentType.TryDestructureSliceType(out sliceElementType))
-                            {
-                                return $"slice[{StringifyType(sliceElementType)}]";
-                            }
-                            return $"ref[{StringifyType(referentType)}]";
-                        }
-                        if (type.IsCluster())
-                        {
-                            string fieldStrings = string.Join(",", type.GetFields().Select(t => StringifyType(t.GetDataType())));
-                            return $"{{{fieldStrings}}}";
-                        }
-                        if (type == DataTypes.FileHandleType)
-                        {
-                            return "filehandle";
-                        }
-                        if (type == DataTypes.FakeDropType)
-                        {
-                            return "fakedrop";
-                        }
-                        NIType innerType;
-                        if (type.TryDestructureOptionType(out innerType))
-                        {
-                            return $"option[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureVectorType(out innerType))
-                        {
-                            return $"vec[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureSharedType(out innerType))
-                        {
-                            return $"shared[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureYieldPromiseType(out innerType))
-                        {
-                            return $"yieldPromise[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureMethodCallPromiseType(out innerType))
-                        {
-                            return $"methodCallPromise[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureNotifierReaderType(out innerType))
-                        {
-                            return $"notifierReader[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureNotifierWriterType(out innerType))
-                        {
-                            return $"notifierWriter[{StringifyType(innerType)}]";
-                        }
-                        if (type.TryDestructureNotifierReaderPromiseType(out innerType))
-                        {
-                            return $"notifierReaderPromise[{StringifyType(innerType)}]";
-                        }
-                        if (type == DataTypes.RangeIteratorType)
-                        {
-                            return "rangeiterator";
-                        }
-                        if (type == DataTypes.WakerType)
-                        {
-                            return "waker";
-                        }
-                        if (type.IsValueClass())
-                        {
-                            return type.GetTypeDefinitionQualifiedName().ToString("::");
-                        }
-                        throw new NotSupportedException("Unsupported type: " + type);
-                    }
-            }
-        }
-
-        private static void BuildCreateYieldPromiseFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef createYieldPromiseFunction)
-        {
-            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First()),
+            LLVMTypeRef valueType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First()),
                 valueReferenceType = LLVMTypeRef.PointerType(valueType, 0u),
-                yieldPromiseType = compiler.Context.CreateLLVMYieldPromiseType(valueReferenceType);
+                yieldPromiseType = moduleContext.LLVMContext.CreateLLVMYieldPromiseType(valueReferenceType);
 
             LLVMBasicBlockRef entryBlock = createYieldPromiseFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef value = createYieldPromiseFunction.GetParam(0u),
@@ -479,19 +329,19 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildYieldPromisePollFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef yieldPromisePollFunction)
+        private static void BuildYieldPromisePollFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef yieldPromisePollFunction)
         {
-            LLVMTypeRef valueType = compiler.Context.AsLLVMType(signature.GetGenericParameters().ElementAt(1)),
-                valueOptionType = compiler.Context.CreateLLVMOptionType(valueType);
+            LLVMTypeRef valueType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().ElementAt(1)),
+                valueOptionType = moduleContext.LLVMContext.CreateLLVMOptionType(valueType);
 
             LLVMBasicBlockRef entryBlock = yieldPromisePollFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef yieldPromisePtr = yieldPromisePollFunction.GetParam(0u),
                 valuePtr = builder.CreateStructGEP(yieldPromisePtr, 0u, "valuePtr"),
                 value = builder.CreateLoad(valuePtr, "value"),
-                someValue = compiler.Context.BuildOptionValue(builder, valueOptionType, value);
+                someValue = moduleContext.LLVMContext.BuildOptionValue(builder, valueOptionType, value);
             builder.CreateStore(someValue, yieldPromisePollFunction.GetParam(2u));
             builder.CreateRetVoid();
         }
@@ -512,6 +362,7 @@ namespace Rebar.RebarTarget.LLVM
             _moduleBuilder = moduleBuilder;
             _sharedData = sharedData;
             _calleesMayPanic = calleesMayPanic;
+            ModuleContext = new FunctionModuleContext(_sharedData.Context, _moduleBuilder.Module, _sharedData.FunctionImporter);
         }
 
         private ContextWrapper Context => _sharedData.Context;
@@ -528,6 +379,8 @@ namespace Rebar.RebarTarget.LLVM
 
         private FunctionAllocationSet AllocationSet => _sharedData.AllocationSet;
 
+        private FunctionModuleContext ModuleContext { get; }
+
         internal LLVMValueRef GetImportedCommonFunction(string functionName)
         {
             return _sharedData.FunctionImporter.GetImportedCommonFunction(functionName);
@@ -538,7 +391,7 @@ namespace Rebar.RebarTarget.LLVM
             string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(methodCallNode.TargetName);
             return GetImportedFunction(
                 FunctionNames.GetSynchronousFunctionName(targetFunctionName),
-                () => TranslateFunctionType(methodCallNode.Signature));
+                () => Context.TranslateFunctionType(methodCallNode.Signature));
         }
 
         private LLVMValueRef GetImportedInitializeStateFunction(CreateMethodCallPromise createMethodCallPromise)
@@ -560,28 +413,12 @@ namespace Rebar.RebarTarget.LLVM
             return _sharedData.FunctionImporter.GetCachedFunction(functionName, () => Module.AddFunction(functionName, getFunctionType()));
         }
 
-        private LLVMValueRef GetSpecializedFunctionWithSignature(FunctionalNode functionalNode, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
-        {
-            return GetSpecializedFunctionWithSignature(functionalNode.FunctionType.FunctionNIType, createFunction);
-        }
-
-        internal LLVMValueRef GetSpecializedFunctionWithSignature(NIType specializedSignature, Action<FunctionCompiler, NIType, LLVMValueRef> createFunction)
-        {
-            string specializedFunctionName = MonomorphizeFunctionName(specializedSignature);
-            return _sharedData.FunctionImporter.GetCachedFunction(specializedFunctionName, () =>
-            {
-                LLVMValueRef function = Module.AddFunction(specializedFunctionName, TranslateFunctionType(specializedSignature));
-                createFunction(this, specializedSignature, function);
-                return function;
-            });
-        }
-
-        private static Action<FunctionCompiler, FunctionalNode> CreateSpecializedFunctionCallCompiler(Action<FunctionCompiler, NIType, LLVMValueRef> functionCreator)
+        private static Action<FunctionCompiler, FunctionalNode> CreateSpecializedFunctionCallCompiler(Action<FunctionModuleContext, NIType, LLVMValueRef> functionCreator)
         {
             return (compiler, functionalNode) =>
             {
                 compiler.CreateCallForFunctionalNode(
-                    compiler.GetSpecializedFunctionWithSignature(functionalNode, functionCreator),
+                    compiler.ModuleContext.GetSpecializedFunctionWithSignature(functionalNode.FunctionType.FunctionNIType, functionCreator),
                     functionalNode);
             };
         }
@@ -608,17 +445,6 @@ namespace Rebar.RebarTarget.LLVM
                 arguments.Add(GetAddress(GetTerminalValueSource(outputPair.Key), Builder));
             }
             Builder.CreateCall(function, arguments.ToArray(), string.Empty);
-        }
-
-        private void CreateCallToCopyMemory(IRBuilder builder, LLVMValueRef destinationPtr, LLVMValueRef sourcePtr, LLVMValueRef bytesToCopy)
-        {
-            LLVMValueRef bytesToCopyExtend = builder.CreateSExt(bytesToCopy, Context.Int64Type, "bytesToCopyExtend"),
-                sourcePtrCast = builder.CreateBitCast(sourcePtr, Context.BytePointerType(), "sourcePtrCast"),
-                destinationPtrCast = builder.CreateBitCast(destinationPtr, Context.BytePointerType(), "destinationPtrCast");
-            builder.CreateCall(
-                _sharedData.FunctionImporter.GetImportedCommonFunction(CommonModules.CopyMemoryName),
-                new LLVMValueRef[] { destinationPtrCast, sourcePtrCast, bytesToCopyExtend },
-                string.Empty);
         }
 
         #region VisitorTransformBase overrides
@@ -741,17 +567,17 @@ namespace Rebar.RebarTarget.LLVM
             if (type.TryDestructureYieldPromiseType(out innerType))
             {
                 NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
-                return GetSpecializedFunctionWithSignature(signature, BuildYieldPromisePollFunction);
+                return ModuleContext.GetSpecializedFunctionWithSignature(signature, BuildYieldPromisePollFunction);
             }
             if (type.TryDestructureMethodCallPromiseType(out innerType))
             {
                 NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
-                return GetSpecializedFunctionWithSignature(signature, BuildMethodCallPromisePollFunction);
+                return ModuleContext.GetSpecializedFunctionWithSignature(signature, BuildMethodCallPromisePollFunction);
             }
             if (type.TryDestructureNotifierReaderPromiseType(out innerType))
             {
                 NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType.CreateOption(), NIType.Unset);
-                return GetSpecializedFunctionWithSignature(signature, BuildNotifierReaderPromisePollFunction);
+                return ModuleContext.GetSpecializedFunctionWithSignature(signature, BuildNotifierReaderPromisePollFunction);
             }
             throw new NotSupportedException("Cannot find poll function for type " + type);
         }
@@ -865,18 +691,8 @@ namespace Rebar.RebarTarget.LLVM
             Terminal inputTerminal = dropNode.InputTerminals[0];
             VariableReference input = inputTerminal.GetTrueVariable();
             var inputValueSource = GetTerminalValueSource(inputTerminal);
-            CreateDropCallIfDropFunctionExists(Builder, input.Type, builder => GetAddress(inputValueSource, builder));
+            ModuleContext.CreateDropCallIfDropFunctionExists(Builder, input.Type, builder => GetAddress(inputValueSource, builder));
             return true;
-        }
-
-        private void CreateDropCallIfDropFunctionExists(IRBuilder builder, NIType droppedValueType, Func<IRBuilder, LLVMValueRef> getDroppedValuePtr)
-        {
-            LLVMValueRef dropFunction;
-            if (TraitHelpers.TryGetDropFunction(droppedValueType, this, out dropFunction))
-            {
-                LLVMValueRef droppedValuePtr = getDroppedValuePtr(builder);
-                builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
-            }
         }
 
         public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
@@ -916,37 +732,10 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-        private LLVMTypeRef TranslateFunctionType(NIType functionType)
-        {
-            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
-            return LLVMSharp.LLVM.FunctionType(Context.VoidType, parameterTypes, false);
-        }
-
         private LLVMTypeRef TranslateInitializeFunctionType(NIType functionType)
         {
-            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(TranslateParameterType).ToArray();
+            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(Context.TranslateParameterType).ToArray();
             return LLVMSharp.LLVM.FunctionType(Context.VoidPointerType(), parameterTypes, false);
-        }
-
-        private LLVMTypeRef TranslateParameterType(NIType parameterType)
-        {
-            // TODO: this should probably share code with how we compute the top function LLVM type above
-            bool isInput = parameterType.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
-                isOutput = parameterType.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
-            LLVMTypeRef parameterLLVMType = Context.AsLLVMType(parameterType.GetDataType());
-            if (isInput)   // includes inout parameters
-            {
-                if (isOutput && !parameterType.GetDataType().IsRebarReferenceType())
-                {
-                    throw new InvalidOperationException("Inout parameter with non-reference type");
-                }
-                return parameterLLVMType;
-            }
-            if (isOutput)
-            {
-                return LLVMTypeRef.PointerType(parameterLLVMType, 0u);
-            }
-            throw new NotImplementedException("Parameter direction is wrong");
         }
 
         public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
@@ -1098,7 +887,7 @@ namespace Rebar.RebarTarget.LLVM
             Builder.CreateRetVoid();
 
             Builder.PositionBuilderAtEnd(promiseDoneBlock);
-            CreateDropCallIfDropFunctionExists(Builder, promiseType, promiseValueSource.GetAddress);
+            ModuleContext.CreateDropCallIfDropFunctionExists(Builder, promiseType, promiseValueSource.GetAddress);
             ValueSource outputValueSource = GetTerminalValueSource(awaitNode.OutputTerminal);
             var updateableOutputSource = outputValueSource as IUpdateableValueSource;
             var initializableOutputSource = outputValueSource as IInitializableValueSource;
@@ -1167,7 +956,7 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
-        private static void BuildMethodCallPromisePollFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef methodCallPromisePollFunction)
+        private static void BuildMethodCallPromisePollFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef methodCallPromisePollFunction)
         {
             NIType optionPromiseResultType = signature.GetParameters().ElementAt(2).GetDataType();
             NIType promiseResultType;
@@ -1181,13 +970,13 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef targetPanickedBlock = mayPanic
                 ? methodCallPromisePollFunction.AppendBasicBlock("targetPanicked")
                 : default(LLVMBasicBlockRef);
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMTypeRef stateType = compiler.Context.StructType(new[]
+            LLVMTypeRef stateType = moduleContext.LLVMContext.StructType(new[]
             {
-                FunctionAllocationSet.FunctionCompletionStatusType(compiler.Context),
-                compiler.Context.WakerType(),
+                FunctionAllocationSet.FunctionCompletionStatusType(moduleContext.LLVMContext),
+                moduleContext.LLVMContext.WakerType(),
             });
 
             LLVMValueRef promisePtr = methodCallPromisePollFunction.GetParam(0u),
@@ -1202,16 +991,16 @@ namespace Rebar.RebarTarget.LLVM
 
             uint switchCases = mayPanic ? 2u : 1u;
             LLVMValueRef completionStateSwitch = builder.CreateSwitch(functionCompletionState, targetNotDoneBlock, switchCases);
-            completionStateSwitch.AddCase(compiler.Context.AsLLVMValue(RuntimeConstants.FunctionCompletedNormallyStatus), targetDoneBlock);
+            completionStateSwitch.AddCase(moduleContext.LLVMContext.AsLLVMValue(RuntimeConstants.FunctionCompletedNormallyStatus), targetDoneBlock);
             if (mayPanic)
             {
-                completionStateSwitch.AddCase(compiler.Context.AsLLVMValue(RuntimeConstants.FunctionPanickedStatus), targetPanickedBlock);
+                completionStateSwitch.AddCase(moduleContext.LLVMContext.AsLLVMValue(RuntimeConstants.FunctionPanickedStatus), targetPanickedBlock);
             }
 
             builder.PositionBuilderAtEnd(targetDoneBlock);
             builder.CreateFree(stateVoidPtr);
-            LLVMValueRef finalResult = mayPanic ? builder.CreateInsertValue(result, compiler.Context.AsLLVMValue(true), 0u, "okResult") : result;
-            LLVMValueRef someResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, finalResult);
+            LLVMValueRef finalResult = mayPanic ? builder.CreateInsertValue(result, moduleContext.LLVMContext.AsLLVMValue(true), 0u, "okResult") : result;
+            LLVMValueRef someResult = moduleContext.LLVMContext.BuildOptionValue(builder, optionResultOutputType, finalResult);
             builder.CreateStore(someResult, optionResultOutputPtr);
             builder.CreateRetVoid();
 
@@ -1221,15 +1010,15 @@ namespace Rebar.RebarTarget.LLVM
                 wakerStatePtr = builder.CreateExtractValue(waker, 1u, "wakerStatePtr"),
                 pollFunctionPtr = builder.CreateExtractValue(promise, MethodCallPromisePollFunctionPtrFieldIndex, "pollFunctionPtr");
             builder.CreateCall(pollFunctionPtr, new LLVMValueRef[] { stateVoidPtr, wakerFunctionPtr, wakerStatePtr }, string.Empty);
-            LLVMValueRef noneResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, null);
+            LLVMValueRef noneResult = moduleContext.LLVMContext.BuildOptionValue(builder, optionResultOutputType, null);
             builder.CreateStore(noneResult, optionResultOutputPtr);
             builder.CreateRetVoid();
 
             if (mayPanic)
             {
                 builder.PositionBuilderAtEnd(targetPanickedBlock);
-                LLVMValueRef panicResult = builder.CreateInsertValue(result, compiler.Context.AsLLVMValue(false), 0u, "panicResult"),
-                    somePanicResult = compiler.Context.BuildOptionValue(builder, optionResultOutputType, panicResult);
+                LLVMValueRef panicResult = builder.CreateInsertValue(result, moduleContext.LLVMContext.AsLLVMValue(false), 0u, "panicResult"),
+                    somePanicResult = moduleContext.LLVMContext.BuildOptionValue(builder, optionResultOutputType, panicResult);
                 builder.CreateStore(somePanicResult, optionResultOutputPtr);
                 builder.CreateRetVoid();
             }
@@ -1348,7 +1137,7 @@ namespace Rebar.RebarTarget.LLVM
 
             foreach (VariableReference variableToDrop in variablesToDrop)
             {
-                CreateDropCallIfDropFunctionExists(Builder, variableToDrop.Type, builder => GetAddress(GetValueSource(variableToDrop), builder));
+                ModuleContext.CreateDropCallIfDropFunctionExists(Builder, variableToDrop.Type, builder => GetAddress(GetValueSource(variableToDrop), builder));
             }
 
             // Initialize any output variables to None
