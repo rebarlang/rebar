@@ -1060,18 +1060,6 @@ namespace Rebar.RebarTarget.LLVM
 
 #region Frame
 
-        private class ConditionallyExecutingFrameData
-        {
-            public ConditionallyExecutingFrameData(Frame frame, FunctionCompiler functionCompiler)
-            {
-                ConditionValue = functionCompiler.Context.AsLLVMValue(true);
-            }
-
-            public LLVMValueRef ConditionValue { get; set; }
-        }
-
-        private readonly Dictionary<Frame, ConditionallyExecutingFrameData> _frameData = new Dictionary<Frame, ConditionallyExecutingFrameData>();
-
         public bool VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
         {
             switch (traversalPoint)
@@ -1090,7 +1078,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
-                _frameData[frame] = new ConditionallyExecutingFrameData(frame, this);
+                InitializeIfNecessary(GetValueSource(frame.GetConditionVariable()), builder => Context.AsLLVMValue(true));
             }
         }
 
@@ -1098,20 +1086,25 @@ namespace Rebar.RebarTarget.LLVM
         {
             if (frame.DoesStructureExecuteConditionally())
             {
+                LLVMValueRef condition = GetValueSource(frame.GetConditionVariable()).GetValue(Builder);
                 Update(
                     _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
-                    _frameData[frame].ConditionValue);
+                    condition);
             }
         }
 
         public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
-            ConditionallyExecutingFrameData frameData = _frameData[(Frame)unwrapOptionTunnel.ParentStructure];
-            ValueSource tunnelInputSource = GetTerminalValueSource(unwrapOptionTunnel.InputTerminals[0]);
+            var frame = (Frame)unwrapOptionTunnel.ParentStructure;
+            ValueSource tunnelInputSource = GetTerminalValueSource(unwrapOptionTunnel.InputTerminals[0]),
+                frameConditionValueSource = GetValueSource(frame.GetConditionVariable());
             LLVMValueRef inputOption = tunnelInputSource.GetValue(Builder),
                 isSome = Builder.CreateExtractValue(inputOption, 0u, "isSome"),
-                value = Builder.CreateExtractValue(inputOption, 1u, "value");
-            frameData.ConditionValue = Builder.CreateAnd(frameData.ConditionValue, isSome, "frameCondition");
+                value = Builder.CreateExtractValue(inputOption, 1u, "value"),
+                oldCondition = frameConditionValueSource.GetValue(Builder),
+                newCondition = Builder.CreateAnd(oldCondition, isSome, "newCondition");
+            Update(frameConditionValueSource, newCondition);
+
             Initialize(GetTerminalValueSource(unwrapOptionTunnel.OutputTerminals[0]), value);
             return true;
         }

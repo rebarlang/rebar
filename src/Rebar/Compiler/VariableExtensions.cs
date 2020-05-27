@@ -11,6 +11,7 @@ namespace Rebar.Compiler
         private static readonly AttributeDescriptor _variableSetTokenName = new AttributeDescriptor("Rebar.Compiler.VariableSet", true);
         private static readonly AttributeDescriptor _lifetimeGraphIdentifierTokenName = new AttributeDescriptor("Rebar.Compiler.LifetimeGraphIdentifier", true);
         private static readonly AttributeDescriptor _dataItemVariableTokenName = new AttributeDescriptor("Rebar.Compiler.DataItemVariable", true);
+        private static readonly AttributeDescriptor _frameConditionVariableTokenName = new AttributeDescriptor("Rebar.Compiler.FrameConditionVariable", true);
 
         public static TypeVariableSet GetTypeVariableSet(this DfirRoot dfirRoot)
         {
@@ -60,6 +61,18 @@ namespace Rebar.Compiler
         {
             var token = dataItem.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableReference>(_dataItemVariableTokenName);
             token.SetAttribute(dataItem, variableReference);
+        }
+
+        public static VariableReference GetConditionVariable(this Frame frame)
+        {
+            var token = frame.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableReference>(_frameConditionVariableTokenName);
+            return token.GetAttribute(frame);
+        }
+
+        public static void SetConditionVariable(this Frame frame, VariableReference variableReference)
+        {
+            var token = frame.DfirRoot.GetOrCreateNamedSparseAttributeToken<VariableReference>(_frameConditionVariableTokenName);
+            token.SetAttribute(frame, variableReference);
         }
 
         public static TypeVariableSet GetTypeVariableSet(this DfirElement element)

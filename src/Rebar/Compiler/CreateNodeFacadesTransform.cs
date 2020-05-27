@@ -10,7 +10,7 @@ using Rebar.Compiler.Nodes;
 
 namespace Rebar.Compiler
 {
-    internal class CreateNodeFacadesTransform : VisitorTransformBase, IDfirNodeVisitor<bool>
+    internal class CreateNodeFacadesTransform : VisitorTransformBase, IDfirNodeVisitor<bool>, IDfirStructureVisitor<bool>
     {
         private AutoBorrowNodeFacade _nodeFacade;
         private TypeVariableSet _typeVariableSet;
@@ -449,5 +449,38 @@ namespace Rebar.Compiler
             _nodeFacade[unwrappedOutput] = new SimpleTerminalFacade(unwrappedOutput, innerTypeVariable);
             return true;
         }
+
+        #region IDfirStructureVisitor implementation
+
+        protected override void VisitStructure(Structure structure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            this.VisitRebarStructure(structure, traversalPoint, nestedDiagram);
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitLoop(Nodes.Loop loop, StructureTraversalPoint traversalPoint)
+        {
+            return true;
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
+        {
+            if (traversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes && frame.DoesStructureExecuteConditionally())
+            {
+                VariableSet variableSet = frame.GetVariableSet();
+                VariableReference conditionVariable = variableSet.CreateNewVariable(
+                    frame.ParentDiagram.GetLifetimeGraphIdentifier().Id,
+                    variableSet.TypeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean),
+                    true);
+                frame.SetConditionVariable(conditionVariable);
+            }
+            return true;
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitOptionPatternStructure(OptionPatternStructure optionPatternStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            return true;
+        }
+
+        #endregion
     }
 }

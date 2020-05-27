@@ -424,6 +424,9 @@ namespace Rebar.RebarTarget
         {
             WillGetValue(unwrapOptionTunnel.InputTerminals[0]);
             WillInitializeWithValue(unwrapOptionTunnel.OutputTerminals[0]);
+
+            var frame = (Frame)unwrapOptionTunnel.ParentStructure;
+            GetVariableUsageForVariable(frame.GetConditionVariable()).WillUpdateValue(_currentGroup);
             return true;
         }
 
@@ -634,6 +637,18 @@ namespace Rebar.RebarTarget
 
         bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
         {
+            if (frame.DoesStructureExecuteConditionally())
+            {
+                VariableUsage conditionVariableUsage = GetVariableUsageForVariable(frame.GetConditionVariable());
+                if (traversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes)
+                {
+                    conditionVariableUsage.WillInitializeWithValue(_currentGroup);
+                }
+                else if (traversalPoint == StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram)
+                {
+                    conditionVariableUsage.WillGetValue(_currentGroup);
+                }
+            }
             return true;
         }
 
