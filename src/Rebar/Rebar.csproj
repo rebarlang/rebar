@@ -345,6 +345,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionCompilerSharedData.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionImporter.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionModuleBuilder.cs" />
+    <Compile Include="RebarTarget\LLVM\FunctionModuleContext.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionNames.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionVariableStorage.cs" />
     <Compile Include="RebarTarget\LLVM\LocalTargetInfo.cs" />

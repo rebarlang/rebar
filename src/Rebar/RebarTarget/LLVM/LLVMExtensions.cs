@@ -390,6 +390,33 @@ namespace Rebar.RebarTarget.LLVM
                 false);
         }
 
+        internal static LLVMTypeRef TranslateFunctionType(this ContextWrapper context, NIType functionType)
+        {
+            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(context.TranslateParameterType).ToArray();
+            return LLVMSharp.LLVM.FunctionType(context.VoidType, parameterTypes, false);
+        }
+
+        internal static LLVMTypeRef TranslateParameterType(this ContextWrapper context, NIType parameterType)
+        {
+            // TODO: this should probably share code with how we compute the top function LLVM type above
+            bool isInput = parameterType.GetInputParameterPassingRule() != NIParameterPassingRule.NotAllowed,
+                isOutput = parameterType.GetOutputParameterPassingRule() != NIParameterPassingRule.NotAllowed;
+            LLVMTypeRef parameterLLVMType = context.AsLLVMType(parameterType.GetDataType());
+            if (isInput)   // includes inout parameters
+            {
+                if (isOutput && !parameterType.GetDataType().IsRebarReferenceType())
+                {
+                    throw new InvalidOperationException("Inout parameter with non-reference type");
+                }
+                return parameterLLVMType;
+            }
+            if (isOutput)
+            {
+                return LLVMTypeRef.PointerType(parameterLLVMType, 0u);
+            }
+            throw new NotImplementedException("Parameter direction is wrong");
+        }
+
         #region Memory Buffer
 
         private static byte[] CopyBytesFromMemoryBufferRef(LLVMMemoryBufferRef bufferRef)

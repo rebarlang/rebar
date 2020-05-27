@@ -104,6 +104,19 @@ namespace Rebar.RebarTarget
 
         private ValueSource CreateValueSourceFromUsage(VariableReference variable, VariableUsage usage, Dictionary<VariableUsage, ValueSource> otherValueSources)
         {
+            if (usage.ParameterDirection == Direction.Input)
+            {
+                return _singleFunctionName != null
+                    ? (ValueSource)AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(variable), variable.Type)
+                    : AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
+            }
+            else if (usage.ParameterDirection == Direction.Output)
+            {
+                return _singleFunctionName != null
+                    ? (ValueSource)AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(variable), variable.Type)
+                    : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(variable), variable.Type);
+            }
+
             if (!variable.Mutable)
             {
                 if (usage.ReferencedVariableUsage != null)
@@ -198,21 +211,8 @@ namespace Rebar.RebarTarget
 
         private void VisitDataItem(DataItem dataItem)
         {
-            VariableReference dataItemVariable = dataItem.GetVariable();
-            ValueSource valueSource;
-            if (_singleFunctionName != null)
-            {
-                valueSource = dataItem.IsInput
-                    ? AllocationSet.CreateLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type)
-                    : AllocationSet.CreateOutputParameterLocalAllocation(_singleFunctionName, VariableAllocationName(dataItemVariable), dataItemVariable.Type);
-            }
-            else
-            {
-                valueSource = dataItem.IsInput
-                    ? AllocationSet.CreateStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type)
-                    : AllocationSet.CreateOutputParameterStateField(VariableAllocationName(dataItemVariable), dataItemVariable.Type);
-            }
-            _variableStorage.AddValueSourceForVariable(dataItemVariable, valueSource);
+            VariableUsage dataItemUsage = GetVariableUsageForVariable(dataItem.GetVariable());
+            dataItemUsage.IsParameter(dataItem.IsInput ? Direction.Input : Direction.Output);
         }
 
         #endregion
@@ -439,6 +439,9 @@ namespace Rebar.RebarTarget
         {
             WillGetValue(unwrapOptionTunnel.InputTerminals[0]);
             WillInitializeWithValue(unwrapOptionTunnel.OutputTerminals[0]);
+
+            var frame = (Frame)unwrapOptionTunnel.ParentStructure;
+            GetVariableUsageForVariable(frame.GetConditionVariable()).WillUpdateValue(_currentGroup);
             return true;
         }
 
@@ -663,18 +666,17 @@ namespace Rebar.RebarTarget
 
         bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
         {
-            switch (traversalPoint)
+            if (frame.DoesStructureExecuteConditionally())
             {
-                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    foreach (Tunnel tunnel in frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
-                    {
-                        // TODO: these tunnels require local allocations for now.
-                        // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
-                        // initialized by values from different predecessor blocks, but may not change
-                        // after initialization.
-                        WillUpdateValue(tunnel.OutputTerminals[0]);
-                    }
-                    break;
+                VariableUsage conditionVariableUsage = GetVariableUsageForVariable(frame.GetConditionVariable());
+                if (traversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes)
+                {
+                    conditionVariableUsage.WillInitializeWithValue(_currentGroup);
+                }
+                else if (traversalPoint == StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram)
+                {
+                    conditionVariableUsage.WillGetValue(_currentGroup);
+                }
             }
             return true;
         }
@@ -733,6 +735,23 @@ namespace Rebar.RebarTarget
 
         #endregion
 
+        #region IVisitationHandler implementation
+
+        bool IVisitationHandler<bool>.VisitFrameSkippedBlockVisitation(FrameSkippedBlockVisitation visitation)
+        {
+            foreach (Tunnel tunnel in visitation.Frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
+            {
+                // TODO: these tunnels require local allocations for now.
+                // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
+                // initialized by values from different predecessor blocks, but may not change
+                // after initialization.
+                WillUpdateValue(tunnel.OutputTerminals[0]);
+            }
+            return true;
+        }
+
+        #endregion
+
         private void WillInitializeWithValue(Terminal terminal)
         {
             GetVariableUsageForVariable(terminal.GetTrueVariable()).WillInitializeWithValue(_currentGroup);
@@ -777,6 +796,8 @@ namespace Rebar.RebarTarget
             public bool GetsValue { get; private set; }
 
             public bool TakesAddress { get; private set; }
+
+            public Direction ParameterDirection { get; private set; } = Direction.Unknown;
 
             public bool TryGetConstantInitialValue(out LLVMValueRef value)
             {
@@ -845,6 +866,11 @@ namespace Rebar.RebarTarget
             {
                 _liveFunctionNames.Add(inGroup.FunctionId);
                 ReferencedVariableUsage?.WillUpdateValue(inGroup);
+            }
+
+            public void IsParameter(Direction direction)
+            {
+                ParameterDirection = direction;
             }
         }
     }

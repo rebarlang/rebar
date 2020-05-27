@@ -190,13 +190,13 @@ namespace Tests.Rebar.Unit.Execution
         public void UnwrapOptionTunnelWithNoneInputAndOutputTunnel_Execute_OutputTunnelOutputsNoneValue()
         {
             DfirRoot function = DfirRoot.Create();
-            FunctionalNode none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            var none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
             Frame frame = Frame.Create(function.BlockDiagram);
-            UnwrapOptionTunnel unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            var unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
             Wire.Create(function.BlockDiagram, none.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
-            FunctionalNode assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
-            Wire unwrapWire = Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[0]);
-            unwrapWire.SetWireBeginsMutableVariable(true);
+            var assign = new FunctionalNode(frame.Diagram, Signatures.AssignType);
+            Wire.Create(frame.Diagram, unwrapOptionTunnel.OutputTerminals[0], assign.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
             ConnectConstantToInputTerminal(assign.InputTerminals[1], NITypes.Int32, false);
             Tunnel outputTunnel = CreateOutputTunnel(frame);
             ConnectConstantToInputTerminal(outputTunnel.InputTerminals[0], NITypes.Int32, false);
@@ -221,6 +221,52 @@ namespace Tests.Rebar.Unit.Execution
             Wire.Create(function.BlockDiagram, some.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
 
             CompileAndExecuteFunction(function);
+        }
+
+        [TestMethod]
+        public void UnwrapOptionTunnelWithNoneInputAndDroppableInputTunnel_Execute_DroppableValueIsDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode some = CreateInt32SomeConstructor(function.BlockDiagram, 0);
+            var none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            var assign = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
+            Wire.Create(function.BlockDiagram, some.OutputTerminals[0], assign.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            Wire.Create(function.BlockDiagram, none.OutputTerminals[0], assign.InputTerminals[1]);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            var unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, assign.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+            FunctionalNode createFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
+            Tunnel inputTunnel = CreateInputTunnel(frame);
+            Wire.Create(function.BlockDiagram, createFakeDrop.OutputTerminals[0], inputTunnel.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1), "Expected FakeDrop value to be dropped.");
+        }
+
+        [TestMethod]
+        public void UnwrapOptionTunnelWithNoneInputAndDroppableUnwrapOptionTunnel_Execute_DroppableValueIsDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode some = CreateInt32SomeConstructor(function.BlockDiagram, 0);
+            var none = new FunctionalNode(function.BlockDiagram, Signatures.NoneConstructorType);
+            var assign = new FunctionalNode(function.BlockDiagram, Signatures.AssignType);
+            Wire.Create(function.BlockDiagram, some.OutputTerminals[0], assign.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            Wire.Create(function.BlockDiagram, none.OutputTerminals[0], assign.InputTerminals[1]);
+            Frame frame = Frame.Create(function.BlockDiagram);
+            var unwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, assign.OutputTerminals[0], unwrapOptionTunnel.InputTerminals[0]);
+            FunctionalNode createFakeDrop = CreateFakeDropWithId(function.BlockDiagram, 1);
+            var someFakeDrop = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            Wire.Create(function.BlockDiagram, createFakeDrop.OutputTerminals[0], someFakeDrop.InputTerminals[0]);
+            var someUnwrapOptionTunnel = new UnwrapOptionTunnel(frame);
+            Wire.Create(function.BlockDiagram, someFakeDrop.OutputTerminals[0], someUnwrapOptionTunnel.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.IsTrue(executionInstance.RuntimeServices.DroppedFakeDropIds.Contains(1), "Expected FakeDrop value to be dropped.");
         }
 
         private FunctionalNode CreateInt32SomeConstructor(Diagram diagram, int value)

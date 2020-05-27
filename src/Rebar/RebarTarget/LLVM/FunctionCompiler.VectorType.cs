@@ -8,32 +8,32 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void BuildVectorCreateFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorCreateFunction)
+        private static void BuildVectorCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCreateFunction)
         {
-            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First());
+            LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
 
             LLVMBasicBlockRef entryBlock = vectorCreateFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorCreateFunction.GetParam(0u),
-                vectorCapacity = compiler.Context.AsLLVMValue(4),
+                vectorCapacity = moduleContext.LLVMContext.AsLLVMValue(4),
                 allocationPtr = builder.CreateArrayMalloc(elementLLVMType, vectorCapacity, "allocationPtr"),
                 vector = builder.BuildStructValue(
-                    compiler.Context.CreateLLVMVectorType(elementLLVMType),
-                    new LLVMValueRef[] { allocationPtr, compiler.Context.AsLLVMValue(0), vectorCapacity },
+                    moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType),
+                    new LLVMValueRef[] { allocationPtr, moduleContext.LLVMContext.AsLLVMValue(0), vectorCapacity },
                     "vector");
             builder.CreateStore(vector, vectorPtr);
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorInitializeFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorInitializeFunction)
+        private static void BuildVectorInitializeFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorInitializeFunction)
         {
-            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First());
-            LLVMTypeRef vectorLLVMType = compiler.Context.CreateLLVMVectorType(elementLLVMType);
+            LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
+            LLVMTypeRef vectorLLVMType = moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType);
 
             LLVMBasicBlockRef entryBlock = vectorInitializeFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef element = vectorInitializeFunction.GetParam(0u),
@@ -46,14 +46,14 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateBr(loopStartBlock);
 
             builder.PositionBuilderAtEnd(loopStartBlock);
-            LLVMValueRef index = builder.CreatePhi(compiler.Context.Int32Type, "index");
+            LLVMValueRef index = builder.CreatePhi(moduleContext.LLVMContext.Int32Type, "index");
             LLVMValueRef indexLessThanSize = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, index, size, "indexLessThanSize");
             builder.CreateCondBr(indexLessThanSize, loopBodyBlock, loopEndBlock);
 
             builder.PositionBuilderAtEnd(loopBodyBlock);
             LLVMValueRef vectorIndexPtr = builder.CreateGEP(allocationPtr, new LLVMValueRef[] { index }, "vectorIndexPtr");
             builder.CreateStore(element, vectorIndexPtr);
-            LLVMValueRef incrementIndex = builder.CreateAdd(index, compiler.Context.AsLLVMValue(1), "incrementIndex");
+            LLVMValueRef incrementIndex = builder.CreateAdd(index, moduleContext.LLVMContext.AsLLVMValue(1), "incrementIndex");
             builder.CreateBr(loopStartBlock);
 
             builder.PositionBuilderAtEnd(loopEndBlock);
@@ -64,18 +64,18 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateStore(vector, vectorPtr);
             builder.CreateRetVoid();
 
-            index.AddIncoming(compiler.Context.AsLLVMValue(0), entryBlock);
+            index.AddIncoming(moduleContext.LLVMContext.AsLLVMValue(0), entryBlock);
             index.AddIncoming(incrementIndex, loopBodyBlock);
         }
 
-        private static void BuildVectorCloneFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorCloneFunction)
+        internal static void BuildVectorCloneFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCloneFunction)
         {
             NIType elementType;
             signature.GetGenericParameters().First().TryDestructureVectorType(out elementType);
-            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(elementType);
+            LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(elementType);
 
             LLVMBasicBlockRef entryBlock = vectorCloneFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef existingVectorPtr = vectorCloneFunction.GetParam(0u),
@@ -86,7 +86,7 @@ namespace Rebar.RebarTarget.LLVM
                 newVectorAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, existingVectorCapacity, "newVectorAllocationPtr");
 
             LLVMValueRef elementCloneFunction;
-            if (compiler.TryGetCloneFunction(elementType, out elementCloneFunction))
+            if (moduleContext.TryGetCloneFunction(elementType, out elementCloneFunction))
             {
                 LLVMBasicBlockRef loopStartBlock = vectorCloneFunction.AppendBasicBlock("loopStart"),
                     loopBodyBlock = vectorCloneFunction.AppendBasicBlock("loopBody"),
@@ -94,7 +94,7 @@ namespace Rebar.RebarTarget.LLVM
                 builder.CreateBr(loopStartBlock);
 
                 builder.PositionBuilderAtEnd(loopStartBlock);
-                LLVMValueRef index = builder.CreatePhi(compiler.Context.Int32Type, "index");
+                LLVMValueRef index = builder.CreatePhi(moduleContext.LLVMContext.Int32Type, "index");
                 LLVMValueRef indexLessThanSize = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, index, existingVectorSize, "indexLessThanSize");
                 builder.CreateCondBr(indexLessThanSize, loopBodyBlock, loopEndBlock);
 
@@ -102,19 +102,19 @@ namespace Rebar.RebarTarget.LLVM
                 LLVMValueRef existingElementPtr = builder.CreateGEP(existingVectorAllocationPtr, new LLVMValueRef[] { index }, "existingElementPtr"),
                     newElementPtr = builder.CreateGEP(newVectorAllocationPtr, new LLVMValueRef[] { index }, "newElementPtr");
                 builder.CreateCall(elementCloneFunction, new LLVMValueRef[] { existingElementPtr, newElementPtr }, string.Empty);
-                LLVMValueRef incrementIndex = builder.CreateAdd(index, compiler.Context.AsLLVMValue(1), "incrementIndex");
+                LLVMValueRef incrementIndex = builder.CreateAdd(index, moduleContext.LLVMContext.AsLLVMValue(1), "incrementIndex");
                 builder.CreateBr(loopStartBlock);
 
-                index.AddIncoming(compiler.Context.AsLLVMValue(0), entryBlock);
+                index.AddIncoming(moduleContext.LLVMContext.AsLLVMValue(0), entryBlock);
                 index.AddIncoming(incrementIndex, loopBodyBlock);
 
                 builder.PositionBuilderAtEnd(loopEndBlock);
             }
             else
             {
-                LLVMValueRef existingVectorSizeExtend = builder.CreateSExt(existingVectorSize, compiler.Context.Int64Type, "existingVectorSizeExtend"),
+                LLVMValueRef existingVectorSizeExtend = builder.CreateSExt(existingVectorSize, moduleContext.LLVMContext.Int64Type, "existingVectorSizeExtend"),
                     bytesToCopy = builder.CreateMul(existingVectorSizeExtend, elementLLVMType.SizeOf(), "bytesToCopy");
-                compiler.CreateCallToCopyMemory(builder, newVectorAllocationPtr, existingVectorAllocationPtr, bytesToCopy);
+                moduleContext.CreateCallToCopyMemory(builder, newVectorAllocationPtr, existingVectorAllocationPtr, bytesToCopy);
             }
 
             LLVMValueRef newVector = builder.CreateInsertValue(existingVector, newVectorAllocationPtr, 0u, "newVector"),
@@ -123,13 +123,13 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        internal static void BuildVectorDropFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorDropFunction)
+        internal static void BuildVectorDropFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorDropFunction)
         {
             NIType elementType;
             signature.GetGenericParameters().First().TryDestructureVectorType(out elementType);
 
             LLVMBasicBlockRef entryBlock = vectorDropFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorDropFunction.GetParam(0u),
@@ -137,7 +137,7 @@ namespace Rebar.RebarTarget.LLVM
                 vectorAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "vectorAllocationPtr");
 
             LLVMValueRef elementDropFunction;
-            if (TraitHelpers.TryGetDropFunction(elementType, compiler, out elementDropFunction))
+            if (TraitHelpers.TryGetDropFunction(elementType, moduleContext, out elementDropFunction))
             {
                 LLVMValueRef vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
                     vectorSize = builder.CreateLoad(vectorSizePtr, "vectorSize");
@@ -147,17 +147,17 @@ namespace Rebar.RebarTarget.LLVM
                 builder.CreateBr(loopStartBlock);
 
                 builder.PositionBuilderAtEnd(loopStartBlock);
-                LLVMValueRef index = builder.CreatePhi(compiler.Context.Int32Type, "index");
+                LLVMValueRef index = builder.CreatePhi(moduleContext.LLVMContext.Int32Type, "index");
                 LLVMValueRef indexLessThanSize = builder.CreateICmp(LLVMIntPredicate.LLVMIntSLT, index, vectorSize, "indexLessThanSize");
                 builder.CreateCondBr(indexLessThanSize, loopBodyBlock, loopEndBlock);
 
                 builder.PositionBuilderAtEnd(loopBodyBlock);
                 LLVMValueRef elementPtr = builder.CreateGEP(vectorAllocationPtr, new LLVMValueRef[] { index }, "elementPtr");
                 builder.CreateCall(elementDropFunction, new LLVMValueRef[] { elementPtr }, string.Empty);
-                LLVMValueRef incrementIndex = builder.CreateAdd(index, compiler.Context.AsLLVMValue(1), "incrementIndex");
+                LLVMValueRef incrementIndex = builder.CreateAdd(index, moduleContext.LLVMContext.AsLLVMValue(1), "incrementIndex");
                 builder.CreateBr(loopStartBlock);
 
-                index.AddIncoming(compiler.Context.AsLLVMValue(0), entryBlock);
+                index.AddIncoming(moduleContext.LLVMContext.AsLLVMValue(0), entryBlock);
                 index.AddIncoming(incrementIndex, loopBodyBlock);
 
                 builder.PositionBuilderAtEnd(loopEndBlock);
@@ -167,13 +167,13 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorToSliceFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorToSliceFunction)
+        private static void BuildVectorToSliceFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorToSliceFunction)
         {
-            LLVMTypeRef sliceElementType = compiler.Context.AsLLVMType(signature.GetGenericParameters().First());
-            LLVMTypeRef sliceReferenceType = compiler.Context.CreateLLVMSliceReferenceType(sliceElementType);
+            LLVMTypeRef sliceElementType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
+            LLVMTypeRef sliceReferenceType = moduleContext.LLVMContext.CreateLLVMSliceReferenceType(sliceElementType);
 
             LLVMBasicBlockRef entryBlock = vectorToSliceFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorToSliceFunction.GetParam(0u),
                 vectorBufferPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorBufferPtrPtr"),
@@ -185,14 +185,14 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorAppendFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorAppendFunction)
+        private static void BuildVectorAppendFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorAppendFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
 
             LLVMBasicBlockRef entryBlock = vectorAppendFunction.AppendBasicBlock("entry"),
                 growBlock = vectorAppendFunction.AppendBasicBlock("grow"),
                 appendBlock = vectorAppendFunction.AppendBasicBlock("append");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorAppendFunction.GetParam(0u),
@@ -204,10 +204,10 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateCondBr(vectorIsFull, growBlock, appendBlock);
 
             builder.PositionBuilderAtEnd(growBlock);
-            string specializedName = MonomorphizeFunctionName("vector_grow", elementType.ToEnumerable());
-            LLVMValueRef vectorGrowFunction = compiler._sharedData.FunctionImporter.GetCachedFunction(
+            string specializedName = FunctionNames.MonomorphizeFunctionName("vector_grow", elementType.ToEnumerable());
+            LLVMValueRef vectorGrowFunction = moduleContext.FunctionImporter.GetCachedFunction(
                 specializedName,
-                () => CreateVectorGrowFunction(compiler, specializedName, elementType));
+                () => CreateVectorGrowFunction(moduleContext, specializedName, elementType));
             builder.CreateCall(vectorGrowFunction, new LLVMValueRef[] { vectorPtr }, string.Empty);
             builder.CreateBr(appendBlock);
 
@@ -215,26 +215,26 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef vectorAllocationPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorAllocationPtrPtr"),
                 vectorAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "vectorAllocationPtr"),
                 elementPtr = builder.CreateGEP(vectorAllocationPtr, new LLVMValueRef[] { vectorSize }, "elementPtr"),
-                incrementedSize = builder.CreateAdd(vectorSize, compiler.Context.AsLLVMValue(1), "incrementedSize");
+                incrementedSize = builder.CreateAdd(vectorSize, moduleContext.LLVMContext.AsLLVMValue(1), "incrementedSize");
             builder.CreateStore(vectorAppendFunction.GetParam(1u), elementPtr);
             builder.CreateStore(incrementedSize, vectorSizePtr);
             builder.CreateRetVoid();
         }
 
-        private static LLVMValueRef CreateVectorGrowFunction(FunctionCompiler compiler, string functionName, NIType elementType)
+        private static LLVMValueRef CreateVectorGrowFunction(FunctionModuleContext moduleContext, string functionName, NIType elementType)
         {
-            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(elementType);
+            LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(elementType);
             LLVMTypeRef vectorGrowFunctionType = LLVMTypeRef.FunctionType(
-                compiler.Context.VoidType,
+                moduleContext.LLVMContext.VoidType,
                 new LLVMTypeRef[]
                 {
-                    LLVMTypeRef.PointerType(compiler.Context.CreateLLVMVectorType(elementLLVMType), 0u),
+                    LLVMTypeRef.PointerType(moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType), 0u),
                 },
                 false);
 
-            LLVMValueRef vectorGrowFunction = compiler.Module.AddFunction(functionName, vectorGrowFunctionType);
+            LLVMValueRef vectorGrowFunction = moduleContext.Module.AddFunction(functionName, vectorGrowFunctionType);
             LLVMBasicBlockRef entryBlock = vectorGrowFunction.AppendBasicBlock("entry");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorGrowFunction.GetParam(0u),
@@ -242,12 +242,12 @@ namespace Rebar.RebarTarget.LLVM
                 oldAllocationPtr = builder.CreateExtractValue(vector, 0u, "oldAllocationPtr"),
                 oldVectorCapacity = builder.CreateExtractValue(vector, 2u, "oldVectorCapacity"),
                 // TODO: ideally handle integer overflow; also there are ways this could be smarter
-                newVectorCapacity = builder.CreateMul(oldVectorCapacity, compiler.Context.AsLLVMValue(2), "newVectorCapacity"),
+                newVectorCapacity = builder.CreateMul(oldVectorCapacity, moduleContext.LLVMContext.AsLLVMValue(2), "newVectorCapacity"),
                 // TODO: handle the case where the allocation fails
                 newAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, newVectorCapacity, "newAllocationPtr"),
-                oldVectorCapacityExtend = builder.CreateSExt(oldVectorCapacity, compiler.Context.Int64Type, "oldVectorCapacityExtend"),
+                oldVectorCapacityExtend = builder.CreateSExt(oldVectorCapacity, moduleContext.LLVMContext.Int64Type, "oldVectorCapacityExtend"),
                 bytesToCopy = builder.CreateMul(oldVectorCapacityExtend, elementLLVMType.SizeOf(), "bytesToCopy");
-            compiler.CreateCallToCopyMemory(builder, newAllocationPtr, oldAllocationPtr, bytesToCopy);
+            moduleContext.CreateCallToCopyMemory(builder, newAllocationPtr, oldAllocationPtr, bytesToCopy);
             LLVMValueRef newVector0 = builder.CreateInsertValue(vector, newAllocationPtr, 0u, "newVector0"),
                 newVector = builder.CreateInsertValue(newVector0, newVectorCapacity, 2u, "newVector");
             builder.CreateStore(newVector, vectorPtr);
@@ -256,38 +256,38 @@ namespace Rebar.RebarTarget.LLVM
             return vectorGrowFunction;
         }
 
-        private static void BuildVectorRemoveLastFunction(FunctionCompiler compiler, NIType signature, LLVMValueRef vectorRemoveLastFunction)
+        private static void BuildVectorRemoveLastFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorRemoveLastFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
-            LLVMTypeRef elementLLVMType = compiler.Context.AsLLVMType(elementType),
-                elementOptionLLVMType = compiler.Context.CreateLLVMOptionType(elementLLVMType);
+            LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(elementType),
+                elementOptionLLVMType = moduleContext.LLVMContext.CreateLLVMOptionType(elementLLVMType);
 
             LLVMBasicBlockRef entryBlock = vectorRemoveLastFunction.AppendBasicBlock("entry"),
                 hasElementsBlock = vectorRemoveLastFunction.AppendBasicBlock("hasElements"),
                 noElementsBlock = vectorRemoveLastFunction.AppendBasicBlock("noElements"),
                 endBlock = vectorRemoveLastFunction.AppendBasicBlock("end");
-            var builder = compiler.Context.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorRemoveLastFunction.GetParam(0u),
                 vectorSizePtr = builder.CreateStructGEP(vectorPtr, 1u, "vectorSizePtr"),
                 vectorSize = builder.CreateLoad(vectorSizePtr, "vectorSize"),
                 optionElementPtr = vectorRemoveLastFunction.GetParam(1u),
-                hasElements = builder.CreateICmp(LLVMIntPredicate.LLVMIntSGT, vectorSize, compiler.Context.AsLLVMValue(0), "hasElements");
+                hasElements = builder.CreateICmp(LLVMIntPredicate.LLVMIntSGT, vectorSize, moduleContext.LLVMContext.AsLLVMValue(0), "hasElements");
             builder.CreateCondBr(hasElements, hasElementsBlock, noElementsBlock);
 
             builder.PositionBuilderAtEnd(hasElementsBlock);
             LLVMValueRef vectorAllocationPtrPtr = builder.CreateStructGEP(vectorPtr, 0u, "vectorAllocationPtrPtr"),
                 vectorAllocationPtr = builder.CreateLoad(vectorAllocationPtrPtr, "vectorAllocationPtr"),
-                lastIndex = builder.CreateSub(vectorSize, compiler.Context.AsLLVMValue(1), "lastIndex"),
+                lastIndex = builder.CreateSub(vectorSize, moduleContext.LLVMContext.AsLLVMValue(1), "lastIndex"),
                 elementToRemovePtr = builder.CreateGEP(vectorAllocationPtr, new LLVMValueRef[] { lastIndex }, "elementToRemovePtr"),
                 elementToRemove = builder.CreateLoad(elementToRemovePtr, "elementToRemove"),
-                someElement = compiler.Context.BuildOptionValue(builder, elementOptionLLVMType, elementToRemove);
+                someElement = moduleContext.LLVMContext.BuildOptionValue(builder, elementOptionLLVMType, elementToRemove);
             builder.CreateStore(lastIndex, vectorSizePtr);
             builder.CreateBr(endBlock);
 
             builder.PositionBuilderAtEnd(noElementsBlock);
-            LLVMValueRef noneElement = compiler.Context.BuildOptionValue(builder, elementOptionLLVMType, null);
+            LLVMValueRef noneElement = moduleContext.LLVMContext.BuildOptionValue(builder, elementOptionLLVMType, null);
             builder.CreateBr(endBlock);
 
             builder.PositionBuilderAtEnd(endBlock);

@@ -8,27 +8,47 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal static class TraitHelpers
     {
+        #region Common
+
+        private static Func<FunctionModuleContext, LLVMValueRef> MakeCommonFunctionImporter(string functionName)
+        {
+            return moduleContext => moduleContext.FunctionImporter.GetImportedCommonFunction(functionName);
+        }
+
+        #endregion
+
+        #region Drop
+
         public static bool TypeHasDropFunction(NIType type)
         {
-            Func<FunctionCompiler, LLVMValueRef> dropFunctionCreator;
+            Func<FunctionModuleContext, LLVMValueRef> dropFunctionCreator;
             return TryGetDropFunctionCreator(type, out dropFunctionCreator);
         }
 
-        public static bool TryGetDropFunction(NIType type, FunctionCompiler compiler, out LLVMValueRef dropFunction)
+        public static bool TryGetDropFunction(NIType type, FunctionModuleContext moduleContext, out LLVMValueRef dropFunction)
         {
             dropFunction = default(LLVMValueRef);
-            Func<FunctionCompiler, LLVMValueRef> dropFunctionCreator;
+            Func<FunctionModuleContext, LLVMValueRef> dropFunctionCreator;
             if (TryGetDropFunctionCreator(type, out dropFunctionCreator))
             {
-                dropFunction = dropFunctionCreator(compiler);
+                dropFunction = dropFunctionCreator(moduleContext);
                 return true;
             }
             return false;
         }
 
-        private static Func<FunctionCompiler, LLVMValueRef> MakeCommonFunctionImporter(string functionName)
+        public static void CreateDropCallIfDropFunctionExists(
+            this FunctionModuleContext moduleContext,
+            IRBuilder builder,
+            NIType droppedValueType,
+            Func<IRBuilder, LLVMValueRef> getDroppedValuePtr)
         {
-            return compiler => compiler.GetImportedCommonFunction(functionName);
+            LLVMValueRef dropFunction;
+            if (TraitHelpers.TryGetDropFunction(droppedValueType, moduleContext, out dropFunction))
+            {
+                LLVMValueRef droppedValuePtr = getDroppedValuePtr(builder);
+                builder.CreateCall(dropFunction, new LLVMValueRef[] { droppedValuePtr }, string.Empty);
+            }
         }
 
         private static NIType SpecializeDropSignature(NIType droppedValueType)
@@ -38,16 +58,16 @@ namespace Rebar.RebarTarget.LLVM
             return functionBuilder.CreateType();
         }
 
-        private static Func<FunctionCompiler, LLVMValueRef> MakeDropFunctionSpecializer(
+        private static Func<FunctionModuleContext, LLVMValueRef> MakeDropFunctionSpecializer(
             NIType droppedValueType,
-            Action<FunctionCompiler, NIType, LLVMValueRef> specializedFunctionCreator)
+            Action<FunctionModuleContext, NIType, LLVMValueRef> specializedFunctionCreator)
         {
-            return compiler => compiler.GetSpecializedFunctionWithSignature(
+            return moduleContext => moduleContext.GetSpecializedFunctionWithSignature(
                 SpecializeDropSignature(droppedValueType),
                 specializedFunctionCreator);
         }
 
-        private static bool TryGetDropFunctionCreator(NIType droppedValueType, out Func<FunctionCompiler, LLVMValueRef> dropFunctionCreator)
+        private static bool TryGetDropFunctionCreator(NIType droppedValueType, out Func<FunctionModuleContext, LLVMValueRef> dropFunctionCreator)
         {
             dropFunctionCreator = null;
             var functionBuilder = Signatures.DropType.DefineFunctionFromExisting();
@@ -107,6 +127,39 @@ namespace Rebar.RebarTarget.LLVM
             if (droppedValueType.TypeHasDropTrait())
             {
                 throw new NotSupportedException("Drop function not found for type: " + droppedValueType);
+            }
+            return false;
+        }
+
+        #endregion
+
+        public static bool TryGetCloneFunction(this FunctionModuleContext moduleContext, NIType valueType, out LLVMValueRef cloneFunction)
+        {
+            cloneFunction = default(LLVMValueRef);
+            var functionBuilder = Signatures.CreateCopyType.DefineFunctionFromExisting();
+            functionBuilder.Name = "Clone";
+            functionBuilder.ReplaceGenericParameters(valueType, NIType.Unset);
+            NIType signature = functionBuilder.CreateType();
+            NIType innerType;
+            if (valueType == NITypes.String)
+            {
+                cloneFunction = moduleContext.FunctionImporter.GetImportedCommonFunction(CommonModules.StringCloneName);
+                return true;
+            }
+            if (valueType.TryDestructureSharedType(out innerType))
+            {
+                cloneFunction = moduleContext.GetSpecializedFunctionWithSignature(signature, FunctionCompiler.BuildSharedCloneFunction);
+                return true;
+            }
+            if (valueType.TryDestructureVectorType(out innerType))
+            {
+                cloneFunction = moduleContext.GetSpecializedFunctionWithSignature(signature, FunctionCompiler.BuildVectorCloneFunction);
+                return true;
+            }
+
+            if (valueType.TypeHasCloneTrait())
+            {
+                throw new NotSupportedException("Clone function not found for type: " + valueType);
             }
             return false;
         }
