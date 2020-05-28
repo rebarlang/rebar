@@ -81,6 +81,24 @@ namespace Tests.Rebar.Unit.Execution
         }
 
         [TestMethod]
+        public void OptionPatternStructureWithInputTunnel_Execute_InputTunnelValueCorrectlyTransferred()
+        {
+            DfirRoot function = DfirRoot.Create();
+            OptionPatternStructure optionPatternStructure = CreateOptionPatternStructure(function.BlockDiagram);
+            var someConstructor = new FunctionalNode(function.BlockDiagram, Signatures.SomeConstructorType);
+            Wire.Create(function.BlockDiagram, someConstructor.OutputTerminals[0], optionPatternStructure.Selector.InputTerminals[0]);
+            ConnectConstantToInputTerminal(someConstructor.InputTerminals[0], NITypes.Int32, 0, false);
+            Tunnel inputTunnel = CreateInputTunnel(optionPatternStructure);
+            ConnectConstantToInputTerminal(inputTunnel.InputTerminals[0], NITypes.Int32, 5, false);
+            var output = new FunctionalNode(optionPatternStructure.Diagrams[0], Signatures.OutputType);
+            Wire.Create(optionPatternStructure.Diagrams[0], inputTunnel.OutputTerminals[0], output.InputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            Assert.AreEqual("5", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
         public void OptionPatternStructureWithOutputTunnelAndSomeValueWiredToSelector_Execute_CorrectValueFromOutputTunnel()
         {
             DfirRoot function = CreateOptionPatternStructureWithOutputTunnelAndInspect(true, 1, 0);

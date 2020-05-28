@@ -358,7 +358,6 @@ namespace Rebar.RebarTarget
 
         public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
         {
-            WillInitializeWithValue(optionPatternStructureSelector.OutputTerminals[0]);
             return true;
         }
 
@@ -389,32 +388,37 @@ namespace Rebar.RebarTarget
 
         public bool VisitTunnel(Tunnel tunnel)
         {
-            tunnel.InputTerminals.ForEach(WillGetValue);
-            if (tunnel.Terminals.HasExactly(2))
+            if (tunnel.Direction == Direction.Input)
             {
-                Terminal inputTerminal = tunnel.InputTerminals[0],
-                    outputTerminal = tunnel.OutputTerminals[0];
-                VariableReference inputVariable = inputTerminal.GetTrueVariable(),
-                    outputVariable = outputTerminal.GetTrueVariable();
-                if (outputVariable.Type != inputVariable.Type.CreateOption())
+                VariableReference inputVariable = tunnel.InputTerminals[0].GetTrueVariable();
+                foreach (Terminal outputTerminal in tunnel.OutputTerminals)
                 {
-                    // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
-                    // the ValueSource if they are close enough
-                    _variableUsages[outputVariable] = _variableUsages[inputVariable];
+                    _variableUsages[outputTerminal.GetTrueVariable()] = _variableUsages[inputVariable];
+                }
+            }
+            else // tunnel.Direction == Direction.Output
+            {
+                tunnel.InputTerminals.ForEach(WillGetValue);
+                Terminal outputTerminal = tunnel.OutputTerminals[0];
+                Terminal inputTerminal;
+                if (tunnel.InputTerminals.TryGetSingleElement(out inputTerminal))
+                {
+                    VariableReference inputVariable = inputTerminal.GetTrueVariable(),
+                        outputVariable = outputTerminal.GetTrueVariable();
+                    if (outputVariable.Type == inputVariable.Type.CreateOption())
+                    {
+                        WillUpdateValue(outputTerminal);
+                    }
+                    else
+                    {
+                        // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
+                        // the ValueSource if they are close enough
+                        _variableUsages[outputVariable] = _variableUsages[inputVariable];
+                    }
                 }
                 else
                 {
-                    WillUpdateValue(outputTerminal);
-                }
-            }
-            else
-            {
-                // If this is an output tunnel, each input variable already has its own allocation, but
-                // the output needs a distinct one (for now)
-                // (Eventually we should try to share a single allocation for all variables.)
-                if (tunnel.InputTerminals.HasFewerThanOrExactly(1))
-                {
-                    throw new NotImplementedException();
+                    // Note: handled in VisitOptionPatternStructure/VisitVariantMatchStructure
                 }
             }
             return true;
@@ -663,6 +667,7 @@ namespace Rebar.RebarTarget
                     if (nestedDiagram == optionPatternStructure.Diagrams[0])
                     {
                         WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
+                        WillInitializeWithValue(optionPatternStructure.Selector.OutputTerminals[0]);
                     }
                     break;
                 case StructureTraversalPoint.AfterDiagram:
