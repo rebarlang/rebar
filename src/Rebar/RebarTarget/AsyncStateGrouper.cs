@@ -5,6 +5,7 @@ using NationalInstruments;
 using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
 using DfirBorderNode = NationalInstruments.Dfir.BorderNode;
@@ -627,6 +628,13 @@ namespace Rebar.RebarTarget
         public bool IsSkippable { get; set; }
 
         public bool BeginsAsDiagramInitialGroup { get; set; }
+
+        /// <remarks>
+        /// Currently, this has to be initialized to a default value at the beginning of an AsyncStateGroup's code and then updated with
+        /// the real value, since the update happens conditionally for a skippable AsyncStateGroup. Once PHI value initializations are
+        /// possible, it would be better to use that since this variable typically only needs to be updated once per execution path.
+        /// </remarks>
+        public VariableReference ContinuationCondition { get; set; }
     }
 
     internal abstract class Continuation

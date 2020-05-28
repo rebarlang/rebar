@@ -1090,7 +1090,7 @@ namespace Rebar.RebarTarget.LLVM
             {
                 LLVMValueRef condition = GetValueSource(frame.GetConditionVariable()).GetValue(Builder);
                 Update(
-                    _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                    GetValueSource(_moduleBuilder.CurrentGroupData.AsyncStateGroup.ContinuationCondition),
                     condition);
             }
         }
@@ -1206,7 +1206,7 @@ namespace Rebar.RebarTarget.LLVM
         {
             LLVMValueRef condition = GetConditionAllocationSource(loop).GetValue(Builder);
             Update(
-                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                GetValueSource(_moduleBuilder.CurrentGroupData.AsyncStateGroup.ContinuationCondition),
                 condition);
         }
 
@@ -1290,7 +1290,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef isSome = Builder.CreateExtractValue(option, 0, "isSome"),
                 isNone = Builder.CreateNot(isSome, "isNone");
             Update(
-                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
+                GetValueSource(_moduleBuilder.CurrentGroupData.AsyncStateGroup.ContinuationCondition),
                 isNone);
         }
 

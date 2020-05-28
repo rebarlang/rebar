@@ -61,23 +61,49 @@ namespace Rebar.RebarTarget
 
         private string VariableAllocationName(VariableReference variable)
         {
-            return $"v{variable.Id}";
+            return variable.Name ?? $"v{variable.Id}";
         }
 
         public override void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
-            // First, execute as a VisitorTransform base to initialize VariableUsages for all variables
+            // Create continuation condition variables for all AsyncStateGroups with conditional continuations
+            VariableSet variableSet = dfirRoot.GetVariableSet();
+            foreach (AsyncStateGroup group in _asyncStateGroups)
+            {
+                var conditionalContinuation = group.Continuation as ConditionallyScheduleGroupsContinuation;
+                if (conditionalContinuation != null)
+                {
+                    if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
+                    {
+                        throw new NotSupportedException("Only boolean conditions supported for continuations");
+                    }
+                    VariableReference continuation = variableSet.CreateNewVariable(
+                        0,
+                        variableSet.TypeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean),
+                        mutable: true);
+                    continuation.Name = $"{group.Label}_continuationStatePtr";
+                    group.ContinuationCondition = continuation;
+                }
+            }
+
+            // Execute as a VisitorTransform base to initialize VariableUsages for all variables
             base.Execute(dfirRoot, cancellationToken);
 
-            // Then, handle each Visitation in order to set particular node/wire/structure VariableUsage characteristics
+            // Handle each Visitation in order to set particular node/wire/structure VariableUsage characteristics
             foreach (AsyncStateGroup group in _asyncStateGroups)
             {
                 _currentGroup = group;
+                VariableUsage continuationConditionUsage = group.Continuation is ConditionallyScheduleGroupsContinuation
+                    ? GetVariableUsageForVariable(group.ContinuationCondition)
+                    : null;
+                continuationConditionUsage?.WillInitializeWithValue(_currentGroup);
+
                 foreach (Visitation visitation in group.Visitations)
                 {
                     visitation.Visit(this);
                 }
-                CreateAllocationsForAsyncStateGroup(group);
+
+                continuationConditionUsage?.WillGetValue(_currentGroup);
             }
 
             // Finally, take all of the VariableUsages collected and create appropriate ValueSources from them
@@ -148,21 +174,6 @@ namespace Rebar.RebarTarget
                 return AllocationSet.CreateLocalAllocation(usage.ContainingFunctionName, VariableAllocationName(variable), variable.Type);
             }
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
-        }
-
-        private void CreateAllocationsForAsyncStateGroup(AsyncStateGroup asyncStateGroup)
-        {
-            var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
-            if (conditionalContinuation != null)
-            {
-                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
-                {
-                    throw new NotSupportedException("Only boolean conditions supported for continuations");
-                }
-                _variableStorage.AddContinuationConditionVariable(
-                    asyncStateGroup,
-                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", NITypes.Boolean));
-            }
         }
 
         #region VisitorTransformBase overrides
@@ -634,6 +645,7 @@ namespace Rebar.RebarTarget
                     LoopConditionTunnel loopCondition = loop.BorderNodes.OfType<LoopConditionTunnel>().First();
                     Terminal loopConditionInput = loopCondition.InputTerminals[0];
                     WillGetValue(loopConditionInput);
+                    GetVariableUsageForVariable(_currentGroup.ContinuationCondition).WillUpdateValue(_currentGroup);
                     break;
             }
             return true;
@@ -651,6 +663,7 @@ namespace Rebar.RebarTarget
                 else if (traversalPoint == StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram)
                 {
                     conditionVariableUsage.WillGetValue(_currentGroup);
+                    GetVariableUsageForVariable(_currentGroup.ContinuationCondition).WillUpdateValue(_currentGroup);
                 }
             }
             return true;
@@ -662,6 +675,7 @@ namespace Rebar.RebarTarget
             {
                 case StructureTraversalPoint.BeforeLeftBorderNodes:
                     WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
+                    GetVariableUsageForVariable(_currentGroup.ContinuationCondition).WillUpdateValue(_currentGroup);
                     break;
                 case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
                     if (nestedDiagram == optionPatternStructure.Diagrams[0])
