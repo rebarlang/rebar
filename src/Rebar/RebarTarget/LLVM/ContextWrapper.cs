@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
 using static LLVMSharp.LLVM;
@@ -123,6 +124,20 @@ namespace Rebar.RebarTarget.LLVM
                     throw new NotSupportedException("Unsupported numeric constant type: " + type);
             }
             return constantValueRef;
+        }
+
+        public LLVMValueRef ConstString(string stringValue)
+        {
+            return ConstStringInContext(
+                _context,
+                stringValue,
+                (uint)Encoding.UTF8.GetByteCount(stringValue),
+                DontNullTerminate: true);
+        }
+
+        public LLVMValueRef ConstStruct(LLVMValueRef[] fieldValues, bool packed = false)
+        {
+            return ConstStructInContext(_context, fieldValues, packed);
         }
 
         public void Dispose()

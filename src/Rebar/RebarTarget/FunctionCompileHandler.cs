@@ -11,6 +11,7 @@ using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Rebar.RebarTarget.LLVM;
 using static NationalInstruments.Dfir.DfirDependencyNameStagingUtilities;
 
 namespace Rebar.RebarTarget
@@ -162,16 +163,18 @@ namespace Rebar.RebarTarget
                 var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
                 var sharedData = new LLVM.FunctionCompilerSharedData(
                     contextWrapper,
+                    module,
                     parameterInfos,
                     allocator.AllocationSet,
                     variableStorage,
                     functionImporter);
                 var moduleBuilder = isYielding
-                    ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
-                    : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
+                    ? new LLVM.AsynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups)
+                    : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups);
                 sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData, calleesMayPanic);
 
                 moduleBuilder.CompileFunction();
+                module.VerifyAndThrowIfInvalid();
                 return new LLVM.FunctionCompileResult(new LLVM.ContextFreeModule(module), isYielding, mayPanic);
             }
         }

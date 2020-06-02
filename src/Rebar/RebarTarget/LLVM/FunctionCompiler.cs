@@ -362,12 +362,12 @@ namespace Rebar.RebarTarget.LLVM
             _moduleBuilder = moduleBuilder;
             _sharedData = sharedData;
             _calleesMayPanic = calleesMayPanic;
-            ModuleContext = new FunctionModuleContext(_sharedData.Context, _moduleBuilder.Module, _sharedData.FunctionImporter);
+            ModuleContext = new FunctionModuleContext(_sharedData.Context, _sharedData.Module, _sharedData.FunctionImporter);
         }
 
         private ContextWrapper Context => _sharedData.Context;
 
-        private Module Module => _moduleBuilder.Module;
+        private Module Module => _sharedData.Module;
 
         private FunctionCompilerState CurrentState => _sharedData.CurrentState;
 
@@ -625,20 +625,20 @@ namespace Rebar.RebarTarget.LLVM
                 {
                     string stringValue = (string)constant.Value;
                     int length = Encoding.UTF8.GetByteCount(stringValue);
-                    LLVMValueRef stringValueConstant = LLVMSharp.LLVM.ConstString(stringValue, (uint)length, true);
+                    LLVMValueRef stringValueConstant = ModuleContext.LLVMContext.ConstString(stringValue);
                     LLVMValueRef stringConstantPtr = Module.AddGlobal(stringValueConstant.TypeOf(), $"string{constant.UniqueId}");
                     stringConstantPtr.SetInitializer(stringValueConstant);
 
                     LLVMValueRef castPointer = Builder.CreateBitCast(
                         stringConstantPtr,
-                        Context.BytePointerType(),
+                        ModuleContext.LLVMContext.BytePointerType(),
                         "ptrCast");
                     LLVMValueRef[] stringSliceFields = new LLVMValueRef[]
                     {
                         castPointer,
-                        Context.AsLLVMValue(length)
+                        ModuleContext.LLVMContext.AsLLVMValue(length)
                     };
-                    LLVMValueRef stringSliceValue = LLVMValueRef.ConstStruct(stringSliceFields, false);
+                    LLVMValueRef stringSliceValue = ModuleContext.LLVMContext.ConstStruct(stringSliceFields);
                     Initialize(outputValueSource, stringSliceValue);
                 }
             }

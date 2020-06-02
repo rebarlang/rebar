@@ -12,14 +12,13 @@ namespace Rebar.RebarTarget.LLVM
     {
         private LLVMValueRef _localDoneAllocationPtr;
 
-        protected FunctionModuleBuilder(Module module, FunctionCompilerSharedData sharedData)
+        protected FunctionModuleBuilder(FunctionCompilerSharedData sharedData)
         {
-            Module = module;
             SharedData = sharedData;
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
         }
 
-        public Module Module { get; }
+        public Module Module => SharedData.Module;
 
         protected FunctionCompilerSharedData SharedData { get; }
 

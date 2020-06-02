@@ -32,7 +32,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMTypeRef sharedDataType = moduleContext.LLVMContext.CreateLLVMNotifierSharedDataType(valueType);
             LLVMTypeRef refCountType = moduleContext.LLVMContext.CreateLLVMRefCountType(sharedDataType);
-            LLVMValueRef refCountAllocationPtr = builder.CreateMalloc(refCountType, "refCountAllocationPtr"),
+            LLVMValueRef refCountAllocationPtr = moduleContext.CreateMalloc(builder, refCountType, "refCountAllocationPtr"),
                 refCount = builder.BuildStructValue(
                     refCountType,
                     new LLVMValueRef[] { moduleContext.LLVMContext.AsLLVMValue(2), LLVMSharp.LLVM.ConstNull(sharedDataType) },
