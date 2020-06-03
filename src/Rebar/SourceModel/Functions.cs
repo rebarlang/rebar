@@ -1014,6 +1014,60 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
     }
 
+    public class SliceToIterator : FunctionalNode
+    {
+        private const string ElementName = "SliceToIterator";
+
+        protected SliceToIterator()
+            : base(Signatures.SliceToIteratorType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SliceToIterator CreateSliceToIterator(IElementCreateInfo elementCreateInfo)
+        {
+            var sliceToIterator = new SliceToIterator();
+            sliceToIterator.Initialize(elementCreateInfo);
+            return sliceToIterator;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
+    public class SliceToMutableIterator : FunctionalNode
+    {
+        private const string ElementName = "SliceToMutableIterator";
+
+        protected SliceToMutableIterator()
+            : base(Signatures.SliceToMutableIteratorType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static SliceToMutableIterator CreateSliceToMutableIterator(IElementCreateInfo elementCreateInfo)
+        {
+            var sliceToMutableIterator = new SliceToMutableIterator();
+            sliceToMutableIterator.Initialize(elementCreateInfo);
+            return sliceToMutableIterator;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        protected override float MinimumHeight => StockDiagramGeometries.GridSize * 4;
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new string[1] { RebarFeatureToggles.VectorAndSliceTypes };
+    }
+
     #endregion
 
     #region Cell

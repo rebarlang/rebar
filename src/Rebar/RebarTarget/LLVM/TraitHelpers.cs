@@ -171,6 +171,14 @@ namespace Rebar.RebarTarget.LLVM
             {
                 return moduleContext.FunctionImporter.GetImportedCommonFunction(CommonModules.StringSplitIteratorNextName);
             }
+            NIType innerType;
+            if (iteratorType.TryDestructureSliceIteratorType(out innerType)
+                || iteratorType.TryDestructureSliceMutableIteratorType(out innerType))
+            {
+                return moduleContext.GetSpecializedFunctionWithSignature(
+                    iteratorNextSignature,
+                    FunctionCompiler.CreateSliceIteratorNextFunction);
+            }
 
             throw new NotSupportedException("Missing Iterator::Next method for type " + iteratorType);
         }

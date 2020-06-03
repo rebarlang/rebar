@@ -214,6 +214,11 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return context.CreateLLVMVectorType(context.AsLLVMType(innerType));
                     }
+                    if (niType.TryDestructureSliceIteratorType(out innerType)
+                        || niType.TryDestructureSliceMutableIteratorType(out innerType))
+                    {
+                        return context.CreateLLVMSliceIteratorType(context.AsLLVMType(innerType));
+                    }
                     if (niType.TryDestructureSharedType(out innerType))
                     {
                         return context.CreateLLVMSharedType(context.AsLLVMType(innerType));
@@ -351,6 +356,11 @@ namespace Rebar.RebarTarget.LLVM
                     LLVMTypeRef.PointerType(context.CreateLLVMRefCountType(context.CreateLLVMNotifierSharedDataType(innerType)), 0u)
                 },
                 false);
+        }
+
+        internal static LLVMTypeRef CreateLLVMSliceIteratorType(this ContextWrapper context, LLVMTypeRef elementType)
+        {
+            return LLVMTypeRef.StructType(new LLVMTypeRef[] { context.CreateLLVMSliceReferenceType(elementType), context.Int32Type }, false);
         }
 
         internal static LLVMTypeRef TranslateFunctionType(this ContextWrapper context, NIType functionType)

@@ -398,6 +398,32 @@ namespace Rebar.Common
                 "elementRef");
             SliceIndexType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SliceToIterator");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInput(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreateImmutableReference(tLifetimeParameter),
+                "sliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                tDataParameter.CreateSliceIterator(tLifetimeParameter),
+                "iterator");
+            SliceToIteratorType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SliceToMutableIterator");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInput(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreateMutableReference(tLifetimeParameter),
+                "sliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                tDataParameter.CreateSliceMutableIterator(tLifetimeParameter),
+                "iterator");
+            SliceToMutableIteratorType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = NITypes.Factory.DefineFunction("CreateLockingCell");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddInput(
@@ -616,6 +642,10 @@ namespace Rebar.Common
         public static NIType VectorRemoveLastType { get; }
 
         public static NIType SliceIndexType { get; }
+
+        public static NIType SliceToIteratorType { get; }
+
+        public static NIType SliceToMutableIteratorType { get; }
 
         public static NIType CreateLockingCellType { get; }
 

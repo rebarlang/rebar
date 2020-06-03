@@ -295,6 +295,28 @@ namespace Tests.Rebar.Unit.Compiler
 
         #endregion
 
+        #region Vector, Slice, and SliceIterator
+
+        [TestMethod]
+        public void VectorIntoSliceIntoSliceIterator_AutomaticNodeInsertion_SliceIteratorTerminatedAndVectorDropped()
+        {
+            DfirRoot function = DfirRoot.Create();
+            var initializeVector = new FunctionalNode(function.BlockDiagram, Signatures.VectorInitializeType);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], NITypes.Int32, false);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], NITypes.Int32, false);
+            var vectorToSlice = new FunctionalNode(function.BlockDiagram, Signatures.VectorToSliceType);
+            Wire.Create(function.BlockDiagram, initializeVector.OutputTerminals[0], vectorToSlice.InputTerminals[0]);
+            var createSliceIterator = new FunctionalNode(function.BlockDiagram, Signatures.SliceToIteratorType);
+            Wire.Create(function.BlockDiagram, vectorToSlice.OutputTerminals[0], createSliceIterator.InputTerminals[0]);
+
+            RunCompilationUpToAutomaticNodeInsertion(function);
+
+            TerminateLifetimeNode terminateLifetime = AssertDiagramContainsNodeWithSources<TerminateLifetimeNode>(function.BlockDiagram, createSliceIterator.OutputTerminals[0]);
+            AssertDiagramContainsNodeWithSources<DropNode>(function.BlockDiagram, terminateLifetime.OutputTerminals[0]);
+        }
+
+        #endregion
+
         #region Async/panicking node decomposition
 
         [TestMethod]

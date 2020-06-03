@@ -39,6 +39,10 @@ namespace Rebar.Common
 
         private static NIType StringSplitIteratorGenericType { get; }
 
+        public static NIType SliceIteratorGenericType { get; }
+
+        public static NIType SliceMutableIteratorGenericType { get; }
+
         public static NIType FileHandleType { get; }
 
         public static NIType FakeDropType { get; }
@@ -140,6 +144,24 @@ namespace Rebar.Common
             sliceGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
             SliceGenericType = sliceGenericTypeBuilder.CreateType();
 
+            var sliceIteratorGenericTypeBuilder = NITypes.Factory.DefineValueClass("SliceIterator");
+            sliceIteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            NIType elementType = sliceIteratorGenericTypeBuilder.MakeGenericParameters("TElem").First().CreateType();
+            NIType lifetimeType = AddGenericLifetimeTypeParameter(sliceIteratorGenericTypeBuilder, "TLife");
+            iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(elementType.CreateImmutableReference(lifetimeType));
+            sliceIteratorGenericTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
+            sliceIteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            SliceIteratorGenericType = sliceIteratorGenericTypeBuilder.CreateType();
+
+            var sliceMutableIteratorGenericTypeBuilder = NITypes.Factory.DefineValueClass("SliceMutableIterator");
+            sliceMutableIteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            elementType = sliceMutableIteratorGenericTypeBuilder.MakeGenericParameters("TElem").First().CreateType();
+            lifetimeType = AddGenericLifetimeTypeParameter(sliceMutableIteratorGenericTypeBuilder, "TLife");
+            iteratorSpecialization = IteratorInterfaceGenericType.ReplaceGenericParameters(elementType.CreateMutableReference(lifetimeType));
+            sliceMutableIteratorGenericTypeBuilder.DefineImplementedInterfaceFromExisting(iteratorSpecialization);
+            sliceMutableIteratorGenericTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
+            SliceMutableIteratorGenericType = sliceMutableIteratorGenericTypeBuilder.CreateType();
+
             var fileHandleTypeBuilder = NITypes.Factory.DefineValueClass("FileHandle");
             fileHandleTypeBuilder.DefineImplementedInterfaceFromExisting(DropInterfaceType);
             fileHandleTypeBuilder.AddTypeKeywordProviderAttribute(RebarTypeKeyword);
@@ -194,6 +216,19 @@ namespace Rebar.Common
             PanicResultGenericType = panicResultGenericTypeBuilder.CreateType();
         }
 
+        private static NIType AddGenericLifetimeTypeParameter(NIClassBuilder classBuilder, string name)
+        {
+            var genericTypeParameters = classBuilder.MakeGenericParameters(name);
+            var parameterBuilder = genericTypeParameters.ElementAt(0);
+            SetLifetimeTypeAttribute((NIAttributedBaseBuilder)parameterBuilder);
+            return parameterBuilder.CreateType();
+        }
+
+        public static void SetLifetimeTypeAttribute(NIAttributedBaseBuilder builder)
+        {
+            builder.AddAttribute("Lifetime", true, true);
+        }
+
         private static NIType SpecializeGenericType(NIType genericTypeDefinition, params NIType[] typeParameters)
         {
             var specializationTypeBuilder = genericTypeDefinition.DefineClassFromExisting();
@@ -234,19 +269,6 @@ namespace Rebar.Common
             }
             parameter = NIType.Unset;
             return false;
-        }
-
-        public static void SetLifetimeTypeAttribute(NIAttributedBaseBuilder builder)
-        {
-            builder.AddAttribute("Lifetime", true, true);
-        }
-
-        private static NIType AddGenericLifetimeTypeParameter(NIClassBuilder classBuilder, string name)
-        {
-            var genericTypeParameters = classBuilder.MakeGenericParameters(name);
-            var parameterBuilder = genericTypeParameters.ElementAt(0);
-            SetLifetimeTypeAttribute((NIAttributedBaseBuilder)parameterBuilder);
-            return parameterBuilder.CreateType();
         }
 
         public static NIType CreateMutableReference(this NIType dereferenceType, NIType lifetimeType = default(NIType))
@@ -562,6 +584,48 @@ namespace Rebar.Common
         internal static bool TryDestructurePanicResultType(this NIType type, out NIType resultType)
         {
             return type.TryGetGenericParameterOfSpecialization(PanicResultGenericType, 0, out resultType);
+        }
+
+        public static NIType CreateSliceIterator(this NIType elementType, NIType lifetimeType)
+        {
+            return SpecializeGenericType(SliceIteratorGenericType, elementType, lifetimeType);
+        }
+
+        public static bool IsSliceIteratorType(this NIType type)
+        {
+            return IsGenericTypeSpecialization(type, SliceIteratorGenericType);
+        }
+
+        public static bool TryDestructureSliceIteratorType(this NIType type, out NIType elementType)
+        {
+            if (!type.IsSliceIteratorType())
+            {
+                elementType = NIType.Unset;
+                return false;
+            }
+            elementType = type.GetGenericParameters().ElementAt(0);
+            return true;
+        }
+
+        public static NIType CreateSliceMutableIterator(this NIType elementType, NIType lifetimeType)
+        {
+            return SpecializeGenericType(SliceMutableIteratorGenericType, elementType, lifetimeType);
+        }
+
+        public static bool IsSliceMutableIteratorType(this NIType type)
+        {
+            return IsGenericTypeSpecialization(type, SliceMutableIteratorGenericType);
+        }
+
+        public static bool TryDestructureSliceMutableIteratorType(this NIType type, out NIType elementType)
+        {
+            if (!type.IsSliceMutableIteratorType())
+            {
+                elementType = NIType.Unset;
+                return false;
+            }
+            elementType = type.GetGenericParameters().ElementAt(0);
+            return true;
         }
 
         internal static bool WireTypeMayFork(this NIType wireType)

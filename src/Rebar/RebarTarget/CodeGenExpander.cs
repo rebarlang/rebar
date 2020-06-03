@@ -430,7 +430,10 @@ namespace Rebar.RebarTarget
             _functionalNodeExpanders["VectorAppend"] = CreateSpecializedFunctionCallExpander(FunctionCompiler.BuildVectorAppendFunction);
             _functionalNodeExpanders["VectorInsert"] = ExpandEmpty;
             _functionalNodeExpanders["VectorRemoveLast"] = CreateSpecializedFunctionCallExpander(FunctionCompiler.BuildVectorRemoveLastFunction);
+
             _functionalNodeExpanders["SliceIndex"] = CreateSpecializedFunctionCallExpander(FunctionCompiler.CreateSliceIndexFunction);
+            _functionalNodeExpanders["SliceToIterator"] = CreateSpecializedFunctionCallExpander(FunctionCompiler.CreateSliceToIteratorFunction);
+            _functionalNodeExpanders["SliceToMutableIterator"] = CreateSpecializedFunctionCallExpander(FunctionCompiler.CreateSliceToIteratorFunction);
 
             _functionalNodeExpanders["CreateLockingCell"] = ExpandEmpty;
 

@@ -1113,6 +1113,30 @@
   <data name="SetNotifierValue_writer_Name" xml:space="preserve">
     <value>notifier writer</value>
   </data>
+  <data name="SliceToIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SliceToIterator_iterator_Name" xml:space="preserve">
+    <value>iterator</value>
+  </data>
+  <data name="SliceToIterator_Name" xml:space="preserve">
+    <value>Slice To Iterator</value>
+  </data>
+  <data name="SliceToIterator_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
+  <data name="SliceToMutableIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SliceToMutableIterator_iterator_Name" xml:space="preserve">
+    <value>iterator</value>
+  </data>
+  <data name="SliceToMutableIterator_Name" xml:space="preserve">
+    <value>Slice To Mutable Iterator</value>
+  </data>
+  <data name="SliceToMutableIterator_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
   <data name="StructTypeBuilder_Description" xml:space="preserve">
     <value />
   </data>
