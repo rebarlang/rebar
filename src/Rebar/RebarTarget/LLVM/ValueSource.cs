@@ -43,14 +43,6 @@ namespace Rebar.RebarTarget.LLVM
         }
     }
 
-    internal class ConstantValueSource : SingleValueSource
-    {
-        public ConstantValueSource(LLVMValueRef value)
-        {
-            Value = value;
-        }
-    }
-
     internal class ImmutableValueSource : SingleValueSource, IInitializableValueSource
     {
         public void InitializeValue(IRBuilder builder, LLVMValueRef value)

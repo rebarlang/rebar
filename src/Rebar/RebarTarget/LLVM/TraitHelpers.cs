@@ -124,6 +124,8 @@ namespace Rebar.RebarTarget.LLVM
 
         #endregion
 
+        #region Clone
+
         public static bool TryGetCloneFunction(this FunctionModuleContext moduleContext, NIType valueType, out LLVMValueRef cloneFunction)
         {
             cloneFunction = default(LLVMValueRef);
@@ -154,5 +156,50 @@ namespace Rebar.RebarTarget.LLVM
             }
             return false;
         }
+
+        #endregion
+
+        #region Iterator
+
+        public static LLVMValueRef GetIteratorNextFunction(this FunctionModuleContext moduleContext, NIType iteratorType, NIType iteratorNextSignature)
+        {
+            if (iteratorType == DataTypes.RangeIteratorType)
+            {
+                return moduleContext.FunctionImporter.GetImportedCommonFunction(CommonModules.RangeIteratorNextName);
+            }
+            if (iteratorType.IsStringSplitIteratorType())
+            {
+                return moduleContext.FunctionImporter.GetImportedCommonFunction(CommonModules.StringSplitIteratorNextName);
+            }
+
+            throw new NotSupportedException("Missing Iterator::Next method for type " + iteratorType);
+        }
+
+        #endregion
+
+        #region Promise
+
+        public static LLVMValueRef GetPromisePollFunction(this FunctionModuleContext moduleContext, NIType type)
+        {
+            NIType innerType;
+            if (type.TryDestructureYieldPromiseType(out innerType))
+            {
+                NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
+                return moduleContext.GetSpecializedFunctionWithSignature(signature, FunctionCompiler.BuildYieldPromisePollFunction);
+            }
+            if (type.TryDestructureMethodCallPromiseType(out innerType))
+            {
+                NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType, NIType.Unset);
+                return moduleContext.GetSpecializedFunctionWithSignature(signature, FunctionCompiler.BuildMethodCallPromisePollFunction);
+            }
+            if (type.TryDestructureNotifierReaderPromiseType(out innerType))
+            {
+                NIType signature = Signatures.PromisePollType.ReplaceGenericParameters(type, innerType.CreateOption(), NIType.Unset);
+                return moduleContext.GetSpecializedFunctionWithSignature(signature, FunctionCompiler.BuildNotifierReaderPromisePollFunction);
+            }
+            throw new NotSupportedException("Cannot find poll function for type " + type);
+        }
+
+        #endregion
     }
 }

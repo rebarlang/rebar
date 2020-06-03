@@ -20,7 +20,7 @@ namespace Rebar.RebarTarget.LLVM
             SharedDataValueFieldIndex = 1u,
             SharedDataStateFieldIndex = 2u;
 
-        private static void BuildCreateNotifierPairFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef createNotifierPairFunction)
+        internal static void BuildCreateNotifierPairFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef createNotifierPairFunction)
         {
             LLVMTypeRef valueType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First()),
                 notifierReaderType = moduleContext.LLVMContext.CreateLLVMNotifierReaderType(valueType),
@@ -46,7 +46,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildGetNotifierReaderPromiseFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef getNotifierReaderPromiseFunction)
+        internal static void BuildGetNotifierReaderPromiseFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef getNotifierReaderPromiseFunction)
         {
             LLVMTypeRef valueType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First()),
                 notifierReaderType = moduleContext.LLVMContext.CreateLLVMNotifierReaderType(valueType),
@@ -64,7 +64,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildNotifierReaderPromisePollFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef notifierReaderPromisePollFunction)
+        internal static void BuildNotifierReaderPromisePollFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef notifierReaderPromisePollFunction)
         {
             NIType notifierReaderPromiseType = signature.GetGenericParameters().ElementAt(0),
                 valueType = notifierReaderPromiseType.GetGenericParameters().ElementAt(0);
@@ -161,7 +161,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildSetNotifierValueFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef setNotifierValueFunction)
+        internal static void BuildSetNotifierValueFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef setNotifierValueFunction)
         {
             NIType valueType = signature.GetGenericParameters().First();
             LLVMTypeRef valueLLVMType = moduleContext.LLVMContext.AsLLVMType(valueType);

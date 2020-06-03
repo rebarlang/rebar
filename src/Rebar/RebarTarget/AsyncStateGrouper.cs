@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NationalInstruments;
@@ -8,6 +9,7 @@ using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Rebar.RebarTarget.LLVM.CodeGen;
 using DfirBorderNode = NationalInstruments.Dfir.BorderNode;
 using Loop = Rebar.Compiler.Nodes.Loop;
 
@@ -127,7 +129,7 @@ namespace Rebar.RebarTarget
                     continue;
                 }
 
-                bool startsWithPanicOrContinue = group.GroupStartsWithPanicOrContinue();
+                bool startsWithPanicOrContinue = group.StartsWithPanicOrContinue;
                 bool hasSkippablePredecessor = group.Predecessors.Any(g => g.IsSkippable);
                 bool isDiagramInitialGroup = group.BeginsAsDiagramInitialGroup;
                 bool isSkippable = !isDiagramInitialGroup && (startsWithPanicOrContinue || hasSkippablePredecessor);
@@ -178,6 +180,7 @@ namespace Rebar.RebarTarget
             if (node is PanicOrContinueNode)
             {
                 AsyncStateGroup group = CreateNewGroupFromNode(node, nodePredecessors);
+                group.StartsWithPanicOrContinue = true;
 #if FALSE
                 AsyncStateGroup singlePredecessor;
                 if (nodePredecessors.TryGetSingleElement(out singlePredecessor))
@@ -615,7 +618,12 @@ namespace Rebar.RebarTarget
 
         public string FunctionId { get; set; }
 
-        public IEnumerable<Visitation> Visitations { get; }
+        public IEnumerable<Visitation> Visitations { get; private set; }
+
+        public void ReplaceVisitations(IEnumerable<Visitation> visitations)
+        {
+            Visitations = visitations;
+        }
 
         public bool SignaledConditionally { get; set; }
 
@@ -626,6 +634,8 @@ namespace Rebar.RebarTarget
         public Continuation Continuation { get; }
 
         public bool IsSkippable { get; set; }
+
+        public bool StartsWithPanicOrContinue { get; set; }
 
         public bool BeginsAsDiagramInitialGroup { get; set; }
 
@@ -667,26 +677,32 @@ namespace Rebar.RebarTarget
 
     internal static class VisitationExtensions
     {
-        public static void Visit<T>(this Visitation visitation, IVisitationHandler<T> visitor)
+        public static T Visit<T>(this Visitation visitation, object visitor)
         {
             var nodeVisitation = visitation as NodeVisitation;
             var structureVisitation = visitation as StructureVisitation;
             var frameSkippedBlockVisitation = visitation as FrameSkippedBlockVisitation;
+            var codeGenElement = visitation as CodeGenElement;
             if (nodeVisitation != null)
             {
-                visitor.VisitRebarNode(nodeVisitation.Node);
+                return ((IDfirNodeVisitor<T>)visitor).VisitRebarNode(nodeVisitation.Node);
             }
             else if (structureVisitation != null)
             {
-                visitor.VisitRebarStructure(
+                return ((IDfirStructureVisitor<T>)visitor).VisitRebarStructure(
                     structureVisitation.Structure,
                     structureVisitation.TraversalPoint,
                     structureVisitation.Diagram);
             }
             else if (frameSkippedBlockVisitation != null)
             {
-                visitor.VisitFrameSkippedBlockVisitation(frameSkippedBlockVisitation);
+                return ((IVisitationHandler<T>)visitor).VisitFrameSkippedBlockVisitation(frameSkippedBlockVisitation);
             }
+            else if (codeGenElement != null)
+            {
+                return codeGenElement.AcceptVisitor((ICodeGenElementVisitor<T>)visitor);
+            }
+            throw new NotSupportedException();
         }
 
         public static bool GroupContainsNode(this AsyncStateGroup group, Node node)
@@ -711,12 +727,6 @@ namespace Rebar.RebarTarget
                         && structureVisitation.Diagram == diagram
                         && structureVisitation.TraversalPoint == traversalPoint;
                 });
-        }
-
-        public static bool GroupStartsWithPanicOrContinue(this AsyncStateGroup group)
-        {
-            var firstVisitation = group.Visitations.FirstOrDefault() as NodeVisitation;
-            return firstVisitation != null && firstVisitation.Node is PanicOrContinueNode;
         }
     }
 
@@ -805,6 +815,7 @@ namespace Rebar.RebarTarget
         {
             var nodeVisitation = visitation as NodeVisitation;
             var structureVisitation = visitation as StructureVisitation;
+            var codeGenElement = visitation as CodeGenElement;
             if (nodeVisitation != null)
             {
                 Node node = nodeVisitation.Node;
@@ -819,6 +830,10 @@ namespace Rebar.RebarTarget
                     ? $" Diagram({structureVisitation.Diagram.UniqueId.ToString()})"
                     : string.Empty;
                 return $"    {structure.GetType().Name}({structure.UniqueId}){diagramString} {structureVisitation.TraversalPoint}";
+            }
+            if (codeGenElement != null)
+            {
+                return $"    {codeGenElement.ToString()}";
             }
             return string.Empty;
         }

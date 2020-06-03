@@ -143,16 +143,23 @@ namespace Rebar.RebarTarget
             var asyncStateGrouper = new AsyncStateGrouper();
             asyncStateGrouper.Execute(dfirRoot, cancellationToken);
             IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
-#if DEBUG
-            string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
-#endif
-            bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
-            bool mayPanic = asyncStateGroups.Any(VisitationExtensions.GroupStartsWithPanicOrContinue);
 
             using (var contextWrapper = new LLVM.ContextWrapper())
             {
                 var module = contextWrapper.CreateModule("module");
                 var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
+
+                var codeGenExpander = new CodeGenExpander(
+                    dfirRoot,
+                    new LLVM.FunctionModuleContext(contextWrapper, module, functionImporter),
+                    calleesMayPanic);
+                asyncStateGroups.ForEach(codeGenExpander.ExpandAsyncStateGroup);
+
+    #if DEBUG
+                string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
+    #endif
+                bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
+                bool mayPanic = asyncStateGroups.Any(group => group.StartsWithPanicOrContinue);
 
                 var variableStorage = new LLVM.FunctionVariableStorage();
                 var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
@@ -171,7 +178,7 @@ namespace Rebar.RebarTarget
                 var moduleBuilder = isYielding
                     ? new LLVM.AsynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups)
                     : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups);
-                sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData, calleesMayPanic);
+                sharedData.VisitationHandler = new LLVM.FunctionCompiler(moduleBuilder, sharedData, codeGenExpander.ReservedIndexCount);
 
                 moduleBuilder.CompileFunction();
                 module.VerifyAndThrowIfInvalid();

@@ -94,10 +94,6 @@ namespace Rebar.Compiler
 
         public static VariableSet GetVariableSet(this DfirElement dfirElement)
         {
-            if (dfirElement is BorderNode)
-            {
-                throw new ArgumentException("Cannot get a VariableSet from a BorderNode; specify a Terminal instead.");
-            }
             return dfirElement.DfirRoot.GetVariableSet();
         }
 

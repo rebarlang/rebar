@@ -8,7 +8,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void BuildVectorCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCreateFunction)
+        internal static void BuildVectorCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCreateFunction)
         {
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
 
@@ -27,7 +27,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorInitializeFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorInitializeFunction)
+        internal static void BuildVectorInitializeFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorInitializeFunction)
         {
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
             LLVMTypeRef vectorLLVMType = moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType);
@@ -167,7 +167,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorToSliceFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorToSliceFunction)
+        internal static void BuildVectorToSliceFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorToSliceFunction)
         {
             LLVMTypeRef sliceElementType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
             LLVMTypeRef sliceReferenceType = moduleContext.LLVMContext.CreateLLVMSliceReferenceType(sliceElementType);
@@ -185,7 +185,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorAppendFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorAppendFunction)
+        internal static void BuildVectorAppendFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorAppendFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
 
@@ -256,7 +256,7 @@ namespace Rebar.RebarTarget.LLVM
             return vectorGrowFunction;
         }
 
-        private static void BuildVectorRemoveLastFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorRemoveLastFunction)
+        internal static void BuildVectorRemoveLastFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorRemoveLastFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(elementType),

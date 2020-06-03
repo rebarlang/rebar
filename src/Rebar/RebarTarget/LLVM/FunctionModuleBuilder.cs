@@ -113,7 +113,7 @@ namespace Rebar.RebarTarget.LLVM
 
             foreach (Visitation visitation in asyncStateGroup.Visitations)
             {
-                visitation.Visit(SharedData.VisitationHandler);
+                visitation.Visit<bool>(SharedData.VisitationHandler);
             }
 
             var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;

@@ -28,7 +28,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildSharedGetValueFunction(FunctionModuleContext functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
+        internal static void BuildSharedGetValueFunction(FunctionModuleContext functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
         {
             LLVMBasicBlockRef entryBlock = sharedGetValueFunction.AppendBasicBlock("entry");
             var builder = functionCompiler.LLVMContext.CreateIRBuilder();

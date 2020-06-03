@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
+using Rebar.Compiler.Nodes;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -69,6 +71,39 @@ namespace Rebar.RebarTarget.LLVM
                 "malloc",
                 // TODO: should ideally use the native integer size of the context
                 LLVMTypeRef.FunctionType(moduleContext.LLVMContext.VoidPointerType(), new LLVMTypeRef[] { moduleContext.LLVMContext.Int64Type }, IsVarArg: false));
+        }
+
+        public static LLVMValueRef GetImportedSynchronousFunction(this FunctionModuleContext moduleContext, MethodCallNode methodCallNode)
+        {
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(methodCallNode.TargetName);
+            return moduleContext.GetImportedFunction(
+                FunctionNames.GetSynchronousFunctionName(targetFunctionName),
+                () => moduleContext.LLVMContext.TranslateFunctionType(methodCallNode.Signature));
+        }
+
+        public static LLVMValueRef GetImportedInitializeStateFunction(this FunctionModuleContext moduleContext, CreateMethodCallPromise createMethodCallPromise)
+        {
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(createMethodCallPromise.TargetName);
+            return moduleContext.GetImportedFunction(
+                FunctionNames.GetInitializeStateFunctionName(targetFunctionName),
+                () => moduleContext.TranslateInitializeFunctionType(createMethodCallPromise.Signature));
+        }
+
+        public static LLVMValueRef GetImportedPollFunction(this FunctionModuleContext moduleContext, CreateMethodCallPromise createMethodCallPromise)
+        {
+            string targetFunctionName = FunctionCompileHandler.FunctionLLVMName(createMethodCallPromise.TargetName);
+            return moduleContext.GetImportedFunction(FunctionNames.GetPollFunctionName(targetFunctionName), () => AsynchronousFunctionModuleBuilder.PollFunctionType(moduleContext.LLVMContext));
+        }
+
+        private static LLVMValueRef GetImportedFunction(this FunctionModuleContext moduleContext, string functionName, Func<LLVMTypeRef> getFunctionType)
+        {
+            return moduleContext.FunctionImporter.GetCachedFunction(functionName, () => moduleContext.Module.AddFunction(functionName, getFunctionType()));
+        }
+
+        private static LLVMTypeRef TranslateInitializeFunctionType(this FunctionModuleContext moduleContext, NIType functionType)
+        {
+            LLVMTypeRef[] parameterTypes = functionType.GetParameters().Select(moduleContext.LLVMContext.TranslateParameterType).ToArray();
+            return LLVMSharp.LLVM.FunctionType(moduleContext.LLVMContext.VoidPointerType(), parameterTypes, false);
         }
     }
 }

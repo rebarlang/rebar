@@ -24,6 +24,7 @@ namespace Rebar.Compiler.Nodes
                 TerminateLifetimeTunnel = (TerminateLifetimeTunnel)mappedTunnel;
                 TerminateLifetimeTunnel.BeginLifetimeTunnel = this;
             }
+            IntermediateValueVariable = toCopy.IntermediateValueVariable;
         }
 
         internal FunctionType IteratorNextFunctionType { get; set; }
@@ -42,6 +43,12 @@ namespace Rebar.Compiler.Nodes
         {
             return visitor.VisitIterateTunnel(this);
         }
+
+        /// <summary>
+        /// Variable that stores the intermediate result from caling Iterator::Next
+        /// for this <see cref="IterateTunnel"/>.
+        /// </summary>
+        public VariableReference IntermediateValueVariable { get; set; }
 
         public string IntermediateValueName => $"iterateIntermediate{UniqueId}";
     }

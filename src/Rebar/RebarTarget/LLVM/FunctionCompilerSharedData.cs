@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using LLVMSharp;
+using Rebar.RebarTarget.LLVM.CodeGen;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -37,7 +38,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public FunctionVariableStorage VariableStorage { get; }
 
-        public IVisitationHandler<bool> VisitationHandler { get; set; }
+        public ICodeGenElementVisitor<bool> VisitationHandler { get; set; }
 
         public FunctionCompilerState CurrentState
         {

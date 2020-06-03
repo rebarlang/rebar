@@ -6,7 +6,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void CreateSliceIndexFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef sliceIndexFunction)
+        internal static void CreateSliceIndexFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef sliceIndexFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
             LLVMTypeRef elementPtrOptionType = moduleContext.LLVMContext.CreateLLVMOptionType(LLVMTypeRef.PointerType(moduleContext.LLVMContext.AsLLVMType(elementType), 0u));

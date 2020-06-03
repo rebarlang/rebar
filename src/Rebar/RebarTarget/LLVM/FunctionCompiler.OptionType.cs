@@ -9,22 +9,6 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void CompileSomeConstructor(FunctionCompiler compiler, FunctionalNode someConstructorNode)
-        {
-            ValueSource inputSource = compiler.GetTerminalValueSource(someConstructorNode.InputTerminals[0]),
-                outputSource = compiler.GetTerminalValueSource(someConstructorNode.OutputTerminals[0]);
-            LLVMTypeRef outputType = compiler.Context.AsLLVMType(someConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
-            LLVMValueRef innerValue = inputSource.GetValue(compiler.Builder);
-            compiler.Initialize(outputSource, compiler.Context.BuildOptionValue(compiler.Builder, outputType, innerValue));
-        }
-
-        private static void CompileNoneConstructor(FunctionCompiler compiler, FunctionalNode noneConstructorNode)
-        {
-            ValueSource outputSource = compiler.GetTerminalValueSource(noneConstructorNode.OutputTerminals[0]);
-            LLVMTypeRef outputType = compiler.Context.AsLLVMType(noneConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
-            compiler.InitializeIfNecessary(outputSource, builder => compiler.Context.BuildOptionValue(builder, outputType, null));
-        }
-
         internal static void BuildOptionDropFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef optionDropFunction)
         {
             NIType innerType;
@@ -49,7 +33,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildOptionToPanicResultFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef optionToPanicResultFunction)
+        internal static void BuildOptionToPanicResultFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef optionToPanicResultFunction)
         {
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
 

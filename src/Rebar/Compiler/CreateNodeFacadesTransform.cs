@@ -266,6 +266,14 @@ namespace Rebar.Compiler
 
             _nodeFacade[itemOutput] = new SimpleTerminalFacade(itemOutput, itemTypeVariable);
 
+            TypeVariableReference intermediateTypeVariable = _typeVariableSet.CreateReferenceToOptionType(itemTypeVariable);
+            VariableReference intermediateVariable = iterateTunnel.GetVariableSet().CreateNewVariable(
+                iterateTunnel.ParentStructure.ParentDiagram.GetLifetimeGraphIdentifier().Id,
+                intermediateTypeVariable,
+                false);
+            intermediateVariable.Name = iterateTunnel.IntermediateValueName;
+            iterateTunnel.IntermediateValueVariable = intermediateVariable;
+
             iterateTunnel.IteratorNextFunctionType = new FunctionType(
                 Signatures.IteratorNextType,
                 new TypeVariableReference[]
