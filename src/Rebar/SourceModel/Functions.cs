@@ -737,6 +737,35 @@ namespace Rebar.SourceModel
         public override IEnumerable<string> RequiredFeatureToggles => new[] { RebarFeatureToggles.StringDataType };
     }
 
+    public class StringFromByteSlice : FunctionalNode
+    {
+        private const string ElementName = "StringFromByteSlice";
+
+        protected StringFromByteSlice()
+            : base(Signatures.StringFromByteSliceType)
+        {
+        }
+
+        [XmlParserFactoryMethod(ElementName, Function.ParsableNamespaceName)]
+        public static StringFromByteSlice CreateStringFromByteSlice(IElementCreateInfo elementCreateInfo)
+        {
+            var stringFromByteSlice = new StringFromByteSlice();
+            stringFromByteSlice.Initialize(elementCreateInfo);
+            return stringFromByteSlice;
+        }
+
+        /// <inheritdoc />
+        public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
+
+        /// <inheritdoc />
+        public override IEnumerable<string> RequiredFeatureToggles => new[] 
+        {
+            RebarFeatureToggles.StringDataType,
+            RebarFeatureToggles.VectorAndSliceTypes,
+            RebarFeatureToggles.AllIntegerTypes
+        };
+    }
+
     public class StringToSlice : FunctionalNode
     {
         private const string ElementName = "StringToSlice";

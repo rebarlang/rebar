@@ -419,6 +419,7 @@ namespace Rebar.RebarTarget
             _functionalNodeExpanders["Range"] = CreateImportedCommonFunctionExpander(CommonModules.CreateRangeIteratorName);
 
             _functionalNodeExpanders["StringFromSlice"] = CreateImportedCommonFunctionExpander(CommonModules.StringFromSliceName);
+            _functionalNodeExpanders["StringFromByteSlice"] = CreateImportedCommonFunctionExpander(CommonModules.StringFromSliceName);
             _functionalNodeExpanders["StringToSlice"] = CreateImportedCommonFunctionExpander(CommonModules.StringToSliceName);
             _functionalNodeExpanders["StringAppend"] = CreateImportedCommonFunctionExpander(CommonModules.StringAppendName);
             _functionalNodeExpanders["StringConcat"] = CreateImportedCommonFunctionExpander(CommonModules.StringConcatName);

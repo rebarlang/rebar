@@ -1,6 +1,9 @@
 ﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.FeatureToggles;
+using Rebar;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -132,6 +135,28 @@ namespace Tests.Rebar.Unit.Execution
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 
             Assert.AreEqual("three", executionInstance.RuntimeServices.LastOutputValue);
+        }
+
+        [TestMethod]
+        public void VectorIntoStringFromByteSlice_Execute_CorrectStringResult()
+        {
+            using (FeatureToggleSupport.TemporarilyEnableFeature(RebarFeatureToggles.AllIntegerTypes))
+            {
+                DfirRoot function = DfirRoot.Create();
+                var initializeVector = new FunctionalNode(function.BlockDiagram, Signatures.VectorInitializeType);
+                ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], NITypes.UInt8, (byte)97, false);
+                ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], NITypes.Int32, 3, false);
+                var vectorToSlice = new FunctionalNode(function.BlockDiagram, Signatures.VectorToSliceType);
+                Wire.Create(function.BlockDiagram, initializeVector.OutputTerminals[0], vectorToSlice.InputTerminals[0]);
+                var stringFromByteSlice = new FunctionalNode(function.BlockDiagram, Signatures.StringFromByteSliceType);
+                Wire.Create(function.BlockDiagram, vectorToSlice.OutputTerminals[0], stringFromByteSlice.InputTerminals[0]);
+                var output = new FunctionalNode(function.BlockDiagram, Signatures.OutputType);
+                Wire.Create(function.BlockDiagram, stringFromByteSlice.OutputTerminals[1], output.InputTerminals[0]);
+
+                TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+                Assert.AreEqual("aaa", executionInstance.RuntimeServices.LastOutputValue);
+            }
         }
     }
 }

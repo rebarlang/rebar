@@ -314,6 +314,18 @@ namespace Rebar.Common
                 "iterator");
             StringSliceToStringSplitIteratorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringFromByteSlice");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInputOutput(
+                functionTypeBuilder,
+                NITypes.UInt8.CreateSlice().CreateImmutableReference(tLifetimeParameter),
+                "byteSliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                NITypes.String,
+                "string");
+            StringFromByteSliceType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = NITypes.Factory.DefineFunction("VectorCreate");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddOutput(
@@ -620,6 +632,8 @@ namespace Rebar.Common
         public static NIType OptionToPanicResultType { get; }
 
         public static NIType StringFromSliceType { get; }
+
+        public static NIType StringFromByteSliceType { get; }
 
         public static NIType StringToSliceType { get; }
 

@@ -2491,6 +2491,51 @@ namespace Rebar.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to byte slice.
+        /// </summary>
+        internal static string StringFromByteSlice_byteSliceRef_in_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_byteSliceRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to byte slice.
+        /// </summary>
+        internal static string StringFromByteSlice_byteSliceRef_out_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_byteSliceRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string StringFromByteSlice_Description {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to String From Byte Slice.
+        /// </summary>
+        internal static string StringFromByteSlice_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string.
+        /// </summary>
+        internal static string StringFromByteSlice_string_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_string_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
         internal static string StringFromSlice_Description {

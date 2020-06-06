@@ -1164,4 +1164,19 @@
   <data name="UnwrapOption_value_Name" xml:space="preserve">
     <value>value</value>
   </data>
+  <data name="StringFromByteSlice_byteSliceRef_in_Name" xml:space="preserve">
+    <value>byte slice</value>
+  </data>
+  <data name="StringFromByteSlice_byteSliceRef_out_Name" xml:space="preserve">
+    <value>byte slice</value>
+  </data>
+  <data name="StringFromByteSlice_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringFromByteSlice_Name" xml:space="preserve">
+    <value>String From Byte Slice</value>
+  </data>
+  <data name="StringFromByteSlice_string_Name" xml:space="preserve">
+    <value>string</value>
+  </data>
 </root>
