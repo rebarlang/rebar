@@ -50,6 +50,18 @@ namespace Rebar.Common
 
         public int Id => _variableSet?.GetId(this) ?? 0;
 
+        public string Name
+        {
+            get
+            {
+                return _variableSet?.GetName(this) ?? null;
+            }
+            set
+            {
+                _variableSet?.SetName(this, value);
+            }
+        }
+
         public int DiagramId => _variableSet?.GetDiagramId(this) ?? 0;
 
         public bool Mutable => _variableSet?.GetMutable(this) ?? false;

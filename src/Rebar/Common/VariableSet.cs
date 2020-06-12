@@ -16,6 +16,11 @@ namespace Rebar.Common
             /// For debugging purposes, come up with something else.</remarks>
             public int Id { get; }
 
+            /// <summary>
+            /// Gets and sets a name for the variable for code-generation and debugging purposes.
+            /// </summary>
+            public string Name { get; set; }
+
             public int FirstReferenceIndex { get; }
 
             /// <summary>
@@ -46,8 +51,9 @@ namespace Rebar.Common
             public override string ToString()
             {
                 string mut = Mutable ? "mut" : string.Empty;
+                string name = Name ?? $"v_{Id}";
                 string type = TypeVariableReference.DebuggerDisplay;
-                return $"v_{Id} : {mut} {type}";
+                return $"{mut} {name} : {type}";
             }
         }
 
@@ -130,6 +136,10 @@ namespace Rebar.Common
         internal bool GetMutable(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Mutable;
 
         internal int GetId(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Id;
+
+        internal string GetName(VariableReference variableReference) => GetVariableForVariableReference(variableReference).Name;
+
+        internal void SetName(VariableReference variableReference, string name) => GetVariableForVariableReference(variableReference).Name = name;
 
         internal string GetDebuggerDisplay(VariableReference variableReference)
         {

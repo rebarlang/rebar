@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NationalInstruments;
 using NationalInstruments.Compiler;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using NationalInstruments.ExecutionFramework;
 using Rebar.Common;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
@@ -25,7 +27,7 @@ namespace Tests.Rebar.Unit.Compiler
             FunctionVariableStorage valueStorage = RunAllocator(function);
 
             ValueSource integerValueSource = valueStorage.GetValueSourceForVariable(constant.OutputTerminal.GetTrueVariable());
-            Assert.IsInstanceOfType(integerValueSource, typeof(ConstantValueSource));
+            Assert.IsInstanceOfType(integerValueSource, typeof(ImmutableValueSource));
             ValueSource inspectInputValueSource = valueStorage.GetValueSourceForVariable(inspect.InputTerminals[0].GetTrueVariable());
             Assert.IsInstanceOfType(inspectInputValueSource, typeof(ReferenceToSingleValueSource));
         }
@@ -88,6 +90,14 @@ namespace Tests.Rebar.Unit.Compiler
 
             using (var contextWrapper = new ContextWrapper())
             {
+                var module = contextWrapper.CreateModule("module");
+                var functionImporter = new FunctionImporter(contextWrapper, module);
+                var codeGenExpander = new CodeGenExpander(
+                    function,
+                    new FunctionModuleContext(contextWrapper, module, functionImporter),
+                    new Dictionary<CompilableDefinitionName, bool>());
+                asyncStateGroups.ForEach(codeGenExpander.ExpandAsyncStateGroup);
+
                 var variableStorage = new FunctionVariableStorage();
                 var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
                 allocator.Execute(function, cancellationToken);

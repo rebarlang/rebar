@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using LLVMSharp;
 using NationalInstruments;
 using NationalInstruments.CommonModel;
 using NationalInstruments.Compiler;
-using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
 using Rebar.Common;
 using Rebar.Compiler;
-using Rebar.Compiler.Nodes;
 using Rebar.RebarTarget.LLVM;
+using Rebar.RebarTarget.LLVM.CodeGen;
 
 namespace Rebar.RebarTarget
 {
@@ -23,7 +20,7 @@ namespace Rebar.RebarTarget
     /// * Using the same frame space for variables of different types
     /// * Determining when semantic variables are actually constants and thus do not need to be
     /// allocated in the frame</remarks>
-    internal class Allocator : VisitorTransformBase, IVisitationHandler<bool>, IInternalDfirNodeVisitor<bool>
+    internal class Allocator : VisitorTransformBase, ICodeGenElementVisitor<bool>
     {
         private readonly FunctionVariableStorage _variableStorage;
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
@@ -61,23 +58,29 @@ namespace Rebar.RebarTarget
 
         private string VariableAllocationName(VariableReference variable)
         {
-            return $"v{variable.Id}";
+            return variable.Name ?? $"v{variable.Id}";
         }
 
         public override void Execute(DfirRoot dfirRoot, CompileCancellationToken cancellationToken)
         {
-            // First, execute as a VisitorTransform base to initialize VariableUsages for all variables
+            // Execute as a VisitorTransform base to initialize VariableUsages for all variables
             base.Execute(dfirRoot, cancellationToken);
 
-            // Then, handle each Visitation in order to set particular node/wire/structure VariableUsage characteristics
+            // Handle each Visitation in order to set particular node/wire/structure VariableUsage characteristics
             foreach (AsyncStateGroup group in _asyncStateGroups)
             {
                 _currentGroup = group;
+                VariableUsage continuationConditionUsage = group.Continuation is ConditionallyScheduleGroupsContinuation
+                    ? GetVariableUsageForVariable(group.ContinuationCondition)
+                    : null;
+                continuationConditionUsage?.WillInitializeWithValue(_currentGroup);
+
                 foreach (Visitation visitation in group.Visitations)
                 {
-                    visitation.Visit(this);
+                    visitation.Visit<bool>(this);
                 }
-                CreateAllocationsForAsyncStateGroup(group);
+
+                continuationConditionUsage?.WillGetValue(_currentGroup);
             }
 
             // Finally, take all of the VariableUsages collected and create appropriate ValueSources from them
@@ -129,12 +132,6 @@ namespace Rebar.RebarTarget
                 }
                 if (!usage.TakesAddress && !usage.UpdatesValue)
                 {
-                    LLVMValueRef constantValue;
-                    if (usage.TryGetConstantInitialValue(out constantValue))
-                    {
-                        return new ConstantValueSource(constantValue);
-                    }
-
                     bool initializedInSkippableGroup = usage.InitializingGroup.IsSkippable;
                     if (!usage.LiveInMultipleFunctions && !initializedInSkippableGroup)
                     {
@@ -150,57 +147,18 @@ namespace Rebar.RebarTarget
             return AllocationSet.CreateStateField(VariableAllocationName(variable), variable.Type);
         }
 
-        private void CreateAllocationsForAsyncStateGroup(AsyncStateGroup asyncStateGroup)
-        {
-            var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
-            if (conditionalContinuation != null)
-            {
-                NIType conditionVariableType;
-                if (conditionalContinuation.SuccessorConditionGroups.Count <= 2)
-                {
-                    conditionVariableType = NITypes.Boolean;
-                }
-                else if (conditionalContinuation.SuccessorConditionGroups.Count <= 256)
-                {
-                    conditionVariableType = NITypes.UInt8;
-                }
-                else
-                {
-                    throw new NotSupportedException("Only 256 conditional continuations supported");
-                }
-                _variableStorage.AddContinuationConditionVariable(
-                    asyncStateGroup,
-                    AllocationSet.CreateLocalAllocation(asyncStateGroup.FunctionId, $"{asyncStateGroup.Label}_continuationStatePtr", conditionVariableType));
-            }
-        }
-
         #region VisitorTransformBase overrides
 
         protected override void VisitBorderNode(NationalInstruments.Dfir.BorderNode borderNode)
         {
-            InitializeVariableUsagesForAllTerminals(borderNode);
         }
 
         protected override void VisitNode(Node node)
         {
-            InitializeVariableUsagesForAllTerminals(node);
         }
 
         protected override void VisitWire(Wire wire)
         {
-            InitializeVariableUsagesForAllTerminals(wire);
-        }
-
-        private void InitializeVariableUsagesForAllTerminals(Node node)
-        {
-            foreach (Terminal terminal in node.Terminals)
-            {
-                VariableReference variable = terminal.GetTrueVariable();
-                if (variable.IsValid && !_variableUsages.ContainsKey(variable))
-                {
-                    _variableUsages[variable] = new VariableUsage();
-                }
-            }
         }
 
         protected override void VisitDfirRoot(DfirRoot dfirRoot)
@@ -211,542 +169,112 @@ namespace Rebar.RebarTarget
 
         private void VisitDataItem(DataItem dataItem)
         {
-            VariableUsage dataItemUsage = GetVariableUsageForVariable(dataItem.GetVariable());
-            dataItemUsage.IsParameter(dataItem.IsInput ? Direction.Input : Direction.Output);
+            GetVariableUsageForVariable(dataItem.GetVariable()).IsParameter(
+                dataItem.IsInput ? Direction.Input : Direction.Output);
         }
 
         #endregion
 
-        #region IDfirNodeVisitor implementation
-        // This visitor implementation parallels that of SetVariableTypesTransform:
-        // For each variable created by a visited node, this should determine the appropriate ValueSource for that variable.
+        #region ICodeGenElementVisitor
 
-        public bool VisitBorrowTunnel(BorrowTunnel borrowTunnel)
+        bool ICodeGenElementVisitor<bool>.VisitGetValue(GetValue getValue)
         {
-            VariableReference inputVariable = borrowTunnel.InputTerminals[0].GetTrueVariable(),
-                outputVariable = borrowTunnel.OutputTerminals[0].GetTrueVariable();
-            GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
-            WillInitializeWithValue(borrowTunnel.OutputTerminals[0]);
+            GetVariableUsageForVariable(getValue.Variable).WillGetValue(_currentGroup);
             return true;
         }
 
-        public bool VisitBuildTupleNode(BuildTupleNode buildTupleNode)
+        bool ICodeGenElementVisitor<bool>.VisitGetDereferencedValue(GetDereferencedValue getDereferencedValue)
         {
-            // TODO: for each input variable, note that it is moved into another data structure
-            WillInitializeWithValue(buildTupleNode.OutputTerminals[0]);
+            GetVariableUsageForVariable(getDereferencedValue.Variable).WillGetDereferencedValue(_currentGroup);
             return true;
         }
 
-        public bool VisitConstant(Constant constant)
+        bool ICodeGenElementVisitor<bool>.VisitUpdateValue(UpdateValue updateValue)
         {
-            VariableReference outputVariable = constant.OutputTerminal.GetTrueVariable();
-            if (outputVariable.Type.IsInteger())
+            GetVariableUsageForVariable(updateValue.Variable).WillUpdateValue(_currentGroup);
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitUpdateDereferencedValue(UpdateDereferencedValue updateDereferencedValue)
+        {
+            GetVariableUsageForVariable(updateDereferencedValue.Variable).WillUpdateDereferencedValue(_currentGroup);
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetAddress(GetAddress getAddress)
+        {
+            VariableUsage usage = GetVariableUsageForVariable(getAddress.Variable);
+            if (getAddress.ForInitialize)
             {
-                GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
-                    _currentGroup,
-                    Context.GetIntegerValue(constant.Value, outputVariable.Type));
+                usage.WillInitializeWithValue(_currentGroup);
             }
-            else if (outputVariable.Type.IsBoolean())
-            {
-                GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(
-                    _currentGroup,
-                    Context.AsLLVMValue((bool)constant.Value));
-            }
-            else
-            {
-                WillInitializeWithValue(constant.OutputTerminal);
-            }
+            usage.WillTakeAddress(_currentGroup);
             return true;
         }
 
-        public bool VisitDataAccessor(DataAccessor dataAccessor)
+        bool ICodeGenElementVisitor<bool>.VisitInitializeValue(InitializeValue initializeValue)
         {
-            if (dataAccessor.Terminal.Direction == Direction.Output)
-            {
-                // TODO: distinguish inout from in parameters?
-                WillInitializeWithValue(dataAccessor.Terminal);
-            }
-            else if (dataAccessor.Terminal.Direction == Direction.Input)
-            {
-                WillGetValue(dataAccessor.Terminal);
-            }
+            GetVariableUsageForVariable(initializeValue.Variable).WillInitializeWithValue(_currentGroup);
             return true;
         }
 
-        public bool VisitDecomposeTupleNode(DecomposeTupleNode decomposeTupleNode)
+        bool ICodeGenElementVisitor<bool>.VisitInitializeAsReference(InitializeAsReference initializeAsReference)
         {
-            // TODO: for Borrow mode, mark each output reference as a struct offset of the input reference
-            WillGetValue(decomposeTupleNode.InputTerminals[0]);
-            decomposeTupleNode.OutputTerminals.ForEach(WillInitializeWithValue);
+            VariableUsage toInitializeUsage = GetVariableUsageForVariable(initializeAsReference.InitializedVariable);
+            toInitializeUsage.IsReferenceToVariable(
+                initializeAsReference.ReferencedVariable,
+                GetVariableUsageForVariable(initializeAsReference.ReferencedVariable));
+            toInitializeUsage.WillInitializeWithValue(_currentGroup);
             return true;
         }
 
-        public bool VisitDropNode(DropNode dropNode)
+        bool ICodeGenElementVisitor<bool>.VisitInitializeWithCopy(InitializeWithCopy initializeWithCopy)
         {
-            VariableReference droppedVariable = dropNode.InputTerminals[0].GetTrueVariable();
-            if (TraitHelpers.TypeHasDropFunction(droppedVariable.Type))
-            {
-                WillTakeAddress(dropNode.InputTerminals[0]);
-            }
+            VariableUsage copiedVariableUsage = GetVariableUsageForVariable(initializeWithCopy.CopiedVariable);
+            VariableUsage initializedVariableUsage = GetVariableUsageForVariable(initializeWithCopy.InitializedVariable);
+            initializedVariableUsage.IsReferenceToVariable(copiedVariableUsage.ReferencedVariable, copiedVariableUsage.ReferencedVariableUsage);
+            initializedVariableUsage.WillInitializeWithValue(_currentGroup);
             return true;
         }
 
-        public bool VisitExplicitBorrowNode(ExplicitBorrowNode explicitBorrowNode)
-        {
-            foreach (KeyValuePair<Terminal, Terminal> terminalPair in explicitBorrowNode.InputTerminals.Zip(explicitBorrowNode.OutputTerminals))
-            {
-                VariableReference inputVariable = terminalPair.Key.GetTrueVariable(),
-                    outputVariable = terminalPair.Value.GetTrueVariable();
-                if (inputVariable.Type == outputVariable.Type || inputVariable.Type.IsReferenceToSameTypeAs(outputVariable.Type))
-                {
-                    _variableUsages[outputVariable] = _variableUsages[inputVariable];
-                }
-                else
-                {
-                    // TODO: there is a bug here with creating a reference to an immutable reference binding;
-                    // in CreateReferenceValueSource we create a constant reference value source for the immutable reference,
-                    // which means we can't create a reference to an allocation for it.
-                    GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, GetVariableUsageForVariable(inputVariable));
-                    WillInitializeWithValue(terminalPair.Value);
-                }
-            }
-            return true;
-        }
-
-        public bool VisitFunctionalNode(FunctionalNode functionalNode)
-        {
-            VisitFunctionSignatureNode(functionalNode, functionalNode.Signature);
-            return true;
-        }
-
-        public bool VisitIterateTunnel(IterateTunnel iterateTunnel)
-        {
-            WillGetValue(iterateTunnel.InputTerminals[0]);
-
-            Terminal outputTerminal = iterateTunnel.OutputTerminals[0];
-            _variableStorage.AddAdditionalValueSource(
-                iterateTunnel.IntermediateValueName,
-                AllocationSet.CreateStateField(iterateTunnel.IntermediateValueName, outputTerminal.GetTrueVariable().Type.CreateOption()));
-            WillInitializeWithValue(outputTerminal);
-
-            LoopConditionTunnel conditionTunnel = ((Compiler.Nodes.Loop)iterateTunnel.ParentStructure).BorderNodes.OfType<LoopConditionTunnel>().First();
-            WillUpdateValue(conditionTunnel.InputTerminals[0]);
-            return true;
-        }
-
-        public bool VisitLockTunnel(LockTunnel lockTunnel)
+        bool ICodeGenElementVisitor<bool>.VisitBuildStruct(BuildStruct buildStruct)
         {
             return true;
         }
 
-        public bool VisitLoopConditionTunnel(LoopConditionTunnel loopConditionTunnel)
-        {
-            Terminal inputTerminal = loopConditionTunnel.InputTerminals[0],
-                outputTerminal = loopConditionTunnel.OutputTerminals[0];
-            VariableReference inputVariable = inputTerminal.GetTrueVariable(),
-                outputVariable = outputTerminal.GetTrueVariable();
-            VariableUsage inputVariableUsage = GetVariableUsageForVariable(inputVariable);
-            if (!inputTerminal.IsConnected)
-            {
-                var loop = (Compiler.Nodes.Loop)loopConditionTunnel.ParentStructure;
-                AsyncStateGroup loopInitialGroup = _asyncStateGroups.First(g => g.GroupContainsStructureTraversalPoint(loop, loop.Diagram, StructureTraversalPoint.BeforeLeftBorderNodes));
-                inputVariableUsage.WillInitializeWithCompileTimeConstant(loopInitialGroup, Context.AsLLVMValue(true));
-            }
-            WillGetValue(inputTerminal);
-
-            GetVariableUsageForVariable(outputVariable).IsReferenceToVariable(inputVariable, inputVariableUsage);
-            WillInitializeWithValue(loopConditionTunnel.OutputTerminals[0]);
-            return true;
-        }
-
-        public bool VisitMethodCallNode(MethodCallNode methodCallNode)
-        {
-            VisitFunctionSignatureNode(methodCallNode, methodCallNode.Signature);
-            return true;
-        }
-
-        public bool VisitOptionPatternStructureSelector(OptionPatternStructureSelector optionPatternStructureSelector)
-        {
-            // The selector output terminals are initialized in VisitOptionPatternStructure, each in their own
-            // diagram initial group.
-            return true;
-        }
-
-        public bool VisitStructConstructorNode(StructConstructorNode structConstructorNode)
-        {
-            // TODO: the input variables can become references to fields of the output variable
-            WillInitializeWithValue(structConstructorNode.OutputTerminals[0]);
-            return true;
-        }
-
-        public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
-        {
-            // TODO: the output variables can become constant GEPs of the input pointer variable
-            WillGetValue(structFieldAccessorNode.StructInputTerminal);
-            structFieldAccessorNode.OutputTerminals.ForEach(WillInitializeWithValue);
-            return true;
-        }
-
-        public bool VisitTerminateLifetimeNode(TerminateLifetimeNode terminateLifetimeNode)
+        bool ICodeGenElementVisitor<bool>.VisitGetStructFieldValue(GetStructFieldValue getStructFieldValue)
         {
             return true;
         }
 
-        public bool VisitTerminateLifetimeTunnel(TerminateLifetimeTunnel terminateLifetimeTunnel)
+        bool ICodeGenElementVisitor<bool>.VisitGetStructFieldPointer(GetStructFieldPointer getStructFieldPointer)
         {
             return true;
         }
 
-        public bool VisitTunnel(Tunnel tunnel)
+        bool ICodeGenElementVisitor<bool>.VisitGetConstant(GetConstant getConstant)
         {
-            if (tunnel.Direction == Direction.Input)
-            {
-                VariableReference inputVariable = tunnel.InputTerminals[0].GetTrueVariable();
-                foreach (Terminal outputTerminal in tunnel.OutputTerminals)
-                {
-                    _variableUsages[outputTerminal.GetTrueVariable()] = _variableUsages[inputVariable];
-                }
-            }
-            else // tunnel.Direction == Direction.Output
-            {
-                tunnel.InputTerminals.ForEach(WillGetValue);
-                Terminal outputTerminal = tunnel.OutputTerminals[0];
-                Terminal inputTerminal;
-                if (tunnel.InputTerminals.TryGetSingleElement(out inputTerminal))
-                {
-                    VariableReference inputVariable = inputTerminal.GetTrueVariable(),
-                        outputVariable = outputTerminal.GetTrueVariable();
-                    if (outputVariable.Type == inputVariable.Type.CreateOption())
-                    {
-                        WillUpdateValue(outputTerminal);
-                    }
-                    else
-                    {
-                        // TODO: maybe it's better to compute variable usage for the input and output separately, and only reuse
-                        // the ValueSource if they are close enough
-                        _variableUsages[outputVariable] = _variableUsages[inputVariable];
-                    }
-                }
-                else
-                {
-                    // Note: handled in VisitOptionPatternStructure/VisitVariantMatchStructure
-                }
-            }
             return true;
         }
 
-        public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
+        bool ICodeGenElementVisitor<bool>.VisitCall(Call call)
         {
-            WillGetValue(unwrapOptionTunnel.InputTerminals[0]);
-            WillInitializeWithValue(unwrapOptionTunnel.OutputTerminals[0]);
-
-            var frame = (Frame)unwrapOptionTunnel.ParentStructure;
-            GetVariableUsageForVariable(frame.GetConditionVariable()).WillUpdateValue(_currentGroup);
             return true;
         }
 
-        public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        bool ICodeGenElementVisitor<bool>.VisitCallWithReturn(CallWithReturn callWithReturn)
         {
-            WillGetValue(variantConstructorNode.InputTerminals[0]);
-            WillInitializeWithValue(variantConstructorNode.OutputTerminals[0]);
             return true;
         }
 
-        public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        bool ICodeGenElementVisitor<bool>.VisitOp(Op op)
         {
-            // The selector output terminals are initialized in VisitVariantMatchStructure, each in their own
-            // diagram initial group.
             return true;
         }
 
-        bool IDfirNodeVisitor<bool>.VisitWire(Wire wire)
+        bool ICodeGenElementVisitor<bool>.VisitShareValue(ShareValue shareValue)
         {
-            if (!wire.SinkTerminals.HasMoreThan(1))
-            {
-                return true;
-            }
-            VariableReference sourceVariable = wire.SourceTerminal.GetTrueVariable();
-            VariableUsage sourceVariableUsage = GetVariableUsageForVariable(sourceVariable);
-            foreach (var sinkTerminal in wire.SinkTerminals.Skip(1))
-            {
-                VariableUsage sinkVariableUsage = GetVariableUsageForVariable(sinkTerminal.GetTrueVariable());
-                sinkVariableUsage.IsReferenceToVariable(sourceVariableUsage.ReferencedVariable, sourceVariableUsage.ReferencedVariableUsage);
-                WillInitializeWithValue(sinkTerminal);
-            }
-            return true;
-        }
-
-        private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
-        {
-            switch (nodeFunctionSignature.GetName())
-            {
-                case "Assign":
-                    {
-                        Terminal assignedInputTerminal = node.InputTerminals[0];
-                        WillUpdateDereferencedValue(assignedInputTerminal);
-                        if (TraitHelpers.TypeHasDropFunction(assignedInputTerminal.GetTrueVariable().Type.GetReferentType()))
-                        {
-                            WillGetValue(assignedInputTerminal);
-                        }
-                        WillGetValue(node.InputTerminals[1]);
-                    }
-                    return;
-                case "Exchange":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillUpdateDereferencedValue(node.InputTerminals[0]);
-                    WillGetDereferencedValue(node.InputTerminals[1]);
-                    WillUpdateDereferencedValue(node.InputTerminals[1]);
-                    return;
-                case "CreateCopy":
-                    VariableReference input0Variable = node.InputTerminals[0].GetTrueVariable();
-                    if (input0Variable.Type.GetReferentType().WireTypeMayFork())
-                    {
-                        WillGetDereferencedValue(node.InputTerminals[0]);
-                    }
-                    else
-                    {
-                        WillGetValue(node.InputTerminals[0]);
-                        WillTakeAddress(node.OutputTerminals[1]);
-                    }
-                    WillInitializeWithValue(node.OutputTerminals[1]);
-                    return;
-                case "SelectReference":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillGetValue(node.InputTerminals[1]);
-                    WillGetValue(node.InputTerminals[2]);
-                    WillInitializeWithValue(node.OutputTerminals[1]);
-                    return;
-                case "Increment":
-                case "Not":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillInitializeWithValue(node.OutputTerminals[1]);
-                    return;
-                case "AccumulateIncrement":
-                case "AccumulateNot":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillUpdateDereferencedValue(node.InputTerminals[0]);
-                    return;
-                case "Add":
-                case "Subtract":
-                case "Multiply":
-                case "Divide":
-                case "Modulus":
-                case "And":
-                case "Or":
-                case "Xor":
-                case "Equal":
-                case "NotEqual":
-                case "LessThan":
-                case "LessEqual":
-                case "GreaterThan":
-                case "GreaterEqual":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillGetDereferencedValue(node.InputTerminals[1]);
-                    WillInitializeWithValue(node.OutputTerminals[2]);
-                    return;
-                case "AccumulateAdd":
-                case "AccumulateSubtract":
-                case "AccumulateMultiply":
-                case "AccumulateDivide":
-                case "AccumulateAnd":
-                case "AccumulateOr":
-                case "AccumulateXor":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    WillUpdateDereferencedValue(node.InputTerminals[0]);
-                    WillGetDereferencedValue(node.InputTerminals[1]);
-                    return;
-                case "NoneConstructor":
-                    {
-                        VariableReference outputVariable = node.OutputTerminals[0].GetTrueVariable();
-                        LLVMTypeRef optionType = Context.AsLLVMType(outputVariable.Type);
-                        GetVariableUsageForVariable(outputVariable).WillInitializeWithCompileTimeConstant(_currentGroup, LLVMSharp.LLVM.ConstNull(optionType));
-                    }
-                    return;
-                case "Inspect":
-                    WillGetDereferencedValue(node.InputTerminals[0]);
-                    return;
-                case "Output":
-                    {
-                        Terminal inputTerminal = node.InputTerminals[0];
-                        NIType inputReferentType = inputTerminal.GetTrueVariable().Type.GetReferentType();
-                        if (inputReferentType.IsInteger() || inputReferentType.IsBoolean())
-                        {
-                            WillGetDereferencedValue(inputTerminal);
-                        }
-                        else
-                        {
-                            WillGetValue(inputTerminal);
-                        }
-                    }
-                    return;
-                case "ImmutPass":
-                case "MutPass":
-                    return;
-            }
-
-            Signature signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);
-            foreach (var terminalPair in node.InputTerminals.Zip(signature.Inputs))
-            {
-                WillGetValue(terminalPair.Key);
-            }
-            foreach (var outputPair in node.OutputTerminals.Zip(signature.Outputs))
-            {
-                if (outputPair.Value.IsPassthrough)
-                {
-                    continue;
-                }
-                WillInitializeWithValue(outputPair.Key);
-                WillTakeAddress(outputPair.Key);
-            }
-        }
-
-        #endregion
-
-        #region IInternalDfirNodeVisitor implementation
-
-        bool IInternalDfirNodeVisitor<bool>.VisitAwaitNode(AwaitNode awaitNode)
-        {
-            WillTakeAddress(awaitNode.InputTerminal);
-            // It may be the case that our output variable is the same as an upstream variable (e.g., because
-            // it represents a passthrough of an async node). In that case we should reuse the value source
-            // we already have for it.
-            WillInitializeWithValue(awaitNode.OutputTerminal);
-            return true;
-        }
-
-        bool IInternalDfirNodeVisitor<bool>.VisitCreateMethodCallPromise(CreateMethodCallPromise createMethodCallPromise)
-        {
-            foreach (Terminal inputTerminal in createMethodCallPromise.InputTerminals)
-            {
-                WillGetValue(inputTerminal);
-            }
-            WillInitializeWithValue(createMethodCallPromise.PromiseTerminal);
-            return true;
-        }
-
-        bool IInternalDfirNodeVisitor<bool>.VisitDecomposeStructNode(DecomposeStructNode decomposeStructNode)
-        {
-            WillGetValue(decomposeStructNode.InputTerminals[0]);
-            decomposeStructNode.OutputTerminals.ForEach(WillInitializeWithValue);
-            return true;
-        }
-
-        bool IInternalDfirNodeVisitor<bool>.VisitPanicOrContinueNode(PanicOrContinueNode panicOrContinueNode)
-        {
-            WillGetValue(panicOrContinueNode.InputTerminal);
-            WillInitializeWithValue(panicOrContinueNode.OutputTerminal);
-            return true;
-        }
-
-        #endregion
-
-        #region IDfirStructureVisitor implementation
-
-        bool IDfirStructureVisitor<bool>.VisitLoop(Compiler.Nodes.Loop loop, StructureTraversalPoint traversalPoint)
-        {
-            switch (traversalPoint)
-            {
-                case StructureTraversalPoint.BeforeLeftBorderNodes:
-                    foreach (Tunnel outputTunnel in loop.BorderNodes.OfType<Tunnel>().Where(tunnel => tunnel.Direction == Direction.Output))
-                    {
-                        // TODO: these tunnels are required to have local allocations for now.
-                        // As with output tunnels of conditionally-executing Frames, it would be nice
-                        // to treat these as Phi ValueSources.
-                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
-                    }
-                    break;
-                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    LoopConditionTunnel loopCondition = loop.BorderNodes.OfType<LoopConditionTunnel>().First();
-                    Terminal loopConditionInput = loopCondition.InputTerminals[0];
-                    WillGetValue(loopConditionInput);
-                    break;
-            }
-            return true;
-        }
-
-        bool IDfirStructureVisitor<bool>.VisitFrame(Frame frame, StructureTraversalPoint traversalPoint)
-        {
-            if (frame.DoesStructureExecuteConditionally())
-            {
-                VariableUsage conditionVariableUsage = GetVariableUsageForVariable(frame.GetConditionVariable());
-                if (traversalPoint == StructureTraversalPoint.BeforeLeftBorderNodes)
-                {
-                    conditionVariableUsage.WillInitializeWithValue(_currentGroup);
-                }
-                else if (traversalPoint == StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram)
-                {
-                    conditionVariableUsage.WillGetValue(_currentGroup);
-                }
-            }
-            return true;
-        }
-
-        bool IDfirStructureVisitor<bool>.VisitOptionPatternStructure(OptionPatternStructure optionPatternStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
-        {
-            switch (traversalPoint)
-            {
-                case StructureTraversalPoint.BeforeLeftBorderNodes:
-                    WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
-                    break;
-                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    if (nestedDiagram == optionPatternStructure.Diagrams[0])
-                    {
-                        WillGetValue(optionPatternStructure.Selector.InputTerminals[0]);
-                        WillInitializeWithValue(optionPatternStructure.Selector.OutputTerminals[0]);
-                    }
-                    break;
-                case StructureTraversalPoint.AfterDiagram:
-                    foreach (Tunnel outputTunnel in optionPatternStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
-                    {
-                        Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
-                        WillGetValue(inputTerminal);
-                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
-                    }
-                    break;
-            }
-            return true;
-        }
-
-        bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
-        {
-            switch (traversalPoint)
-            {
-                case StructureTraversalPoint.BeforeLeftBorderNodes:
-                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
-                    break;
-                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
-                    foreach (NationalInstruments.Dfir.BorderNode borderNode in variantMatchStructure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
-                    {
-                        WillInitializeWithValue(borderNode.OutputTerminals[nestedDiagram.Index]);
-                    }
-                    break;
-                case StructureTraversalPoint.AfterDiagram:
-                    foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
-                    {
-                        Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
-                        WillGetValue(inputTerminal);
-                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
-                    }
-                    break;
-            }
-            return true;
-        }
-
-        #endregion
-
-        #region IVisitationHandler implementation
-
-        bool IVisitationHandler<bool>.VisitFrameSkippedBlockVisitation(FrameSkippedBlockVisitation visitation)
-        {
-            foreach (Tunnel tunnel in visitation.Frame.BorderNodes.OfType<Tunnel>().Where(t => t.Direction == Direction.Output))
-            {
-                // TODO: these tunnels require local allocations for now.
-                // It would be nicer to allow them to be Phi values--i.e., ValueSources that can be
-                // initialized by values from different predecessor blocks, but may not change
-                // after initialization.
-                WillUpdateValue(tunnel.OutputTerminals[0]);
-            }
+            _variableUsages[shareValue.User] = _variableUsages[shareValue.Provider];
             return true;
         }
 
@@ -784,7 +312,6 @@ namespace Rebar.RebarTarget
 
         private class VariableUsage
         {
-            private LLVMValueRef? _constantValue;
             private HashSet<string> _liveFunctionNames = new HashSet<string>();
 
             public VariableUsage ReferencedVariableUsage { get; private set; }
@@ -798,20 +325,6 @@ namespace Rebar.RebarTarget
             public bool TakesAddress { get; private set; }
 
             public Direction ParameterDirection { get; private set; } = Direction.Unknown;
-
-            public bool TryGetConstantInitialValue(out LLVMValueRef value)
-            {
-                if (_constantValue != null)
-                {
-                    value = _constantValue.Value;
-                    return true;
-                }
-                else
-                {
-                    value = default(LLVMValueRef);
-                    return false;
-                }
-            }
 
             public bool UpdatesValue { get; private set; }
 
@@ -848,12 +361,6 @@ namespace Rebar.RebarTarget
             {
                 _liveFunctionNames.Add(inGroup.FunctionId);
                 TakesAddress = true;
-            }
-
-            public void WillInitializeWithCompileTimeConstant(AsyncStateGroup inGroup, LLVMValueRef constantValue)
-            {
-                _liveFunctionNames.Add(inGroup.FunctionId);
-                _constantValue = constantValue;
             }
 
             public void WillUpdateValue(AsyncStateGroup inGroup)

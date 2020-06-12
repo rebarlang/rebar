@@ -21,11 +21,10 @@ namespace Rebar.RebarTarget.LLVM
             false);
 
         public AsynchronousFunctionModuleBuilder(
-            Module module,
             FunctionCompilerSharedData sharedData,
             string functionName,
             IEnumerable<AsyncStateGroup> asyncStateGroups)
-            : base(module, sharedData)
+            : base(sharedData)
         {
             _functionName = functionName;
             _asyncStateGroups = asyncStateGroups;
@@ -39,7 +38,7 @@ namespace Rebar.RebarTarget.LLVM
                     fireCountFields[asyncStateGroup] = SharedData.AllocationSet.CreateStateField($"{groupName}FireCount", NITypes.Int32);
                 }
             }
-            SharedData.AllocationSet.InitializeStateType(module, functionName);
+            SharedData.AllocationSet.InitializeStateType(sharedData.Module, functionName);
             LLVMTypeRef groupFunctionType = LLVMTypeRef.FunctionType(
                 SharedData.Context.VoidType,
                 new LLVMTypeRef[] { LLVMTypeRef.PointerType(SharedData.AllocationSet.StateType, 0u) },
@@ -92,7 +91,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMBasicBlockRef entryBlock = initializeStateFunction.AppendBasicBlock("entry");
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMValueRef statePtr = builder.CreateMalloc(SharedData.AllocationSet.StateType, "statePtr");
+            LLVMValueRef statePtr = SharedData.ModuleContext.CreateMalloc(builder, SharedData.AllocationSet.StateType, "statePtr");
             CurrentState = new OuterFunctionCompilerState(initializeStateFunction, builder) { StateMalloc = statePtr };
             GenerateStoreCompletionState(RuntimeConstants.FunctionNotDoneStatus);
 

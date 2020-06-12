@@ -2,6 +2,7 @@
 using NationalInstruments.CommonModel;
 using NationalInstruments.DataTypes;
 using NationalInstruments.Dfir;
+using Rebar.Common;
 
 namespace Rebar.Compiler.Nodes
 {
@@ -18,11 +19,14 @@ namespace Rebar.Compiler.Nodes
         {
             InputTerminal = copyInfo.GetMappingFor(nodeToCopy.InputTerminal);
             OutputTerminal = copyInfo.GetMappingFor(nodeToCopy.OutputTerminal);
+            PollResultVariable = nodeToCopy.PollResultVariable;
         }
 
         public Terminal InputTerminal { get; }
 
         public Terminal OutputTerminal { get; }
+
+        public VariableReference PollResultVariable { get; set; }
 
         protected override Node CopyNodeInto(Node newParentNode, NodeCopyInfo copyInfo)
         {

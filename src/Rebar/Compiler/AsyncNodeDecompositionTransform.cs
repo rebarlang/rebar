@@ -130,6 +130,13 @@ namespace Rebar.Compiler
                     createMethodCallPromise.GetTypeVariableSet().CreateTypeVariableReferenceFromNIType(promiseType));
 
                 awaitNode = ConnectNewNodeToOutputTerminalWithOutputFacade(createMethodCallPromise, diagram => new AwaitNode(diagram), awaitOutputType);
+                VariableSet variableSet = awaitNode.GetVariableSet();
+                TypeVariableReference outputTypeVariable = awaitNode.OutputTerminal.GetTrueVariable().TypeVariableReference;
+                TypeVariableReference pollResultTypeVariable = variableSet.TypeVariableSet.CreateReferenceToOptionType(outputTypeVariable);
+                awaitNode.PollResultVariable = variableSet.CreateNewVariable(
+                    diagramId: 0,
+                    variableType: pollResultTypeVariable,
+                    mutable: false);
             }
 
             Node outputNode = awaitNode;
@@ -187,6 +194,14 @@ namespace Rebar.Compiler
             FunctionalNode createPromiseNode = CreateInputReplacementNode(functionalNode, diagram => CreateFunctionalNodeWithFacade(diagram, createPromiseSignature));
             AwaitNode awaitNode = ConnectNewNodeToOutputTerminal(createPromiseNode, diagram => new AwaitNode(diagram));
             ConnectOutputTerminal(functionalNode.OutputTerminals[0], awaitNode.OutputTerminal);
+
+            VariableSet variableSet = awaitNode.GetVariableSet();
+            TypeVariableReference outputTypeVariable = awaitNode.OutputTerminal.GetTrueVariable().TypeVariableReference;
+            TypeVariableReference pollResultTypeVariable = variableSet.TypeVariableSet.CreateReferenceToOptionType(outputTypeVariable);
+            awaitNode.PollResultVariable = variableSet.CreateNewVariable(
+                diagramId: 0,
+                variableType: pollResultTypeVariable,
+                mutable: false);
 
             functionalNode.RemoveFromGraph();
         }

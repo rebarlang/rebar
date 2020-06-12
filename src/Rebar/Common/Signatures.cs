@@ -314,6 +314,18 @@ namespace Rebar.Common
                 "iterator");
             StringSliceToStringSplitIteratorType = functionTypeBuilder.CreateType();
 
+            functionTypeBuilder = NITypes.Factory.DefineFunction("StringFromByteSlice");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInputOutput(
+                functionTypeBuilder,
+                NITypes.UInt8.CreateSlice().CreateImmutableReference(tLifetimeParameter),
+                "byteSliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                NITypes.String,
+                "string");
+            StringFromByteSliceType = functionTypeBuilder.CreateType();
+
             functionTypeBuilder = NITypes.Factory.DefineFunction("VectorCreate");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
             AddOutput(
@@ -397,6 +409,32 @@ namespace Rebar.Common
                 tDataParameter.CreatePolymorphicReference(tLifetimeParameter, tMutabilityParameter).CreateOption(),
                 "elementRef");
             SliceIndexType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SliceToIterator");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInput(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreateImmutableReference(tLifetimeParameter),
+                "sliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                tDataParameter.CreateSliceIterator(tLifetimeParameter),
+                "iterator");
+            SliceToIteratorType = functionTypeBuilder.CreateType();
+
+            functionTypeBuilder = NITypes.Factory.DefineFunction("SliceToMutableIterator");
+            tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TElem");
+            tLifetimeParameter = AddGenericLifetimeTypeParameter(functionTypeBuilder, "TLife");
+            AddInput(
+                functionTypeBuilder,
+                tDataParameter.CreateSlice().CreateMutableReference(tLifetimeParameter),
+                "sliceRef");
+            AddOutput(
+                functionTypeBuilder,
+                tDataParameter.CreateSliceMutableIterator(tLifetimeParameter),
+                "iterator");
+            SliceToMutableIteratorType = functionTypeBuilder.CreateType();
 
             functionTypeBuilder = NITypes.Factory.DefineFunction("CreateLockingCell");
             tDataParameter = AddGenericDataTypeParameter(functionTypeBuilder, "TData");
@@ -595,6 +633,8 @@ namespace Rebar.Common
 
         public static NIType StringFromSliceType { get; }
 
+        public static NIType StringFromByteSliceType { get; }
+
         public static NIType StringToSliceType { get; }
 
         public static NIType StringConcatType { get; }
@@ -616,6 +656,10 @@ namespace Rebar.Common
         public static NIType VectorRemoveLastType { get; }
 
         public static NIType SliceIndexType { get; }
+
+        public static NIType SliceToIteratorType { get; }
+
+        public static NIType SliceToMutableIteratorType { get; }
 
         public static NIType CreateLockingCellType { get; }
 

@@ -151,7 +151,7 @@ namespace Tests.Rebar.Unit.Execution
             AssertNoOutput(executionInstance);
         }
 
-        // Failing because input tunnels on OptionPatternStructure aren't supported
+        // Failing because the OptionPatternStructure doesn't correctly skip its interior after a panic
         // [TestMethod]
         public void PanickingUnwrapOptionIntoUnwrapOptionStructure_Execute_StructureDoesNotExecute()
         {
@@ -162,6 +162,7 @@ namespace Tests.Rebar.Unit.Execution
             Tunnel inputTunnel = CreateInputTunnel(optionPatternStructure);
             Wire.Create(function.BlockDiagram, unwrap.OutputTerminals[0], inputTunnel.InputTerminals[0]);
             ConnectOutputToOutputTerminal(inputTunnel.OutputTerminals[0]);
+            ConnectOutputToOutputTerminal(inputTunnel.OutputTerminals[1]);
 
             TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
 

@@ -8,7 +8,7 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void BuildVectorCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCreateFunction)
+        internal static void BuildVectorCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorCreateFunction)
         {
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
 
@@ -18,7 +18,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(entryBlock);
             LLVMValueRef vectorPtr = vectorCreateFunction.GetParam(0u),
                 vectorCapacity = moduleContext.LLVMContext.AsLLVMValue(4),
-                allocationPtr = builder.CreateArrayMalloc(elementLLVMType, vectorCapacity, "allocationPtr"),
+                allocationPtr = moduleContext.CreateArrayMalloc(builder, elementLLVMType, vectorCapacity, "allocationPtr"),
                 vector = builder.BuildStructValue(
                     moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType),
                     new LLVMValueRef[] { allocationPtr, moduleContext.LLVMContext.AsLLVMValue(0), vectorCapacity },
@@ -27,7 +27,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorInitializeFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorInitializeFunction)
+        internal static void BuildVectorInitializeFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorInitializeFunction)
         {
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
             LLVMTypeRef vectorLLVMType = moduleContext.LLVMContext.CreateLLVMVectorType(elementLLVMType);
@@ -39,7 +39,7 @@ namespace Rebar.RebarTarget.LLVM
             LLVMValueRef element = vectorInitializeFunction.GetParam(0u),
                 size = vectorInitializeFunction.GetParam(1u),
                 vectorPtr = vectorInitializeFunction.GetParam(2u),
-                allocationPtr = builder.CreateArrayMalloc(elementLLVMType, size, "allocationPtr");
+                allocationPtr = moduleContext.CreateArrayMalloc(builder, elementLLVMType, size, "allocationPtr");
             LLVMBasicBlockRef loopStartBlock = vectorInitializeFunction.AppendBasicBlock("loopStart"),
                 loopBodyBlock = vectorInitializeFunction.AppendBasicBlock("loopBody"),
                 loopEndBlock = vectorInitializeFunction.AppendBasicBlock("loopEnd");
@@ -83,7 +83,7 @@ namespace Rebar.RebarTarget.LLVM
                 existingVectorAllocationPtr = builder.CreateExtractValue(existingVector, 0u, "existingVectorAllocationPtr"),
                 existingVectorSize = builder.CreateExtractValue(existingVector, 1u, "existingVectorSize"),
                 existingVectorCapacity = builder.CreateExtractValue(existingVector, 2u, "existingVectorCapacity"),
-                newVectorAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, existingVectorCapacity, "newVectorAllocationPtr");
+                newVectorAllocationPtr = moduleContext.CreateArrayMalloc(builder, elementLLVMType, existingVectorCapacity, "newVectorAllocationPtr");
 
             LLVMValueRef elementCloneFunction;
             if (moduleContext.TryGetCloneFunction(elementType, out elementCloneFunction))
@@ -167,7 +167,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorToSliceFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorToSliceFunction)
+        internal static void BuildVectorToSliceFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorToSliceFunction)
         {
             LLVMTypeRef sliceElementType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
             LLVMTypeRef sliceReferenceType = moduleContext.LLVMContext.CreateLLVMSliceReferenceType(sliceElementType);
@@ -185,7 +185,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildVectorAppendFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorAppendFunction)
+        internal static void BuildVectorAppendFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorAppendFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
 
@@ -244,7 +244,7 @@ namespace Rebar.RebarTarget.LLVM
                 // TODO: ideally handle integer overflow; also there are ways this could be smarter
                 newVectorCapacity = builder.CreateMul(oldVectorCapacity, moduleContext.LLVMContext.AsLLVMValue(2), "newVectorCapacity"),
                 // TODO: handle the case where the allocation fails
-                newAllocationPtr = builder.CreateArrayMalloc(elementLLVMType, newVectorCapacity, "newAllocationPtr"),
+                newAllocationPtr = moduleContext.CreateArrayMalloc(builder, elementLLVMType, newVectorCapacity, "newAllocationPtr"),
                 oldVectorCapacityExtend = builder.CreateSExt(oldVectorCapacity, moduleContext.LLVMContext.Int64Type, "oldVectorCapacityExtend"),
                 bytesToCopy = builder.CreateMul(oldVectorCapacityExtend, elementLLVMType.SizeOf(), "bytesToCopy");
             moduleContext.CreateCallToCopyMemory(builder, newAllocationPtr, oldAllocationPtr, bytesToCopy);
@@ -256,7 +256,7 @@ namespace Rebar.RebarTarget.LLVM
             return vectorGrowFunction;
         }
 
-        private static void BuildVectorRemoveLastFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorRemoveLastFunction)
+        internal static void BuildVectorRemoveLastFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef vectorRemoveLastFunction)
         {
             NIType elementType = signature.GetGenericParameters().First();
             LLVMTypeRef elementLLVMType = moduleContext.LLVMContext.AsLLVMType(elementType),

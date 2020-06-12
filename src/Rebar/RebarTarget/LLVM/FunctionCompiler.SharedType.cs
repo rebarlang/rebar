@@ -8,19 +8,19 @@ namespace Rebar.RebarTarget.LLVM
 {
     internal partial class FunctionCompiler
     {
-        private static void BuildSharedCreateFunction(FunctionModuleContext functionCompiler, NIType signature, LLVMValueRef sharedCreateFunction)
+        internal static void BuildSharedCreateFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef sharedCreateFunction)
         {
-            LLVMTypeRef valueType = functionCompiler.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
+            LLVMTypeRef valueType = moduleContext.LLVMContext.AsLLVMType(signature.GetGenericParameters().First());
 
             LLVMBasicBlockRef entryBlock = sharedCreateFunction.AppendBasicBlock("entry");
-            var builder = functionCompiler.LLVMContext.CreateIRBuilder();
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
 
             builder.PositionBuilderAtEnd(entryBlock);
-            LLVMTypeRef refCountType = functionCompiler.LLVMContext.CreateLLVMRefCountType(valueType);
-            LLVMValueRef refCountAllocationPtr = builder.CreateMalloc(refCountType, "refCountAllocationPtr"),
+            LLVMTypeRef refCountType = moduleContext.LLVMContext.CreateLLVMRefCountType(valueType);
+            LLVMValueRef refCountAllocationPtr = moduleContext.CreateMalloc(builder, refCountType, "refCountAllocationPtr"),
                 refCount = builder.BuildStructValue(
                     refCountType,
-                    new LLVMValueRef[] { functionCompiler.LLVMContext.AsLLVMValue(1), sharedCreateFunction.GetParam(0u) },
+                    new LLVMValueRef[] { moduleContext.LLVMContext.AsLLVMValue(1), sharedCreateFunction.GetParam(0u) },
                     "refCount");
             builder.CreateStore(refCount, refCountAllocationPtr);
             LLVMValueRef sharedPtr = sharedCreateFunction.GetParam(1u);
@@ -28,7 +28,7 @@ namespace Rebar.RebarTarget.LLVM
             builder.CreateRetVoid();
         }
 
-        private static void BuildSharedGetValueFunction(FunctionModuleContext functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
+        internal static void BuildSharedGetValueFunction(FunctionModuleContext functionCompiler, NIType signature, LLVMValueRef sharedGetValueFunction)
         {
             LLVMBasicBlockRef entryBlock = sharedGetValueFunction.AppendBasicBlock("entry");
             var builder = functionCompiler.LLVMContext.CreateIRBuilder();

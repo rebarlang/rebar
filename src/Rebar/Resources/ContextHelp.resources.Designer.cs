@@ -2268,6 +2268,78 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string SliceToIterator_Description {
+            get {
+                return ResourceManager.GetString("SliceToIterator_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to iterator.
+        /// </summary>
+        internal static string SliceToIterator_iterator_Name {
+            get {
+                return ResourceManager.GetString("SliceToIterator_iterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Slice To Iterator.
+        /// </summary>
+        internal static string SliceToIterator_Name {
+            get {
+                return ResourceManager.GetString("SliceToIterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice reference.
+        /// </summary>
+        internal static string SliceToIterator_sliceRef_Name {
+            get {
+                return ResourceManager.GetString("SliceToIterator_sliceRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SliceToMutableIterator_Description {
+            get {
+                return ResourceManager.GetString("SliceToMutableIterator_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to iterator.
+        /// </summary>
+        internal static string SliceToMutableIterator_iterator_Name {
+            get {
+                return ResourceManager.GetString("SliceToMutableIterator_iterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Slice To Mutable Iterator.
+        /// </summary>
+        internal static string SliceToMutableIterator_Name {
+            get {
+                return ResourceManager.GetString("SliceToMutableIterator_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to slice reference.
+        /// </summary>
+        internal static string SliceToMutableIterator_sliceRef_Name {
+            get {
+                return ResourceManager.GetString("SliceToMutableIterator_sliceRef_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string SomeConstructorNode_Description {
             get {
                 return ResourceManager.GetString("SomeConstructorNode_Description", resourceCulture);
@@ -2415,6 +2487,51 @@ namespace Rebar.Resources {
         internal static string StringConcat_secondSlice_out_Name {
             get {
                 return ResourceManager.GetString("StringConcat_secondSlice_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to byte slice.
+        /// </summary>
+        internal static string StringFromByteSlice_byteSliceRef_in_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_byteSliceRef_in_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to byte slice.
+        /// </summary>
+        internal static string StringFromByteSlice_byteSliceRef_out_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_byteSliceRef_out_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string StringFromByteSlice_Description {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to String From Byte Slice.
+        /// </summary>
+        internal static string StringFromByteSlice_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to string.
+        /// </summary>
+        internal static string StringFromByteSlice_string_Name {
+            get {
+                return ResourceManager.GetString("StringFromByteSlice_string_Name", resourceCulture);
             }
         }
         

@@ -12,14 +12,13 @@ namespace Rebar.RebarTarget.LLVM
     {
         private LLVMValueRef _localDoneAllocationPtr;
 
-        protected FunctionModuleBuilder(Module module, FunctionCompilerSharedData sharedData)
+        protected FunctionModuleBuilder(FunctionCompilerSharedData sharedData)
         {
-            Module = module;
             SharedData = sharedData;
             AsyncStateGroups = new Dictionary<AsyncStateGroup, AsyncStateGroupData>();
         }
 
-        public Module Module { get; }
+        public Module Module => SharedData.Module;
 
         protected FunctionCompilerSharedData SharedData { get; }
 
@@ -89,6 +88,12 @@ namespace Rebar.RebarTarget.LLVM
             }
 
             var conditionalContinuation = asyncStateGroup.Continuation as ConditionallyScheduleGroupsContinuation;
+            if (conditionalContinuation != null)
+            {
+                var continuationConditionValueSource = (IInitializableValueSource)SharedData.VariableStorage.GetValueSourceForVariable(asyncStateGroup.ContinuationCondition);
+                continuationConditionValueSource.InitializeValue(Builder, SharedData.Context.AsLLVMValue(false));
+            }
+
             if (asyncStateGroup.IsSkippable)
             {
                 if (asyncStateGroup.FunctionId == asyncStateGroup.Label && this is SynchronousFunctionModuleBuilder)
@@ -108,7 +113,7 @@ namespace Rebar.RebarTarget.LLVM
 
             foreach (Visitation visitation in asyncStateGroup.Visitations)
             {
-                visitation.Visit(SharedData.VisitationHandler);
+                visitation.Visit<bool>(SharedData.VisitationHandler);
             }
 
             var unconditionalContinuation = asyncStateGroup.Continuation as UnconditionallySchduleGroupsContinuation;
@@ -148,7 +153,7 @@ namespace Rebar.RebarTarget.LLVM
             }
             if (conditionalContinuation != null)
             {
-                LLVMValueRef condition = SharedData.VariableStorage.GetContinuationConditionVariable(asyncStateGroup).GetValue(Builder);
+                LLVMValueRef condition = SharedData.VariableStorage.GetValueSourceForVariable(asyncStateGroup.ContinuationCondition).GetValue(Builder);
 
                 bool isBooleanCondition = conditionalContinuation.SuccessorConditionGroups.Count == 2;
                 bool allSynchronousContinuations = conditionalContinuation.SuccessorConditionGroups.All(group =>

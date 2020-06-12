@@ -10,11 +10,10 @@ namespace Rebar.RebarTarget.LLVM
         private readonly IEnumerable<AsyncStateGroup> _asyncStateGroups;
 
         public SynchronousFunctionModuleBuilder(
-            Module module,
             FunctionCompilerSharedData sharedData,
             string functionName,
             IEnumerable<AsyncStateGroup> asyncStateGroups)
-            : base(module, sharedData)
+            : base(sharedData)
         {
             _functionName = functionName;
             _asyncStateGroups = asyncStateGroups;

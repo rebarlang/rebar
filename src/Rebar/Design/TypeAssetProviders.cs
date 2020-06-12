@@ -44,6 +44,18 @@ namespace Rebar.Design
                 {
                     return new QueryResult<T>(typeAssetProvider as T);
                 }
+                if (type.IsSlice())
+                {
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Slice") as T);
+                }
+                if (type.IsSliceIteratorType())
+                {
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Slice Iterator") as T);
+                }
+                if (type.IsSliceMutableIteratorType())
+                {
+                    return new QueryResult<T>(new GenericReferenceTypeAssetProvider("Slice Mutable Iterator") as T);
+                }
             }
             return new QueryResult<T>();
         }

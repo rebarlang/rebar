@@ -1113,6 +1113,30 @@
   <data name="SetNotifierValue_writer_Name" xml:space="preserve">
     <value>notifier writer</value>
   </data>
+  <data name="SliceToIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SliceToIterator_iterator_Name" xml:space="preserve">
+    <value>iterator</value>
+  </data>
+  <data name="SliceToIterator_Name" xml:space="preserve">
+    <value>Slice To Iterator</value>
+  </data>
+  <data name="SliceToIterator_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
+  <data name="SliceToMutableIterator_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SliceToMutableIterator_iterator_Name" xml:space="preserve">
+    <value>iterator</value>
+  </data>
+  <data name="SliceToMutableIterator_Name" xml:space="preserve">
+    <value>Slice To Mutable Iterator</value>
+  </data>
+  <data name="SliceToMutableIterator_sliceRef_Name" xml:space="preserve">
+    <value>slice reference</value>
+  </data>
   <data name="StructTypeBuilder_Description" xml:space="preserve">
     <value />
   </data>
@@ -1139,6 +1163,21 @@
   </data>
   <data name="UnwrapOption_value_Name" xml:space="preserve">
     <value>value</value>
+  </data>
+  <data name="StringFromByteSlice_byteSliceRef_in_Name" xml:space="preserve">
+    <value>byte slice</value>
+  </data>
+  <data name="StringFromByteSlice_byteSliceRef_out_Name" xml:space="preserve">
+    <value>byte slice</value>
+  </data>
+  <data name="StringFromByteSlice_Description" xml:space="preserve">
+    <value />
+  </data>
+  <data name="StringFromByteSlice_Name" xml:space="preserve">
+    <value>String From Byte Slice</value>
+  </data>
+  <data name="StringFromByteSlice_string_Name" xml:space="preserve">
+    <value>string</value>
   </data>
   <data name="VariantMatchStructureSelector_Description" xml:space="preserve">
     <value />

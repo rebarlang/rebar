@@ -126,6 +126,11 @@ namespace Rebar.RebarTarget.LLVM
                         {
                             return $"notifierReaderPromise[{StringifyType(innerType)}]";
                         }
+                        if (type.TryDestructureSliceIteratorType(out innerType)
+                            || type.TryDestructureSliceMutableIteratorType(out innerType))
+                        {
+                            return $"sliceiterator[{StringifyType(innerType)}]";
+                        }
                         if (type == DataTypes.RangeIteratorType)
                         {
                             return "rangeiterator";

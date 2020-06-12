@@ -11,6 +11,7 @@ using NationalInstruments.Dfir;
 using NationalInstruments.ExecutionFramework;
 using Rebar.Compiler;
 using Rebar.Compiler.Nodes;
+using Rebar.RebarTarget.LLVM;
 using static NationalInstruments.Dfir.DfirDependencyNameStagingUtilities;
 
 namespace Rebar.RebarTarget
@@ -142,16 +143,23 @@ namespace Rebar.RebarTarget
             var asyncStateGrouper = new AsyncStateGrouper();
             asyncStateGrouper.Execute(dfirRoot, cancellationToken);
             IEnumerable<AsyncStateGroup> asyncStateGroups = asyncStateGrouper.GetAsyncStateGroups();
-#if DEBUG
-            string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
-#endif
-            bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
-            bool mayPanic = asyncStateGroups.Any(VisitationExtensions.GroupStartsWithPanicOrContinue);
 
             using (var contextWrapper = new LLVM.ContextWrapper())
             {
                 var module = contextWrapper.CreateModule("module");
                 var functionImporter = new LLVM.FunctionImporter(contextWrapper, module);
+
+                var codeGenExpander = new CodeGenExpander(
+                    dfirRoot,
+                    new LLVM.FunctionModuleContext(contextWrapper, module, functionImporter),
+                    calleesMayPanic);
+                asyncStateGroups.ForEach(codeGenExpander.ExpandAsyncStateGroup);
+
+    #if DEBUG
+                string prettyPrintAsyncStateGroups = asyncStateGroups.PrettyPrintAsyncStateGroups();
+    #endif
+                bool isYielding = asyncStateGroups.Select(g => g.FunctionId).Distinct().HasMoreThan(1);
+                bool mayPanic = asyncStateGroups.Any(group => group.StartsWithPanicOrContinue);
 
                 var variableStorage = new LLVM.FunctionVariableStorage();
                 var allocator = new Allocator(contextWrapper, variableStorage, asyncStateGroups);
@@ -162,16 +170,18 @@ namespace Rebar.RebarTarget
                 var parameterInfos = dfirRoot.DataItems.OrderBy(d => d.ConnectorPaneIndex).Select(ToParameterInfo).ToArray();
                 var sharedData = new LLVM.FunctionCompilerSharedData(
                     contextWrapper,
+                    module,
                     parameterInfos,
                     allocator.AllocationSet,
                     variableStorage,
                     functionImporter);
                 var moduleBuilder = isYielding
-                    ? new LLVM.AsynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups)
-                    : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(module, sharedData, compiledFunctionName, asyncStateGroups);
-                sharedData.VisitationHandler = new LLVM.FunctionCompiler(dfirRoot, moduleBuilder, sharedData, calleesMayPanic);
+                    ? new LLVM.AsynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups)
+                    : (LLVM.FunctionModuleBuilder)new LLVM.SynchronousFunctionModuleBuilder(sharedData, compiledFunctionName, asyncStateGroups);
+                sharedData.VisitationHandler = new LLVM.FunctionCompiler(moduleBuilder, sharedData, codeGenExpander.ReservedIndexCount);
 
                 moduleBuilder.CompileFunction();
+                module.VerifyAndThrowIfInvalid();
                 return new LLVM.FunctionCompileResult(new LLVM.ContextFreeModule(module), isYielding, mayPanic);
             }
         }

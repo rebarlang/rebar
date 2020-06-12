@@ -71,9 +71,7 @@ namespace Tests.Rebar.Unit.Execution
         private Tuple<DfirRoot, FunctionalNode> CreateInitializeVectorAndSliceIndexFunction(int elementValue, int index)
         {
             DfirRoot function = DfirRoot.Create();
-            FunctionalNode initializeVector = new FunctionalNode(function.BlockDiagram, Signatures.VectorInitializeType);
-            ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], NITypes.Int32, elementValue, false);
-            ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], NITypes.Int32, 4, false);
+            FunctionalNode initializeVector = CreateInitializeVectorWithIntegerConstants(function.BlockDiagram, elementValue, 4);
             FunctionalNode vectorToSlice = new FunctionalNode(function.BlockDiagram, Signatures.VectorToSliceType);
             Wire.Create(function.BlockDiagram, initializeVector.OutputTerminals[0], vectorToSlice.InputTerminals[0]);
             FunctionalNode sliceIndex = new FunctionalNode(function.BlockDiagram, Signatures.SliceIndexType);
@@ -135,6 +133,41 @@ namespace Tests.Rebar.Unit.Execution
             Wire.Create(loop.ParentDiagram, range.OutputTerminals[0], iterateTunnel.InputTerminals[0])
                 .SetWireBeginsMutableVariable(true);
             return iterateTunnel;
+        }
+
+        private FunctionalNode CreateInitializeVectorWithIntegerConstants(Diagram parentDiagram, int elementValue, int size)
+        {
+            FunctionalNode initializeVector = new FunctionalNode(parentDiagram, Signatures.VectorInitializeType);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[0], NITypes.Int32, elementValue, false);
+            ConnectConstantToInputTerminal(initializeVector.InputTerminals[1], NITypes.Int32, size, false);
+            return initializeVector;
+        }
+
+        [TestMethod]
+        public void InitializeVectorAndSumWithSliceIterator_Execute_CorrectSumValue()
+        {
+            DfirRoot function = DfirRoot.Create();
+            FunctionalNode initializeVector = CreateInitializeVectorWithIntegerConstants(function.BlockDiagram, 4, 4);
+            FunctionalNode vectorToSlice = new FunctionalNode(function.BlockDiagram, Signatures.VectorToSliceType);
+            Wire.Create(function.BlockDiagram, initializeVector.OutputTerminals[0], vectorToSlice.InputTerminals[0]);
+            FunctionalNode sliceToIterator = new FunctionalNode(function.BlockDiagram, Signatures.SliceToIteratorType);
+            Wire.Create(function.BlockDiagram, vectorToSlice.OutputTerminals[0], sliceToIterator.InputTerminals[0]);
+            Loop loop = new Loop(function.BlockDiagram);
+            CreateLoopConditionTunnel(loop);
+            IterateTunnel iterateTunnel = CreateIterateTunnel(loop);
+            BorrowTunnel borrowTunnel = CreateBorrowTunnel(loop, BorrowMode.Mutable);
+            ConnectConstantToInputTerminal(borrowTunnel.InputTerminals[0], NITypes.Int32, 0, true);
+            Wire.Create(function.BlockDiagram, sliceToIterator.OutputTerminals[0], iterateTunnel.InputTerminals[0])
+                .SetWireBeginsMutableVariable(true);
+            FunctionalNode accumulateAdd = new FunctionalNode(loop.Diagrams[0], Signatures.DefineMutatingBinaryFunction("AccumulateAdd", NITypes.Int32));
+            Wire.Create(loop.Diagrams[0], borrowTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[0]);
+            Wire.Create(loop.Diagrams[0], iterateTunnel.OutputTerminals[0], accumulateAdd.InputTerminals[1]);
+            FunctionalNode inspectNode = ConnectInspectToOutputTerminal(borrowTunnel.TerminateLifetimeTunnel.OutputTerminals[0]);
+
+            TestExecutionInstance executionInstance = CompileAndExecuteFunction(function);
+
+            byte[] inspectValue = executionInstance.GetLastValueFromInspectNode(inspectNode);
+            AssertByteArrayIsInt32(inspectValue, 16);
         }
     }
 }

@@ -125,12 +125,13 @@ namespace Rebar.Common
             {
                 get
                 {
-                    // TODO
-                    if (TypeParameters.Any())
-                    {
-                        return TypeParameters.First().Lifetime;
-                    }
-                    return Lifetime.Unbounded;
+                    // TODO: need to create a supertype lifetime of all bounded lifetimes
+                    // in TypeParameters
+                    Lifetime commonBoundedLifetime = TypeParameters
+                        .Select(t => t.Lifetime)
+                        .Where(l => l.IsBounded)
+                        .FirstOrDefault();
+                    return commonBoundedLifetime ?? Lifetime.Unbounded;
                 }
             }
         }

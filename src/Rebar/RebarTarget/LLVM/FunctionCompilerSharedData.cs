@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using LLVMSharp;
+using Rebar.RebarTarget.LLVM.CodeGen;
 
 namespace Rebar.RebarTarget.LLVM
 {
@@ -11,19 +13,24 @@ namespace Rebar.RebarTarget.LLVM
 
         public FunctionCompilerSharedData(
             ContextWrapper context,
+            Module module,
             IReadOnlyList<ParameterInfo> orderedParameters,
             FunctionAllocationSet allocationSet,
             FunctionVariableStorage variableStorage,
             FunctionImporter functionImporter)
         {
             Context = context;
+            Module = module;
             OrderedParameters = orderedParameters;
             AllocationSet = allocationSet;
             VariableStorage = variableStorage;
             FunctionImporter = functionImporter;
+            ModuleContext = new FunctionModuleContext(context, module, functionImporter);
         }
 
         public ContextWrapper Context { get; }
+
+        public Module Module { get; }
 
         public IReadOnlyList<ParameterInfo> OrderedParameters { get; }
 
@@ -31,7 +38,7 @@ namespace Rebar.RebarTarget.LLVM
 
         public FunctionVariableStorage VariableStorage { get; }
 
-        public IVisitationHandler<bool> VisitationHandler { get; set; }
+        public ICodeGenElementVisitor<bool> VisitationHandler { get; set; }
 
         public FunctionCompilerState CurrentState
         {
@@ -44,5 +51,7 @@ namespace Rebar.RebarTarget.LLVM
         }
 
         public FunctionImporter FunctionImporter { get; }
+
+        public FunctionModuleContext ModuleContext { get; }
     }
 }
