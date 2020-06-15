@@ -252,6 +252,21 @@ namespace Rebar.RebarTarget
             return true;
         }
 
+        bool ICodeGenElementVisitor<bool>.VisitBuildVariant(BuildVariant buildVariant)
+        {
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantTagValue(GetVariantTagValue getVariantTagValue)
+        {
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantFieldValue(GetVariantFieldValue getVariantFieldValue)
+        {
+            return true;
+        }
+
         bool ICodeGenElementVisitor<bool>.VisitGetConstant(GetConstant getConstant)
         {
             return true;

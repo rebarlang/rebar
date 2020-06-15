@@ -340,6 +340,7 @@
     <Compile Include="RebarTarget\LLVM\AsynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\BuildStruct.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\BuildVariant.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\Call.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\CallWithReturn.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\CodeGenElement.cs" />
@@ -349,6 +350,8 @@
     <Compile Include="RebarTarget\LLVM\CodeGen\GetStructFieldPointer.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\GetStructFieldValue.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\GetValue.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\GetVariantFieldValue.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\GetVariantTagValue.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\ICodeGenValueStorage.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\InitializeAsReference.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\InitializeValue.cs" />

@@ -1061,6 +1061,7 @@ namespace Rebar.RebarTarget
                 else
                 {
                     // Note: handled in VisitOptionPatternStructure/VisitVariantMatchStructure
+                    // handling it here would require this method to be diagram-specific
                 }
             }
         }
@@ -1080,115 +1081,62 @@ namespace Rebar.RebarTarget
 
         public IEnumerable<Visitation> VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
         {
-            WillGetValue(variantConstructorNode.InputTerminals[0]);
-            WillInitializeWithValue(variantConstructorNode.OutputTerminals[0]);
-            return true;
+            int startIndex = ReserveIndices(2);
+            yield return new GetValue(variantConstructorNode.InputTerminals[0].GetTrueVariable(), startIndex);
+            yield return new GetAddress(variantConstructorNode.OutputTerminals[0].GetTrueVariable(), startIndex + 1, forInitialize: true);
+            yield return new BuildVariant(startIndex, startIndex + 1, variantConstructorNode.SelectedFieldIndex);
         }
-
-#if FALSE
-        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
-        {
-            var fieldIndex = (byte)variantConstructorNode.SelectedFieldIndex;
-            LLVMTypeRef llvmVariantType = Context.AsLLVMType(variantConstructorNode.OutputTerminals[0].GetTrueVariable().Type);
-
-            // TODO: if we have to allocate, we should allocate directly into the ValueSource. There should at least be a
-            // ValueSource subclass that knows how to handle variant values.
-            // Another idea is to generate one function per variant field that takes the field type and returns the constructed variant value.
-            LLVMValueRef variantAlloca = Builder.CreateAlloca(llvmVariantType, "variantAlloca"),
-                variantAllocaTagFieldPtr = Builder.CreateStructGEP(variantAlloca, 0u, "variantAllocaTagFieldPtr"),
-                variantAllocaDataFieldPtr = Builder.CreateStructGEP(variantAlloca, 1u, "variantAllocaDataFieldPtr"),
-                inputValue = GetValueSource(variantConstructorNode.InputTerminals[0].GetTrueVariable()).GetValue(Builder),
-                bitCastAllocaFieldPtr = Builder.CreateBitCast(variantAllocaDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
-            Builder.CreateStore(Context.AsLLVMValue(fieldIndex), variantAllocaTagFieldPtr);
-            Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
-
-            LLVMValueRef loadedVariant = Builder.CreateLoad(variantAlloca, "loadedVariant");
-            Initialize(GetValueSource(variantConstructorNode.OutputTerminals[0].GetTrueVariable()), loadedVariant);
-            return true;
-        }
-#endif
 
         public IEnumerable<Visitation> VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
+            int startIndex;
             switch (traversalPoint)
             {
                 case StructureTraversalPoint.BeforeLeftBorderNodes:
-                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
-#if FALSE
-            ValueSource selectorInputSource = GetTerminalValueSource(variantMatchStructure.Selector.InputTerminals[0]);
-            LLVMValueRef variant = selectorInputSource.GetValue(Builder);
-            LLVMValueRef tag = Builder.CreateExtractValue(variant, 0, "tag");
-
-            LLVMValueRef conditionValue = tag;
-            if (variantMatchStructure.Diagrams.Count <= 2)
-            {
-                // TODO: just for now, truncate the tag to an i1. This will need to be fixed in order to handle >2 cases.
-                conditionValue = Builder.CreateTrunc(tag, Context.Int1Type, "truncatedTag");
-            }
-
-            Update(
-                _sharedData.VariableStorage.GetContinuationConditionVariable(_moduleBuilder.CurrentGroupData.AsyncStateGroup),
-                conditionValue);
-#endif
+                    startIndex = ReserveIndices(2);
+                    yield return new GetAddress(variantMatchStructure.Selector.InputTerminals[0].GetTrueVariable(), startIndex, forInitialize: false);
+                    yield return new GetVariantTagValue(startIndex, startIndex + 1);
+                    int tagIndex = startIndex + 1;
+                    if (variantMatchStructure.Diagrams.Count <= 2)
+                    {
+                        // TODO: just for now, truncate the tag to an i1. This will need to be fixed in order to handle >2 cases.
+                        tagIndex = ReserveIndices(1);
+                        yield return new Op((builder, valueStorage) =>
+                        {
+                            LLVMValueRef tag = valueStorage[startIndex + 1];
+                            valueStorage[tagIndex] = builder.CreateTrunc(tag, Context.Int1Type, "truncatedTag");
+                        });
+                    }
+                    yield return new UpdateValue(CurrentGroup.ContinuationCondition, tagIndex);
                     break;
                 case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
-                    WillGetValue(variantMatchStructure.Selector.InputTerminals[0]);
-                    foreach (NationalInstruments.Dfir.BorderNode borderNode in variantMatchStructure.BorderNodes.Where(bn => bn.Direction == Direction.Input))
-                    {
-                        WillInitializeWithValue(borderNode.OutputTerminals[nestedDiagram.Index]);
-                    }
-#if FALSE
-            // TODO: this should be in a diagram-specific VisitOptionPatternStructureSelector
-            int diagramIndex = variantMatchStructure.Diagrams.IndexOf(diagram);
-            DestructureSelectorValueWithTag(variantMatchStructure.Selector, diagramIndex);
+                    // TODO: ideally this should be in a diagram-specific VisitVariantMatchStructureSelector
+                    startIndex = ReserveIndices(2);
+                    yield return new GetAddress(variantMatchStructure.Selector.InputTerminals[0].GetTrueVariable(), startIndex, forInitialize: false);
 
-        private void DestructureSelectorValueWithTag(VariantMatchStructureSelector variantMatchStructureSelector, int diagramIndex)
-        {
-            ValueSource selectorInputAllocationSource = GetTerminalValueSource(variantMatchStructureSelector.InputTerminals[0]);
-            Terminal outputTerminal = variantMatchStructureSelector.OutputTerminals[diagramIndex];
-            ValueSource selectorOutputSource = GetTerminalValueSource(outputTerminal);
-            // TODO: if the outer structure and diagram initial blocks are all in the same function, we should be able
-            // to stash this read somewhere and reuse it
-            LLVMValueRef variant = selectorInputAllocationSource.GetValue(Builder);
-            LLVMValueRef alloca = Builder.CreateAlloca(variant.TypeOf().GetStructElementTypes()[1], "alloca");
-            LLVMValueRef genericTagValue = Builder.CreateExtractValue(variant, 1, "genericTagValue");
-            Builder.CreateStore(genericTagValue, alloca);
-            LLVMTypeRef elementLLVMType = Context.AsLLVMType(outputTerminal.GetTrueVariable().Type);
-            LLVMValueRef bitCastAlloca = Builder.CreateBitCast(alloca, LLVMTypeRef.PointerType(elementLLVMType, 0u), "bitCastAlloca");
-            LLVMValueRef loadedElement = Builder.CreateLoad(bitCastAlloca, "loadedElement");
-            Initialize(selectorOutputSource, loadedElement);
-        }
-
-#endif
+                    int diagramIndex = variantMatchStructure.Diagrams.IndexOf(nestedDiagram);
+                    Terminal outputTerminal = variantMatchStructure.Selector.OutputTerminals[diagramIndex];
+                    VariableReference fieldVariable = outputTerminal.GetTrueVariable();
+                    yield return new GetVariantFieldValue(startIndex, startIndex + 1, fieldVariable.Type);
+                    yield return new InitializeValue(fieldVariable, startIndex + 1);
                     break;
                 case StructureTraversalPoint.AfterDiagram:
                     foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
                     {
                         Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
-                        WillGetValue(inputTerminal);
-                        WillUpdateValue(outputTunnel.OutputTerminals[0]);
+                        startIndex = ReserveIndices(1);
+                        yield return new GetValue(inputTerminal.GetTrueVariable(), startIndex);
+                        yield return new UpdateValue(outputTunnel.OutputTerminals[0].GetTrueVariable(), startIndex);
                     }
-#if FALSE
-            LLVMBasicBlockRef currentBlock = Builder.GetInsertBlock();
-            foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
-            {
-                Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == diagram);
-                ValueSource inputTerminalValueSource = GetTerminalValueSource(inputTerminal);
-                ValueSource outputTerminalValueSource = GetTerminalValueSource(outputTunnel.OutputTerminals[0]);
-                // TODO: these Tunnel output variables should also be able to be Phi ValueSources
-                Update(outputTerminalValueSource, inputTerminalValueSource.GetValue(Builder));
-            }
-#endif
                     break;
             }
-            return true;
         }
 
         public IEnumerable<Visitation> VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
         {
             // The selector output terminals are initialized in VisitVariantMatchStructure, each in their own
             // diagram initial group.
-            return true;
+            return Enumerable.Empty<Visitation>();
         }
 
         public IEnumerable<Visitation> VisitWire(Wire wire)

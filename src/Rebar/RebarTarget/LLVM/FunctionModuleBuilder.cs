@@ -91,7 +91,8 @@ namespace Rebar.RebarTarget.LLVM
             if (conditionalContinuation != null)
             {
                 var continuationConditionValueSource = (IInitializableValueSource)SharedData.VariableStorage.GetValueSourceForVariable(asyncStateGroup.ContinuationCondition);
-                continuationConditionValueSource.InitializeValue(Builder, SharedData.Context.AsLLVMValue(false));
+                LLVMValueRef initialConditionValue = LLVMSharp.LLVM.ConstNull(SharedData.Context.AsLLVMType(asyncStateGroup.ContinuationCondition.Type));
+                continuationConditionValueSource.InitializeValue(Builder, initialConditionValue);
             }
 
             if (asyncStateGroup.IsSkippable)

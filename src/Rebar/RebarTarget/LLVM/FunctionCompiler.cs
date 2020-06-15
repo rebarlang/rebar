@@ -316,6 +316,39 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        bool ICodeGenElementVisitor<bool>.VisitBuildVariant(BuildVariant buildVariant)
+        {
+            LLVMValueRef variantAddress = _codeGenValues[buildVariant.VariantAddressIndex],
+                variantTagFieldPtr = Builder.CreateStructGEP(variantAddress, 0u, "variantTagFieldPtr"),
+                variantDataFieldPtr = Builder.CreateStructGEP(variantAddress, 1u, "variantDataFieldPtr"),
+                inputValue = _codeGenValues[buildVariant.FieldValueIndex],
+                bitCastAllocaFieldPtr = Builder.CreateBitCast(variantDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
+            Builder.CreateStore(Context.AsLLVMValue((byte)buildVariant.FieldIndex), variantTagFieldPtr);
+            Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantTagValue(GetVariantTagValue getVariantTagValue)
+        {
+            LLVMValueRef variantAddress = _codeGenValues[getVariantTagValue.VariantAddressIndex],
+                variantTagFieldPtr = Builder.CreateStructGEP(variantAddress, 0u, "variantTagFieldPtr");
+            _codeGenValues[getVariantTagValue.TagIndex] = Builder.CreateLoad(variantTagFieldPtr, "tag");
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantFieldValue(GetVariantFieldValue getVariantFieldValue)
+        {
+            LLVMTypeRef fieldLLVMType = Context.AsLLVMType(getVariantFieldValue.FieldType);
+            LLVMValueRef variantAddress = _codeGenValues[getVariantFieldValue.VariantAddressIndex],
+                variantValueFieldPtr = Builder.CreateStructGEP(variantAddress, 1u, "variantValueFieldPtr"),
+                bitCastFieldPtr = Builder.CreateBitCast(
+                    variantValueFieldPtr,
+                    LLVMTypeRef.PointerType(fieldLLVMType, 0u),
+                    "bitCastFieldPtr");
+            _codeGenValues[getVariantFieldValue.FieldValueIndex] = Builder.CreateLoad(bitCastFieldPtr, "fieldValue");
+            return true;
+        }
+
         bool ICodeGenElementVisitor<bool>.VisitGetConstant(GetConstant getConstant)
         {
             _codeGenValues[getConstant.OutputIndex] = getConstant.ValueCreator(ModuleContext, Builder);
@@ -388,8 +421,6 @@ namespace Rebar.RebarTarget.LLVM
             builder.PositionBuilderAtEnd(exitBlock);
             builder.CreateRetVoid();
         }
-
-#endregion
     }
 
     internal abstract class FunctionCompilerState
