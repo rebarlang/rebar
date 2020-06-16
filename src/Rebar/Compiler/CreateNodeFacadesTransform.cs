@@ -458,6 +458,39 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            Terminal inputTerminal = variantConstructorNode.InputTerminals[0],
+                outputTerminal = variantConstructorNode.OutputTerminals[0];
+            NIType elementType = variantConstructorNode.VariantType.GetFields().ElementAt(variantConstructorNode.SelectedFieldIndex).GetDataType();
+            _nodeFacade[inputTerminal] = new SimpleTerminalFacade(
+                inputTerminal,
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(elementType));
+            _nodeFacade[outputTerminal] = new SimpleTerminalFacade(
+                outputTerminal,
+                _typeVariableSet.CreateTypeVariableReferenceFromNIType(variantConstructorNode.VariantType));
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            var fieldTypes = new Dictionary<string, TypeVariableReference>();
+            int fieldIndex = 0;
+            foreach (var outputTerminal in variantMatchStructureSelector.OutputTerminals)
+            {
+                string fieldName = $"_{fieldIndex}";
+                TypeVariableReference fieldType = _typeVariableSet.CreateReferenceToNewTypeVariable();
+                fieldTypes[fieldName] = fieldType;
+                _nodeFacade[outputTerminal] = new SimpleTerminalFacade(outputTerminal, fieldType);
+                ++fieldIndex;
+            }
+
+            TypeVariableReference fieldedType = _typeVariableSet.CreateReferenceToIndefiniteFieldedType(fieldTypes);
+            Terminal inputTerminal = variantMatchStructureSelector.InputTerminals[0];
+            _nodeFacade[inputTerminal] = new SimpleTerminalFacade(inputTerminal, fieldedType);
+            return true;
+        }
+
         #region IDfirStructureVisitor implementation
 
         protected override void VisitStructure(Structure structure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
@@ -485,6 +518,11 @@ namespace Rebar.Compiler
         }
 
         bool IDfirStructureVisitor<bool>.VisitOptionPatternStructure(OptionPatternStructure optionPatternStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            return true;
+        }
+
+        bool IDfirStructureVisitor<bool>.VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
         {
             return true;
         }

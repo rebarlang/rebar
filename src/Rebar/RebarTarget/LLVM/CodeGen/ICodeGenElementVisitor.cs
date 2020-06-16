@@ -7,6 +7,7 @@
     internal interface ICodeGenElementVisitor<T>
     {
         T VisitBuildStruct(BuildStruct buildStruct);
+        T VisitBuildVariant(BuildVariant buildVariant);
         T VisitCall(Call call);
         T VisitCallWithReturn(CallWithReturn callWithReturn);
         T VisitGetAddress(GetAddress getAddress);
@@ -15,6 +16,8 @@
         T VisitGetStructFieldPointer(GetStructFieldPointer getStructFieldPointer);
         T VisitGetStructFieldValue(GetStructFieldValue getStructFieldValue);
         T VisitGetValue(GetValue getValue);
+        T VisitGetVariantTagValue(GetVariantTagValue getVariantTagValue);
+        T VisitGetVariantFieldValue(GetVariantFieldValue getVariantFieldValue);
         T VisitInitializeAsReference(InitializeAsReference initializeAsReference);
         T VisitInitializeValue(InitializeValue initializeValue);
         T VisitInitializeWithCopy(InitializeWithCopy initializeWithCopy);

@@ -230,17 +230,22 @@ namespace Rebar.RebarTarget
             var frame = structure as Frame;
             var loop = structure as Loop;
             var optionPatternStructure = structure as OptionPatternStructure;
+            var variantMatchStructure = structure as VariantMatchStructure;
             if (frame != null)
             {
                 VisitFrame(frame, traversalPoint);
             }
-            if (loop != null)
+            else if (loop != null)
             {
                 VisitLoop(loop, traversalPoint);
             }
-            if (optionPatternStructure != null)
+            else if (optionPatternStructure != null)
             {
                 VisitOptionPatternStructure(optionPatternStructure, nestedDiagram, traversalPoint);
+            }
+            else if (variantMatchStructure != null)
+            {
+                VisitVariantMatchStructure(variantMatchStructure, nestedDiagram, traversalPoint);
             }
         }
 
@@ -510,6 +515,81 @@ namespace Rebar.RebarTarget
                         AddVisitationToGroup(
                             diagramTerminalGroup,
                             new StructureVisitation(optionPatternStructure, diagram, StructureTraversalPoint.AfterDiagram));
+                        break;
+                    }
+            }
+        }
+
+        private void VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, Diagram diagram, StructureTraversalPoint traversalPoint)
+        {
+            var predecessors = new HashSet<AsyncStateGroup>();
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    {
+                        predecessors.AddRange(GetStructureBorderNodePredecessorGroups(
+                            variantMatchStructure,
+                            variantMatchStructure.ParentDiagram,
+                            Direction.Input));
+                        AsyncStateGroup structureInitialGroup = GetGroupJoinOfPredecessorGroups(
+                            $"variantMatchStructure{variantMatchStructure.UniqueId}_initialGroup",
+                            variantMatchStructure.ParentDiagram,
+                            predecessors);
+                        _structureInitialGroups[variantMatchStructure] = structureInitialGroup;
+                        AsyncStateGroup structureInputBorderNodeGroup = CreateGroupThatConditionallySchedulesSuccessors(
+                            $"variantMatchStructure{variantMatchStructure.UniqueId}_inputBNGroup",
+                            variantMatchStructure.ParentDiagram);
+                        AddUnconditionalSuccessorGroup(structureInitialGroup, structureInputBorderNodeGroup);
+                        _structureInputBorderNodeGroups[variantMatchStructure] = structureInputBorderNodeGroup;
+
+                        AddVisitationToGroup(
+                            structureInputBorderNodeGroup,
+                            new StructureVisitation(variantMatchStructure, null, StructureTraversalPoint.BeforeLeftBorderNodes));
+
+                        AsyncStateGroup structureTerminalGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
+                            $"variantMatchStructure{variantMatchStructure.UniqueId}_terminalGroup",
+                            variantMatchStructure.ParentDiagram);
+                        structureTerminalGroup.SignaledConditionally = true;
+                        _nodeGroups[variantMatchStructure] = structureTerminalGroup;
+                        _structureOutputBorderNodeGroups[variantMatchStructure] = structureTerminalGroup;
+                        break;
+                    }
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    {
+                        AsyncStateGroup structureInputBorderNodeGroup = _structureInputBorderNodeGroups[variantMatchStructure];
+                        AsyncStateGroup diagramInitialGroup = CreateGroupThatUnconditionallySchedulesSuccessors(
+                            $"diagram{diagram.UniqueId}_initialGroup",
+                            diagram);
+                        diagramInitialGroup.BeginsAsDiagramInitialGroup = true;
+                        _diagramInitialGroups[diagram] = diagramInitialGroup;
+                        AddConditionalSuccessorGroups(structureInputBorderNodeGroup, new HashSet<AsyncStateGroup>() { diagramInitialGroup });
+                        AddVisitationToGroup(
+                            diagramInitialGroup,
+                            new StructureVisitation(variantMatchStructure, diagram, StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram));
+                        break;
+                    }
+                case StructureTraversalPoint.AfterDiagram:
+                    {
+                        predecessors.AddRange(GetStructureBorderNodePredecessorGroups(
+                            variantMatchStructure,
+                            diagram,
+                            Direction.Output));
+                        foreach (Node node in diagram.Nodes)
+                        {
+                            if (!node.GetDownstreamNodesSameDiagram(false).Any())
+                            {
+                                predecessors.Add(_nodeGroups[node]);
+                            }
+                        }
+                        AsyncStateGroup diagramTerminalGroup = GetGroupJoinOfPredecessorGroups(
+                            $"diagram{diagram.UniqueId}_terminalGroup",
+                            diagram,
+                            predecessors);
+                        AsyncStateGroup structureTerminalGroup = _nodeGroups[variantMatchStructure];
+                        AddUnconditionalSuccessorGroup(diagramTerminalGroup, structureTerminalGroup);
+                        AddVisitationToGroup(
+                            diagramTerminalGroup,
+                            new StructureVisitation(variantMatchStructure, diagram, StructureTraversalPoint.AfterDiagram));
                         break;
                     }
             }

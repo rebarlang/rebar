@@ -1,11 +1,10 @@
 ﻿using System.Xml.Linq;
 using NationalInstruments.SourceModel;
 using NationalInstruments.SourceModel.Persistence;
-using NationalInstruments.VI.SourceModel;
 
 namespace Rebar.SourceModel
 {
-    public class OptionPatternStructureTunnel : StackedStructureTunnel
+    public class OptionPatternStructureTunnel : MatchStructureTunnelBase
     {
         private const string ElementName = "OptionPatternStructureTunnel";
 
@@ -19,8 +18,5 @@ namespace Rebar.SourceModel
 
         /// <inheritdoc />
         public override XName XmlElementName => XName.Get(ElementName, Function.ParsableNamespaceName);
-
-        /// <inheritdoc />
-        public override BorderNodeMultiplicity Multiplicity => BorderNodeMultiplicity.OneToMany;
     }
 }

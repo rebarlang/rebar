@@ -185,10 +185,13 @@ namespace Rebar.Compiler
         public bool VisitStructFieldAccessorNode(StructFieldAccessorNode structFieldAccessorNode)
         {
             ValidateRequiredInputTerminal(structFieldAccessorNode.StructInputTerminal);
-            NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
-            if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+            if (structFieldAccessorNode.StructInputTerminal.IsConnected)
             {
-                structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+                NIType inputType = structFieldAccessorNode.StructInputTerminal.GetTrueVariable().Type.GetReferentType();
+                if (!(inputType.IsValueClass() && inputType.GetFields().Any()))
+                {
+                    structFieldAccessorNode.StructInputTerminal.SetDfirMessage(Messages.TypeIsNotStructType);
+                }
             }
             foreach (Terminal outputTerminal in structFieldAccessorNode.OutputTerminals)
             {
@@ -240,6 +243,27 @@ namespace Rebar.Compiler
         public bool VisitUnwrapOptionTunnel(UnwrapOptionTunnel unwrapOptionTunnel)
         {
             ValidateRequiredInputTerminal(unwrapOptionTunnel.InputTerminals[0]);
+            return true;
+        }
+
+        public bool VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            ValidateRequiredInputTerminal(variantConstructorNode.InputTerminals[0]);
+            return true;
+        }
+
+        public bool VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            Terminal inputTerminal = variantMatchStructureSelector.InputTerminals[0];
+            ValidateRequiredInputTerminal(inputTerminal);
+            if (inputTerminal.IsConnected)
+            {
+                NIType inputType = inputTerminal.GetTrueVariable().Type;
+                if (!(inputType.IsUnion() && inputType.GetFields().Any()))
+                {
+                    inputTerminal.SetDfirMessage(Messages.TypeIsNotVariantType);
+                }
+            }
             return true;
         }
 

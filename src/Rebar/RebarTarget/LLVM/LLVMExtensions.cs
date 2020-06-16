@@ -11,6 +11,7 @@ namespace Rebar.RebarTarget.LLVM
     internal static class LLVMExtensions
     {
         private static System.Reflection.FieldInfo _moduleInstanceFieldInfo;
+        private static readonly LLVMMCJITCompilerOptions _mcJITCompilerOptions;
 
         private static readonly Dictionary<LLVMContextRef, Dictionary<string, LLVMTypeRef>> _namedStructTypes = new Dictionary<LLVMContextRef, Dictionary<string, LLVMTypeRef>>();
 
@@ -19,6 +20,22 @@ namespace Rebar.RebarTarget.LLVM
             _moduleInstanceFieldInfo = typeof(Module).GetField(
                "instance",
                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            LLVMSharp.LLVM.LinkInMCJIT();
+
+            LLVMSharp.LLVM.InitializeX86TargetMC();
+            LLVMSharp.LLVM.InitializeX86Target();
+            LLVMSharp.LLVM.InitializeX86TargetInfo();
+            LLVMSharp.LLVM.InitializeX86AsmParser();
+            LLVMSharp.LLVM.InitializeX86AsmPrinter();
+
+            _mcJITCompilerOptions = new LLVMMCJITCompilerOptions
+            {
+                NoFramePointerElim = 1,
+                // TODO: comment about why this is necessary
+                CodeModel = LLVMCodeModel.LLVMCodeModelLarge,
+            };
+            LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_mcJITCompilerOptions);
         }
 
         public static bool IsUninitialized(this LLVMValueRef valueReference)
@@ -247,10 +264,30 @@ namespace Rebar.RebarTarget.LLVM
                     {
                         return context.CreateLLVMPanicResultType(context.AsLLVMType(innerType));
                     }
+                    // TODO: when using typedef classes and unions in FunctionCompiler, the LLVM type should
+                    // come from a TypeDiagramBuiltPackage.
                     if (niType.IsValueClass() && niType.GetFields().Any())
                     {
                         LLVMTypeRef[] fieldTypes = niType.GetFields().Select(f => context.AsLLVMType(f.GetDataType())).ToArray();
                         return context.StructType(fieldTypes);
+                    }
+                    if (niType.IsUnion())
+                    {
+                        int maxSize = 4;
+                        foreach (NIType field in niType.GetFields())
+                        {
+                            // TODO: where possible, use a non-array type that matches the max size
+                            LLVMTypeRef llvmFieldType = context.AsLLVMType(field.GetDataType());
+                            int fieldSize = (int)LLVMSharp.LLVM.StoreSizeOfType(LocalTargetInfo.TargetData, llvmFieldType);
+                            maxSize = Math.Max(maxSize, fieldSize);
+                        }
+                        LLVMTypeRef[] structFieldTypes = new LLVMTypeRef[]
+                        {
+                            context.Int8Type,
+                            // TODO: this is incorrect because it does not consider alignment
+                            LLVMTypeRef.ArrayType(context.Int8Type, (uint)maxSize)
+                        };
+                        return context.StructType(structFieldTypes);
                     }
                     throw new NotSupportedException("Unsupported type: " + niType);
                 }
@@ -471,6 +508,22 @@ namespace Rebar.RebarTarget.LLVM
         internal static void LinkInModule(this Module linkInto, Module toLinkIn)
         {
             LLVMSharp.LLVM.LinkModules2(linkInto.GetModuleRef(), toLinkIn.GetModuleRef());
+        }
+
+        internal static LLVMExecutionEngineRef CreateMCJITCompilerForModule(this Module module)
+        {
+            LLVMExecutionEngineRef engine;
+            string error;
+            LLVMBool Success = new LLVMBool(0);
+            if (LLVMSharp.LLVM.CreateMCJITCompilerForModule(
+                out engine,
+                module.GetModuleRef(),
+                _mcJITCompilerOptions,
+                out error) != Success)
+            {
+                throw new InvalidOperationException($"Error creating JIT: {error}");
+            }
+            return engine;
         }
 
         #endregion

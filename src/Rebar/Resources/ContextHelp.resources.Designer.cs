@@ -2835,6 +2835,42 @@ namespace Rebar.Resources {
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
+        internal static string VariantMatchStructure_Description {
+            get {
+                return ResourceManager.GetString("VariantMatchStructure_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variant Match Structure.
+        /// </summary>
+        internal static string VariantMatchStructure_Name {
+            get {
+                return ResourceManager.GetString("VariantMatchStructure_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string VariantMatchStructureSelector_Description {
+            get {
+                return ResourceManager.GetString("VariantMatchStructureSelector_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Variant Match Structure Selector.
+        /// </summary>
+        internal static string VariantMatchStructureSelector_Name {
+            get {
+                return ResourceManager.GetString("VariantMatchStructureSelector_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
         internal static string VectorAppend_Description {
             get {
                 return ResourceManager.GetString("VectorAppend_Description", resourceCulture);

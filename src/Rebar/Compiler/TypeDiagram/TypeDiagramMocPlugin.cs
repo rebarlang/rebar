@@ -88,11 +88,11 @@ namespace Rebar.Compiler.TypeDiagram
 
         private static NIType BuildTypeFromSelfType(Nodes.SelfTypeNode selfTypeNode, string typeName)
         {
+            int fieldIndex = 0;
             switch (selfTypeNode.Mode)
             {
                 case SelfTypeMode.Struct:
                     NIClassBuilder classBuilder = NITypes.Factory.DefineValueClass(typeName);
-                    int fieldIndex = 0;
                     foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
                     {
                         NIType fieldType = inputTerminal.GetTrueVariable().Type;
@@ -100,6 +100,16 @@ namespace Rebar.Compiler.TypeDiagram
                         ++fieldIndex;
                     }
                     return classBuilder.CreateType();
+                case SelfTypeMode.Variant:
+                    NIUnionBuilder unionBuilder = NITypes.Factory.DefineUnion(typeName);
+                    foreach (Terminal inputTerminal in selfTypeNode.InputTerminals)
+                    {
+                        NIType fieldType = inputTerminal.GetTrueVariable().Type;
+                        unionBuilder.DefineField(fieldType, $"_{fieldIndex}");
+                        ++fieldIndex;
+                    }
+                    unionBuilder.AddTypeKeywordProviderAttribute(DataTypes.RebarTypeKeyword);
+                    return unionBuilder.CreateType();
                 default:
                     throw new NotImplementedException($"SelfTypeMode: {selfTypeNode.Mode}");
             }

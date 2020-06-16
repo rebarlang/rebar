@@ -85,6 +85,14 @@ namespace Rebar.Compiler
                 SemanticAnalysisMessageCategories.Connection,
                 TypeIsNotStructTypeDescriptor);
 
+        internal static readonly MessageDescriptor TypeIsNotVariantTypeDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeIsNotVariantType");
+
+        public static readonly DfirMessage TypeIsNotVariantType =
+            new DfirMessage(
+                MessageSeverity.Error,
+                SemanticAnalysisMessageCategories.Connection,
+                TypeIsNotVariantTypeDescriptor);
+
         private static readonly MessageDescriptor TypeNotDeterminedDescriptor = new MessageDescriptor(ResourceDictionaryName, "TypeNotDetermined");
 
         public static readonly DfirMessage TypeNotDetermined =

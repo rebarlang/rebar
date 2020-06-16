@@ -486,14 +486,23 @@ namespace Rebar.RebarTarget
             var conditionalContinuation = group.Continuation as ConditionallyScheduleGroupsContinuation;
             if (conditionalContinuation != null)
             {
-                if (conditionalContinuation.SuccessorConditionGroups.Count != 2)
+                NIType conditionVariableType;
+                if (conditionalContinuation.SuccessorConditionGroups.Count <= 2)
                 {
-                    throw new NotSupportedException("Only boolean conditions supported for continuations");
+                    conditionVariableType = NITypes.Boolean;
+                }
+                else if (conditionalContinuation.SuccessorConditionGroups.Count <= 256)
+                {
+                    conditionVariableType = NITypes.UInt8;
+                }
+                else
+                {
+                    throw new NotSupportedException("Only 256 conditional continuations supported");
                 }
                 VariableSet variableSet = DfirRoot.GetVariableSet();
                 VariableReference continuation = variableSet.CreateNewVariable(
                     0,
-                    variableSet.TypeVariableSet.CreateTypeVariableReferenceFromNIType(NITypes.Boolean),
+                    variableSet.TypeVariableSet.CreateTypeVariableReferenceFromNIType(conditionVariableType),
                     mutable: true);
                 continuation.Name = $"{group.Label}_continuationStatePtr";
                 group.ContinuationCondition = continuation;
@@ -1052,6 +1061,7 @@ namespace Rebar.RebarTarget
                 else
                 {
                     // Note: handled in VisitOptionPatternStructure/VisitVariantMatchStructure
+                    // handling it here would require this method to be diagram-specific
                 }
             }
         }
@@ -1067,6 +1077,66 @@ namespace Rebar.RebarTarget
             yield return new Op((builder, valueStorage) => valueStorage[startIndex + 4] = builder.CreateAnd(valueStorage[startIndex + 1], valueStorage[startIndex + 3], "newCondition"));
             yield return new UpdateValue(frame.GetConditionVariable(), startIndex + 4);
             yield return new InitializeValue(unwrapOptionTunnel.OutputTerminals[0].GetTrueVariable(), startIndex + 2);
+        }
+
+        public IEnumerable<Visitation> VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            int startIndex = ReserveIndices(2);
+            yield return new GetValue(variantConstructorNode.InputTerminals[0].GetTrueVariable(), startIndex);
+            yield return new GetAddress(variantConstructorNode.OutputTerminals[0].GetTrueVariable(), startIndex + 1, forInitialize: true);
+            yield return new BuildVariant(startIndex, startIndex + 1, variantConstructorNode.SelectedFieldIndex);
+        }
+
+        public IEnumerable<Visitation> VisitVariantMatchStructure(VariantMatchStructure variantMatchStructure, StructureTraversalPoint traversalPoint, Diagram nestedDiagram)
+        {
+            int startIndex;
+            switch (traversalPoint)
+            {
+                case StructureTraversalPoint.BeforeLeftBorderNodes:
+                    startIndex = ReserveIndices(2);
+                    yield return new GetAddress(variantMatchStructure.Selector.InputTerminals[0].GetTrueVariable(), startIndex, forInitialize: false);
+                    yield return new GetVariantTagValue(startIndex, startIndex + 1);
+                    int tagIndex = startIndex + 1;
+                    if (variantMatchStructure.Diagrams.Count <= 2)
+                    {
+                        // TODO: just for now, truncate the tag to an i1. This will need to be fixed in order to handle >2 cases.
+                        tagIndex = ReserveIndices(1);
+                        yield return new Op((builder, valueStorage) =>
+                        {
+                            LLVMValueRef tag = valueStorage[startIndex + 1];
+                            valueStorage[tagIndex] = builder.CreateTrunc(tag, Context.Int1Type, "truncatedTag");
+                        });
+                    }
+                    yield return new UpdateValue(CurrentGroup.ContinuationCondition, tagIndex);
+                    break;
+                case StructureTraversalPoint.AfterLeftBorderNodesAndBeforeDiagram:
+                    // TODO: ideally this should be in a diagram-specific VisitVariantMatchStructureSelector
+                    startIndex = ReserveIndices(2);
+                    yield return new GetAddress(variantMatchStructure.Selector.InputTerminals[0].GetTrueVariable(), startIndex, forInitialize: false);
+
+                    int diagramIndex = variantMatchStructure.Diagrams.IndexOf(nestedDiagram);
+                    Terminal outputTerminal = variantMatchStructure.Selector.OutputTerminals[diagramIndex];
+                    VariableReference fieldVariable = outputTerminal.GetTrueVariable();
+                    yield return new GetVariantFieldValue(startIndex, startIndex + 1, fieldVariable.Type);
+                    yield return new InitializeValue(fieldVariable, startIndex + 1);
+                    break;
+                case StructureTraversalPoint.AfterDiagram:
+                    foreach (Tunnel outputTunnel in variantMatchStructure.Tunnels.Where(tunnel => tunnel.Direction == Direction.Output))
+                    {
+                        Terminal inputTerminal = outputTunnel.InputTerminals.First(t => t.ParentDiagram == nestedDiagram);
+                        startIndex = ReserveIndices(1);
+                        yield return new GetValue(inputTerminal.GetTrueVariable(), startIndex);
+                        yield return new UpdateValue(outputTunnel.OutputTerminals[0].GetTrueVariable(), startIndex);
+                    }
+                    break;
+            }
+        }
+
+        public IEnumerable<Visitation> VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            // The selector output terminals are initialized in VisitVariantMatchStructure, each in their own
+            // diagram initial group.
+            return Enumerable.Empty<Visitation>();
         }
 
         public IEnumerable<Visitation> VisitWire(Wire wire)

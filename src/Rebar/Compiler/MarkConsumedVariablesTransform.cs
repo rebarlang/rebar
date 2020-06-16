@@ -214,6 +214,20 @@ namespace Rebar.Compiler
             return true;
         }
 
+        bool IDfirNodeVisitor<bool>.VisitVariantConstructorNode(VariantConstructorNode variantConstructorNode)
+        {
+            MarkTrueVariableOfTerminalConsumed(variantConstructorNode.InputTerminals[0]);
+            MarkFacadeVariableOfTerminalLive(variantConstructorNode.OutputTerminals[0]);
+            return true;
+        }
+
+        bool IDfirNodeVisitor<bool>.VisitVariantMatchStructureSelector(VariantMatchStructureSelector variantMatchStructureSelector)
+        {
+            MarkTrueVariableOfTerminalConsumed(variantMatchStructureSelector.InputTerminals[0]);
+            variantMatchStructureSelector.OutputTerminals.ForEach(MarkFacadeVariableOfTerminalLive);
+            return true;
+        }
+
         private void VisitFunctionSignatureNode(Node node, NIType nodeFunctionSignature)
         {
             var signature = Signatures.GetSignatureForNIType(nodeFunctionSignature);

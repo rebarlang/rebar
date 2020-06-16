@@ -109,7 +109,8 @@ namespace Rebar.Design
         {
             get
             {
-                VariableReference variable = ((Wire)Model).GetWireVariable();
+                var wire = (Wire)Model;
+                VariableReference variable = wire.GetWireVariable();
                 if (!variable.IsValid)
                 {
                     return base.WireRenderInfo;
@@ -122,7 +123,7 @@ namespace Rebar.Design
 
                 if (!variable.Type.IsRebarReferenceType())
                 {
-                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets((Element)null, variable.Type);
+                    ITypeAssetProvider innerTypeAssetProvider = stockResources.GetTypeAssets(wire, variable.Type);
                     ITypeAssetProvider outerAssetProvider = variable.Mutable
                         ? (ITypeAssetProvider)new MutableValueTypeAssetProvider(innerTypeAssetProvider, 0)
                         : new ImmutableValueTypeAssetProvider(innerTypeAssetProvider, 0);

@@ -250,24 +250,34 @@ namespace Rebar.SourceModel
 
         private void UpdateTerminalsFromDataType(NIType type)
         {
-            if (type.IsValueClass())
+            bool isStruct = type.IsValueClass();
+            bool isUnion = type.IsUnion();
+            if (isStruct || isUnion)
             {
-                NIType[] structFields = type.GetFields().ToArray();
-                int newFieldCount = structFields.Length;
-                if (!InputTerminals.HasExactly(newFieldCount))
+                NIType[] fields = type.GetFields().ToArray();
+                int inputTerminalCount = isStruct ? fields.Length : 1;
+                if (!InputTerminals.HasExactly(inputTerminalCount))
                 {
-                    while (newFieldCount < InputTerminals.Count())
+                    while (inputTerminalCount < InputTerminals.Count())
                     {
                         FixedTerminals.Remove(FixedTerminals.Last());
                     }
-                    while (newFieldCount > InputTerminals.Count())
+                    while (inputTerminalCount > InputTerminals.Count())
                     {
                         int index = InputTerminals.Count();
                         FixedTerminals.Add(new ConstructorTerminal(NITypes.Void, $"element{index}"));
                     }
-                    foreach (var pair in FixedTerminals.Skip(1).Cast<ConstructorTerminal>().Zip(structFields))
+                    if (isStruct)
                     {
-                        pair.Key.FieldName = pair.Value.GetName();
+                        foreach (var pair in FixedTerminals.Skip(1).Cast<ConstructorTerminal>().Zip(fields))
+                        {
+                            pair.Key.FieldName = pair.Value.GetName();
+                        }
+                    }
+                    else
+                    {
+                        // TODO: attempt to recover the same variant element index
+                        ((ConstructorTerminal)FixedTerminals[1]).FieldName = fields[0].GetName();
                     }
                 }
                 SetGeometry();

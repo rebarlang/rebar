@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using LLVMSharp;
 using NationalInstruments.DataTypes;
 using Rebar.Common;
@@ -113,6 +114,14 @@ namespace Rebar.RebarTarget.LLVM
             {
                 dropFunctionCreator = MakeDropFunctionSpecializer(droppedValueType, FunctionCompiler.BuildNotifierWriterDropFunction);
                 return true;
+            }
+            if (droppedValueType.IsUnion())
+            {
+                if (droppedValueType.GetFields().Any(field => field.GetDataType().TypeHasDropTrait()))
+                {
+                    dropFunctionCreator = MakeDropFunctionSpecializer(droppedValueType, FunctionCompiler.BuildVariantDropFunction);
+                    return true;
+                }
             }
 
             if (droppedValueType.TypeHasDropTrait())

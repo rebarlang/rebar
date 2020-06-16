@@ -227,6 +227,9 @@
     <Compile Include="Compiler\Nodes\PanicOrContinueNode.cs" />
     <Compile Include="Compiler\Nodes\StructConstructorNode.cs" />
     <Compile Include="Compiler\Nodes\StructFieldAccessorNode.cs" />
+    <Compile Include="Compiler\Nodes\VariantConstructorNode.cs" />
+    <Compile Include="Compiler\Nodes\VariantMatchStructure.cs" />
+    <Compile Include="Compiler\Nodes\VariantMatchStructureSelector.cs" />
     <Compile Include="Compiler\TypeDiagram\CreateTypeDiagramNodeFacadesTransform.cs" />
     <Compile Include="Compiler\DfirTranslationHelpers.cs" />
     <Compile Include="Compiler\FinalizeAutoBorrowsTransform.cs" />
@@ -290,6 +293,8 @@
     <Compile Include="Compiler\TypeDiagram\UnifyTypesAcrossWiresTransform.cs" />
     <Compile Include="Compiler\TypeDiagram\ValidateTypeUsagesTransform.cs" />
     <Compile Include="Compiler\TypeUnificationExtensions.cs" />
+    <Compile Include="Design\ConstructorTerminalViewModel.cs" />
+    <Compile Include="Design\IFieldTerminalViewModel.cs" />
     <Compile Include="Design\StructFieldAccessorTerminalViewModel.cs" />
     <Compile Include="Design\StructFieldAccessorViewModel.cs" />
     <Compile Include="Design\ConstructorViewModel.cs" />
@@ -307,6 +312,10 @@
     <Compile Include="Design\TypeDiagram\TypeDiagramEditor.xaml.cs">
       <DependentUpon>TypeDiagramEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Design\VariantMatchStructureControl.cs" />
+    <Compile Include="Design\VariantMatchStructureDiagramViewModel.cs" />
+    <Compile Include="Design\VariantMatchStructureEditor.cs" />
+    <Compile Include="Design\VariantMatchStructureSelectorViewModel.cs" />
     <Compile Include="RebarTarget\Allocator.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactory.cs" />
     <Compile Include="RebarTarget\ApplicationCompileHandlerFactoryFactory.cs" />
@@ -331,6 +340,7 @@
     <Compile Include="RebarTarget\LLVM\AsynchronousFunctionModuleBuilder.cs" />
     <Compile Include="RebarTarget\LLVM\AsyncStateGroupData.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\BuildStruct.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\BuildVariant.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\Call.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\CallWithReturn.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\CodeGenElement.cs" />
@@ -340,6 +350,8 @@
     <Compile Include="RebarTarget\LLVM\CodeGen\GetStructFieldPointer.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\GetStructFieldValue.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\GetValue.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\GetVariantFieldValue.cs" />
+    <Compile Include="RebarTarget\LLVM\CodeGen\GetVariantTagValue.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\ICodeGenValueStorage.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\InitializeAsReference.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\InitializeValue.cs" />
@@ -360,6 +372,7 @@
     <Compile Include="RebarTarget\LLVM\FunctionNames.cs" />
     <Compile Include="RebarTarget\LLVM\FunctionVariableStorage.cs" />
     <Compile Include="RebarTarget\LLVM\CodeGen\ICodeGenElementVisitor.cs" />
+    <Compile Include="RebarTarget\LLVM\LocalTargetInfo.cs" />
     <Compile Include="RebarTarget\LLVM\ParameterInfo.cs" />
     <Compile Include="RebarTarget\LLVM\RuntimeConstants.cs" />
     <Compile Include="RebarTarget\LLVM\SynchronousFunctionModuleBuilder.cs" />
@@ -445,6 +458,10 @@
     <Compile Include="SourceModel\BorrowTunnel.cs" />
     <Compile Include="SourceModel\DataItemBatchRule.cs" />
     <Compile Include="SourceModel\DropNode.cs" />
+    <Compile Include="SourceModel\MatchStructureBase.cs" />
+    <Compile Include="SourceModel\MatchStructureDiagramBase.cs" />
+    <Compile Include="SourceModel\MatchStructureSelectorBase.cs" />
+    <Compile Include="SourceModel\MatchStructureTunnelBase.cs" />
     <Compile Include="SourceModel\StructFieldAccessor.cs" />
     <Compile Include="SourceModel\TypeDiagram\PrimitiveType.cs" />
     <Compile Include="SourceModel\TypeDiagram\SelfType.cs" />
@@ -467,7 +484,7 @@
     <Compile Include="SourceModel\LoopTerminateLifetimeTunnel.cs" />
     <Compile Include="SourceModel\LoopTunnel.cs" />
     <Compile Include="SourceModel\OptionPatternStructure.cs" />
-    <Compile Include="SourceModel\OptionPatternStructureBatchRule.cs" />
+    <Compile Include="SourceModel\MatchStructureBaseBatchRule.cs" />
     <Compile Include="SourceModel\OptionPatternStructureDiagram.cs" />
     <Compile Include="SourceModel\OptionPatternStructureSelector.cs" />
     <Compile Include="SourceModel\OptionPatternStructureTunnel.cs" />
@@ -486,6 +503,10 @@
     <Compile Include="SourceModel\TypeDiagram\TypeDiagramMergeScriptDataServiceFactory.cs" />
     <Compile Include="SourceModel\TypePassthrough.cs" />
     <Compile Include="SourceModel\UnwrapOptionTunnel.cs" />
+    <Compile Include="SourceModel\VariantMatchStructure.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureDiagram.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureSelector.cs" />
+    <Compile Include="SourceModel\VariantMatchStructureTunnel.cs" />
     <Compile Include="SourceModel\WireProperties.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -583,6 +604,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\VariantMatchStructure_96.xml" />
+    <EmbeddedResource Include="Resources\VariantPalette.xml">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <None Include="app.config" />
     <None Include="packages.config" />
     <Content Include="RebarTarget\LLVM\Resources\output.bc">

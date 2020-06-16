@@ -20,6 +20,7 @@ namespace Rebar.Design
             AddSupportedModel<MocCommonMethodCall>(n => new MethodCallViewModel(n));
             AddSupportedModel<DataAccessor>(n => new DataAccessorEditor(n));
             AddSupportedModel<Constructor>(n => new ConstructorViewModel(n));
+            AddSupportedModel<ConstructorTerminal>(t => new ConstructorTerminalViewModel(t));
             AddSupportedModel<StructFieldAccessor>(n => new StructFieldAccessorViewModel(n));
             AddSupportedModel<StructFieldAccessorTerminal>(t => new StructFieldAccessorTerminalViewModel(t));
 
@@ -114,6 +115,11 @@ namespace Rebar.Design
             AddSupportedModel<OptionPatternStructureDiagram>(d => new OptionPatternStructureDiagramViewModel(d));
             AddSupportedModel<OptionPatternStructureSelector>(t => new BorderNodeViewModel(t));
             AddSupportedModel<OptionPatternStructureTunnel>(t => new BorderNodeViewModel(t));
+
+            AddSupportedModel<VariantMatchStructure>(s => new VariantMatchStructureEditor(s));
+            AddSupportedModel<VariantMatchStructureDiagram>(d => new VariantMatchStructureDiagramViewModel(d));
+            AddSupportedModel<VariantMatchStructureSelector>(t => new VariantMatchStructureSelectorViewModel(t, @"Resources\Diagram\Nodes\UnwrapOptionTunnel.png"));
+            AddSupportedModel<VariantMatchStructureTunnel>(t => new BorderNodeViewModel(t));
         }
     }
 }

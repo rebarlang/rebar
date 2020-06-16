@@ -143,6 +143,12 @@ namespace Rebar.RebarTarget.LLVM
                         {
                             return type.GetTypeDefinitionQualifiedName().ToString("::");
                         }
+                        if (type.IsUnion())
+                        {
+                            return type.IsTypedef()
+                                ? type.GetTypeDefinitionQualifiedName().ToString("::")
+                                : type.GetName();
+                        }
                         throw new NotSupportedException("Unsupported type: " + type);
                     }
             }

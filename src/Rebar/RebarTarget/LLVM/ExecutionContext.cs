@@ -8,7 +8,6 @@ namespace Rebar.RebarTarget.LLVM
 {
     public class ExecutionContext : IDisposable
     {
-        private static readonly LLVMMCJITCompilerOptions _options;
         private static IRebarTargetRuntimeServices _runtimeServices;
         private static readonly IntPtr _topLevelCallerWakerFunctionPtr;
         private static readonly Queue<ScheduledTask> _scheduledTasks = new Queue<ScheduledTask>();
@@ -16,22 +15,6 @@ namespace Rebar.RebarTarget.LLVM
 
         static ExecutionContext()
         {
-            LLVMSharp.LLVM.LinkInMCJIT();
-
-            LLVMSharp.LLVM.InitializeX86TargetMC();
-            LLVMSharp.LLVM.InitializeX86Target();
-            LLVMSharp.LLVM.InitializeX86TargetInfo();
-            LLVMSharp.LLVM.InitializeX86AsmParser();
-            LLVMSharp.LLVM.InitializeX86AsmPrinter();
-
-            _options = new LLVMMCJITCompilerOptions
-            {
-                NoFramePointerElim = 1,
-                // TODO: comment about why this is necessary
-                CodeModel = LLVMCodeModel.LLVMCodeModelLarge,
-            };
-            LLVMSharp.LLVM.InitializeMCJITCompilerOptions(_options);
-
             AddSymbolForDelegate("schedule", _schedule);
             AddSymbolForDelegate("output_string", _outputString);
             AddSymbolForDelegate("fake_drop", _fakeDrop);
@@ -131,16 +114,7 @@ namespace Rebar.RebarTarget.LLVM
                 _globalModule.LinkInModule(_contextWrapper.LoadContextFreeModule(module));
             }
 
-            string error;
-            LLVMBool Success = new LLVMBool(0);
-            if (LLVMSharp.LLVM.CreateMCJITCompilerForModule(
-                out _engine,
-                _globalModule.GetModuleRef(), 
-                _options, 
-                out error) != Success)
-            {
-                throw new InvalidOperationException($"Error creating JIT: {error}");
-            }
+            _engine = _globalModule.CreateMCJITCompilerForModule();
             _targetData = LLVMSharp.LLVM.GetExecutionEngineTargetData(_engine);
         }
 

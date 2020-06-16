@@ -316,6 +316,39 @@ namespace Rebar.RebarTarget.LLVM
             return true;
         }
 
+        bool ICodeGenElementVisitor<bool>.VisitBuildVariant(BuildVariant buildVariant)
+        {
+            LLVMValueRef variantAddress = _codeGenValues[buildVariant.VariantAddressIndex],
+                variantTagFieldPtr = Builder.CreateStructGEP(variantAddress, 0u, "variantTagFieldPtr"),
+                variantDataFieldPtr = Builder.CreateStructGEP(variantAddress, 1u, "variantDataFieldPtr"),
+                inputValue = _codeGenValues[buildVariant.FieldValueIndex],
+                bitCastAllocaFieldPtr = Builder.CreateBitCast(variantDataFieldPtr, LLVMTypeRef.PointerType(inputValue.TypeOf(), 0u), "bitCastAllocaFieldPtr");
+            Builder.CreateStore(Context.AsLLVMValue((byte)buildVariant.FieldIndex), variantTagFieldPtr);
+            Builder.CreateStore(inputValue, bitCastAllocaFieldPtr);
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantTagValue(GetVariantTagValue getVariantTagValue)
+        {
+            LLVMValueRef variantAddress = _codeGenValues[getVariantTagValue.VariantAddressIndex],
+                variantTagFieldPtr = Builder.CreateStructGEP(variantAddress, 0u, "variantTagFieldPtr");
+            _codeGenValues[getVariantTagValue.TagIndex] = Builder.CreateLoad(variantTagFieldPtr, "tag");
+            return true;
+        }
+
+        bool ICodeGenElementVisitor<bool>.VisitGetVariantFieldValue(GetVariantFieldValue getVariantFieldValue)
+        {
+            LLVMTypeRef fieldLLVMType = Context.AsLLVMType(getVariantFieldValue.FieldType);
+            LLVMValueRef variantAddress = _codeGenValues[getVariantFieldValue.VariantAddressIndex],
+                variantValueFieldPtr = Builder.CreateStructGEP(variantAddress, 1u, "variantValueFieldPtr"),
+                bitCastFieldPtr = Builder.CreateBitCast(
+                    variantValueFieldPtr,
+                    LLVMTypeRef.PointerType(fieldLLVMType, 0u),
+                    "bitCastFieldPtr");
+            _codeGenValues[getVariantFieldValue.FieldValueIndex] = Builder.CreateLoad(bitCastFieldPtr, "fieldValue");
+            return true;
+        }
+
         bool ICodeGenElementVisitor<bool>.VisitGetConstant(GetConstant getConstant)
         {
             _codeGenValues[getConstant.OutputIndex] = getConstant.ValueCreator(ModuleContext, Builder);
@@ -351,6 +384,42 @@ namespace Rebar.RebarTarget.LLVM
         {
             get { return ReadCodeGenValue(index); }
             set { _codeGenValues[index] = value; }
+        }
+        internal static void BuildVariantDropFunction(FunctionModuleContext moduleContext, NIType signature, LLVMValueRef variantDropFunction)
+        {
+            NIType variantType = signature.GetGenericParameters().First();
+            Tuple<NIType, int>[] droppableFields = variantType.GetFields()
+                .Select((field, i) => new Tuple<NIType, int>(field, i))
+                .Where(field => field.Item1.GetDataType().TypeHasDropTrait()).ToArray();
+            LLVMBasicBlockRef entryBlock = variantDropFunction.AppendBasicBlock("entry");
+            Tuple<LLVMBasicBlockRef, int>[] dropBlocks = droppableFields.Select(field => new Tuple<LLVMBasicBlockRef, int>(variantDropFunction.AppendBasicBlock($"drop{field.Item1.GetName()}"), field.Item2)).ToArray();
+            LLVMBasicBlockRef exitBlock = variantDropFunction.AppendBasicBlock("exit");
+
+            var builder = moduleContext.LLVMContext.CreateIRBuilder();
+
+            builder.PositionBuilderAtEnd(entryBlock);
+            LLVMValueRef variantPtr = variantDropFunction.GetParam(0u),
+                variantTagPtr = builder.CreateStructGEP(variantPtr, 0u, "variantTagPtr"),
+                variantDataPtr = builder.CreateStructGEP(variantPtr, 1u, "variantDataPtr"),
+                variantTag = builder.CreateLoad(variantTagPtr, "variantTag"),
+                tagSwitch = builder.CreateSwitch(variantTag, exitBlock, (uint)dropBlocks.Length);
+            foreach (var pair in dropBlocks)
+            {
+                tagSwitch.AddCase(moduleContext.LLVMContext.AsLLVMValue((byte)pair.Item2), pair.Item1);
+            }
+
+            for (int i = 0; i < droppableFields.Length; ++i)
+            {
+                builder.PositionBuilderAtEnd(dropBlocks[i].Item1);
+                NIType fieldType = droppableFields[i].Item1.GetDataType();
+                LLVMTypeRef fieldLLVMType = moduleContext.LLVMContext.AsLLVMType(fieldType);
+                LLVMValueRef bitCastFieldPtr = builder.CreateBitCast(variantDataPtr, LLVMTypeRef.PointerType(fieldLLVMType, 0u), "bitCastFieldPtr");
+                moduleContext.CreateDropCallIfDropFunctionExists(builder, fieldType, _ => bitCastFieldPtr);
+                builder.CreateBr(exitBlock);
+            }
+
+            builder.PositionBuilderAtEnd(exitBlock);
+            builder.CreateRetVoid();
         }
     }
 

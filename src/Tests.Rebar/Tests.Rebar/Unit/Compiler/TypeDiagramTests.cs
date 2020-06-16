@@ -41,7 +41,7 @@ namespace Tests.Rebar.Unit.Compiler
         }
 
         [TestMethod]
-        public void StructTypeIntoSelf_InferTypes_SelfTypeIsClusterType()
+        public void PrimitivesIntoSelfStructType_InferTypes_SelfTypeIsClusterType()
         {
             DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
             var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Struct, 2);
@@ -52,6 +52,21 @@ namespace Tests.Rebar.Unit.Compiler
 
             NIType selfType = typeDiagram.GetSelfType();
             Assert.IsTrue(selfType.IsValueClass());
+            Assert.AreEqual(2, selfType.GetFields().Count());
+        }
+
+        [TestMethod]
+        public void PrimitivesIntoSelfVariantType_InferTypes_SelfTypeIsUnionType()
+        {
+            DfirRoot typeDiagram = DfirRoot.Create(CreateTestCompilableDefinitionName("type"));
+            var selfTypeNode = new SelfTypeNode(typeDiagram.BlockDiagram, SelfTypeMode.Variant, 2);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[0], NITypes.Int32);
+            ConnectPrimitiveTypeToInputTerminal(selfTypeNode.InputTerminals[1], NITypes.Boolean);
+
+            RunSemanticAnalysisUpToTypeInference(typeDiagram);
+
+            NIType selfType = typeDiagram.GetSelfType();
+            Assert.IsTrue(selfType.IsUnion());
             Assert.AreEqual(2, selfType.GetFields().Count());
         }
 
